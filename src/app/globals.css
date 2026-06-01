@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --yai-bg: #f5f4f8;
+  --yai-surface: #ffffff;
+  --yai-ink: #0c0a14;
+  --yai-muted: #6b6578;
+  --yai-primary: #5b4dff;
+  --yai-primary-soft: #ede9fe;
+  --yai-accent: #ff5c7a;
+  --yai-cyan: #22d3ee;
+  --yai-border: rgba(12, 10, 20, 0.06);
+  --yai-shadow: 0 4px 24px rgba(91, 77, 255, 0.08), 0 1px 3px rgba(12, 10, 20, 0.04);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c4bdd4 transparent;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--yai-bg);
+  color: var(--yai-ink);
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--yai-border);
+    box-shadow: var(--yai-shadow);
+  }
+
+  .yai-panel {
+    @apply rounded-2xl border border-[var(--yai-border)] bg-white shadow-[var(--yai-shadow)];
+  }
+
+  .mesh-bg {
+    background-color: var(--yai-bg);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% -10%, rgba(91, 77, 255, 0.14), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(255, 92, 122, 0.1), transparent),
+      radial-gradient(ellipse 50% 30% at 50% 100%, rgba(34, 211, 238, 0.08), transparent);
+  }
+
+  .dashboard-canvas {
+    background-color: #eeecf4;
+    background-image:
+      linear-gradient(rgba(91, 77, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(91, 77, 255, 0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .sidebar-light {
+    background: linear-gradient(180deg, #ffffff 0%, #faf9fc 100%);
+    border-right: 1px solid var(--yai-border);
+  }
+
+  .text-gradient-yai {
+    background: linear-gradient(135deg, #5b4dff 0%, #ff5c7a 50%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .yai-tab-strip {
+    scrollbar-width: thin;
+    scrollbar-color: #c4bdd4 transparent;
+  }
+
+  .yai-tab-strip::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .yai-tab-strip::-webkit-scrollbar-thumb {
+    background: #c4bdd4;
+    border-radius: 999px;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

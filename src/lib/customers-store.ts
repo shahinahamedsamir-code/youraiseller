@@ -1,0 +1,90 @@
+import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
+
+export type SellerCustomer = {
+  id: string;
+  name: string;
+  phone: string;
+  orders: number;
+  spent: number;
+  email?: string;
+};
+
+type OrderLike = {
+  customerName: string;
+  phone: string;
+  email?: string;
+  status: string;
+  total: number;
+};
+
+const DEMO_CUSTOMERS: SellerCustomer[] = [
+  { id: "C-101", name: "Rahim Uddin", phone: "01712345678", orders: 12, spent: 28400 },
+  { id: "C-102", name: "Sadia Akter", phone: "01898765432", orders: 8, spent: 19200 },
+  { id: "C-103", name: "Karim Hassan", phone: "01611223344", orders: 3, spent: 5400 },
+];
+
+function storageKey(): string | null {
+  return sellerStorageKey("customers");
+}
+
+function buildFromOrders(orders: OrderLike[]): SellerCustomer[] {
+  const map = new Map<string, SellerCustomer>();
+
+  for (const o of orders) {
+    const phone = o.phone.trim();
+    if (!phone) continue;
+    const prev = map.get(phone) ?? {
+      id: `C-${phone.slice(-4)}`,
+      name: o.customerName,
+      phone,
+      orders: 0,
+      spent: 0,
+      email: o.email,
+    };
+    prev.orders += 1;
+    if (!["cancelled", "returned", "lost"].includes(o.status)) {
+      prev.spent += o.total;
+    }
+    if (o.email) prev.email = o.email;
+    map.set(phone, prev);
+  }
+
+  return Array.from(map.values());
+}
+
+function saveCustomers(list: SellerCustomer[]) {
+  if (typeof window === "undefined") return;
+  const key = storageKey();
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify(list));
+  window.dispatchEvent(new Event("youraiseller-data-updated"));
+}
+
+/** Update customer DB from this seller's order list (no cross-account data). */
+export function syncCustomersFromOrderList(orders: OrderLike[]): SellerCustomer[] {
+  const built = buildFromOrders(orders);
+  saveCustomers(built);
+  return built;
+}
+
+export function loadCustomers(): SellerCustomer[] {
+  if (typeof window === "undefined") {
+    return isDemoSellerAccount() ? DEMO_CUSTOMERS : [];
+  }
+  const key = storageKey();
+  if (!key) return [];
+
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      if (isDemoSellerAccount()) {
+        saveCustomers(DEMO_CUSTOMERS);
+        return DEMO_CUSTOMERS;
+      }
+      return [];
+    }
+    return JSON.parse(raw) as SellerCustomer[];
+  } catch {
+    return isDemoSellerAccount() ? DEMO_CUSTOMERS : [];
+  }
+}

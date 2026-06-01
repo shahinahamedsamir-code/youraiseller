@@ -1,0 +1,60 @@
+const labels: Record<string, string> = {
+  dashboard: "Dashboard",
+  search: "Search",
+  orders: "Orders",
+  web: "Web Orders",
+  approved: "Approved Orders",
+  new: "New Order",
+  inventory: "Inventory",
+  products: "Products",
+  categories: "Categories & Brands",
+  stock: "Stock",
+  decrease: "Decrease Stock",
+  increase: "Increase Stock",
+  transfer: "Transfer Stock",
+  "smart-restock": "Smart Restock",
+  list: "List",
+  "meta-ads": "Meta Ads",
+  accounting: "Accounting",
+  tasks: "Task & Follow-up",
+  hrm: "HRM",
+  automation: "Automation",
+  delivery: "Delivery Methods",
+  integration: "Integration",
+  shopify: "Shopify Integration",
+  courier: "Courier Integration",
+  settings: "Setting",
+  reports: "Reports",
+  customers: "Customer",
+  sms: "SMS",
+  "auto-call-center": "Auto Call Center",
+  preorders: "Preorders",
+  view: "View order",
+  "sync-products": "Sync Products",
+  woocommerce: "WooCommerce",
+  "additional-sites": "Additional Sites",
+  manual: "Manual Web Order",
+  "block-list": "Order Block List",
+};
+
+export function getBreadcrumbs(pathname: string): { label: string; href: string }[] {
+  if (pathname === "/dashboard") {
+    return [{ label: "Dashboard", href: "/dashboard" }];
+  }
+
+  const segments = pathname.replace("/dashboard", "").split("/").filter(Boolean);
+  const crumbs: { label: string; href: string }[] = [
+    { label: "Dashboard", href: "/dashboard" },
+  ];
+
+  let path = "/dashboard";
+  segments.forEach((seg) => {
+    path += `/${seg}`;
+    let label = labels[seg] ?? seg.replace(/-/g, " ");
+    if (path === "/dashboard/inventory/dashboard") label = "Inventory Dashboard";
+    if (seg === "new" && path.includes("/inventory/")) label = "New";
+    crumbs.push({ label, href: path });
+  });
+
+  return crumbs;
+}

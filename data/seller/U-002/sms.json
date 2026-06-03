@@ -1,0 +1,103 @@
+{
+  "balance": 58,
+  "walletTaka": 4,
+  "totalRechargedTaka": 4,
+  "autoSettings": {
+    "new_order": [
+      {
+        "id": "new_order_created",
+        "title": "New Order SMS",
+        "hint": "নতুন অর্ডার তৈরি করার সময় কাস্টমারকে SMS পাঠান",
+        "enabled": false
+      },
+      {
+        "id": "new_order_edited",
+        "title": "Edit Order SMS",
+        "hint": "Send SMS when an order is edited",
+        "enabled": false
+      },
+      {
+        "id": "new_order_shipped",
+        "title": "Shipped Order SMS",
+        "hint": "অর্ডার শিপ করার সময় কাস্টমারকে SMS পাঠান",
+        "enabled": false
+      }
+    ],
+    "preorder": [
+      {
+        "id": "preorder_created",
+        "title": "Preorder Created SMS",
+        "hint": "প্রি-অর্ডার তৈরি হলে কাস্টমারকে SMS পাঠান",
+        "enabled": false
+      },
+      {
+        "id": "preorder_pending",
+        "title": "Preorder to Pending SMS",
+        "hint": "প্রি-অর্ডার Pending হলে কাস্টমারকে SMS পাঠান",
+        "enabled": false
+      }
+    ],
+    "web_order": [
+      {
+        "id": "web_received",
+        "title": "Web Order Received SMS",
+        "hint": "নতুন ওয়েব অর্ডার পাওয়ার সময় কাস্টমারকে SMS পাঠান",
+        "enabled": false
+      },
+      {
+        "id": "web_reminder",
+        "title": "Reminder SMS",
+        "hint": "ওয়েব অর্ডারে কাস্টমারকে রিমাইন্ডার SMS পাঠান",
+        "enabled": false
+      },
+      {
+        "id": "web_advance",
+        "title": "Advance SMS",
+        "hint": "ওয়েব অর্ডারে কাস্টমারকে অ্যাডভান্স SMS পাঠান",
+        "enabled": false
+      }
+    ]
+  },
+  "logs": [
+    {
+      "id": "sms-1780487873898-fqmax7",
+      "phone": "001616618286",
+      "message": "hellooooooooooooo",
+      "type": "Manual",
+      "status": "pending",
+      "sentAt": "2026-06-03 17:57",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780486621363-e6id1q",
+      "phone": "001616618286",
+      "message": "dsgd gsd g",
+      "type": "Manual",
+      "status": "pending",
+      "sentAt": "2026-06-03 17:37",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780486457186-81cvha",
+      "phone": "001616618286",
+      "message": "hgljhl",
+      "type": "Manual",
+      "status": "failed",
+      "sentAt": "2026-06-03 17:34",
+      "cost": 0,
+      "providerText": "Sender Id not valid."
+    },
+    {
+      "id": "sms-1780486359428-r3a9hq",
+      "phone": "001616618286",
+      "message": "d gdfgd",
+      "type": "Manual",
+      "status": "failed",
+      "sentAt": "2026-06-03 17:32",
+      "cost": 0,
+      "providerText": "Sender Id not valid."
+    }
+  ]
+}

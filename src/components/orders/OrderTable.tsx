@@ -8,13 +8,13 @@ import {
   toggleOrderPrinted,
   setOrderTracking,
   type Order,
+  type OrderLine,
   type OrderStatus,
 } from "@/lib/orders-store";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
 import { buildOrderListChips } from "@/lib/order-list-chips";
 import { loadActiveDeliveryMethods } from "@/lib/delivery-methods-store";
 import { getProductImageForLine } from "@/lib/inventory-store";
-import { getSessionUser } from "@/lib/dev-users";
 import { OrderStatusTabs } from "./OrderStatusTabs";
 import { OrderDetailsModal } from "./OrderDetailsModal";
 import { OrderRowActionsMenu } from "./OrderRowActionsMenu";
@@ -41,6 +41,9 @@ import {
 import clsx from "clsx";
 import { OrderProductsCell } from "@/components/orders/OrderProductsCell";
 import { OrderProductsList } from "@/components/orders/OrderProductsList";
+import { OrderCreatorCell } from "@/components/orders/OrderCreatorCell";
+import { OrderNoteModal } from "@/components/orders/OrderNoteModal";
+import { OrderProductDetailModal } from "@/components/orders/OrderProductDetailModal";
 
 type Props = {
   mode?: "approved" | "all" | "preorder";
@@ -79,8 +82,8 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
   const [trackDraft, setTrackDraft] = useState("");
   const [deliveryMethods, setDeliveryMethods] = useState(loadActiveDeliveryMethods);
   const [viewOrderId, setViewOrderId] = useState<string | null>(null);
-
-  const staffName = getSessionUser()?.name ?? "You";
+  const [notePopup, setNotePopup] = useState<string | null>(null);
+  const [productPopup, setProductPopup] = useState<OrderLine[] | null>(null);
 
   const goEditOrder = (id: string) => {
     setOpenMenu(null);
@@ -373,7 +376,6 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
                         setOpenMenu(openMenu === o.id ? null : o.id)
                       }
                       onCloseMenu={() => setOpenMenu(null)}
-                      staffName={staffName}
                       editingTrack={editingTrack === o.id}
                       trackDraft={trackDraft}
                       onTrackEdit={() => {
@@ -399,6 +401,8 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
                         showStatusTabs || mode === "approved"
                       }
                       showPanelLink={activeTab !== "pending"}
+                      onNoteClick={setNotePopup}
+                      onProductClick={setProductPopup}
                     />
                   ))}
                 </tbody>
@@ -424,7 +428,6 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
               openMenu={openMenu === o.id}
               onMenuToggle={() => setOpenMenu(openMenu === o.id ? null : o.id)}
               onCloseMenu={() => setOpenMenu(null)}
-              staffName={staffName}
               phoneScore={phoneScore(o.phone)}
               editingTrack={editingTrack === o.id}
               trackDraft={trackDraft}
@@ -449,6 +452,8 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
               activeChipId={activeChip}
               showCourierActions={showStatusTabs || mode === "approved"}
               showPanelLink={activeTab !== "pending"}
+              onNoteClick={setNotePopup}
+              onProductClick={setProductPopup}
             />
           ))}
         </div>
@@ -484,6 +489,16 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
           onEdit={() => goEditOrder(viewOrderId)}
         />
       )}
+      <OrderNoteModal
+        open={!!notePopup}
+        note={notePopup ?? ""}
+        onClose={() => setNotePopup(null)}
+      />
+      <OrderProductDetailModal
+        open={!!productPopup?.length}
+        items={productPopup}
+        onClose={() => setProductPopup(null)}
+      />
     </div>
   );
 }
@@ -495,7 +510,6 @@ function OrderTableRow({
   openMenu,
   onMenuToggle,
   onCloseMenu,
-  staffName,
   editingTrack,
   trackDraft,
   onTrackEdit,
@@ -509,6 +523,8 @@ function OrderTableRow({
   activeChipId,
   showCourierActions,
   showPanelLink = true,
+  onNoteClick,
+  onProductClick,
 }: {
   order: Order;
   selected: boolean;
@@ -516,7 +532,6 @@ function OrderTableRow({
   openMenu: boolean;
   onMenuToggle: () => void;
   onCloseMenu: () => void;
-  staffName: string;
   editingTrack: boolean;
   trackDraft: string;
   onTrackEdit: () => void;
@@ -530,6 +545,8 @@ function OrderTableRow({
   activeChipId: string;
   showCourierActions?: boolean;
   showPanelLink?: boolean;
+  onNoteClick: (note: string) => void;
+  onProductClick: (items: OrderLine[]) => void;
 }) {
   const createdParts = o.createdAt.split(",");
 
@@ -583,12 +600,24 @@ function OrderTableRow({
         </p>
       </td>
       <td className={TD}>
-        <p className="line-clamp-3 text-sm leading-relaxed text-slate-700">
-          {o.note || "—"}
-        </p>
+        {o.internalNote?.trim() ? (
+          <button
+            type="button"
+            onClick={() => onNoteClick(o.internalNote!.trim())}
+            className="line-clamp-3 w-full text-left text-sm leading-relaxed text-slate-700 transition hover:text-violet-700 hover:underline"
+          >
+            {o.internalNote}
+          </button>
+        ) : (
+          <span className="text-sm text-slate-400">—</span>
+        )}
       </td>
       <td className={TD}>
-        <OrderProductsCell items={o.items} onMoreClick={onViewDetails} />
+        <OrderProductsCell
+          items={o.items}
+          onMoreClick={onViewDetails}
+          onProductClick={() => onProductClick(o.items)}
+        />
       </td>
       <td className={TD}>
         <div className="flex flex-wrap gap-1">
@@ -633,9 +662,7 @@ function OrderTableRow({
         />
       </td>
       <td className={TD}>
-        <p className="text-sm font-semibold text-slate-700">
-          {o.handledBy ?? staffName}
-        </p>
+        <OrderCreatorCell order={o} />
       </td>
       <td className={TD}>
         <OrderSourceBadge order={o} size="md" />
@@ -651,7 +678,6 @@ function OrderRow({
   openMenu,
   onMenuToggle,
   onCloseMenu,
-  staffName,
   phoneScore,
   editingTrack,
   trackDraft,
@@ -666,6 +692,8 @@ function OrderRow({
   activeChipId,
   showCourierActions,
   showPanelLink = true,
+  onNoteClick,
+  onProductClick,
 }: {
   order: Order;
   selected: boolean;
@@ -673,7 +701,6 @@ function OrderRow({
   openMenu: boolean;
   onMenuToggle: () => void;
   onCloseMenu: () => void;
-  staffName: string;
   phoneScore: number;
   editingTrack: boolean;
   trackDraft: string;
@@ -688,6 +715,8 @@ function OrderRow({
   activeChipId: string;
   showCourierActions?: boolean;
   showPanelLink?: boolean;
+  onNoteClick: (note: string) => void;
+  onProductClick: (items: OrderLine[]) => void;
 }) {
   const firstItem = o.items[0];
   const productImg = firstItem ? getProductImageForLine(firstItem) : undefined;
@@ -777,9 +806,17 @@ function OrderRow({
           {/* Note */}
           <div className="min-w-0 rounded-lg border border-dashed border-amber-200 bg-amber-50/50 p-3">
             <p className="text-[10px] font-bold uppercase text-amber-700">Note</p>
-            <p className="mt-1 line-clamp-4 text-xs leading-relaxed text-slate-700">
-              {o.note || "—"}
-            </p>
+            {o.internalNote?.trim() ? (
+              <button
+                type="button"
+                onClick={() => onNoteClick(o.internalNote!.trim())}
+                className="mt-1 line-clamp-4 w-full text-left text-xs leading-relaxed text-slate-700 hover:text-violet-700 hover:underline"
+              >
+                {o.internalNote}
+              </button>
+            ) : (
+              <p className="mt-1 text-xs text-slate-400">—</p>
+            )}
             {o.advance > 0 && (
               <p className="mt-2 text-xs font-semibold text-indigo-700">
                 Advance ৳{o.advance.toLocaleString()}
@@ -794,6 +831,7 @@ function OrderRow({
             variant="cards"
             fallbackImage={productImg}
             onMoreClick={onViewDetails}
+            onProductClick={() => onProductClick(o.items)}
           />
 
           {/* Meta */}
@@ -841,11 +879,7 @@ function OrderRow({
               onTrackSave={onTrackSave}
             />
           )}
-          <p className="text-xs text-slate-500">
-            <span className="font-semibold text-slate-700">
-              {o.handledBy ?? staffName}
-            </span>
-          </p>
+          <OrderCreatorCell order={o} compact />
           <OrderSourceBadge order={o} size="md" />
         </div>
       </div>

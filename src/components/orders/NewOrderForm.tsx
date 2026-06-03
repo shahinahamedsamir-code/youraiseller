@@ -39,6 +39,8 @@ import {
   loadProducts,
   type OrderLine,
   type AdvancePaymentMethod,
+  type OrderAttachment,
+  type Order,
 } from "@/lib/orders-store";
 import type { Product } from "@/lib/inventory-store";
 import { getProductImageForLine } from "@/lib/inventory-store";
@@ -54,9 +56,18 @@ import {
   logForAdvancePayment,
 } from "@/lib/order-activity";
 import { getSessionUser } from "@/lib/dev-users";
+import { loadBusinessSettings } from "@/lib/business-settings-store";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
 import { AdvancePaymentPanel } from "@/components/orders/AdvancePaymentPanel";
 import { OrderSourceSelect } from "@/components/orders/OrderSourceSelect";
+import { ShippingNoteField } from "@/components/orders/ShippingNoteField";
+import { OrderExtraOptions } from "@/components/orders/OrderExtraOptions";
+import { CourierRatioPanel } from "@/components/orders/CourierRatioPanel";
+import {
+  loadAdvanceSettings,
+  ADVANCE_SETTINGS_UPDATED,
+  type RequiredFieldKey,
+} from "@/lib/advance-settings-store";
 import {
   DEFAULT_ORDER_SOURCE,
   inferOrderSourceFromOrder,
@@ -117,6 +128,10 @@ export function NewOrderForm({ orderId }: Props = {}) {
   const [shippingNote, setShippingNote] = useState("");
   const [orderSource, setOrderSource] = useState<OrderSource>(DEFAULT_ORDER_SOURCE);
   const [customOrderSource, setCustomOrderSource] = useState("");
+  const [internalNote, setInternalNote] = useState("");
+  const [referenceLink, setReferenceLink] = useState("");
+  const [orderTags, setOrderTags] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<OrderAttachment[]>([]);
   const [isPreorder, setIsPreorder] = useState(false);
   const [preorderReason, setPreorderReason] =
     useState<PreorderReason>("out_of_stock");
@@ -137,6 +152,28 @@ export function NewOrderForm({ orderId }: Props = {}) {
   const [advance, setAdvance] = useState("0");
   const [shippingCharge, setShippingCharge] = useState("0");
   const [saving, setSaving] = useState(false);
+  const [requiredFields, setRequiredFields] = useState<
+    Record<RequiredFieldKey, boolean>
+  >(() => loadAdvanceSettings().required);
+
+  useEffect(() => {
+    const refresh = () => setRequiredFields(loadAdvanceSettings().required);
+    refresh();
+    window.addEventListener(ADVANCE_SETTINGS_UPDATED, refresh);
+    window.addEventListener("youraiseller-data-updated", refresh);
+    return () => {
+      window.removeEventListener(ADVANCE_SETTINGS_UPDATED, refresh);
+      window.removeEventListener("youraiseller-data-updated", refresh);
+    };
+  }, []);
+
+  // New order: seed delivery charge / note from Business Settings defaults.
+  useEffect(() => {
+    if (orderId) return;
+    const biz = loadBusinessSettings();
+    if (biz.defaultDeliveryCost > 0) setShippingCharge(String(biz.defaultDeliveryCost));
+    if (biz.orderNote?.trim()) setShippingNote(biz.orderNote.trim());
+  }, [orderId]);
 
   useEffect(() => {
     if (!orderId) return;
@@ -168,6 +205,10 @@ export function NewOrderForm({ orderId }: Props = {}) {
     setPreorderDeliveryLocal(toDatetimeLocalValue(o.preorderDeliveryAt));
     setOrderSource(inferOrderSourceFromOrder(o));
     setCustomOrderSource(o.customOrderSource ?? "");
+    setInternalNote(o.internalNote ?? "");
+    setReferenceLink(o.referenceLink ?? "");
+    setOrderTags(o.tags ?? []);
+    setAttachments(o.attachments ?? []);
   }, [orderId]);
 
   useEffect(() => {
@@ -204,6 +245,16 @@ export function NewOrderForm({ orderId }: Props = {}) {
   const isHandCashAdvance = advancePaymentMethod === "hand_cash";
   const phoneInvalid = phone.trim().length > 0 && !isValidPhone(phone);
   const addressInvalid = address.trim().length > 0 && !isValidAddress(address);
+  const localOrdersForPhone = useMemo(() => {
+    if (!isValidPhone(phone)) return [];
+    return findOrdersByPhone(phone);
+  }, [phone]);
+
+  const fillFromLastOrder = (order: Order) => {
+    setCustomerName(order.customerName);
+    setAddress(order.address);
+    if (order.note?.trim()) setShippingNote(order.note.trim());
+  };
 
   const checkPhone = () => {
     if (!isValidPhone(phone)) {
@@ -271,8 +322,12 @@ export function NewOrderForm({ orderId }: Props = {}) {
   const submit = () => {
     setError("");
     setSuccess("");
-    if (!customerName.trim() || !phone.trim()) {
-      setError("Customer name and phone are required.");
+    if (!customerName.trim()) {
+      setError("Customer name is required.");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Mobile number is required.");
       return;
     }
     if (!isValidPhone(phone)) {
@@ -287,11 +342,23 @@ export function NewOrderForm({ orderId }: Props = {}) {
       setError("Address must be at least 10 characters.");
       return;
     }
+    if (requiredFields.deliveryMethod && !deliveryMethodId) {
+      setError("Select a delivery method.");
+      return;
+    }
+    if (requiredFields.shippingNote && !shippingNote.trim()) {
+      setError("Shipping note is required.");
+      return;
+    }
+    if (requiredFields.orderSource && orderSource === "unknown") {
+      setError("Select an order source.");
+      return;
+    }
     if (lines.length === 0) {
       setError("Add at least one product.");
       return;
     }
-    if (showAdvancePayment) {
+    if (showAdvancePayment && requiredFields.transactionId) {
       if (isHandCashAdvance) {
         if (!cashReceiverName.trim()) {
           setError("Enter who received the cash (receiver name).");
@@ -321,7 +388,8 @@ export function NewOrderForm({ orderId }: Props = {}) {
         advancePaymentMethod,
         advanceTxnId,
         cashReceiverName,
-        cashReference
+        cashReference,
+        requiredFields.transactionId
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Invalid advance payment");
@@ -349,6 +417,10 @@ export function NewOrderForm({ orderId }: Props = {}) {
           orderSource,
           customOrderSource:
             orderSource === "custom" ? customOrderSource.trim() : undefined,
+          internalNote: internalNote.trim() || undefined,
+          referenceLink: referenceLink.trim() || undefined,
+          tags: orderTags.length ? orderTags : undefined,
+          attachments: attachments.length ? attachments : undefined,
         };
         if (isPreorder) {
           Object.assign(patch, {
@@ -428,6 +500,10 @@ export function NewOrderForm({ orderId }: Props = {}) {
         orderSource,
         customOrderSource:
           orderSource === "custom" ? customOrderSource : undefined,
+        internalNote: internalNote.trim() || undefined,
+        referenceLink: referenceLink.trim() || undefined,
+        tags: orderTags.length ? orderTags : undefined,
+        attachments: attachments.length ? attachments : undefined,
       });
       setSuccess(
         isPreorder
@@ -504,7 +580,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
         </div>
       )}
       {/* Customer row */}
-      <section className="yai-panel overflow-hidden">
+      <section className="yai-panel overflow-visible">
         <div className="border-b border-violet-100/80 bg-gradient-to-r from-violet-50/60 via-white to-indigo-50/40 px-4 py-3.5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-200">
@@ -517,16 +593,19 @@ export function NewOrderForm({ orderId }: Props = {}) {
           </div>
         </div>
         <div className="p-4">
+        {isValidPhone(phone) && (
+          <CourierRatioPanel
+            phone={phone}
+            localOrders={localOrdersForPhone}
+            onFillInfo={fillFromLastOrder}
+          />
+        )}
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <div>
-            {!isValidPhone(phone) && (
-              <p className="mb-2 text-sm font-medium text-slate-600">
-                Mobile number must be 11 digits to check
-              </p>
-            )}
             <label className={labelCls}>
               <Phone className="h-3.5 w-3.5 text-violet-500" />
               Mobile Number
+              <span className="text-rose-500">*</span>
             </label>
             <input
               value={phone}
@@ -537,15 +616,21 @@ export function NewOrderForm({ orderId }: Props = {}) {
               maxLength={14}
               className={clsx(
                 inputCls,
-                phoneInvalid && "border-rose-300 ring-2 ring-rose-100",
-                isValidPhone(phone) && "border-emerald-300 ring-2 ring-emerald-100"
+                phoneInvalid &&
+                  "border-rose-400 bg-rose-50/50 ring-2 ring-rose-100 focus:border-rose-500 focus:ring-rose-200",
+                isValidPhone(phone) &&
+                  "border-emerald-400 bg-emerald-50/30 ring-2 ring-emerald-100 focus:border-emerald-500 focus:ring-emerald-100"
               )}
             />
             {phone.trim() ? (
               <p
                 className={clsx(
                   "mt-1 text-[10px] font-semibold",
-                  isValidPhone(phone) ? "text-emerald-600" : "text-slate-400"
+                  isValidPhone(phone)
+                    ? "text-emerald-600"
+                    : phoneInvalid
+                      ? "text-rose-600"
+                      : "text-slate-400"
                 )}
               >
                 {phoneDigitCount(phone)}/{REQUIRED_PHONE_DIGITS} digits
@@ -561,6 +646,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
             <label className={labelCls}>
               <User className="h-3.5 w-3.5 text-violet-500" />
               Customer Name
+              <span className="text-rose-500">*</span>
             </label>
             <input
               value={customerName}
@@ -572,6 +658,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
             <label className={labelCls}>
               <Truck className="h-3.5 w-3.5 text-violet-500" />
               Delivery Method
+              {requiredFields.deliveryMethod && <span className="text-rose-500">*</span>}
             </label>
             <DeliveryMethodSelect
               value={deliveryMethodId}
@@ -586,6 +673,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
               <label className={labelCls}>
                 <MapPin className="h-3.5 w-3.5 text-violet-500" />
                 Address
+                <span className="text-rose-500">*</span>
               </label>
               <textarea
                 rows={3}
@@ -609,19 +697,30 @@ export function NewOrderForm({ orderId }: Props = {}) {
                 </p>
               )}
             </div>
-          </div>
-          <div className="space-y-3">
             <div>
               <label className={labelCls}>
                 <Layers className="h-3.5 w-3.5 text-violet-500" />
                 Shipping Note
+                {requiredFields.shippingNote && <span className="text-rose-500">*</span>}
               </label>
-              <input
+              <ShippingNoteField
                 value={shippingNote}
-                onChange={(e) => setShippingNote(e.target.value)}
-                className={inputCls}
+                onChange={setShippingNote}
+                inputClassName={inputCls}
               />
             </div>
+          </div>
+          <div className="space-y-3">
+            <OrderExtraOptions
+              note={internalNote}
+              onNoteChange={setInternalNote}
+              link={referenceLink}
+              onLinkChange={setReferenceLink}
+              tags={orderTags}
+              onTagsChange={setOrderTags}
+              attachments={attachments}
+              onAttachmentsChange={setAttachments}
+            />
             <OrderSourceSelect
               value={orderSource}
               onChange={setOrderSource}
@@ -629,6 +728,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
               onCustomLabelChange={setCustomOrderSource}
               inputClassName={inputCls}
               compact
+              required={requiredFields.orderSource}
             />
             <label className="flex items-center gap-2 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-orange-50/50 px-3 py-2.5 text-sm font-semibold text-amber-900 shadow-sm">
               <input
@@ -908,6 +1008,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
             onCashReceiverNameChange={setCashReceiverName}
             cashReference={cashReference}
             onCashReferenceChange={setCashReference}
+            proofRequired={requiredFields.transactionId}
           />
         ) : advanceNum === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-xs text-slate-500">

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "sn-fragile",
+    "label": "Fragile",
+    "text": "Handle with care — fragile item, please do not throw."
+  },
+  {
+    "id": "sn-call-before",
+    "label": "Call before delivery",
+    "text": "Please call the customer before delivery."
+  },
+  {
+    "id": "sn-cod-exact",
+    "label": "Collect exact COD",
+    "text": "Collect the exact cash-on-delivery amount only."
+  }
+]

@@ -1,4 +1,5 @@
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
+import { pushSellerData } from "./seller-sync";
 
 export type Category = { id: string; name: string };
 export type Brand = { id: string; name: string };
@@ -269,6 +270,7 @@ function saveRaw(data: InventoryData) {
   const key = storageKey();
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(data));
+  pushSellerData("inventory", data);
   window.dispatchEvent(new Event("youraiseller-data-updated"));
 }
 

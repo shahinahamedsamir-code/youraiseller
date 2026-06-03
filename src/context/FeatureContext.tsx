@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import {
+  cascadeFeatures,
   DEFAULT_FEATURES,
   FEATURE_LIST,
   type FeatureKey,
@@ -113,25 +114,21 @@ export function FeatureProvider({
     []
   );
 
+  // Effective flags with parent → child cascade applied (a child is off when
+  // its parent menu is off), used for runtime access checks & sidebar.
+  const effectiveFeatures = useMemo(() => cascadeFeatures(features), [features]);
+
   const isEnabled = useCallback(
-    (key: FeatureKey) => features[key] ?? true,
-    [features]
+    (key: FeatureKey) => effectiveFeatures[key] ?? true,
+    [effectiveFeatures]
   );
 
   const toggle = useCallback(
     (key: FeatureKey) => {
       if (mode !== "global") return;
-      patchGlobal((prev) => {
-        const next = { ...prev, [key]: !prev[key] };
-        if (key === "web_orders" && !next[key]) {
-          FEATURE_LIST.filter(
-            (f) => f.category === "web_orders" && f.key !== "web_orders"
-          ).forEach((f) => {
-            next[f.key] = false;
-          });
-        }
-        return next;
-      });
+      // Parent → child cascade is applied at read time (cascadeFeatures), so we
+      // only flip this one flag; children keep their own stored state.
+      patchGlobal((prev) => ({ ...prev, [key]: !prev[key] }));
     },
     [mode, patchGlobal]
   );

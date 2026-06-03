@@ -12,11 +12,11 @@ export const deliveryNav: DeliveryNavItem[] = [
   {
     label: "Delivery Method List",
     href: "/dashboard/delivery",
-    featureKey: "delivery",
+    featureKey: "delivery_list",
   },
   {
     label: "Add Method",
     href: "/dashboard/delivery/new",
-    featureKey: "delivery",
+    featureKey: "delivery_add",
   },
 ];

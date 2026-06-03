@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { refreshCurrentSessionUser } from "@/lib/dev-users";
+import { syncSellerDataFromServer } from "@/lib/seller-sync";
 
 export function AccountGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -23,6 +24,14 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
         router.replace("/renew");
         return;
       }
+      // Pull this business's shared data (orders/products/customers) so team
+      // members on any device see the same data as the owner.
+      try {
+        await syncSellerDataFromServer();
+      } catch {
+        /* offline — fall back to local data */
+      }
+      if (cancelled) return;
       setState("ok");
     })();
     return () => {

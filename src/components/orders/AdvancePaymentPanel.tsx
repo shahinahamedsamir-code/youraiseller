@@ -73,6 +73,7 @@ type Props = {
   onCashReceiverNameChange: (v: string) => void;
   cashReference: string;
   onCashReferenceChange: (v: string) => void;
+  proofRequired?: boolean;
 };
 
 export function AdvancePaymentPanel({
@@ -85,8 +86,15 @@ export function AdvancePaymentPanel({
   onCashReceiverNameChange,
   cashReference,
   onCashReferenceChange,
+  proofRequired = true,
 }: Props) {
   const isHandCash = method === "hand_cash";
+  const ReqBadge = () =>
+    proofRequired ? (
+      <span className="text-rose-500"> *</span>
+    ) : (
+      <span className="font-normal text-slate-400"> (optional)</span>
+    );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-orange-50/50 shadow-sm ring-1 ring-amber-100">
@@ -177,6 +185,7 @@ export function AdvancePaymentPanel({
                 <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                   <User className="h-3.5 w-3.5 text-emerald-600" />
                   Receiver name
+                  <ReqBadge />
                 </label>
                 <input
                   value={cashReceiverName}
@@ -208,6 +217,7 @@ export function AdvancePaymentPanel({
                 <span className="font-normal text-slate-400">
                   ({ADVANCE_PAYMENT_LABELS[method]})
                 </span>
+                <ReqBadge />
               </label>
               <input
                 value={transactionId}

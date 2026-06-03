@@ -13,6 +13,11 @@ import {
   Sparkles,
   Phone,
   MessageCircle,
+  User,
+  Truck,
+  MapPin,
+  Layers,
+  AlertTriangle,
 } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -22,19 +27,34 @@ import {
 import { AdvancePaymentPanel } from "@/components/orders/AdvancePaymentPanel";
 import { PreorderReasonFields } from "@/components/orders/PreorderReasonFields";
 import { OrderActivityTimeline } from "@/components/orders/OrderActivityTimeline";
+import { OrderSourceSelect } from "@/components/orders/OrderSourceSelect";
+import { ShippingNoteField } from "@/components/orders/ShippingNoteField";
+import { OrderExtraOptions } from "@/components/orders/OrderExtraOptions";
+import { CourierRatioPanel } from "@/components/orders/CourierRatioPanel";
+import { DeliveryMethodSelect } from "@/components/delivery/DeliveryMethodSelect";
+import { WebOrderWooSummary } from "@/components/web-orders/WebOrderWooSummary";
+import { WebOrderSummaryAside } from "@/components/web-orders/WebOrderSummaryAside";
+import { findPriorOrdersByPhone } from "@/lib/web-order-display";
 import {
   buildAdvancePaymentRecord,
   buildLineFromProduct,
+  findOrdersByPhone,
   getOrder,
   updateOrder,
   promoteWebOrderToApproved,
   appendOrderActivity,
   isOrderPreorder,
   type AdvancePaymentMethod,
+  type Order,
+  type OrderAttachment,
   type OrderLine,
   type PaymentMethod,
   type WebDisplayStatus,
 } from "@/lib/orders-store";
+import {
+  getInitialDeliveryMethodId,
+  resolveDeliveryFieldsForOrderInput,
+} from "@/lib/delivery-methods-store";
 import {
   loadProducts,
   getProductDisplayImage,
@@ -57,16 +77,27 @@ import {
 import { getSessionUser } from "@/lib/dev-users";
 import {
   isInWebQueue,
+  isWebSourceOrder,
   shouldStayInWebQueueAfterWooSync,
 } from "@/lib/web-order-queue";
 import { webListTabForStatus } from "@/lib/web-order-tabs";
-import { OrderSourceSelect } from "@/components/orders/OrderSourceSelect";
 import {
   WEB_DEFAULT_ORDER_SOURCE,
   inferOrderSourceFromOrder,
   type OrderSource,
 } from "@/lib/order-source";
+import { refreshWooOrderFromApi } from "@/lib/woocommerce-order-sync";
 import { statusColors } from "@/lib/mock-web-orders";
+
+const REQUIRED_PHONE_DIGITS = 11;
+
+function isValidPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === REQUIRED_PHONE_DIGITS;
+}
+
+const labelCls =
+  "mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500";
 
 const WEB_STATUSES: { value: WebDisplayStatus; label: string }[] = [
   { value: "pending", label: "Pending" },
@@ -81,8 +112,6 @@ const WEB_STATUSES: { value: WebDisplayStatus; label: string }[] = [
 
 const WEB_LIST = "/dashboard/orders/web";
 const ENTRY = "Web Order List · Open";
-
-const PAYMENTS: PaymentMethod[] = ["cod", "bkash", "nagad", "prepaid"];
 
 type CartLine = OrderLine & { imageDataUrl?: string };
 
@@ -118,12 +147,20 @@ export function WebOrderEditForm({ orderId }: Props) {
   const [saving, setSaving] = useState(false);
   const [addedFlash, setAddedFlash] = useState<string | null>(null);
   const [logTick, setLogTick] = useState(0);
+  const [wooRefreshing, setWooRefreshing] = useState(false);
 
   const [phone, setPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
+  const [shippingNote, setShippingNote] = useState("");
+  const [deliveryMethodId, setDeliveryMethodId] = useState(
+    () => getInitialDeliveryMethodId()
+  );
+  const [internalNote, setInternalNote] = useState("");
+  const [referenceLink, setReferenceLink] = useState("");
+  const [orderTags, setOrderTags] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<OrderAttachment[]>([]);
   const [orderSource, setOrderSource] = useState<OrderSource>(WEB_DEFAULT_ORDER_SOURCE);
   const [customOrderSource, setCustomOrderSource] = useState("");
   const [webStatus, setWebStatus] = useState<WebDisplayStatus>("pending");
@@ -156,7 +193,12 @@ export function WebOrderEditForm({ orderId }: Props) {
     setPhone(o.phone);
     setEmail(o.email ?? "");
     setAddress(o.address);
-    setNote(o.note ?? "");
+    setShippingNote(o.note ?? "");
+    setDeliveryMethodId(o.deliveryMethodId ?? getInitialDeliveryMethodId());
+    setInternalNote(o.internalNote ?? "");
+    setReferenceLink(o.referenceLink ?? "");
+    setOrderTags(o.tags ?? []);
+    setAttachments(o.attachments ?? []);
     setOrderSource(inferOrderSourceFromOrder(o));
     setCustomOrderSource(o.customOrderSource ?? "");
     setPaymentMethod(o.paymentMethod);
@@ -236,6 +278,40 @@ export function WebOrderEditForm({ orderId }: Props) {
   const grandTotal = Math.max(0, subtotal + deliveryNum - discountNum - advanceNum);
   const showAdvancePayment = advanceNum > 0;
   const isHandCashAdvance = advancePaymentMethod === "hand_cash";
+  const localOrdersForPhone = useMemo(() => {
+    if (!isValidPhone(phone)) return [];
+    return findOrdersByPhone(phone);
+  }, [phone]);
+
+  const duplicatePhoneOrders = useMemo(() => {
+    if (!isValidPhone(phone)) return [];
+    return findPriorOrdersByPhone(phone, orderId);
+  }, [phone, orderId]);
+
+  const fillFromLastOrder = (order: Order) => {
+    setCustomerName(order.customerName);
+    setAddress(order.address);
+    if (order.note?.trim()) setShippingNote(order.note.trim());
+  };
+
+  const refreshFromWoo = async () => {
+    const o = getOrder(orderId);
+    if (!o?.wooOrderId) return;
+    setError("");
+    setWooRefreshing(true);
+    try {
+      await refreshWooOrderFromApi(o.wooOrderId);
+      hydrateFromStore();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("youraiseller-data-updated"));
+      }
+      setSuccess("WooCommerce data refreshed.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Woo refresh failed");
+    } finally {
+      setWooRefreshing(false);
+    }
+  };
 
   const tapAddProduct = (product: Product) => {
     if (product.manageStock && product.stockQty <= 0) {
@@ -333,16 +409,23 @@ export function WebOrderEditForm({ orderId }: Props) {
     const before = snapshotRef.current ?? getOrder(orderId);
     const wasPreorder = before ? isOrderPreorder(before) : false;
     const stillInWebQueue = before ? isInWebQueue(before) : true;
+    const delivery = resolveDeliveryFieldsForOrderInput({ deliveryMethodId });
 
     const patch: Parameters<typeof updateOrder>[1] = {
       customerName: customerName.trim(),
       phone: phone.trim(),
       email: email.trim() || undefined,
       address: address.trim(),
-      note: note.trim() || undefined,
+      note: shippingNote.trim() || undefined,
+      deliveryMethodId: delivery.deliveryMethodId,
+      courier: delivery.courier,
       orderSource,
       customOrderSource:
         orderSource === "custom" ? customOrderSource.trim() : undefined,
+      internalNote: internalNote.trim() || undefined,
+      referenceLink: referenceLink.trim() || undefined,
+      tags: orderTags.length ? orderTags : undefined,
+      attachments: attachments.length ? attachments : undefined,
       paymentMethod,
       items: lines,
       shippingCharge: deliveryNum,
@@ -483,7 +566,13 @@ export function WebOrderEditForm({ orderId }: Props) {
   };
 
   const order = getOrder(orderId);
-  const inWebQueue = order ? isInWebQueue(order) : false;
+  const canCreateApprovedOrder = useMemo(() => {
+    if (!order) return false;
+    if (order.webQueueReleased) return false;
+    if (isPreorder) return false;
+    if (!isWebSourceOrder(order)) return false;
+    return shouldStayInWebQueueAfterWooSync(order, webStatus);
+  }, [order, isPreorder, webStatus]);
 
   if (!order) {
     return (
@@ -494,7 +583,8 @@ export function WebOrderEditForm({ orderId }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+      <div className="min-w-0 flex-1 space-y-4">
       <section className="yai-panel p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -513,6 +603,16 @@ export function WebOrderEditForm({ orderId }: Props) {
             {webStatus.replace("_", " ")}
           </span>
         </div>
+
+        {isValidPhone(phone) && (
+          <div className="min-w-0">
+            <CourierRatioPanel
+              phone={phone}
+              localOrders={localOrdersForPhone}
+              onFillInfo={fillFromLastOrder}
+            />
+          </div>
+        )}
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <div>
@@ -541,9 +641,19 @@ export function WebOrderEditForm({ orderId }: Props) {
                 <MessageCircle className="h-4 w-4" />
               </a>
             </div>
+            {duplicatePhoneOrders.length > 0 ? (
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <p>
+                  {duplicatePhoneOrders.length} more order
+                  {duplicatePhoneOrders.length === 1 ? "" : "s"} on this number.
+                </p>
+              </div>
+            ) : null}
           </div>
           <div>
-            <label className="mb-1 block text-xs font-bold text-slate-500">
+            <label className={labelCls}>
+              <User className="h-3.5 w-3.5 text-teal-500" />
               Customer Name
             </label>
             <input
@@ -591,47 +701,54 @@ export function WebOrderEditForm({ orderId }: Props) {
         </div>
 
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-bold text-slate-500">
-              Address
-            </label>
-            <textarea
-              rows={3}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Full delivery address"
-              className={orderFormInputCls}
-            />
-          </div>
           <div className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-500">
-                Note
+              <label className={labelCls}>
+                <MapPin className="h-3.5 w-3.5 text-teal-500" />
+                Address
               </label>
-              <input
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
+              <textarea
+                rows={3}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Full delivery address"
                 className={orderFormInputCls}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-500">
-                Payment
+              <label className={labelCls}>
+                <Truck className="h-3.5 w-3.5 text-teal-500" />
+                Delivery Method
               </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) =>
-                  setPaymentMethod(e.target.value as PaymentMethod)
-                }
+              <DeliveryMethodSelect
+                value={deliveryMethodId}
+                onChange={setDeliveryMethodId}
                 className={orderFormInputCls}
-              >
-                {PAYMENTS.map((p) => (
-                  <option key={p} value={p}>
-                    {p.toUpperCase()}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
+            <div>
+              <label className={labelCls}>
+                <Layers className="h-3.5 w-3.5 text-teal-500" />
+                Shipping Note
+              </label>
+              <ShippingNoteField
+                value={shippingNote}
+                onChange={setShippingNote}
+                inputClassName={orderFormInputCls}
+              />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <OrderExtraOptions
+              note={internalNote}
+              onNoteChange={setInternalNote}
+              link={referenceLink}
+              onLinkChange={setReferenceLink}
+              tags={orderTags}
+              onTagsChange={setOrderTags}
+              attachments={attachments}
+              onAttachmentsChange={setAttachments}
+            />
             <OrderSourceSelect
               value={orderSource}
               onChange={setOrderSource}
@@ -899,7 +1016,7 @@ export function WebOrderEditForm({ orderId }: Props) {
         )}
 
         <div className="mt-6 space-y-3">
-          {inWebQueue && !isPreorder && (
+          {canCreateApprovedOrder && (
             <button
               type="button"
               onClick={createApprovedOrder}
@@ -919,7 +1036,7 @@ export function WebOrderEditForm({ orderId }: Props) {
               </span>
             </button>
           )}
-          {inWebQueue && !isPreorder ? (
+          {canCreateApprovedOrder ? (
             <p className="text-center text-xs text-slate-500">
               <strong className="text-indigo-700">Create Order</strong> → Approved
               Pending + Web list-এ <strong>Complete</strong> ইতিহাস ·{" "}
@@ -951,6 +1068,25 @@ export function WebOrderEditForm({ orderId }: Props) {
           <OrderActivityTimeline timeline={timeline} variant="web" />
         </section>
       )}
+      </div>
+
+      <WebOrderSummaryAside>
+        <WebOrderWooSummary
+          order={order}
+          wooSnapshot={order.wooSnapshot}
+          webStatus={webStatus}
+          subtotal={subtotal}
+          shippingCharge={deliveryNum}
+          discount={discountNum}
+          grandTotal={grandTotal}
+          items={lines}
+          paymentMethod={paymentMethod}
+          orderSource={orderSource}
+          customOrderSource={customOrderSource}
+          onRefreshWoo={order.wooOrderId ? refreshFromWoo : undefined}
+          wooRefreshing={wooRefreshing}
+        />
+      </WebOrderSummaryAside>
     </div>
   );
 }

@@ -19,6 +19,10 @@ import {
   Store,
   RefreshCw,
   ExternalLink,
+  FileText,
+  Link2,
+  Tag,
+  Paperclip,
 } from "lucide-react";
 import clsx from "clsx";
 import { getOrder, isOrderPreorder } from "@/lib/orders-store";
@@ -46,6 +50,8 @@ import { formatAdvancePaymentSummary } from "@/lib/orders-store";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
 import { statusColors } from "@/lib/mock-web-orders";
 import { resolveWebDisplayStatus } from "@/lib/order-edit";
+import { loadOrderTags, orderTagChipClass } from "@/lib/order-tags-store";
+import { getOrderCreatorInfo } from "@/lib/order-creator";
 
 export type OrderDetailsModalProps = {
   orderId: string;
@@ -148,6 +154,19 @@ export function OrderDetailsModal({
     [order]
   );
 
+  const orderTags = useMemo(() => {
+    void dataTick;
+    return loadOrderTags();
+  }, [dataTick]);
+
+  const hasExtraOptions =
+    !!order?.internalNote?.trim() ||
+    !!order?.referenceLink?.trim() ||
+    (order?.tags?.length ?? 0) > 0 ||
+    (order?.attachments?.length ?? 0) > 0;
+
+  const creatorInfo = order ? getOrderCreatorInfo(order) : null;
+
   if (!order) {
     return (
       <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4">
@@ -235,11 +254,15 @@ export function OrderDetailsModal({
           <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
             <Calendar className="h-4 w-4" />
             <span>{order.createdAt}</span>
-            {order.handledBy && (
+            {creatorInfo && (
               <>
                 <span className="text-slate-300">·</span>
                 <User className="h-4 w-4" />
-                <span>{order.handledBy}</span>
+                <span>
+                  {creatorInfo.role === "SYSTEM"
+                    ? creatorInfo.name
+                    : `${creatorInfo.roleLabel} · ${creatorInfo.name}`}
+                </span>
               </>
             )}
           </div>
@@ -337,11 +360,125 @@ export function OrderDetailsModal({
           {order.note && (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
               <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase text-amber-700">
-                <StickyNote className="h-4 w-4" /> Note
+                <StickyNote className="h-4 w-4" /> Shipping note
               </p>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                 {order.note}
               </p>
+            </div>
+          )}
+
+          {hasExtraOptions && (
+            <div className="mt-4 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/50 to-white p-4 shadow-sm">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-violet-700">
+                Extra options
+              </p>
+              <div className="space-y-3">
+                {order.internalNote?.trim() ? (
+                  <div>
+                    <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-500">
+                      <FileText className="h-3.5 w-3.5" />
+                      Internal note
+                    </p>
+                    <p className="whitespace-pre-wrap rounded-xl border border-slate-100 bg-white px-3 py-2 text-sm leading-relaxed text-slate-700">
+                      {order.internalNote}
+                    </p>
+                  </div>
+                ) : null}
+
+                {order.referenceLink?.trim() ? (
+                  <div>
+                    <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-500">
+                      <Link2 className="h-3.5 w-3.5" />
+                      Reference link
+                    </p>
+                    <a
+                      href={order.referenceLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex max-w-full items-center gap-1.5 truncate rounded-xl border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
+                    >
+                      {order.referenceLink}
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    </a>
+                  </div>
+                ) : null}
+
+                {(order.tags?.length ?? 0) > 0 ? (
+                  <div>
+                    <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-500">
+                      <Tag className="h-3.5 w-3.5" />
+                      Order tags
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {order.tags!.map((label) => {
+                        const def = orderTags.find((t) => t.label === label);
+                        return (
+                          <span
+                            key={label}
+                            className={clsx(
+                              "rounded-lg px-2.5 py-1 text-[10px] font-bold ring-1",
+                              orderTagChipClass(def?.color ?? "slate")
+                            )}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                {(order.attachments?.length ?? 0) > 0 ? (
+                  <div>
+                    <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase text-slate-500">
+                      <Paperclip className="h-3.5 w-3.5" />
+                      Attachments ({order.attachments!.length})
+                    </p>
+                    <ul className="space-y-2">
+                      {order.attachments!.map((file, i) => {
+                        const isImage = file.type?.startsWith("image/");
+                        return (
+                          <li
+                            key={`${file.name}-${i}`}
+                            className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-2"
+                          >
+                            {isImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={file.dataUrl}
+                                alt=""
+                                className="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-100"
+                              />
+                            ) : (
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-50 text-slate-400 ring-1 ring-slate-100">
+                                <Paperclip className="h-5 w-5" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-slate-800">
+                                {file.name}
+                              </p>
+                              {file.size ? (
+                                <p className="text-[10px] text-slate-400">
+                                  {(file.size / 1024).toFixed(0)} KB
+                                </p>
+                              ) : null}
+                            </div>
+                            <a
+                              href={file.dataUrl}
+                              download={file.name}
+                              className="shrink-0 rounded-lg bg-violet-50 px-2.5 py-1.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-100 hover:bg-violet-100"
+                            >
+                              Download
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
 
@@ -391,19 +528,6 @@ export function OrderDetailsModal({
               })}
             </div>
           </div>
-
-          {order.tags && order.tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {order.tags.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-lg bg-slate-800 px-2.5 py-1 text-[10px] font-bold text-white"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
 
           {/* Activity log — newest first, at bottom */}
           <div className="mt-5 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white p-4">

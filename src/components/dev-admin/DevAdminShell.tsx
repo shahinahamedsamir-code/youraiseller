@@ -11,6 +11,7 @@ import {
   LogOut,
   ClipboardList,
   Menu,
+  MessageSquare,
   X,
 } from "lucide-react";
 import { clearDevAuthenticated } from "@/lib/dev-auth";
@@ -21,6 +22,7 @@ const devNav = [
   { label: "Feature Control", href: "/dev-admin", icon: ToggleLeft, exact: true },
   { label: "Request", href: "/dev-admin/requests", icon: ClipboardList },
   { label: "Software Users", href: "/dev-admin/users", icon: Users },
+  { label: "SMS Control", href: "/dev-admin/sms", icon: MessageSquare },
 ];
 
 function isNavActive(pathname: string, href: string, exact?: boolean) {

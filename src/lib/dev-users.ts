@@ -35,6 +35,9 @@ export type UserContact = {
   note?: string;
 };
 
+/** Team role for sub-accounts created by a business owner. */
+export type TeamRole = "FOUNDER" | "ADMIN" | "USER";
+
 export type DevUser = {
   /** Internal system id (U-001) */
   id: string;
@@ -44,6 +47,16 @@ export type DevUser = {
   email: string;
   phone?: string;
   company: string;
+  /** Set when this is a team member created by a business owner. */
+  parentAccountId?: string;
+  /** Owner's email — stable link that survives id changes. */
+  parentAccountEmail?: string;
+  /** Role within the parent business (Admin/User). Owner has no value. */
+  teamRole?: TeamRole;
+  /** Friendly label the owner assigns, e.g. "Manager - Tanbin". */
+  teamLabel?: string;
+  /** Business names this member can access. */
+  teamBusinesses?: string[];
   companyAddress?: CompanyAddress;
   contacts?: UserContact[];
   adminNotes?: string;
@@ -207,6 +220,10 @@ function normalizeContacts(raw: unknown): UserContact[] {
 function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
   const plan = u.plan ?? "basic";
   const authProvider = u.authProvider ?? (u.googleId ? "google" : "password");
+  const teamRole: TeamRole | undefined =
+    u.teamRole === "FOUNDER" || u.teamRole === "ADMIN" || u.teamRole === "USER"
+      ? u.teamRole
+      : undefined;
   return {
     id: u.id,
     customerId: u.customerId?.trim() || undefined,
@@ -214,6 +231,13 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
     email: u.email ?? "",
     phone: u.phone?.trim() || undefined,
     company: u.company ?? "",
+    parentAccountId: u.parentAccountId?.trim() || undefined,
+    parentAccountEmail: u.parentAccountEmail?.trim().toLowerCase() || undefined,
+    teamRole,
+    teamLabel: u.teamLabel?.trim() || undefined,
+    teamBusinesses: Array.isArray(u.teamBusinesses)
+      ? u.teamBusinesses.map((b) => String(b).trim()).filter(Boolean)
+      : undefined,
     companyAddress: normalizeAddress(u.companyAddress),
     contacts: normalizeContacts(u.contacts),
     adminNotes: u.adminNotes?.trim() || undefined,
@@ -517,7 +541,7 @@ export function registerUser(data: {
 
   const users = loadDevUsers();
   const user: DevUser = {
-    id: `U-${String(users.length + 1).padStart(3, "0")}`,
+    id: nextUserId(users),
     customerId: allocateCustomerId(users),
     name: data.name.trim(),
     email,
@@ -550,7 +574,7 @@ export function createDevUser(
     passwordHash: hashPasswordDemo(data.password ?? "password123"),
     plan: data.plan,
     features: data.features,
-    id: `U-${String(users.length + 1).padStart(3, "0")}`,
+    id: nextUserId(users),
     customerId: data.customerId?.trim() || allocateCustomerId(users),
     status: data.status ?? "active",
     createdAt: new Date().toLocaleDateString("en-GB", {
@@ -569,6 +593,87 @@ export function createDevUser(
   };
   saveDevUsers(dedupeUsersByEmail([user, ...users]));
   return user;
+}
+
+function nextUserId(users: DevUser[]): string {
+  let max = 0;
+  for (const u of users) {
+    const m = u.id.match(/U-(\d+)/);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `U-${String(max + 1).padStart(3, "0")}`;
+}
+
+/** All sub-accounts created under a given business owner. */
+export function listTeamMembers(parentAccountId: string): DevUser[] {
+  return loadDevUsers().filter((u) => u.parentAccountId === parentAccountId);
+}
+
+/**
+ * Create a pre-approved (active) team member under a business owner.
+ * Empty password => Google login by email (no admin approval needed).
+ */
+export function createTeamMember(data: {
+  parentAccountId: string;
+  name: string;
+  email: string;
+  password?: string;
+  teamRole: TeamRole;
+  teamLabel?: string;
+  teamBusinesses: string[];
+  company: string;
+  features: Record<FeatureKey, boolean>;
+  parentAccountEmail?: string;
+}): { ok: true; user: DevUser } | { ok: false; error: string } {
+  const email = data.email.toLowerCase().trim();
+  const password = data.password?.trim() ?? "";
+  if (!data.name.trim()) return { ok: false, error: "Name is required." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+  if (findUserByEmail(email)) {
+    return { ok: false, error: "This email already has access." };
+  }
+  if (password && password.length < 6) {
+    return { ok: false, error: "Password must be at least 6 characters." };
+  }
+
+  const useGoogle = password.length === 0;
+  const users = loadDevUsers();
+  const now = formatRequestDate();
+  const user: DevUser = {
+    id: nextUserId(users),
+    customerId: allocateCustomerId(users),
+    name: data.name.trim(),
+    email,
+    company: data.company,
+    parentAccountId: data.parentAccountId,
+    parentAccountEmail: data.parentAccountEmail?.trim().toLowerCase() || undefined,
+    teamRole: data.teamRole,
+    teamLabel: data.teamLabel?.trim() || undefined,
+    teamBusinesses: data.teamBusinesses.map((b) => b.trim()).filter(Boolean),
+    passwordHash: useGoogle ? "" : hashPasswordDemo(password),
+    authProvider: useGoogle ? "google" : "password",
+    plan: "pro",
+    status: "active",
+    features: { ...data.features },
+    createdAt: now,
+    approvedAt: now,
+  };
+  saveDevUsers(dedupeUsersByEmail([user, ...users]));
+  return { ok: true, user };
+}
+
+/** Permanently remove a team member (never the owner). */
+export function removeTeamMember(id: string): { ok: true } | { ok: false; error: string } {
+  const users = loadDevUsers();
+  const target = users.find((u) => u.id === id);
+  if (!target) return { ok: false, error: "User not found." };
+  if (!target.parentAccountId) {
+    return { ok: false, error: "Only invited team members can be removed." };
+  }
+  saveDevUsers(users.filter((u) => u.id !== id));
+  return { ok: true };
 }
 
 export function updateDevUser(
@@ -593,6 +698,12 @@ export function updateDevUser(
       | "cancelNote"
       | "googleId"
       | "authProvider"
+      | "passwordHash"
+      | "parentAccountId"
+      | "parentAccountEmail"
+      | "teamRole"
+      | "teamLabel"
+      | "teamBusinesses"
     >
   >
 ): DevUser | null {
@@ -612,6 +723,14 @@ export function updateDevUser(
   }
   if (patch.phone !== undefined) {
     updated.phone = patch.phone.trim() || undefined;
+  }
+  if (patch.teamLabel !== undefined) {
+    updated.teamLabel = patch.teamLabel.trim() || undefined;
+  }
+  if (patch.teamBusinesses !== undefined) {
+    updated.teamBusinesses = patch.teamBusinesses
+      .map((b) => b.trim())
+      .filter(Boolean);
   }
   if (patch.customerId !== undefined) {
     const cid = patch.customerId.trim();
@@ -672,7 +791,7 @@ export function registerGoogleUser(data: {
   const email = data.email.toLowerCase().trim();
   const users = loadDevUsers();
   const user: DevUser = {
-    id: `U-${String(users.length + 1).padStart(3, "0")}`,
+    id: nextUserId(users),
     customerId: allocateCustomerId(users),
     name: data.name.trim(),
     email,
@@ -786,6 +905,8 @@ export function authenticateUser(
 
 /** Google signups & email signups waiting for review — not manual Software Users. */
 export function isSignupRequestUser(u: DevUser): boolean {
+  // Invited team members are pre-approved sub-accounts, never signup requests.
+  if (u.parentAccountId) return false;
   return u.authProvider === "google" || u.status === "pending";
 }
 

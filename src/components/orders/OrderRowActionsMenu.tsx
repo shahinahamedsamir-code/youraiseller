@@ -21,6 +21,7 @@ import {
   Plane,
   RefreshCw,
   Loader2,
+  Tag,
 } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -46,6 +47,9 @@ import {
 } from "@/lib/courier-entry";
 import { showCourierAlert } from "@/lib/courier-entry-alerts";
 import { CancelOrderModal } from "@/components/orders/CancelOrderModal";
+import { loadBusinessSettings } from "@/lib/business-settings-store";
+import { renderInvoiceDoc } from "@/lib/invoice-templates";
+import { renderStickerDoc } from "@/lib/sticker-templates";
 
 const MENU_W = 240;
 const MENU_MAX_H = 420;
@@ -81,21 +85,34 @@ type Item = {
   show?: boolean;
 };
 
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function openPrintWindow(order: Order) {
-  const lines = order.items
-    .map(
-      (i) =>
-        `<tr><td>${i.productName}</td><td>${i.productCode}</td><td>${i.qty}</td><td>৳${i.total}</td></tr>`
-    )
-    .join("");
-  const html = `<!DOCTYPE html><html><head><title>${order.id}</title>
-<style>body{font-family:system-ui;padding:24px;color:#111}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{border:1px solid #ddd;padding:8px;text-align:left}h1{color:#4f46e5}</style></head>
-<body><h1>Invoice ${order.id}</h1>
-<p><strong>${order.customerName}</strong><br>${order.phone}<br>${order.address}, ${order.district}</p>
-<p>Status: ${ORDER_STATUS_LABELS[order.status]} · Total: <strong>৳${order.total}</strong></p>
-<table><thead><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Total</th></tr></thead><tbody>${lines}</tbody></table>
-${order.note ? `<p><em>Note: ${order.note}</em></p>` : ""}
-<script>window.onload=()=>window.print()</script></body></html>`;
+  const biz = loadBusinessSettings();
+  const template =
+    (order.deliveryMethodId && biz.deliveryInvoices[order.deliveryMethodId]) ||
+    biz.invoiceTemplate;
+  const html = renderInvoiceDoc(order, biz, template, {
+    print: true,
+    paper: biz.invoicePaper,
+  });
+  const w = window.open("", "_blank");
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  }
+}
+
+function openStickerWindow(order: Order) {
+  const biz = loadBusinessSettings();
+  const html = renderStickerDoc(order, biz, biz.stickerTemplate, biz.stickerSize, {
+    print: true,
+  });
   const w = window.open("", "_blank");
   if (w) {
     w.document.write(html);
@@ -106,22 +123,30 @@ ${order.note ? `<p><em>Note: ${order.note}</em></p>` : ""}
 function openJpgPreview(order: Order) {
   const w = window.open("", "_blank", "width=480,height=720");
   if (!w) return;
+  const biz = loadBusinessSettings();
+  const sym = biz.currency === "USD" ? "$" : "৳";
+  const brand = biz.name || "YOUR AI SELLER";
+  const logo = biz.logoUrl
+    ? `<img src="${esc(biz.logoUrl)}" alt="logo" style="max-height:40px;max-width:160px;object-fit:contain;margin-bottom:6px"/>`
+    : "";
   const items = order.items
     .map(
       (i) =>
-        `<li style="margin:6px 0"><b>${i.productName}</b><br><span style="color:#64748b;font-size:12px">${i.productCode} · Qty ${i.qty} · ৳${i.total}</span></li>`
+        `<li style="margin:6px 0"><b>${esc(i.productName)}</b><br><span style="color:#64748b;font-size:12px">${esc(i.productCode)} · Qty ${i.qty} · ${sym}${i.total}</span></li>`
     )
     .join("");
-  w.document.write(`<!DOCTYPE html><html><head><title>${order.id} export</title></head>
+  w.document.write(`<!DOCTYPE html><html><head><title>${esc(order.id)} export</title></head>
 <body style="font-family:system-ui;background:linear-gradient(135deg,#eef2ff,#fdf2f8);padding:20px;margin:0">
 <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(79,70,229,.15);max-width:400px">
-<div style="font-size:11px;font-weight:700;color:#6366f1">YOUR AI SELLER</div>
-<h2 style="margin:8px 0 4px;color:#1e1b4b">${order.id}</h2>
-<p style="margin:0 0 12px;color:#64748b;font-size:13px">${order.createdAt}</p>
-<p style="margin:0 0 8px"><b>${order.customerName}</b><br>${order.phone}</p>
-<p style="font-size:12px;color:#475569;margin:0 0 12px">${order.address}</p>
+${logo}
+<div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase">${esc(brand)}</div>
+<h2 style="margin:8px 0 4px;color:#1e1b4b">${esc(order.id)}</h2>
+<p style="margin:0 0 12px;color:#64748b;font-size:13px">${esc(order.createdAt)}</p>
+<p style="margin:0 0 8px"><b>${esc(order.customerName)}</b><br>${esc(order.phone)}</p>
+<p style="font-size:12px;color:#475569;margin:0 0 12px">${esc(order.address)}</p>
 <ul style="padding-left:18px;margin:0 0 12px">${items}</ul>
-<p style="font-size:18px;font-weight:800;color:#4f46e5;margin:0">৳${order.total.toLocaleString()}</p>
+<p style="font-size:18px;font-weight:800;color:#4f46e5;margin:0">${sym}${order.total.toLocaleString()}</p>
+${biz.invoiceFooter ? `<p style="font-size:11px;color:#94a3b8;margin:10px 0 0">${esc(biz.invoiceFooter)}</p>` : ""}
 </div>
 </body></html>`);
   w.document.close();
@@ -315,6 +340,17 @@ export function OrderRowActionsMenu({
       show: true,
     },
     {
+      id: "sticker",
+      label: "Print sticker",
+      hint: "Shipping label",
+      icon: Tag,
+      onClick: () => {
+        openStickerWindow(o);
+        onClose();
+      },
+      show: true,
+    },
+    {
       id: "jpg",
       label: "JPG export",
       hint: "Preview card",
@@ -414,7 +450,9 @@ export function OrderRowActionsMenu({
   const workflow = visible.filter((i) =>
     ["flow_next", "flow_back", "cancel"].includes(i.id)
   );
-  const exportItems = visible.filter((i) => ["print", "jpg"].includes(i.id));
+  const exportItems = visible.filter((i) =>
+    ["print", "sticker", "jpg"].includes(i.id)
+  );
   const extra = visible.filter((i) =>
     ["task", "note", "copy"].includes(i.id)
   );

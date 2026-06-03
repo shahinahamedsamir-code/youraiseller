@@ -1,0 +1,72 @@
+[
+  {
+    "id": "facebook",
+    "label": "Facebook",
+    "base": "facebook",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "website",
+    "label": "Website",
+    "base": "website",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "direct",
+    "label": "Direct",
+    "base": "direct",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "unknown",
+    "label": "Unknown",
+    "base": "unknown",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "instagram",
+    "label": "Instagram",
+    "base": "instagram",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "tiktok",
+    "label": "TikTok",
+    "base": "tiktok",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "whatsapp",
+    "label": "WhatsApp",
+    "base": "whatsapp",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "exchange",
+    "label": "Exchange",
+    "base": "exchange",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "messenger",
+    "label": "Messenger",
+    "base": "messenger",
+    "builtin": true,
+    "enabled": true
+  },
+  {
+    "id": "custom",
+    "label": "Custom Source",
+    "base": "custom",
+    "builtin": true,
+    "enabled": true
+  }
+]

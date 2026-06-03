@@ -10,6 +10,7 @@ type Props = {
   items: OrderLine[];
   variant?: "table" | "cards";
   onMoreClick?: () => void;
+  onProductClick?: (items: OrderLine[]) => void;
   fallbackImage?: string;
 };
 
@@ -17,6 +18,7 @@ export function OrderProductsList({
   items,
   variant = "table",
   onMoreClick,
+  onProductClick,
   fallbackImage,
 }: Props) {
   if (!items.length) {
@@ -26,6 +28,7 @@ export function OrderProductsList({
   const visible = items.slice(0, MAX_VISIBLE);
   const hasMore = items.length > MAX_VISIBLE;
   const extraCount = items.length - MAX_VISIBLE;
+  const showAll = () => onProductClick?.(items);
 
   if (variant === "cards") {
     return (
@@ -35,6 +38,7 @@ export function OrderProductsList({
           fallbackImage={fallbackImage}
           hasMore={hasMore}
           extraCount={extraCount}
+          onShowAll={onProductClick ? showAll : undefined}
           onMoreClick={onMoreClick}
         />
       </div>
@@ -44,17 +48,15 @@ export function OrderProductsList({
   return (
     <div className="min-w-0">
       {visible.map((item, idx) => (
-        <p
+        <ProductLineButton
           key={`${item.productId}-${idx}`}
-          className="text-sm font-medium text-slate-800"
-        >
-          <span className="font-bold text-indigo-600">{item.qty}×</span>{" "}
-          {item.productName}
-        </p>
+          item={item}
+          onShowAll={onProductClick ? showAll : undefined}
+        />
       ))}
       {hasMore && (
         <MoreLabel
-          onClick={onMoreClick}
+          onClick={onProductClick ? showAll : onMoreClick}
           extraCount={extraCount}
           className="mt-0.5"
         />
@@ -63,17 +65,55 @@ export function OrderProductsList({
   );
 }
 
+function ProductLineButton({
+  item,
+  onShowAll,
+  className,
+}: {
+  item: OrderLine;
+  onShowAll?: () => void;
+  className?: string;
+}) {
+  const content = (
+    <>
+      <span className="font-bold text-indigo-600">{item.qty}×</span> {item.productName}
+    </>
+  );
+
+  if (!onShowAll) {
+    return <p className={clsx("text-sm font-medium text-slate-800", className)}>{content}</p>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onShowAll();
+      }}
+      className={clsx(
+        "block w-full text-left text-sm font-medium text-slate-800 transition hover:text-violet-700 hover:underline",
+        className
+      )}
+    >
+      {content}
+    </button>
+  );
+}
+
 function CardRows({
   visible,
   fallbackImage,
   hasMore,
   extraCount,
+  onShowAll,
   onMoreClick,
 }: {
   visible: OrderLine[];
   fallbackImage?: string;
   hasMore: boolean;
   extraCount: number;
+  onShowAll?: () => void;
   onMoreClick?: () => void;
 }) {
   return (
@@ -81,9 +121,15 @@ function CardRows({
       {visible.map((item, idx) => {
         const img = getProductImageForLine(item) ?? fallbackImage;
         return (
-          <div
+          <button
             key={`${item.productId}-${idx}`}
-            className="flex gap-2 rounded-lg border border-slate-100 bg-white p-2"
+            type="button"
+            onClick={() => onShowAll?.()}
+            disabled={!onShowAll}
+            className={clsx(
+              "flex w-full gap-2 rounded-lg border border-slate-100 bg-white p-2 text-left transition",
+              onShowAll && "hover:border-violet-200 hover:bg-violet-50/40"
+            )}
           >
             {img ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -103,11 +149,14 @@ function CardRows({
               </p>
               <p className="text-xs text-slate-500">Qty: {item.qty}</p>
             </div>
-          </div>
+          </button>
         );
       })}
       {hasMore && (
-        <MoreLabel onClick={onMoreClick} extraCount={extraCount} />
+        <MoreLabel
+          onClick={onShowAll ?? onMoreClick}
+          extraCount={extraCount}
+        />
       )}
     </>
   );
@@ -122,8 +171,7 @@ function MoreLabel({
   extraCount: number;
   className?: string;
 }) {
-  const label =
-    extraCount > 0 ? `+${extraCount} more` : "more";
+  const label = extraCount > 0 ? `+${extraCount} more` : "more";
 
   if (onClick) {
     return (

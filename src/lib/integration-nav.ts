@@ -27,6 +27,12 @@ export const integrationNav: IntegrationNavItem[] = [
     featureKey: "courier_integration",
   },
   {
+    label: "SMS Integration",
+    href: "/dashboard/integration/sms",
+    description: "Recharge, auto SMS & delivery log",
+    featureKey: "sms",
+  },
+  {
     label: "Additional Sites",
     href: "/dashboard/integration/additional-sites",
     description: "Manage multiple web storefronts",

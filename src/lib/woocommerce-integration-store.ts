@@ -1,4 +1,5 @@
 import { sellerStorageKey } from "./seller-storage";
+import { pushSellerData } from "./seller-sync";
 
 /** How WooCommerce order status is handled when synced */
 export type WooOrderStatusPolicy = "on-hold" | "web" | "none";
@@ -119,6 +120,7 @@ export function saveWooCommerceSettings(settings: WooCommerceSettings) {
   const key = storageKey();
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(settings));
+  pushSellerData("woocommerce", settings);
 }
 
 export function appendWooLog(

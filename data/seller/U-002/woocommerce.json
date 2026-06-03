@@ -1,0 +1,263 @@
+{
+  "storeUrl": "https://zentixbd.com/",
+  "consumerKey": "ck_a55c71e56d21ca77a8e5f7a4c7903e11fffe1b9e",
+  "consumerSecret": "cs_101f68f67c3bbe9e52d94e4fb4377fc9701adda4",
+  "connected": true,
+  "orderStatusOnImport": "on-hold",
+  "syncViaPlugin": true,
+  "fetchFullOrderViaApi": false,
+  "businessId": "biz_mpw762smeznbw0",
+  "apiKey": "yai_mpw762smkzhhlc",
+  "logs": [
+    {
+      "at": "03 Jun 2026, 18:05",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 18:04",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 18:04",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 18:03",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 18:01",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:59",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:59",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:57",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:57",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:56",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:55",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:55",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:55",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:54",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:53",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:52",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:52",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:51",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:49",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:49",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:48",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:48",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:48",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:48",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:47",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:47",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:46",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:46",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:44",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:44",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:44",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:43",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:43",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:43",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:42",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:41",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:39",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:39",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:38",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:37",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:37",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:36",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:36",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:35",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:35",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:34",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    },
+    {
+      "at": "03 Jun 2026, 17:33",
+      "level": "success",
+      "message": "Order sync: 0 new, 2 updated, 20 on Web List (0 repaired)"
+    }
+  ]
+}

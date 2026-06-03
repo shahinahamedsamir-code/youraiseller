@@ -3,17 +3,19 @@ import {
   loadOrders,
   repairWebOrdersInQueue,
 } from "./orders-store";
-import { WEB_DEFAULT_ORDER_SOURCE } from "./order-source";
+import { WEB_DEFAULT_ORDER_SOURCE, resolveOrderSourceOnWooSync } from "./order-source";
 import type { Order, OrderLine, PaymentMethod, WebDisplayStatus } from "./orders-store";
 import { loadWooCommerceSettings, appendWooLog } from "./woocommerce-integration-store";
 import { findProductForWooLine } from "./inventory-store";
 import { sellerStorageKey } from "./seller-storage";
 
-export type WooOrderRow = {
-  id: number;
-  number: string;
-  status: string;
-  date_created: string;
+import {
+  detectOrderSourceFromWooRow,
+  parseWooOrderSnapshot,
+  type WooOrderApiRow,
+} from "./woo-order-snapshot";
+
+export type WooOrderRow = WooOrderApiRow & {
   total: string;
   payment_method: string;
   billing: {
@@ -147,6 +149,7 @@ function mapWooOrder(row: WooOrderRow): Parameters<typeof upsertWooCommerceOrder
   const items = row.line_items?.map(lineFromWooItem) ?? [];
   const subtotal = items.reduce((s, i) => s + i.total, 0);
   const total = parseFloat(row.total) || subtotal + shipping;
+  const sourceDetect = detectOrderSourceFromWooRow(row);
 
   return {
     wooOrderId: row.id,
@@ -169,12 +172,14 @@ function mapWooOrder(row: WooOrderRow): Parameters<typeof upsertWooCommerceOrder
     advance: 0,
     note: row.customer_note,
     source: "web",
-    orderSource: WEB_DEFAULT_ORDER_SOURCE,
+    orderSource: sourceDetect.orderSource,
+    customOrderSource: sourceDetect.customOrderSource,
     status: mapWcOrderStatus(row.status),
     webStatus: mapWcWebStatus(row.status),
     isPreorder: false,
     tags: ["WooCommerce", row.status.toUpperCase()],
-    createdAt: new Date(row.date_created).toLocaleString("en-GB", {
+    wooSnapshot: parseWooOrderSnapshot(row),
+    createdAt: new Date(row.date_created ?? Date.now()).toLocaleString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -182,6 +187,83 @@ function mapWooOrder(row: WooOrderRow): Parameters<typeof upsertWooCommerceOrder
       minute: "2-digit",
     }),
   };
+}
+
+type WooCreds = {
+  storeUrl: string;
+  consumerKey: string;
+  consumerSecret: string;
+};
+
+async function fetchSingleWooOrder(
+  creds: WooCreds,
+  orderId: number
+): Promise<WooOrderRow | null> {
+  const res = await fetch("/api/woocommerce/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...creds, orderId }),
+  });
+  const data = (await res.json()) as {
+    ok: boolean;
+    message?: string;
+    order?: WooOrderRow;
+  };
+  if (!data.ok || !data.order) {
+    throw new Error(data.message ?? `Could not load Woo order #${orderId}`);
+  }
+  return data.order;
+}
+
+function mergeWooOrderRows(listRow: WooOrderRow, full: WooOrderRow): WooOrderRow {
+  return {
+    ...listRow,
+    ...full,
+    billing: full.billing ?? listRow.billing,
+    line_items: full.line_items?.length ? full.line_items : listRow.line_items,
+    shipping_lines: full.shipping_lines?.length
+      ? full.shipping_lines
+      : listRow.shipping_lines,
+    meta_data: full.meta_data?.length ? full.meta_data : listRow.meta_data,
+    coupon_lines: full.coupon_lines?.length ? full.coupon_lines : listRow.coupon_lines,
+  };
+}
+
+async function enrichWooOrderRow(
+  creds: WooCreds,
+  row: WooOrderRow
+): Promise<WooOrderRow> {
+  const settings = loadWooCommerceSettings();
+  if (!settings.fetchFullOrderViaApi) return row;
+  try {
+    const full = await fetchSingleWooOrder(creds, row.id);
+    if (!full) return row;
+    return mergeWooOrderRows(row, full);
+  } catch {
+    return row;
+  }
+}
+
+/** Re-fetch one Woo order (full API) and upsert — for edit page refresh. */
+export async function refreshWooOrderFromApi(wooOrderId: number): Promise<Order | null> {
+  const woo = loadWooCommerceSettings();
+  if (!isWooCommerceReadyForSync()) {
+    throw new Error("WooCommerce credentials missing.");
+  }
+  const creds = {
+    storeUrl: woo.storeUrl.trim(),
+    consumerKey: woo.consumerKey.trim(),
+    consumerSecret: woo.consumerSecret.trim(),
+  };
+  const full = await fetchSingleWooOrder(creds, wooOrderId);
+  if (!full?.line_items?.length) {
+    throw new Error("Order has no line items in WooCommerce.");
+  }
+  const enriched = woo.fetchFullOrderViaApi
+    ? full
+    : await enrichWooOrderRow(creds, full);
+  const { order } = upsertWooCommerceOrder(mapWooOrder(enriched));
+  return order;
 }
 
 const SYNC_STATUSES =
@@ -309,7 +391,7 @@ export async function syncNewOrdersFromWooCommerce(options?: {
     totalPages = tp;
 
     for (const row of rows) {
-      if (full) {
+      if (full && row.date_created) {
         const createdMs = new Date(row.date_created).getTime();
         if (!Number.isNaN(createdMs) && createdMs < cutoffMs) continue;
       }
@@ -321,7 +403,8 @@ export async function syncNewOrdersFromWooCommerce(options?: {
         continue;
       }
       try {
-        const { created } = upsertWooCommerceOrder(mapWooOrder(row));
+        const enriched = await enrichWooOrderRow(creds, row);
+        const { created } = upsertWooCommerceOrder(mapWooOrder(enriched));
         if (created) result.imported++;
         else result.updated++;
       } catch (e) {

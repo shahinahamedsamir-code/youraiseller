@@ -8,7 +8,7 @@ import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
 import { repairWebOrdersInQueue } from "@/lib/orders-store";
 import { WooOrderSyncBar } from "@/components/web-orders/WooOrderSyncBar";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
-import { WebOrderSuccessRing } from "@/components/web-orders/WebOrderSuccessRing";
+import { WebOrderCourierRatioCell } from "@/components/web-orders/WebOrderCourierRatioCell";
 import { resolveWebDisplayStatus } from "@/lib/order-edit";
 import { statusColors } from "@/lib/mock-web-orders";
 import {
@@ -23,8 +23,14 @@ import {
   DEFAULT_ROWS_PER_PAGE,
   paginateSlice,
 } from "@/components/ui/TablePagination";
-import { getCustomerOrderStats } from "@/lib/web-customer-stats";
 import { formatRelativeTime } from "@/lib/format-relative-time";
+import {
+  getOrderSourceDisplay,
+  getWooCommerceStatus,
+  formatWcStatusLabel,
+  sourceBadgeCls,
+  wcStatusBadgeCls,
+} from "@/lib/web-order-display";
 import {
   ExternalLink,
   MessageCircle,
@@ -32,7 +38,6 @@ import {
   Package,
   MapPin,
   User,
-  Plus,
   Search,
   Filter,
 } from "lucide-react";
@@ -306,8 +311,8 @@ export function WebOrderTable() {
                 <th className="min-w-[200px] px-3 py-3">Customer</th>
                 <th className="min-w-[160px] px-3 py-3">Note</th>
                 <th className="min-w-[200px] px-3 py-3">Order items</th>
-                <th className="min-w-[130px] px-3 py-3">Success rate</th>
-                <th className="min-w-[90px] px-3 py-3">Tags</th>
+                <th className="min-w-[160px] px-3 py-3">Courier ratio</th>
+                <th className="min-w-[110px] px-3 py-3">Source / WC</th>
                 <th className="min-w-[72px] px-3 py-3">Site</th>
               </tr>
             </thead>
@@ -325,7 +330,6 @@ export function WebOrderTable() {
               ) : (
                 paged.map((order) => {
                   const ws = resolveWebDisplayStatus(order);
-                  const stats = getCustomerOrderStats(order.phone);
                   const wa = `88${order.phone.replace(/\D/g, "")}`;
                   const isChecked = selected.has(order.id);
 
@@ -444,49 +448,33 @@ export function WebOrderTable() {
                       </td>
 
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <WebOrderSuccessRing percent={stats.successPct} />
-                          <div className="text-[10px] leading-tight text-slate-600">
-                            <p>
-                              <span className="font-bold text-slate-800">
-                                Success:
-                              </span>{" "}
-                              {stats.successPct}%
-                            </p>
-                            <p>
-                              <span className="font-bold text-slate-800">
-                                Order:
-                              </span>{" "}
-                              {stats.success}/{stats.total}
-                            </p>
-                            <p>
-                              <span className="font-bold text-slate-800">
-                                Rating:
-                              </span>{" "}
-                              {stats.rating}
-                            </p>
-                          </div>
-                        </div>
+                        <WebOrderCourierRatioCell phone={order.phone} />
                       </td>
 
                       <td className="px-3 py-3">
                         <div className="flex flex-wrap gap-1">
-                          {order.tags?.slice(0, 2).map((t) => (
-                            <span
-                              key={t}
-                              className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-bold text-white"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                          <button
-                            type="button"
-                            className="flex h-5 w-5 items-center justify-center rounded border border-dashed border-slate-300 text-slate-400 hover:border-teal-300 hover:text-teal-600"
-                            aria-label="Add tag"
-                            title="Tags coming soon"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
+                          {(() => {
+                            const { source, label } = getOrderSourceDisplay(order);
+                            return (
+                              <span
+                                className={sourceBadgeCls(source)}
+                                title="Order source"
+                              >
+                                {label}
+                              </span>
+                            );
+                          })()}
+                          {(() => {
+                            const wc = getWooCommerceStatus(order);
+                            return wc ? (
+                              <span
+                                className={wcStatusBadgeCls(wc)}
+                                title="WooCommerce status"
+                              >
+                                {formatWcStatusLabel(wc)}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                       </td>
 

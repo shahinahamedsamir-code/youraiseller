@@ -1,6 +1,8 @@
-import { getSessionUser } from "./dev-users";
+import { getSessionUser, type TeamRole } from "./dev-users";
 import { syncCustomersFromOrderList } from "./customers-store";
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
+import { pushSellerData } from "./seller-sync";
+import { loadBusinessSettings, saveBusinessSettings } from "./business-settings-store";
 import {
   createActivityEntry,
   logForNewOrder,
@@ -33,8 +35,11 @@ import {
 import { isWooOrderStatusSyncEnabled } from "./woo-sync-config";
 import {
   inferOrderSourceFromOrder,
+  resolveOrderSourceOnWooSync,
   type OrderSource,
 } from "./order-source";
+import { sessionCreatorFields } from "./order-creator";
+import type { WooOrderSnapshot } from "./woo-order-snapshot";
 
 export type OrderStatus =
   | "pending"
@@ -168,14 +173,15 @@ export function buildAdvancePaymentRecord(
   method: AdvancePaymentMethod,
   transactionId: string,
   cashReceiverName: string,
-  cashReference: string
+  cashReference: string,
+  requireProof = true
 ): AdvancePaymentInfo | undefined {
   if (advance <= 0) return undefined;
   if (method === "hand_cash") {
-    if (!cashReceiverName.trim()) {
+    if (requireProof && !cashReceiverName.trim()) {
       throw new Error("Enter who received the hand cash.");
     }
-    if (!cashReference.trim()) {
+    if (requireProof && !cashReference.trim()) {
       throw new Error("Enter hand cash reference / note.");
     }
     return {
@@ -185,7 +191,7 @@ export function buildAdvancePaymentRecord(
     };
   }
   const trx = transactionId.trim();
-  if (!trx) {
+  if (requireProof && !trx) {
     throw new Error("Enter transaction ID for advance payment.");
   }
   return { method, transactionId: trx };
@@ -230,6 +236,14 @@ export type WebDisplayStatus =
   | "cancelled"
   | "complete";
 
+export type OrderAttachment = {
+  name: string;
+  /** Data URL (base64). Kept small to stay within storage limits. */
+  dataUrl: string;
+  size?: number;
+  type?: string;
+};
+
 export type Order = {
   id: string;
   customerName: string;
@@ -255,6 +269,8 @@ export type Order = {
   customOrderSource?: string;
   wooOrderId?: number;
   wooNumber?: string;
+  /** Latest WooCommerce REST fields (payment meta, IP, etc.) */
+  wooSnapshot?: WooOrderSnapshot;
   webStatus?: WebDisplayStatus;
   /** Set when staff saves Web status in panel — blocks Woo sync overwrite */
   webStatusStaffSetAt?: string;
@@ -272,8 +288,16 @@ export type Order = {
   courierRiderName?: string;
   courierSyncedAt?: string;
   tags?: string[];
+  /** Internal/private note (not the customer-facing shipping note). */
+  internalNote?: string;
+  /** Optional reference link (Drive, design file, chat thread, etc.). */
+  referenceLink?: string;
+  /** Files attached to this order (stored as data URLs). */
+  attachments?: OrderAttachment[];
   printed?: boolean;
   handledBy?: string;
+  createdByUserId?: string;
+  createdByRole?: TeamRole;
   isPreorder: boolean;
   /** Why this order is on preorder list */
   preorderReason?: PreorderReason;
@@ -319,11 +343,17 @@ export type CreateOrderInput = {
   preorderDeliveryAt?: string;
   wooOrderId?: number;
   wooNumber?: string;
+  wooSnapshot?: WooOrderSnapshot;
   webStatus?: WebDisplayStatus;
   inWebQueue?: boolean;
   webQueueReleased?: boolean;
   handledBy?: string;
+  createdByUserId?: string;
+  createdByRole?: TeamRole;
   tags?: string[];
+  internalNote?: string;
+  referenceLink?: string;
+  attachments?: OrderAttachment[];
   createdAt?: string;
 };
 
@@ -606,6 +636,7 @@ function saveRaw(data: OrdersData) {
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(data));
   syncCustomersFromOrderList(data.orders);
+  pushSellerData("orders", data);
   window.dispatchEvent(new Event("youraiseller-data-updated"));
 }
 
@@ -673,6 +704,24 @@ export function findOrdersByPhone(phone: string): Order[] {
 
 function nextOrderId(): string {
   const orders = loadRaw().orders;
+  const settings = loadBusinessSettings();
+  const slug = (settings.invoiceSlug || "").trim();
+
+  // When a business invoice slug is configured, use it together with the
+  // configured "next invoice number" and bump it after each order.
+  if (slug) {
+    const prefix = `${slug}-`;
+    const maxSameSlug = orders.reduce((m, o) => {
+      if (!o.id.startsWith(prefix)) return m;
+      const num = parseInt(o.id.slice(prefix.length).replace(/\D/g, ""), 10);
+      return Number.isNaN(num) ? m : Math.max(m, num);
+    }, 0);
+    const num = Math.max(settings.nextInvoiceNumber || 1, maxSameSlug + 1);
+    saveBusinessSettings({ ...settings, nextInvoiceNumber: num + 1 });
+    return `${prefix}${num}`;
+  }
+
+  // Legacy fallback when no slug is set.
   const max = orders.reduce((m, o) => {
     const num = parseInt(o.id.replace(/\D/g, ""), 10);
     return Number.isNaN(num) ? m : Math.max(m, num);
@@ -736,6 +785,7 @@ export function createOrder(input: CreateOrderInput): Order {
 
   const source = input.source ?? "manual";
   const delivery = resolveDeliveryFieldsForOrderInput(input);
+  const creator = sessionCreatorFields();
   const order: Order = {
     id: nextOrderId(),
     customerName: input.customerName.trim(),
@@ -759,8 +809,13 @@ export function createOrder(input: CreateOrderInput): Order {
     webStatus: input.webStatus,
     inWebQueue: input.inWebQueue,
     webQueueReleased: input.webQueueReleased,
-    handledBy: input.handledBy,
+    handledBy: input.handledBy ?? creator.handledBy,
+    createdByUserId: input.createdByUserId ?? creator.createdByUserId,
+    createdByRole: input.createdByRole ?? creator.createdByRole,
     tags: input.tags,
+    internalNote: input.internalNote?.trim() || undefined,
+    referenceLink: input.referenceLink?.trim() || undefined,
+    attachments: input.attachments?.length ? input.attachments : undefined,
     orderSource: input.orderSource ?? inferOrderSourceFromOrder({
       source,
       wooOrderId: input.wooOrderId,
@@ -818,7 +873,9 @@ export function createOrder(input: CreateOrderInput): Order {
     order.inWebQueue = order.inWebQueue ?? true;
     order.webQueueReleased = order.webQueueReleased ?? false;
     order.status = "pending";
-    order.handledBy = order.handledBy ?? staffActor();
+    order.handledBy = order.handledBy ?? creator.handledBy ?? staffActor();
+    order.createdByUserId = order.createdByUserId ?? creator.createdByUserId;
+    order.createdByRole = order.createdByRole ?? creator.createdByRole;
     activityLog.push({
       ...createActivityEntry({
         type: "created",
@@ -874,6 +931,11 @@ export function upsertWooCommerceOrder(
     const prev = data.orders[idx];
     const syncWooStatus = isWooOrderStatusSyncEnabled();
     const panelWebStatus = prev.webStatus ?? "processing";
+    const sourcePatch = resolveOrderSourceOnWooSync(
+      prev,
+      input.orderSource ?? "website",
+      input.customOrderSource
+    );
     const merged: Order = {
       ...prev,
       customerName: input.customerName.trim(),
@@ -895,10 +957,11 @@ export function upsertWooCommerceOrder(
       source: "web",
       wooOrderId: input.wooOrderId,
       wooNumber: input.wooNumber ?? prev.wooNumber,
+      wooSnapshot: input.wooSnapshot ?? prev.wooSnapshot,
       tags: syncWooStatus ? (input.tags ?? prev.tags) : prev.tags,
       isPreorder: input.isPreorder ?? false,
-      orderSource: prev.orderSource ?? input.orderSource ?? "website",
-      customOrderSource: input.customOrderSource ?? prev.customOrderSource,
+      orderSource: sourcePatch.orderSource,
+      customOrderSource: sourcePatch.customOrderSource,
       webStatus: syncWooStatus
         ? resolveWebStatusAfterWooSync(prev, input.webStatus)
         : panelWebStatus,
@@ -940,13 +1003,17 @@ export function upsertWooCommerceOrder(
     source: "web",
     wooOrderId: input.wooOrderId,
     wooNumber: input.wooNumber,
+    wooSnapshot: input.wooSnapshot,
     webStatus: input.webStatus ?? "processing",
     tags: input.tags ?? ["WooCommerce"],
     printed: false,
     handledBy: "WooCommerce",
     isPreorder: input.isPreorder ?? false,
-    orderSource: input.orderSource ?? "website",
-    customOrderSource: input.customOrderSource?.trim() || undefined,
+    ...resolveOrderSourceOnWooSync(
+      null,
+      input.orderSource ?? "website",
+      input.customOrderSource
+    ),
     inWebQueue: shouldStayInWebQueueAfterWooSync(
       { inWebQueue: undefined, isPreorder: input.isPreorder ?? false, webStatus: input.webStatus },
       input.webStatus

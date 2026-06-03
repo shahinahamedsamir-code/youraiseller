@@ -34,6 +34,50 @@ export const ORDER_SOURCE_OPTIONS: OrderSourceOption[] = [
 export const DEFAULT_ORDER_SOURCE: OrderSource = "unknown";
 export const WEB_DEFAULT_ORDER_SOURCE: OrderSource = "website";
 
+export function isGenericOrderSource(source?: OrderSource): boolean {
+  return !source || source === "website" || source === "unknown";
+}
+
+/** Apply Woo-detected marketing source without overwriting staff picks. */
+export function resolveOrderSourceOnWooSync(
+  prev: Pick<Order, "orderSource" | "customOrderSource"> | null | undefined,
+  detected: OrderSource,
+  customDetected?: string
+): Pick<Order, "orderSource" | "customOrderSource"> {
+  if (!prev) {
+    return {
+      orderSource: detected,
+      customOrderSource: customDetected?.trim() || undefined,
+    };
+  }
+
+  if (prev.customOrderSource?.trim() && prev.orderSource === "custom") {
+    return {
+      orderSource: prev.orderSource,
+      customOrderSource: prev.customOrderSource,
+    };
+  }
+
+  if (isGenericOrderSource(prev.orderSource) && !isGenericOrderSource(detected)) {
+    return {
+      orderSource: detected,
+      customOrderSource: customDetected?.trim() || undefined,
+    };
+  }
+
+  if (!isGenericOrderSource(prev.orderSource)) {
+    return {
+      orderSource: prev.orderSource,
+      customOrderSource: prev.customOrderSource,
+    };
+  }
+
+  return {
+    orderSource: detected,
+    customOrderSource: customDetected?.trim() || undefined,
+  };
+}
+
 export function getOrderSourceLabel(
   source?: OrderSource,
   customLabel?: string

@@ -107,7 +107,12 @@ export default function DevUsersPage() {
   const refresh = () => {
     const all = loadDevUsers();
     setUsers(
-      all.filter((u) => u.status !== "pending" && u.status !== "rejected")
+      all.filter(
+        (u) =>
+          !u.parentAccountId &&
+          u.status !== "pending" &&
+          u.status !== "rejected"
+      )
     );
     setPendingCount(getPendingUsers().length);
   };

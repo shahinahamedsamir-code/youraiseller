@@ -1,4 +1,5 @@
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
+import { pushSellerData } from "./seller-sync";
 
 export type SellerCustomer = {
   id: string;
@@ -57,6 +58,7 @@ function saveCustomers(list: SellerCustomer[]) {
   const key = storageKey();
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(list));
+  pushSellerData("customers", list);
   window.dispatchEvent(new Event("youraiseller-data-updated"));
 }
 

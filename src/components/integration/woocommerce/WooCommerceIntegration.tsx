@@ -468,8 +468,8 @@ function ConnectionTab({
                 Fetch complete order data via REST API
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Full order details from WooCommerce REST API (~3–5s extra per
-                order). Use if imported data is incomplete.
+                When enabled, each synced order is re-fetched via REST API for
+                full meta (IP, transaction, Facebook source). Slightly slower sync.
               </p>
             </div>
           </label>

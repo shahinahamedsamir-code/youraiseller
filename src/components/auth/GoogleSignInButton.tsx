@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
-import { loginWithGoogleProfile } from "@/lib/dev-users";
+import { loginWithGoogleProfile, syncDevUsersFromServer } from "@/lib/dev-users";
 import { Loader2, ShieldCheck } from "lucide-react";
 import clsx from "clsx";
 
@@ -54,6 +54,10 @@ function GoogleSignInButtonInner({
       setError(data.error ?? "Google sign-in failed.");
       return;
     }
+
+    // Pull the latest users (incl. invited team members) so login on any
+    // device resolves them instead of creating a new signup request.
+    await syncDevUsersFromServer(true);
 
     const result = loginWithGoogleProfile(
       {

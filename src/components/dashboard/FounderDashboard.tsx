@@ -672,8 +672,8 @@ export function FounderDashboard() {
         <div className="relative grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {approvedSummary.map((item, i) => (
             <ApprovedStatusCard key={item.key} item={item} index={i} />
-          ))}
-        </div>
+        ))}
+      </div>
       </section>
 
       <section className="group relative overflow-hidden rounded-2xl border border-cyan-100/80 bg-gradient-to-br from-white via-white to-cyan-50/40 p-6 shadow-sm ring-1 ring-cyan-100/60 transition hover:shadow-md">
@@ -700,7 +700,7 @@ export function FounderDashboard() {
           {webSummary.map((item, i) => (
             <WebStatusCard key={item.key} item={item} index={i} />
           ))}
-        </div>
+      </div>
       </section>
     </div>
   );

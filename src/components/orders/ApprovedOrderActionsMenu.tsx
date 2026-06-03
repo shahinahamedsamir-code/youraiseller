@@ -25,9 +25,20 @@ import {
   getOrderStatusFlowAction,
   ORDER_STATUS_LABELS,
 } from "@/lib/order-status-tabs";
-import { updateOrderStatus } from "@/lib/orders-store";
+import { getOrder, updateOrderStatus } from "@/lib/orders-store";
 import type { OrderStatus } from "@/lib/orders-store";
 import type { DeliveryMethod } from "@/lib/delivery-methods-store";
+import { loadBusinessSettings } from "@/lib/business-settings-store";
+import {
+  renderInvoiceBody,
+  type InvoicePaper,
+  type InvoiceTemplate,
+} from "@/lib/invoice-templates";
+import {
+  renderStickerBody,
+  type StickerSize,
+  type StickerTemplate,
+} from "@/lib/sticker-templates";
 
 type Props = {
   selectedIds: string[];
@@ -38,6 +49,61 @@ type Props = {
 };
 
 const MENU_W = 320;
+
+function openBulkPrintInvoices(orderIds: string[]) {
+  const biz = loadBusinessSettings();
+  const templateFor = (o: ReturnType<typeof getOrder>) => {
+    if (!o) return biz.invoiceTemplate;
+    return (o.deliveryMethodId && biz.deliveryInvoices[o.deliveryMethodId]) || biz.invoiceTemplate;
+  };
+  const paper = biz.invoicePaper as InvoicePaper;
+  const bodies = orderIds
+    .map((id) => getOrder(id))
+    .filter(Boolean)
+    .map((o, idx) => {
+      const tpl = templateFor(o) as InvoiceTemplate;
+      const body = renderInvoiceBody(o!, biz, tpl, paper);
+      return `${body}${idx < orderIds.length - 1 ? `<div style="page-break-after:always"></div>` : ""}`;
+    })
+    .join("");
+
+  const pageCss =
+    paper === "pos"
+      ? "@page{size:80mm auto;margin:0}body{width:80mm}"
+      : "@page{size:A4;margin:12mm}";
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoices</title>
+<style>*{box-sizing:border-box}${pageCss}body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>
+</head><body>${bodies}<script>window.onload=()=>window.print()</script></body></html>`;
+  const w = window.open("", "_blank");
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  }
+}
+
+function openBulkPrintStickers(orderIds: string[]) {
+  const biz = loadBusinessSettings();
+  const template = biz.stickerTemplate as StickerTemplate;
+  const size = biz.stickerSize as StickerSize;
+  const widthIn = size === "2x3" ? 2 : 3;
+  const bodies = orderIds
+    .map((id) => getOrder(id))
+    .filter(Boolean)
+    .map((o, idx) => {
+      const body = renderStickerBody(o!, biz, template, size);
+      return `${body}${idx < orderIds.length - 1 ? `<div style="page-break-after:always"></div>` : ""}`;
+    })
+    .join("");
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Stickers</title>
+<style>*{box-sizing:border-box}@page{size:${widthIn}in auto;margin:0}body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>
+</head><body>${bodies}<script>window.onload=()=>window.print()</script></body></html>`;
+  const w = window.open("", "_blank");
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  }
+}
 
 export function ApprovedOrderActionsMenu({
   selectedIds,
@@ -220,9 +286,11 @@ export function ApprovedOrderActionsMenu({
                     key={label}
                     type="button"
                     className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                    onClick={() =>
-                      setMessage(`${label} print — select orders and use row menu`)
-                    }
+                    onClick={() => {
+                      if (label === "Invoice") openBulkPrintInvoices(selectedIds);
+                      else openBulkPrintStickers(selectedIds);
+                      setOpen(false);
+                    }}
                   >
                     <Printer className="mr-1 inline h-3 w-3" />
                     {label}

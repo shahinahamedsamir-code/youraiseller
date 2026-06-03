@@ -21,6 +21,10 @@ import {
 } from "@/lib/dev-users";
 import { countEffectiveFeatures, GLOBAL_FEATURES_UPDATED } from "@/lib/feature-storage";
 import { FEATURE_LIST } from "@/lib/features";
+import {
+  loadBusinessSettings,
+  BUSINESS_SETTINGS_UPDATED,
+} from "@/lib/business-settings-store";
 import clsx from "clsx";
 
 const planStyles = {
@@ -36,19 +40,23 @@ export function ProfileMenu() {
   const ref = useRef<HTMLDivElement>(null);
 
   const [enabledCount, setEnabledCount] = useState(0);
+  const [logoUrl, setLogoUrl] = useState("");
 
   useEffect(() => {
     const sync = () => {
       const u = getSessionUser();
       setUser(u ?? null);
       setEnabledCount(u ? countEffectiveFeatures(u.features) : 0);
+      setLogoUrl(loadBusinessSettings().logoUrl || "");
     };
     sync();
     window.addEventListener(GLOBAL_FEATURES_UPDATED, sync);
     window.addEventListener("youraiseller-users-updated", sync);
+    window.addEventListener(BUSINESS_SETTINGS_UPDATED, sync);
     return () => {
       window.removeEventListener(GLOBAL_FEATURES_UPDATED, sync);
       window.removeEventListener("youraiseller-users-updated", sync);
+      window.removeEventListener(BUSINESS_SETTINGS_UPDATED, sync);
     };
   }, [open]);
 
@@ -100,8 +108,13 @@ export function ProfileMenu() {
         <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
           <div className="bg-gradient-to-br from-teal-500 to-violet-600 px-5 py-4 text-white">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
-                {user?.name?.charAt(0) ?? "?"}
+              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/20 text-lg font-bold">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl} alt="logo" className="h-full w-full object-cover" />
+                ) : (
+                  (user?.name?.charAt(0) ?? "?")
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{user?.name ?? "Guest User"}</p>

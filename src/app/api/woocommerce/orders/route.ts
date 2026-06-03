@@ -7,6 +7,8 @@ export async function POST(req: Request) {
       page?: number;
       perPage?: number;
       statuses?: string;
+      /** Single order — full REST payload (meta_data, etc.) */
+      orderId?: number;
       /** ISO8601 — only orders created after this (Woo `after` param) */
       after?: string;
       /** ISO8601 — orders modified after (best for fast incremental sync) */
@@ -16,6 +18,7 @@ export async function POST(req: Request) {
       storeUrl,
       consumerKey,
       consumerSecret,
+      orderId,
       page = 1,
       perPage = 50,
       statuses = "pending,processing,on-hold,completed,cancelled,failed,refunded",
@@ -35,6 +38,19 @@ export async function POST(req: Request) {
       consumerKey: consumerKey.trim(),
       consumerSecret: consumerSecret.trim(),
     };
+
+    if (orderId != null && Number.isFinite(orderId)) {
+      const res = await wooFetch(creds, `/wp-json/wc/v3/orders/${orderId}`);
+      if (!res.ok) {
+        const text = await res.text();
+        return NextResponse.json({
+          ok: false,
+          message: `WooCommerce API error (${res.status}): ${text.slice(0, 200)}`,
+        });
+      }
+      const order = await res.json();
+      return NextResponse.json({ ok: true, order });
+    }
 
     const afterParam = after?.trim()
       ? `&after=${encodeURIComponent(after.trim())}`

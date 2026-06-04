@@ -14,7 +14,7 @@ const DATA_FILE = path.join(process.cwd(), "data", "platform", "sms-control.json
 
 export const DEFAULT_SMS_PLATFORM_CONTROL: SmsPlatformControl = {
   enabled: true,
-  smsPriceTaka: 0.4,
+  smsPriceTaka: 0.35,
   selfRechargeEnabled: true,
   updatedAt: new Date().toISOString(),
 };

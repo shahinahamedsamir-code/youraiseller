@@ -15,7 +15,7 @@ import {
   type AutoSmsTab,
 } from "@/lib/sms-integration-mock";
 import { saveAutoSmsSettings } from "@/lib/sms-store";
-import { SmsToggleSetting } from "@/components/integration/sms/SmsToggleSetting";
+import { SmsAutoRuleEditor } from "@/components/integration/sms/SmsAutoRuleEditor";
 import { useSmsAccount } from "@/components/integration/sms/useSmsAccount";
 
 const TAB_ICONS = {
@@ -43,13 +43,17 @@ export function AutoSmsSettingsPanel() {
     [settings]
   );
 
-  const toggle = (tabKey: AutoSmsTab, id: string, enabled: boolean) => {
+  const updateRule = (
+    tabKey: AutoSmsTab,
+    id: string,
+    patch: Partial<{ enabled: boolean; template: string }>
+  ) => {
     setSaved(false);
     setError("");
     setSettings((prev) => ({
       ...prev,
       [tabKey]: prev[tabKey].map((row) =>
-        row.id === id ? { ...row, enabled } : row
+        row.id === id ? { ...row, ...patch } : row
       ),
     }));
   };
@@ -75,7 +79,7 @@ export function AutoSmsSettingsPanel() {
           <div>
             <h2 className="text-lg font-extrabold text-slate-900">Auto SMS Settings</h2>
             <p className="mt-1 text-sm text-slate-500">
-              অর্ডার স্ট্যাটাস অনুযায়ী অটোমেটিক SMS পাঠানোর সেটিংস
+              Automatic SMS rules by order status
             </p>
           </div>
           <button
@@ -83,7 +87,7 @@ export function AutoSmsSettingsPanel() {
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
             <HelpCircle className="h-4 w-4" />
-            কিভাবে SMS সেটিংস করবেন?
+            How to configure SMS settings?
           </button>
         </div>
       </div>
@@ -93,6 +97,7 @@ export function AutoSmsSettingsPanel() {
           {AUTO_SMS_TABS.map((item) => {
             const Icon = TAB_ICONS[item.icon];
             const active = tab === item.id;
+            const tabEnabled = settings[item.id].filter((r) => r.enabled).length;
             return (
               <button
                 key={item.id}
@@ -106,21 +111,25 @@ export function AutoSmsSettingsPanel() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{item.labelBn}</span>
+                <span className="hidden sm:inline">{item.label}</span>
                 <span className="sm:hidden">{item.label.split(" ")[0]}</span>
+                {tabEnabled > 0 ? (
+                  <span className="rounded-full bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-700">
+                    {tabEnabled}
+                  </span>
+                ) : null}
               </button>
             );
           })}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {rows.map((row) => (
-            <SmsToggleSetting
+            <SmsAutoRuleEditor
               key={row.id}
-              title={row.title}
-              hint={row.hint}
-              enabled={row.enabled}
-              onChange={(enabled) => toggle(tab, row.id, enabled)}
+              rule={row}
+              onToggle={(enabled) => updateRule(tab, row.id, { enabled })}
+              onTemplateChange={(template) => updateRule(tab, row.id, { template })}
             />
           ))}
         </div>
@@ -129,7 +138,7 @@ export function AutoSmsSettingsPanel() {
           <p className="text-sm font-medium text-rose-600">{error}</p>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
           <button
             type="button"
             disabled={saving}
@@ -141,7 +150,7 @@ export function AutoSmsSettingsPanel() {
             ) : (
               <Save className="h-4 w-4" />
             )}
-            সেভ করুন
+            Save settings
           </button>
           <p className="text-xs font-medium text-slate-500">
             {enabledCount} auto rule{enabledCount === 1 ? "" : "s"} active

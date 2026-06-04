@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const control = await loadSmsPlatformControl();
     const config = getTeamItqanConfig();
     let providerBalance: number | undefined;
-    let providerConfigured = Boolean(config);
+    const providerConfigured = Boolean(config);
 
     if (config) {
       const bal = await teamItqanFetchBalance(config);

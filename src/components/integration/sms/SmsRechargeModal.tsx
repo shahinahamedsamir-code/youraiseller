@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Coins, Loader2, X } from "lucide-react";
 import { selfRechargeViaBkash } from "@/lib/sms-store";
-import type { SmsAccount } from "@/lib/sms-types";
+import { formatSmsBdt, type SmsAccount } from "@/lib/sms-types";
 
 type Props = {
   open: boolean;
@@ -115,10 +115,10 @@ export function SmsRechargeModal({
 
           <p className="text-base font-extrabold text-slate-900">
             Total Amount:{" "}
-            <span className="text-rose-600">{totalTaka.toLocaleString("en-BD")} TK</span>
+            <span className="text-rose-600">{formatSmsBdt(totalTaka)}</span>
           </p>
           <p className="text-[11px] text-slate-500">
-            ৳{smsPriceTaka}/SMS · bKash payment (live gateway coming soon)
+            BDT {smsPriceTaka}/SMS · bKash payment (live gateway coming soon)
           </p>
 
           <button

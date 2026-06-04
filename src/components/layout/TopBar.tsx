@@ -5,6 +5,7 @@ import { Bell, Menu, Search, Zap } from "lucide-react";
 import { quickLinks } from "@/lib/navigation";
 import { useFeatures } from "@/context/FeatureContext";
 import { useMemo } from "react";
+import { HeaderQuickSms } from "./HeaderQuickSms";
 import { ProfileMenu } from "./ProfileMenu";
 
 type TopBarProps = {
@@ -57,6 +58,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <HeaderQuickSms />
         <button
           type="button"
           className="hidden items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 sm:flex"

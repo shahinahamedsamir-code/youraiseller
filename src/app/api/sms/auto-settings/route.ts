@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
 import { normalizeSmsAccount } from "@/lib/sms-types";
-import type { AutoSmsTab } from "@/lib/sms-integration-mock";
+import type { AutoSmsTab, AutoSmsSetting } from "@/lib/sms-integration-mock";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
 
 export async function POST(req: Request) {
@@ -14,10 +14,7 @@ export async function POST(req: Request) {
 
     const account = await loadSmsAccount(scope);
     if (body?.autoSettings && typeof body.autoSettings === "object") {
-      account.autoSettings = body.autoSettings as Record<
-        AutoSmsTab,
-        { id: string; title: string; hint: string; enabled: boolean }[]
-      >;
+      account.autoSettings = body.autoSettings as Record<AutoSmsTab, AutoSmsSetting[]>;
     }
     const normalized = normalizeSmsAccount(account);
     await saveSmsAccount(scope, normalized);

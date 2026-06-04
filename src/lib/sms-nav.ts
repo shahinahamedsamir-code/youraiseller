@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { History, Send, Zap } from "lucide-react";
+import { FileText, History, Send, Zap } from "lucide-react";
 
 export const smsIntegrationBasePath = "/dashboard/integration/sms";
 
@@ -14,7 +14,7 @@ export const smsNav: SmsNavItem[] = [
   {
     label: "Send SMS",
     href: "/dashboard/integration/sms",
-    description: "Quick send & templates",
+    description: "Quick send to customers",
     icon: Send,
   },
   {
@@ -22,6 +22,12 @@ export const smsNav: SmsNavItem[] = [
     href: "/dashboard/integration/sms/auto",
     description: "Order status triggers",
     icon: Zap,
+  },
+  {
+    label: "SMS Template",
+    href: "/dashboard/integration/sms/templates",
+    description: "Custom quick send messages",
+    icon: FileText,
   },
   {
     label: "SMS Log",

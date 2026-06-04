@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { AlertCircle, CheckCircle2, MessageSquare } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { smsNav } from "@/lib/sms-nav";
 import { SmsBalanceBar } from "@/components/integration/sms/SmsBalanceBar";
 import { useSmsAccount } from "@/components/integration/sms/useSmsAccount";
@@ -26,27 +26,6 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
 
   return (
     <div className="space-y-5">
-      <div className="relative overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-600 via-cyan-600 to-indigo-600 p-5 text-white shadow-lg shadow-teal-200/40 sm:p-6">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-8 left-1/3 h-32 w-32 rounded-full bg-cyan-300/20 blur-2xl" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
-              <MessageSquare className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-teal-100">
-                Integration
-              </p>
-              <h1 className="text-xl font-extrabold sm:text-2xl">SMS Integration</h1>
-              <p className="mt-1 max-w-xl text-sm text-teal-50/90">
-                Recharge balance, unlimited SMS by credits, auto triggers &amp; log
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <SmsBalanceBar
         balance={account.balance}
         smsPriceTaka={smsPriceTaka}

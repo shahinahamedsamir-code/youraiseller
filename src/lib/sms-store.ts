@@ -5,6 +5,7 @@ import type { AutoSmsTab, AutoSmsSetting } from "./sms-integration-mock";
 import {
   normalizeSmsAccount,
   type SmsAccount,
+  type SmsQuickTemplate,
 } from "./sms-types";
 
 function storageKey(scope: string): string {
@@ -141,6 +142,46 @@ export async function saveAutoSmsSettings(
   if (json.account) saveSmsAccountLocal(normalizeSmsAccount(json.account));
   if (!res.ok) {
     return { ok: false, error: json.error ?? "Save failed" };
+  }
+  return { ok: true, account: normalizeSmsAccount(json.account) };
+}
+
+export async function saveQuickSmsTemplates(
+  quickTemplates: SmsQuickTemplate[]
+): Promise<{ ok: boolean; error?: string; account?: SmsAccount }> {
+  const scope = getSellerStorageScope();
+  if (!scope) return { ok: false, error: "Not signed in" };
+
+  const res = await fetch("/api/sms/quick-templates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope, quickTemplates }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (json.account) saveSmsAccountLocal(normalizeSmsAccount(json.account));
+  if (!res.ok) {
+    return { ok: false, error: json.error ?? "Save failed" };
+  }
+  return { ok: true, account: normalizeSmsAccount(json.account) };
+}
+
+export async function deleteSmsLog(logId: string): Promise<{
+  ok: boolean;
+  error?: string;
+  account?: SmsAccount;
+}> {
+  const scope = getSellerStorageScope();
+  if (!scope) return { ok: false, error: "Not signed in" };
+
+  const res = await fetch("/api/sms/logs", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope, logId }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (json.account) saveSmsAccountLocal(normalizeSmsAccount(json.account));
+  if (!res.ok) {
+    return { ok: false, error: json.error ?? "Delete failed" };
   }
   return { ok: true, account: normalizeSmsAccount(json.account) };
 }

@@ -41,6 +41,11 @@ export function defaultOrderTags(): OrderTag[] {
     { id: "tag-phone-off", label: "Phone off", color: "slate" },
     { id: "tag-scammer", label: "Scammer", color: "rose" },
     { id: "tag-call-no-answer", label: "Call No Answer", color: "sky" },
+    { id: "tag-auto-call", label: "Auto Call", color: "violet" },
+    { id: "tag-approve-order", label: "Approve Order", color: "sky" },
+    { id: "tag-pressed-1", label: "Pressed 1", color: "emerald" },
+    { id: "tag-pressed-2", label: "Pressed 2", color: "amber" },
+    { id: "tag-rejected", label: "Rejected", color: "rose" },
   ];
 }
 
@@ -136,4 +141,22 @@ export function orderTagChipClass(color: OrderTagColor): string {
     fuchsia: "bg-fuchsia-100 text-fuchsia-700 ring-fuchsia-200",
   };
   return map[color] ?? map.slate;
+}
+
+const AUTO_CALL_TAG_COLORS: Record<string, OrderTagColor> = {
+  "auto call": "violet",
+  "approve order": "sky",
+  rejected: "rose",
+};
+
+export function orderTagColorForLabel(label: string, catalog?: OrderTag[]): OrderTagColor {
+  const trimmed = label.trim();
+  if (!trimmed) return "slate";
+  const items = catalog ?? loadOrderTags();
+  const hit = items.find((t) => t.label.toLowerCase() === trimmed.toLowerCase());
+  if (hit) return hit.color;
+  const fallback = AUTO_CALL_TAG_COLORS[trimmed.toLowerCase()];
+  if (fallback) return fallback;
+  if (/^pressed\s+\d+$/i.test(trimmed)) return "emerald";
+  return "slate";
 }

@@ -129,6 +129,24 @@ export async function syncSellerDataFromServer(): Promise<boolean> {
   return changed;
 }
 
+/** Pull latest orders from server into localStorage (e.g. after auto-call key routing). */
+export async function pullOrdersFromServer(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const scope = getSellerStorageScope();
+  if (!scope) return false;
+
+  const serverData = await pullSellerData("orders");
+  if (serverData == null) return false;
+
+  const key = localKey("orders", scope);
+  const next = JSON.stringify(serverData);
+  if (localStorage.getItem(key) === next) return false;
+
+  localStorage.setItem(key, next);
+  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  return true;
+}
+
 function safeParse(raw: string): unknown {
   try {
     return JSON.parse(raw);

@@ -30,6 +30,7 @@ import {
   getWooCommerceStatus,
   wcStatusBadgeClass,
 } from "@/lib/web-order-display";
+import { WebOrderSmsActions } from "@/components/web-orders/WebOrderSmsActions";
 
 type Props = {
   order: Order;
@@ -116,6 +117,8 @@ export function WebOrderWooSummary({
 
   return (
     <div className="space-y-3">
+      <WebOrderSmsActions order={order} />
+
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100">
         <div className="border-b border-slate-100 bg-gradient-to-r from-teal-50 to-cyan-50/60 px-4 py-3">
           <div className="flex items-center gap-2">

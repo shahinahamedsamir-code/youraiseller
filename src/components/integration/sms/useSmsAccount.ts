@@ -13,7 +13,7 @@ export function useSmsAccount() {
   );
   const [systemEnabled, setSystemEnabled] = useState(true);
   const [selfRechargeEnabled, setSelfRechargeEnabled] = useState(true);
-  const [smsPriceTaka, setSmsPriceTaka] = useState(0.4);
+  const [smsPriceTaka, setSmsPriceTaka] = useState(0.35);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {

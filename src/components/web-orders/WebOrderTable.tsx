@@ -42,6 +42,14 @@ import {
   Filter,
 } from "lucide-react";
 import clsx from "clsx";
+import { buildAutoCallLogIndex } from "@/lib/auto-call-order-status";
+import {
+  loadAutoCallLogs,
+  pollAutoCallStatuses,
+  refreshAutoCallAccount,
+  hasPendingAutoCallLogs,
+} from "@/lib/auto-call-store";
+import { WebOrderAutoCallCell } from "@/components/web-orders/WebOrderAutoCallCell";
 
 /** Sticky left columns — Open stays visible when scrolling */
 const stickyCheckCls =
@@ -140,8 +148,10 @@ export function WebOrderTable() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [createdFlash, setCreatedFlash] = useState<string | null>(null);
+  const [callLogTick, setCallLogTick] = useState(0);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+  const refreshCallLogs = useCallback(() => setCallLogTick((t) => t + 1), []);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -166,6 +176,41 @@ export function WebOrderTable() {
     window.addEventListener("youraiseller-data-updated", onData);
     return () => window.removeEventListener("youraiseller-data-updated", onData);
   }, [refresh]);
+
+  useEffect(() => {
+    const syncCallLogs = () => {
+      void pollAutoCallStatuses().then(async () => {
+        await refreshAutoCallAccount();
+        refreshCallLogs();
+        refresh();
+      });
+    };
+
+    syncCallLogs();
+
+    const onAutoCall = () => refreshCallLogs();
+    window.addEventListener("youraiseller-autocall-updated", onAutoCall);
+
+    const onData = () => syncCallLogs();
+    window.addEventListener("youraiseller-data-updated", onData);
+
+    let interval = window.setInterval(syncCallLogs, 5000);
+
+    const retune = () => {
+      window.clearInterval(interval);
+      interval = window.setInterval(syncCallLogs, hasPendingAutoCallLogs() ? 3000 : 8000);
+    };
+    retune();
+    const retuneInterval = window.setInterval(retune, 10000);
+
+    return () => {
+      window.removeEventListener("youraiseller-autocall-updated", onAutoCall);
+      window.removeEventListener("youraiseller-data-updated", onData);
+      window.clearInterval(interval);
+      window.clearInterval(retuneInterval);
+    };
+  }, [refreshCallLogs, refresh]);
+
   const storeSite = useMemo(() => siteLabel(), [tick]);
   const storeHref = useMemo(() => siteUrl(), [tick]);
 
@@ -175,6 +220,16 @@ export function WebOrderTable() {
   }, [tick]);
 
   const counts = useMemo(() => countWebOrdersByTab(orders), [orders]);
+
+  const autoCallLogs = useMemo(() => {
+    void callLogTick;
+    return loadAutoCallLogs();
+  }, [callLogTick]);
+
+  const autoCallByOrderId = useMemo(
+    () => buildAutoCallLogIndex(autoCallLogs),
+    [autoCallLogs]
+  );
 
   const filtered = useMemo(() => {
     let list = orders.filter((o) => matchesWebOrderTab(o, activeFilter));
@@ -284,7 +339,7 @@ export function WebOrderTable() {
           </div>
 
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-sm">
+          <table className="w-full min-w-[1220px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/90 text-left text-[10px] font-bold uppercase tracking-wide text-slate-500">
                 <th className={clsx(stickyCheckCls, "px-3 py-3")}>
@@ -308,6 +363,7 @@ export function WebOrderTable() {
                   Open
                 </th>
                 <th className="min-w-[120px] px-3 py-3">Created at</th>
+                <th className="min-w-[130px] px-3 py-3">Auto Call</th>
                 <th className="min-w-[200px] px-3 py-3">Customer</th>
                 <th className="min-w-[160px] px-3 py-3">Note</th>
                 <th className="min-w-[200px] px-3 py-3">Order items</th>
@@ -320,7 +376,7 @@ export function WebOrderTable() {
               {paged.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-4 py-12 text-center text-sm text-slate-500"
                   >
                     No web orders in this tab. Live sync runs every ~20s — or click{" "}
@@ -388,6 +444,12 @@ export function WebOrderTable() {
                         >
                           {ws.replace("_", " ")}
                         </span>
+                      </td>
+
+                      <td className="px-3 py-3">
+                        <WebOrderAutoCallCell
+                          log={autoCallByOrderId.get(order.id) ?? null}
+                        />
                       </td>
 
                       <td className="px-3 py-3">

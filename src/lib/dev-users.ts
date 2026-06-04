@@ -1,6 +1,5 @@
 import { DEFAULT_FEATURES, FEATURE_LIST, type FeatureKey } from "./features";
 import {
-  GLOBAL_FEATURES_KEY,
   saveStoredFeatures,
   SESSION_FEATURES_KEY,
 } from "./feature-storage";
@@ -992,7 +991,6 @@ export function getSessionUser(): DevUser | undefined {
     clearUserSession();
     return undefined;
   }
-  const featuresJson = JSON.stringify(user.features);
   saveStoredFeatures(SESSION_FEATURES_KEY, user.features);
   return user;
 }

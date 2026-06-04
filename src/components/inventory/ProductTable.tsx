@@ -75,6 +75,8 @@ export function ProductTable() {
 
   useEffect(() => {
     refresh();
+    window.addEventListener("youraiseller-data-updated", refresh);
+    return () => window.removeEventListener("youraiseller-data-updated", refresh);
   }, []);
 
   useEffect(() => {

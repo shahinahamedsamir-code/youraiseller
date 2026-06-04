@@ -1,6 +1,1109 @@
 {
   "orders": [
     {
+      "id": "WO-4458",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000674",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - S",
+          "productCode": "Sky Stripe-zentix001-S",
+          "qty": 2,
+          "price": 1150,
+          "total": 2300,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3865
+        }
+      ],
+      "subtotal": 2300,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 2370,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4458,
+      "wooNumber": "4458",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T22:50:34",
+        "dateModified": "2026-06-04T22:50:37",
+        "syncedAt": "2026-06-04T16:55:35.842Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "04 Jun 2026, 22:50",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780591837832-fe9j",
+          "at": "2026-06-04T16:50:37.832Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4458",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "WO-4457",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000674",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - S",
+          "productCode": "Sky Stripe-zentix001-S",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3865
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4457,
+      "wooNumber": "4457",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T22:49:09",
+        "dateModified": "2026-06-04T22:49:13",
+        "syncedAt": "2026-06-04T16:55:35.923Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING",
+        "Auto Call",
+        "Pressed 1",
+        "Approve Order"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "04 Jun 2026, 22:49",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780591755688-a2om",
+          "at": "2026-06-04T16:49:15.688Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4457",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780591804327-aran",
+          "at": "2026-06-04T16:50:04.294Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-04T16:50:04.162Z",
+      "invoiceNumber": "ZENTIX-1012"
+    },
+    {
+      "id": "WO-4456",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000675",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - M",
+          "productCode": "Sky Stripe-zentix001-M",
+          "qty": 2,
+          "price": 1150,
+          "total": 2300,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3864
+        }
+      ],
+      "subtotal": 2300,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 2370,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4456,
+      "wooNumber": "4456",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T22:41:27",
+        "dateModified": "2026-06-04T22:41:31",
+        "syncedAt": "2026-06-04T16:55:36.017Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING",
+        "Auto Call",
+        "Pressed 1",
+        "Approve Order"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "04 Jun 2026, 22:41",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780591302143-f72f",
+          "at": "2026-06-04T16:41:42.143Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4456",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780591606214-rjl6",
+          "at": "2026-06-04T16:46:46.170Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-04T16:46:46.089Z",
+      "invoiceNumber": "ZENTIX-1009"
+    },
+    {
+      "id": "WO-4455",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4455,
+      "wooNumber": "4455",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T22:10:34",
+        "dateModified": "2026-06-04T22:10:38",
+        "syncedAt": "2026-06-04T16:55:36.129Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING",
+        "Auto Call",
+        "Pressed 1",
+        "Approve Order"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "04 Jun 2026, 22:10",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780589436545-2r2l",
+          "at": "2026-06-04T16:10:36.545Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4455",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780591606553-g34x",
+          "at": "2026-06-04T16:46:46.506Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-04T16:46:46.419Z",
+      "invoiceNumber": "ZENTIX-1010"
+    },
+    {
+      "id": "WO-4454",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-47994485",
+          "productName": "Zentix Ocean Formal Stripe - XL",
+          "productCode": "Ocean Formal Stripe-ZENTIX003-XL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_000000000b14720888d5c0c3e4593a7e.webp",
+          "wooProductId": 3879,
+          "wooVariationId": 3883
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4454,
+      "wooNumber": "4454",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T21:56:25",
+        "dateModified": "2026-06-04T21:56:29",
+        "syncedAt": "2026-06-04T16:55:36.218Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "04 Jun 2026, 21:56",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780588587437-dhnj",
+          "at": "2026-06-04T15:56:27.437Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4454",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "WO-4453",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4453,
+      "wooNumber": "4453",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T21:51:35",
+        "dateModified": "2026-06-04T21:51:39",
+        "syncedAt": "2026-06-04T16:55:36.304Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "04 Jun 2026, 21:51",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780588308833-6sey",
+          "at": "2026-06-04T15:51:48.833Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4453",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "WO-4452",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4452,
+      "wooNumber": "4452",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T20:56:30",
+        "dateModified": "2026-06-04T20:56:34",
+        "syncedAt": "2026-06-04T16:55:36.385Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "04 Jun 2026, 20:56",
+      "updatedAt": "04 Jun 2026, 22:55",
+      "activityLog": [
+        {
+          "id": "log-1780585005856-era8",
+          "at": "2026-06-04T14:56:45.856Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4452",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "ZENTIX-1008",
+      "invoiceNumber": "ZENTIX-1008",
+      "customerName": "Zentix",
+      "phone": "01616618286",
+      "address": "House 28, Road 9",
+      "district": "",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779425614752",
+      "courier": "STEADFAST",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-74929198",
+          "productName": "Baby Pink Oxford Full Sleeve Cotton Shirt — size: L",
+          "productCode": "babypink-oxford-Zentix007-L",
+          "qty": 1,
+          "price": 1050,
+          "total": 1050,
+          "imageDataUrl": "https://zentixbd.com/wp-content/uploads/2026/05/ChatGPT-Image-May-16-2026-07_43_35-PM.jpg"
+        }
+      ],
+      "subtotal": 1050,
+      "shippingCharge": 0,
+      "discount": 0,
+      "advance": 0,
+      "total": 1050,
+      "note": "",
+      "source": "manual",
+      "handledBy": "Zentix",
+      "createdByUserId": "U-002",
+      "createdByRole": "FOUNDER",
+      "orderSource": "website",
+      "isPreorder": false,
+      "createdAt": "04 Jun 2026, 12:28",
+      "updatedAt": "04 Jun 2026, 12:28",
+      "activityLog": [
+        {
+          "id": "log-1780554480569-yrgc",
+          "at": "2026-06-04T06:28:00.568Z",
+          "type": "created",
+          "title": "Order created — Panel",
+          "detail": "Order source: Website · New Order form",
+          "actor": "Zentix"
+        }
+      ],
+      "tags": [
+        "COD",
+        "STEADFAST"
+      ],
+      "printed": false
+    },
+    {
+      "id": "WO-4451",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-47992197",
+          "productName": "Zentix Ivory Flow Stripe - S",
+          "productCode": "Ivory Flow Stripe-ZENTIX004-S",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_000000002924720896e5341cdabaca82.webp",
+          "wooProductId": 3887,
+          "wooVariationId": 3890
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "source": "web",
+      "wooOrderId": 4451,
+      "wooNumber": "4451",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T12:17:57",
+        "dateModified": "2026-06-04T13:02:16",
+        "syncedAt": "2026-06-04T13:18:13.214Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "04 Jun 2026, 12:17",
+      "updatedAt": "04 Jun 2026, 19:18",
+      "activityLog": [
+        {
+          "id": "log-1780553893472-eq1j",
+          "at": "2026-06-04T06:18:13.472Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4451",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780553933312-caqq",
+          "at": "2026-06-04T06:18:53.312Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4451 · Order source: Website\nWooCommerce #4451\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780553933454-5mm2",
+          "at": "2026-06-04T06:18:53.454Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4451 · Order source: Website\nWooCommerce #4451\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780553936551-m519",
+          "at": "2026-06-04T06:18:56.522Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-04T06:18:56.450Z",
+      "email": "",
+      "note": ""
+    },
+    {
+      "id": "WO-4450",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-47998081",
+          "productName": "Zentix Mocha Edge Stripe - XL",
+          "productCode": "Mocha Edge Stripe-ZENTIX002-XL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_0000000080247208bc17d8de8498ce63.webp",
+          "wooProductId": 3871,
+          "wooVariationId": 3875
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "source": "web",
+      "wooOrderId": 4450,
+      "wooNumber": "4450",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-04T12:06:07",
+        "dateModified": "2026-06-04T13:02:16",
+        "syncedAt": "2026-06-04T13:18:13.464Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "04 Jun 2026, 12:06",
+      "updatedAt": "04 Jun 2026, 19:18",
+      "activityLog": [
+        {
+          "id": "log-1780553205089-c4iv",
+          "at": "2026-06-04T06:06:45.089Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4450",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780553314027-elm1",
+          "at": "2026-06-04T06:08:34.027Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4450 · Order source: Website\nWooCommerce #4450\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780553314179-484g",
+          "at": "2026-06-04T06:08:34.179Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4450 · Order source: Website\nWooCommerce #4450\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780553342628-6i9p",
+          "at": "2026-06-04T06:09:02.586Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-04T06:09:02.512Z",
+      "email": "",
+      "note": ""
+    },
+    {
+      "id": "ZENTIX-1007",
+      "customerName": "Zentix",
+      "phone": "01616618286",
+      "address": "House 28, Road 9",
+      "district": "",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779425614752",
+      "courier": "STEADFAST",
+      "status": "preorder",
+      "items": [
+        {
+          "productId": "PRD-74929197",
+          "productName": "Baby Pink Oxford Full Sleeve Cotton Shirt — size: M",
+          "productCode": "babypink-oxford-Zentix007-M",
+          "qty": 1,
+          "price": 1050,
+          "total": 1050,
+          "imageDataUrl": "https://zentixbd.com/wp-content/uploads/2026/05/ChatGPT-Image-May-16-2026-07_43_35-PM.jpg"
+        }
+      ],
+      "subtotal": 1050,
+      "shippingCharge": 0,
+      "discount": 0,
+      "advance": 0,
+      "total": 1050,
+      "note": "",
+      "source": "manual",
+      "handledBy": "Zentix",
+      "createdByUserId": "U-002",
+      "createdByRole": "FOUNDER",
+      "orderSource": "website",
+      "isPreorder": true,
+      "preorderReason": "out_of_stock",
+      "preorderDeliveryAt": "2026-06-25T15:52:00.000Z",
+      "createdAt": "03 Jun 2026, 21:52",
+      "updatedAt": "03 Jun 2026, 21:53",
+      "activityLog": [
+        {
+          "id": "log-1780501968159-35bj",
+          "at": "2026-06-03T15:52:48.158Z",
+          "type": "created",
+          "title": "Order created — Panel",
+          "detail": "Preorder · Order source: Website · New Order form",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501968160-5nth",
+          "at": "2026-06-03T15:52:48.159Z",
+          "type": "note",
+          "title": "Preorder reason",
+          "detail": "Out of stock\nTentative delivery: 25 Jun 2026, 21:52",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780502018205-khi7",
+          "at": "2026-06-03T15:53:38.205Z",
+          "type": "note",
+          "title": "Customer notified",
+          "detail": "Notification recorded at 03 Jun 2026, 21:53",
+          "actor": "Zentix"
+        }
+      ],
+      "tags": [
+        "COD",
+        "STEADFAST"
+      ],
+      "printed": false,
+      "preorderNotifiedAt": "03 Jun 2026, 21:53"
+    },
+    {
+      "id": "WO-4449",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4449,
+      "wooNumber": "4449",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-03T21:24:50",
+        "dateModified": "2026-06-04T01:02:14",
+        "syncedAt": "2026-06-04T04:40:13.184Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING",
+        "Auto Call",
+        "Pressed 1",
+        "Approve Order"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "03 Jun 2026, 21:24",
+      "updatedAt": "04 Jun 2026, 22:46",
+      "activityLog": [
+        {
+          "id": "log-1780500306525-7ba2",
+          "at": "2026-06-03T15:25:06.525Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4449",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780501353095-coi4",
+          "at": "2026-06-03T15:42:33.095Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4449 · Order source: Website\nWooCommerce #4449\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501353220-bv95",
+          "at": "2026-06-03T15:42:33.220Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4449 · Order source: Website\nWooCommerce #4449\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780591606873-be6l",
+          "at": "2026-06-04T16:46:46.836Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-04T16:46:46.746Z",
+      "invoiceNumber": "ZENTIX-1011"
+    },
+    {
+      "id": "ZENTIX-1006",
+      "customerName": "Zentix",
+      "phone": "01616618286",
+      "address": "House 28, Road 9",
+      "district": "",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779425614752",
+      "courier": "STEADFAST",
+      "status": "shipped",
+      "items": [
+        {
+          "productId": "PRD-74929198",
+          "productName": "Baby Pink Oxford Full Sleeve Cotton Shirt — size: L",
+          "productCode": "babypink-oxford-Zentix007-L",
+          "qty": 1,
+          "price": 1050,
+          "total": 1050,
+          "imageDataUrl": "https://zentixbd.com/wp-content/uploads/2026/05/ChatGPT-Image-May-16-2026-07_43_35-PM.jpg"
+        }
+      ],
+      "subtotal": 1050,
+      "shippingCharge": 0,
+      "discount": 0,
+      "advance": 200,
+      "total": 850,
+      "source": "manual",
+      "handledBy": "Zentix",
+      "createdByUserId": "U-002",
+      "createdByRole": "FOUNDER",
+      "orderSource": "facebook",
+      "isPreorder": false,
+      "createdAt": "03 Jun 2026, 20:40",
+      "updatedAt": "03 Jun 2026, 20:45",
+      "activityLog": [
+        {
+          "id": "log-1780497600693-fwob",
+          "at": "2026-06-03T14:40:00.692Z",
+          "type": "created",
+          "title": "Order created — Panel",
+          "detail": "Order source: Facebook · New Order form",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497695809-z5mb",
+          "at": "2026-06-03T14:41:35.809Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497695938-flbw",
+          "at": "2026-06-03T14:41:35.938Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497704568-rc6j",
+          "at": "2026-06-03T14:41:44.568Z",
+          "type": "note",
+          "title": "Advance payment recorded",
+          "detail": "Amount: ৳100\nPayment method: bKash\nTransaction ID: 4655646545464",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497704647-b6pw",
+          "at": "2026-06-03T14:41:44.647Z",
+          "type": "edited",
+          "title": "Order saved — Approved Order List · Edit",
+          "detail": "Saved via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nChanges:\n• Advance: ৳0 → ৳100\n• Total: ৳1050 → ৳950\nItems now: Baby Pink Oxford Full Sleeve Cotton Shirt — size: L ×1\nTotal: ৳950",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497850093-vowg",
+          "at": "2026-06-03T14:44:10.093Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497850246-kspp",
+          "at": "2026-06-03T14:44:10.246Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497855412-8np7",
+          "at": "2026-06-03T14:44:15.412Z",
+          "type": "note",
+          "title": "Advance payment recorded",
+          "detail": "Amount: ৳200\nPayment method: bKash\nTransaction ID: 4655646545464",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497855486-mf1t",
+          "at": "2026-06-03T14:44:15.486Z",
+          "type": "edited",
+          "title": "Order saved — Approved Order List · Edit",
+          "detail": "Saved via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nChanges:\n• Advance: ৳100 → ৳200\n• Total: ৳950 → ৳850\nItems now: Baby Pink Oxford Full Sleeve Cotton Shirt — size: L ×1\nTotal: ৳850",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497898873-ucbi",
+          "at": "2026-06-03T14:44:58.849Z",
+          "type": "status",
+          "title": "Status: Pending → RTS",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780497914678-g63r",
+          "at": "2026-06-03T14:45:14.649Z",
+          "type": "status",
+          "title": "Status: RTS → Shipped",
+          "actor": "Zentix"
+        }
+      ],
+      "tags": [
+        "COD",
+        "STEADFAST"
+      ],
+      "printed": false,
+      "advancePayment": {
+        "method": "bkash",
+        "transactionId": "4655646545464"
+      },
+      "approvedAt": "03 Jun 2026, 20:44"
+    },
+    {
       "id": "WO-4448",
       "customerName": "junayed",
       "phone": "01874748282",
@@ -44,7 +1147,7 @@
       "orderSource": "website",
       "inWebQueue": true,
       "createdAt": "03 Jun 2026, 13:15",
-      "updatedAt": "03 Jun 2026, 18:05",
+      "updatedAt": "04 Jun 2026, 10:40",
       "activityLog": [
         {
           "id": "log-1780470953101-auur",
@@ -133,6 +1236,38 @@
           "title": "Opened for edit — Web Order List · Open",
           "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4448 · Order source: Website\nWooCommerce #4448\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
           "actor": "Zentix"
+        },
+        {
+          "id": "log-1780499416653-93xn",
+          "at": "2026-06-03T15:10:16.653Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4448 · Order source: Website\nWooCommerce #4448\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780499416775-jenl",
+          "at": "2026-06-03T15:10:16.775Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4448 · Order source: Website\nWooCommerce #4448\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780499880534-nyhi",
+          "at": "2026-06-03T15:18:00.534Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4448 · Order source: Website\nWooCommerce #4448\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780499880713-wud8",
+          "at": "2026-06-03T15:18:00.713Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4448 · Order source: Website\nWooCommerce #4448\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
         }
       ],
       "webQueueReleased": false,
@@ -149,15 +1284,14 @@
         "deviceLabel": "Desktop",
         "attributionSource": "typein",
         "dateCreated": "2026-06-03T13:15:15",
-        "dateModified": "2026-06-03T13:15:18",
-        "syncedAt": "2026-06-03T12:05:27.675Z"
+        "dateModified": "2026-06-04T01:02:14",
+        "syncedAt": "2026-06-04T04:40:13.930Z"
       }
     },
     {
       "id": "WO-4447",
       "customerName": "Samir",
       "phone": "01616618286",
-      "email": "",
       "address": "Nikunjo 2 road 9",
       "district": "Dhaka",
       "paymentMethod": "cod",
@@ -182,11 +1316,10 @@
       "discount": 0,
       "advance": 0,
       "total": 1220,
-      "note": "",
       "source": "web",
       "wooOrderId": 4447,
       "wooNumber": "4447",
-      "webStatus": "processing",
+      "webStatus": "complete",
       "tags": [
         "WooCommerce",
         "PROCESSING"
@@ -195,9 +1328,9 @@
       "handledBy": "WooCommerce",
       "isPreorder": false,
       "orderSource": "website",
-      "inWebQueue": true,
+      "inWebQueue": false,
       "createdAt": "03 Jun 2026, 13:08",
-      "updatedAt": "03 Jun 2026, 18:05",
+      "updatedAt": "04 Jun 2026, 10:40",
       "activityLog": [
         {
           "id": "log-1780470542733-po9r",
@@ -238,6 +1371,46 @@
           "title": "Opened for edit — Web Order List · Open",
           "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4447 · Order source: Website\nWooCommerce #4447\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
           "actor": "Zentix"
+        },
+        {
+          "id": "log-1780499890561-3ro4",
+          "at": "2026-06-03T15:18:10.561Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4447 · Order source: Website\nWooCommerce #4447\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780499890694-ybq5",
+          "at": "2026-06-03T15:18:10.694Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4447 · Order source: Website\nWooCommerce #4447\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780500206938-vs4a",
+          "at": "2026-06-03T15:23:26.938Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4447 · Order source: Website\nWooCommerce #4447\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780500207072-x2l1",
+          "at": "2026-06-03T15:23:27.072Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4447 · Order source: Website\nWooCommerce #4447\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780500209111-iv3w",
+          "at": "2026-06-03T15:23:29.084Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
         }
       ],
       "webQueueReleased": false,
@@ -254,9 +1427,12 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-03T13:08:58",
-        "dateModified": "2026-06-03T13:09:03",
-        "syncedAt": "2026-06-03T12:05:27.745Z"
-      }
+        "dateModified": "2026-06-04T01:02:14",
+        "syncedAt": "2026-06-04T04:40:14.562Z"
+      },
+      "webStatusStaffSetAt": "2026-06-03T15:23:29.024Z",
+      "email": "",
+      "note": ""
     },
     {
       "id": "ZENTIX-1005",
@@ -606,7 +1782,7 @@
       "orderSource": "unknown",
       "isPreorder": false,
       "createdAt": "02 Jun 2026, 13:12",
-      "updatedAt": "03 Jun 2026, 18:05",
+      "updatedAt": "04 Jun 2026, 22:55",
       "activityLog": [
         {
           "id": "log-1780384322785-ul6n",
@@ -670,7 +1846,7 @@
       "courierConsignmentId": "255895689",
       "courierStatus": "unknown",
       "courierRiderAssigned": false,
-      "courierSyncedAt": "2026-06-03T12:05:27.212Z",
+      "courierSyncedAt": "2026-06-04T16:55:36.802Z",
       "approvedAt": "02 Jun 2026, 22:08"
     },
     {
@@ -1170,7 +2346,7 @@
       "orderSource": "facebook",
       "isPreorder": false,
       "createdAt": "23 May 2026, 20:36",
-      "updatedAt": "03 Jun 2026, 18:05",
+      "updatedAt": "04 Jun 2026, 22:55",
       "activityLog": [
         {
           "id": "log-1779546968404-3oih",
@@ -1220,7 +2396,7 @@
       "courierConsignmentId": "254471356",
       "courierStatus": "partial_delivered",
       "courierRiderAssigned": true,
-      "courierSyncedAt": "2026-06-03T12:05:33.728Z",
+      "courierSyncedAt": "2026-06-04T16:55:39.035Z",
       "approvedAt": "23 May 2026, 20:51"
     },
     {
@@ -11146,7 +12322,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "21 May 2026, 19:55",
-      "updatedAt": "03 Jun 2026, 18:05",
+      "updatedAt": "04 Jun 2026, 22:55",
       "activityLog": [
         {
           "id": "log-1779425438229-co8f",
@@ -12809,7 +13985,7 @@
       "trackingId": "SFR260522ST91CE511BD",
       "courierStatus": "delivered",
       "courierRiderAssigned": true,
-      "courierSyncedAt": "2026-06-03T12:05:36.197Z",
+      "courierSyncedAt": "2026-06-04T16:55:40.381Z",
       "approvedAt": "22 May 2026, 23:44"
     },
     {
@@ -12854,7 +14030,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "22 May 2026, 00:14",
-      "updatedAt": "03 Jun 2026, 18:05",
+      "updatedAt": "04 Jun 2026, 22:55",
       "activityLog": [
         {
           "id": "log-1779425438207-mo1z",
@@ -14532,7 +15708,7 @@
       "trackingId": "SFR260522STE46491ABD",
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
-      "courierSyncedAt": "2026-06-03T12:05:36.976Z",
+      "courierSyncedAt": "2026-06-04T16:55:40.851Z",
       "approvedAt": "22 May 2026, 23:44",
       "courierConsignmentId": "254071250"
     },
@@ -19212,7 +20388,7 @@
       "id": "AO-8827",
       "customerName": "pre order",
       "phone": "01874748787",
-      "address": "dsagsdg",
+      "address": "dsagsdg fdshdfhsdfsh",
       "district": "Dhaka",
       "paymentMethod": "cod",
       "deliveryMethodId": "dm-manual",
@@ -19241,7 +20417,7 @@
       "source": "manual",
       "isPreorder": true,
       "createdAt": "21 May 2026, 14:46",
-      "updatedAt": "21 May 2026, 20:59",
+      "updatedAt": "03 Jun 2026, 21:51",
       "activityLog": [
         {
           "id": "log-1779353171383-3sfz",
@@ -19418,6 +20594,78 @@
           "title": "Customer notified",
           "detail": "Notification recorded at 21 May 2026, 20:59",
           "actor": "Zentix"
+        },
+        {
+          "id": "log-1780500833474-uaex",
+          "at": "2026-06-03T15:33:53.474Z",
+          "type": "opened",
+          "title": "Opened for edit — Preorder List · Open",
+          "detail": "Opened via: Preorder List · Open\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780500833607-yc8l",
+          "at": "2026-06-03T15:33:53.607Z",
+          "type": "opened",
+          "title": "Opened for edit — Preorder List · Open",
+          "detail": "Opened via: Preorder List · Open\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501832599-fl2z",
+          "at": "2026-06-03T15:50:32.599Z",
+          "type": "opened",
+          "title": "Opened for edit — Preorder List · Open",
+          "detail": "Opened via: Preorder List · Open\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501832722-1xsf",
+          "at": "2026-06-03T15:50:32.722Z",
+          "type": "opened",
+          "title": "Opened for edit — Preorder List · Open",
+          "detail": "Opened via: Preorder List · Open\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501838739-gykj",
+          "at": "2026-06-03T15:50:38.739Z",
+          "type": "edited",
+          "title": "Order saved — Preorder List · Open",
+          "detail": "Saved via: Preorder List · Open\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nNo field changes (re-saved)\nItems now: Zentix SkyLine Classic Stripe Shirt — size: L ×1\nTotal: ৳1,001",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501838920-0i6t",
+          "at": "2026-06-03T15:50:38.895Z",
+          "type": "approved",
+          "title": "Ready for delivery",
+          "detail": "Moved from Preorder List to Approved Orders → Pending list for courier processing",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501867454-48a1",
+          "at": "2026-06-03T15:51:07.454Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501867606-amrj",
+          "at": "2026-06-03T15:51:07.606Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780501899630-j6g0",
+          "at": "2026-06-03T15:51:39.630Z",
+          "type": "edited",
+          "title": "Order saved — Approved Order List · Edit",
+          "detail": "Saved via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Unknown · New Order form\nChannel tag: manual\nChanges:\n• Address updated\nItems now: Zentix SkyLine Classic Stripe Shirt — size: L ×1\nTotal: ৳1,001",
+          "actor": "Zentix"
         }
       ],
       "tags": [
@@ -19428,7 +20676,7 @@
       "handledBy": "Staff",
       "preorderReason": "gift_parcel",
       "preorderDeliveryAt": "2026-05-31T09:07:00.000Z",
-      "orderSource": "unknown",
+      "orderSource": "facebook",
       "preorderNotifiedAt": "21 May 2026, 20:59"
     },
     {

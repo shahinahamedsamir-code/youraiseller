@@ -92,9 +92,9 @@ export const customers = [
 ];
 
 export const smsTemplates = [
-  { id: 1, name: "Order Confirm", body: "আপনার অর্ডার #{id} কনফার্ম হয়েছে।" },
-  { id: 2, name: "Out for Delivery", body: "আপনার পার্সেল ডেলিভারির পথে।" },
-  { id: 3, name: "Payment Reminder", body: "অগ্রিম পেমেন্ট বাকি আছে।" },
+  { id: 1, name: "Order Confirm", body: "Your order #{id} has been confirmed." },
+  { id: 2, name: "Out for Delivery", body: "Your parcel is out for delivery." },
+  { id: 3, name: "Payment Reminder", body: "Advance payment is still due." },
 ];
 
 export const deliveryMethods = [

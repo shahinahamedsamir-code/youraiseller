@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { SellerSmsSummary } from "@/lib/sms-admin-server";
 import type { SmsPlatformControl } from "@/lib/sms-platform-control";
+import { formatSmsBdt } from "@/lib/sms-types";
 import { SearchField } from "@/components/ui/SearchField";
 import {
   DevAdminSellerRechargeModal,
@@ -202,7 +203,7 @@ export function SmsControlPanel() {
           <div className="mt-5 flex flex-wrap items-end gap-4">
             <label className="block">
               <span className="mb-1 block text-xs font-bold uppercase text-slate-500">
-                Price per SMS (৳)
+                Price per SMS (BDT)
               </span>
               <input
                 type="number"
@@ -264,9 +265,9 @@ export function SmsControlPanel() {
               <strong className="text-white">{data.totals.balance}</strong>
             </p>
             <p className="flex justify-between text-slate-400">
-              Total recharge ৳{" "}
+              Total recharge{" "}
               <strong className="text-teal-300">
-                ৳{data.totals.walletTaka.toLocaleString("en-BD")}
+                {formatSmsBdt(data.totals.walletTaka)}
               </strong>
             </p>
           </div>
@@ -289,7 +290,7 @@ export function SmsControlPanel() {
               <tr className="border-b border-slate-800 text-[11px] font-bold uppercase text-slate-500">
                 <th className="px-4 py-3">Business</th>
                 <th className="px-3 py-3">SMS balance</th>
-                <th className="px-3 py-3">Recharge ৳</th>
+                <th className="px-3 py-3">Recharge (BDT)</th>
                 <th className="px-3 py-3">Total loaded</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -317,10 +318,10 @@ export function SmsControlPanel() {
                       {s.balance}
                     </td>
                     <td className="px-3 py-3 font-bold tabular-nums text-white">
-                      ৳{s.walletTaka.toLocaleString("en-BD")}
+                      {formatSmsBdt(s.walletTaka)}
                     </td>
                     <td className="px-3 py-3 tabular-nums text-slate-400">
-                      ৳{s.totalRechargedTaka.toLocaleString("en-BD")}
+                      {formatSmsBdt(s.totalRechargedTaka)}
                     </td>
                     <td className="px-3 py-3">
                       <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-300">
@@ -338,7 +339,7 @@ export function SmsControlPanel() {
                           className="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-500"
                         >
                           <Wallet className="h-3.5 w-3.5" />
-                          Recharge ৳
+                          Recharge BDT
                         </button>
                         <button
                           type="button"

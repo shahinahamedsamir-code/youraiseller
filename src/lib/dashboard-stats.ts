@@ -8,12 +8,27 @@ import { resolveWebDisplayStatus } from "./order-edit";
 import type { WebDisplayStatus } from "./orders-store";
 import { getProduct, loadProducts } from "./inventory-store";
 import { parseActivityDate } from "./order-activity";
+import {
+  getOrderSourceLabel,
+  inferOrderSourceFromOrder,
+  type OrderSource,
+} from "./order-source";
 
 const SOURCE_COLORS: Record<string, string> = {
+  facebook: "#1877f2",
+  website: "#14b8a6",
+  direct: "#8b5cf6",
+  unknown: "#94a3b8",
+  instagram: "#d946ef",
+  tiktok: "#0f172a",
+  whatsapp: "#22c55e",
+  exchange: "#f59e0b",
+  messenger: "#0ea5e9",
+  custom: "#6366f1",
+  /** @deprecated legacy channel field */
   web: "#5b4dff",
-  whatsapp: "#ff5c7a",
-  phone: "#22d3ee",
   manual: "#94a3b8",
+  phone: "#22d3ee",
 };
 
 const WEB_PIPELINE_STATUS_ORDER: {
@@ -95,10 +110,10 @@ export function resolveOverviewDateRange(preset: OverviewDatePreset): {
   if (preset === "all") return null;
 
   const today = new Date();
+  const start = new Date(today);
   const end = new Date(today);
-  let start = new Date(today);
-  let prevEnd = new Date(today);
-  let prevStart = new Date(today);
+  const prevEnd = new Date(today);
+  const prevStart = new Date(today);
 
   if (preset === "today") {
     prevEnd.setDate(prevEnd.getDate() - 1);
@@ -345,21 +360,25 @@ export function buildOrdersBySource(options?: {
     return inDateRange(ms, range.from, range.to);
   });
 
-  const map = new Map<string, { orders: number; amount: number }>();
+  const map = new Map<
+    string,
+    { orders: number; amount: number; sourceKey: OrderSource }
+  >();
 
   for (const o of orders) {
-    const key = o.source.toUpperCase();
-    const prev = map.get(key) ?? { orders: 0, amount: 0 };
+    const sourceKey = inferOrderSourceFromOrder(o);
+    const label = getOrderSourceLabel(sourceKey, o.customOrderSource);
+    const prev = map.get(label) ?? { orders: 0, amount: 0, sourceKey };
     prev.orders += 1;
     prev.amount += o.total;
-    map.set(key, prev);
+    map.set(label, prev);
   }
 
   const rows = Array.from(map.entries()).map(([name, data]) => ({
     name,
     orders: data.orders,
     amount: data.amount,
-    color: SOURCE_COLORS[name.toLowerCase()] ?? "#94a3b8",
+    color: SOURCE_COLORS[data.sourceKey] ?? "#94a3b8",
   }));
 
   return {

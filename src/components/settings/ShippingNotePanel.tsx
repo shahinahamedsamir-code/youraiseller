@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import clsx from "clsx";
 import { ScrollText, Plus, Trash2, Sparkles, Pencil, Check, X } from "lucide-react";
 import {
   loadShippingNotes,

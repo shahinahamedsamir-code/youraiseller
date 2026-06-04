@@ -16,7 +16,7 @@ export const webOrdersNav: WebOrderNavItem[] = [
   },
   {
     label: "Auto Call Center",
-    href: "/dashboard/orders/web/auto-call-center",
+    href: "/dashboard/integration/auto-call",
     description: "Automated order verification calls",
     featureKey: "auto_call_center",
   },

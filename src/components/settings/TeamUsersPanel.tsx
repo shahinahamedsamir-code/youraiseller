@@ -18,7 +18,6 @@ import {
   Check,
   Building2,
   Crown,
-  Sparkles,
 } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -320,7 +319,6 @@ export function TeamUsersPanel() {
 
       {showCreate && (
         <UserFormModal
-          mode="create"
           onClose={() => setShowCreate(false)}
           onDone={(msg) => {
             setShowCreate(false);
@@ -632,11 +630,9 @@ function ErrorText({ msg }: { msg: string }) {
 /* ------------------------------ Create form ------------------------------ */
 
 function UserFormModal({
-  mode,
   onClose,
   onDone,
 }: {
-  mode: "create";
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {

@@ -186,9 +186,7 @@ export function getCourierTrackingDisplayId(
 }
 
 /** User-facing link text (Turume-style) */
-export function getCourierPanelTrackingLabel(
-  _order?: Pick<Order, "deliveryMethodId" | "courier">
-): string {
+export function getCourierPanelTrackingLabel(): string {
   return "Parcel Link";
 }
 

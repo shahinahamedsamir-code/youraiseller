@@ -21,6 +21,7 @@ import { OrderRowActionsMenu } from "./OrderRowActionsMenu";
 import { ApprovedOrderActionsMenu } from "./ApprovedOrderActionsMenu";
 import { canEditOrder } from "@/lib/order-edit";
 import { OrderSourceBadge } from "@/components/orders/OrderSourceBadge";
+import { OrderTagChips } from "@/components/orders/OrderTagChips";
 import { CourierTrackingCell } from "@/components/orders/CourierTrackingCell";
 import {
   Search,
@@ -620,20 +621,7 @@ function OrderTableRow({
         />
       </td>
       <td className={TD}>
-        <div className="flex flex-wrap gap-1">
-          {o.tags?.length ? (
-            o.tags.map((t) => (
-              <span
-                key={t}
-                className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-bold text-white"
-              >
-                {t}
-              </span>
-            ))
-          ) : (
-            <span className="text-slate-400">—</span>
-          )}
-        </div>
+        <OrderTagChips tags={o.tags} />
       </td>
       <td className={clsx(TD, "text-center")}>
         <button type="button" onClick={onPrinted} className="mx-auto">
@@ -836,16 +824,7 @@ function OrderRow({
 
           {/* Meta */}
           <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap gap-1">
-              {o.tags?.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-md bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-white"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
+            <OrderTagChips tags={o.tags} size="md" />
             <button
               type="button"
               onClick={onPrinted}

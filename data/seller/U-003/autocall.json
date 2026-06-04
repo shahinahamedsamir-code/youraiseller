@@ -1,0 +1,93 @@
+{
+  "balanceTaka": 7,
+  "walletTaka": 10,
+  "totalRechargedTaka": 10,
+  "settings": {
+    "senderId": "",
+    "questionVoiceId": "voice-1780592839246",
+    "defaultDeliveryMethodId": "dm-steadfast",
+    "maxAttempts": 2,
+    "retryGapMinutes": 15,
+    "perCallDurationMinutes": 3,
+    "dtmfOptions": [
+      {
+        "id": "dtmf-1780592871444",
+        "key": "1",
+        "voiceLabel": "Eid off confirm key 1",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-003/1780592858191-fqw6e7.wav",
+        "orderAction": "approve_pending"
+      },
+      {
+        "id": "dtmf-1780592885400",
+        "key": "2",
+        "voiceLabel": "Adorix Key2",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-003/1780592866109-tpl4np.wav",
+        "orderAction": "web_cancel"
+      }
+    ],
+    "voices": [
+      {
+        "id": "voice-1780592839246",
+        "label": "Eid Munarak Main call",
+        "fileName": "1780592837573-yhbb8q.wav",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-003/1780592837573-yhbb8q.wav"
+      },
+      {
+        "id": "voice-1780592858536",
+        "label": "Eid off confirm key 1",
+        "fileName": "1780592858191-fqw6e7.wav",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-003/1780592858191-fqw6e7.wav"
+      },
+      {
+        "id": "voice-1780592866440",
+        "label": "Adorix Key2",
+        "fileName": "1780592866109-tpl4np.wav",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-003/1780592866109-tpl4np.wav"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "new_web",
+      "label": "Call new web orders automatically",
+      "enabled": true
+    },
+    {
+      "id": "retry",
+      "label": "Retry if customer does not answer",
+      "enabled": true
+    },
+    {
+      "id": "max_attempts",
+      "label": "Limit how many times we call",
+      "enabled": true
+    },
+    {
+      "id": "business_hours",
+      "label": "Call only between 9 AM – 9 PM",
+      "enabled": false
+    },
+    {
+      "id": "approved_pending",
+      "label": "Include approved pending orders",
+      "enabled": false
+    }
+  ],
+  "runs": [],
+  "logs": [
+    {
+      "id": "log-1780592923868-cgli",
+      "orderId": "test",
+      "phone": "01616618286",
+      "campaignId": "TVT4J0BE4Q",
+      "responseCode": "keyP2",
+      "responseLabel": "Pressed 2",
+      "status": "completed",
+      "sentAt": "2026-06-04T17:08:43.868Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-003/1780592837573-yhbb8q.wav",
+      "providerMessage": "keyP2",
+      "source": "TEST",
+      "attempt": 1
+    }
+  ]
+}

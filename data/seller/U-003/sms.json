@@ -1,0 +1,87 @@
+{
+  "balance": 0,
+  "walletTaka": 0,
+  "totalRechargedTaka": 0,
+  "autoSettings": {
+    "new_order": [
+      {
+        "id": "new_order_created",
+        "title": "New Order SMS",
+        "hint": "Send SMS to customer when a new order is created",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nYour order has been confirmed.\nInvoice: {{invoiceNumber}}.\nAmount: {{grandTotal}} BDT.\nThank you for shopping with {{storeName}}."
+      },
+      {
+        "id": "new_order_edited",
+        "title": "Edit Order SMS",
+        "hint": "Send SMS when an order is edited",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nYour order has been updated.\nInvoice: {{invoiceNumber}}.\nUpdated Amount: {{grandTotal}} BDT.\nThank you for shopping with {{storeName}}."
+      },
+      {
+        "id": "new_order_shipped",
+        "title": "Shipped Order SMS",
+        "hint": "Send SMS to customer when order is shipped",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nYour order {{invoiceNumber}} is on the way.\nAmount: {{grandTotal}} BDT.\nThank you — {{storeName}}."
+      }
+    ],
+    "preorder": [
+      {
+        "id": "preorder_created",
+        "title": "Preorder Created SMS",
+        "hint": "Send SMS when customer creates a pre-order",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nYour pre-order is received.\nInvoice: {{invoiceNumber}}.\nAmount: {{grandTotal}} BDT.\nWe will contact you soon — {{storeName}}."
+      },
+      {
+        "id": "preorder_pending",
+        "title": "Preorder to Pending SMS",
+        "hint": "Send SMS when pre-order moves to pending",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nYour pre-order {{invoiceNumber}} is now pending confirmation.\nAmount: {{grandTotal}} BDT.\n{{storeName}}"
+      }
+    ],
+    "web_order": [
+      {
+        "id": "web_received",
+        "title": "Web Order Received SMS",
+        "hint": "Send SMS when a new web order is received",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nYour order has been confirmed.\nOrder ID: {{orderId}}.\nAmount: {{grandTotal}} BDT.\nThank you for shopping with {{storeName}}."
+      },
+      {
+        "id": "web_reminder",
+        "title": "Reminder SMS",
+        "hint": "Send reminder SMS for web orders",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nReminder: order {{orderId}} ({{grandTotal}} BDT) is waiting.\nPlease confirm — {{storeName}}."
+      },
+      {
+        "id": "web_advance",
+        "title": "Advance SMS",
+        "hint": "Send advance payment SMS for web orders",
+        "enabled": false,
+        "template": "Dear {{name}},\n\nAdvance payment received for order {{orderId}}.\nAmount: {{grandTotal}} BDT.\nThank you — {{storeName}}."
+      }
+    ]
+  },
+  "quickTemplates": [
+    {
+      "id": "qt-order-confirm",
+      "name": "Order Confirm",
+      "body": "Your order has been confirmed. Thank you for shopping with us."
+    },
+    {
+      "id": "qt-out-for-delivery",
+      "name": "Out for Delivery",
+      "body": "Your parcel is out for delivery. Please keep your phone reachable."
+    },
+    {
+      "id": "qt-payment-reminder",
+      "name": "Payment Reminder",
+      "body": "Reminder: your advance payment is still due. Please pay soon."
+    }
+  ],
+  "logs": []
+}

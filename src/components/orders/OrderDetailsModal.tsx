@@ -42,7 +42,6 @@ import {
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { getDeliveryMethodName } from "@/lib/delivery-methods-store";
 import {
-  getCourierPanelTrackingLabel,
   getCourierPanelTrackingUrl,
   getCourierTrackingDisplayId,
 } from "@/lib/courier-tracking-url";

@@ -1,19 +1,19 @@
 [
   {
+    "id": "C-8286",
+    "name": "Samir",
+    "phone": "01616618286",
+    "orders": 21,
+    "spent": 24820,
+    "email": ""
+  },
+  {
     "id": "C-8282",
     "name": "junayed",
     "phone": "01874748282",
     "orders": 3,
     "spent": 1220,
     "email": "Zentixbd@gmail.com"
-  },
-  {
-    "id": "C-8286",
-    "name": "Samir",
-    "phone": "01616618286",
-    "orders": 8,
-    "spent": 7370,
-    "email": ""
   },
   {
     "id": "C-6220",

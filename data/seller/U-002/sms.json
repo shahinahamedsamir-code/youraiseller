@@ -1,64 +1,463 @@
 {
-  "balance": 58,
-  "walletTaka": 4,
-  "totalRechargedTaka": 4,
+  "balance": 36,
+  "walletTaka": 8,
+  "totalRechargedTaka": 8,
   "autoSettings": {
     "new_order": [
       {
         "id": "new_order_created",
         "title": "New Order SMS",
-        "hint": "নতুন অর্ডার তৈরি করার সময় কাস্টমারকে SMS পাঠান",
-        "enabled": false
+        "hint": "Send SMS to customer when a new order is created",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nYour order has been confirmed.\nInvoice: {{invoiceNumber}}.\nAmount: {{grandTotal}} BDT.\nThank you for shopping with {{storeName}}."
       },
       {
         "id": "new_order_edited",
         "title": "Edit Order SMS",
         "hint": "Send SMS when an order is edited",
-        "enabled": false
+        "enabled": true,
+        "template": "Dear {{name}},\n\nYour order has been updated.\nInvoice: {{invoiceNumber}}.\nUpdated Amount: {{grandTotal}} BDT.\nThank you for shopping with {{storeName}}."
       },
       {
         "id": "new_order_shipped",
         "title": "Shipped Order SMS",
-        "hint": "অর্ডার শিপ করার সময় কাস্টমারকে SMS পাঠান",
-        "enabled": false
+        "hint": "Send SMS to customer when order is shipped",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nYour order {{invoiceNumber}} is on the way.\nAmount: {{grandTotal}} BDT.\nThank you — {{storeName}}."
       }
     ],
     "preorder": [
       {
         "id": "preorder_created",
         "title": "Preorder Created SMS",
-        "hint": "প্রি-অর্ডার তৈরি হলে কাস্টমারকে SMS পাঠান",
-        "enabled": false
+        "hint": "Send SMS when customer creates a pre-order",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nYour pre-order is received."
       },
       {
         "id": "preorder_pending",
         "title": "Preorder to Pending SMS",
-        "hint": "প্রি-অর্ডার Pending হলে কাস্টমারকে SMS পাঠান",
-        "enabled": false
+        "hint": "Send SMS when pre-order moves to pending",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nYour pre-order {{invoiceNumber}} is now pending confirmation.\nAmount: {{grandTotal}} BDT.\n{{storeName}}"
       }
     ],
     "web_order": [
       {
         "id": "web_received",
         "title": "Web Order Received SMS",
-        "hint": "নতুন ওয়েব অর্ডার পাওয়ার সময় কাস্টমারকে SMS পাঠান",
-        "enabled": false
+        "hint": "Send SMS when a new web order is received",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nYour order has been confirmed.\nOrder ID: {{orderId}}.\nAmount: {{grandTotal}} BDT.\nThank you for shopping with {{storeName}}."
       },
       {
         "id": "web_reminder",
         "title": "Reminder SMS",
-        "hint": "ওয়েব অর্ডারে কাস্টমারকে রিমাইন্ডার SMS পাঠান",
-        "enabled": false
+        "hint": "Send reminder SMS for web orders",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nReminder: order {{orderId}} ({{grandTotal}} BDT) is waiting.\nPlease confirm — {{storeName}}."
       },
       {
         "id": "web_advance",
         "title": "Advance SMS",
-        "hint": "ওয়েব অর্ডারে কাস্টমারকে অ্যাডভান্স SMS পাঠান",
-        "enabled": false
+        "hint": "Send advance payment SMS for web orders",
+        "enabled": true,
+        "template": "Dear {{name}},\n\nAdvance payment need  for order {{orderId}}.\nAmount: {{grandTotal}} BDT.\nThank you — {{storeName}}."
       }
     ]
   },
+  "quickTemplates": [
+    {
+      "id": "qt-order-confirm",
+      "name": "Order Confirm",
+      "body": "Your order has been confirmed. Thank you for shopping with us."
+    },
+    {
+      "id": "qt-out-for-delivery",
+      "name": "Out for Delivery",
+      "body": "Your parcel is out for delivery. Please keep your phone reachable."
+    },
+    {
+      "id": "qt-payment-reminder",
+      "name": "Payment Reminder",
+      "body": "Reminder: your advance payment is still due. Please pay soon."
+    }
+  ],
   "logs": [
+    {
+      "id": "sms-1780591839340-on0j06",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4458.\nAmount: 2370 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:50",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780591812889-qu7fbk",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1013.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:50",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780591809257-7ppcvh",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1012.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:50",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780591758995-orv7ht",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4457.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:49",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780591613823-id5qxa",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1011.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:46",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780591613544-ilfkf7",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1010.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:46",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780591305144-7lhkmz",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4456.\nAmount: 2370 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:41",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780589441142-ce91h4",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4455.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 22:10",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780588589258-02hv4e",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4454.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 21:56",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780588312140-xclaeu",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4453.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 21:51",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780585011015-tnje91",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4452.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 20:56",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780554483304-w4ni37",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1008.\nAmount: 1050 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:28",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780553936874-i15dtt",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: WO-4451.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:18",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780553894822-c21jt9",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4451.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:18",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780553342884-iucrrx",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been updated.\nInvoice: WO-4450.\nUpdated Amount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Edit Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:09",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780553335823-66qkfb",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nReminder: order 4450 (1220 BDT) is waiting.\nPlease confirm — Zentix.",
+      "type": "Auto · Web Reminder",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:08",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780553328276-ln41vs",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nAdvance payment need  for order 4450.\nAmount: 1220 BDT.\nThank you — Zentix.",
+      "type": "Auto · Web Advance",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:08",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780553207378-2s6wkz",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4450.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-04 12:06",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780503175255-vlrdhb",
+      "phone": "001616618286",
+      "message": "Your order has been confirmed. Thank you for shopping with us.",
+      "type": "Manual",
+      "status": "delivered",
+      "sentAt": "2026-06-03 22:12",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780501968642-zalrd1",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour pre-order is received.",
+      "type": "Auto · Preorder",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:52",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780501900175-msdonl",
+      "phone": "001874748787",
+      "message": "Dear pre order,\n\nYour order has been updated.\nInvoice: AO-8827.\nUpdated Amount: 1001 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Edit Order",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:51",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780501842299-yyospa",
+      "phone": "001874748787",
+      "message": "Dear pre order,\n\nYour pre-order AO-8827 is now pending confirmation.\nAmount: 1001 BDT.\nZentix",
+      "type": "Auto · Preorder Pending",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:50",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780500307017-y3reb7",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: WO-4449.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:25",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780500211307-v8bnfn",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been updated.\nInvoice: WO-4447.\nUpdated Amount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Edit Order",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:23",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780499994124-9qsfu9",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nAdvance payment received for WO-4447.\nAmount: 1220 BDT.\nThank you — Zentix.",
+      "type": "Auto · Web Advance",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:19",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780499990915-tcbdbc",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nReminder: order WO-4447 (1220 BDT) is waiting.\nPlease confirm — Zentix.",
+      "type": "Auto · Web Reminder",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:19",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780499893191-d0vkis",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nAdvance payment received for WO-4447.\nAmount: 1220 BDT.\nThank you — Zentix.",
+      "type": "Auto · Web Advance",
+      "status": "delivered",
+      "sentAt": "2026-06-03 21:18",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780497915137-r6b64e",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour order ZENTIX-1006 is on the way.\nAmount: 850 BDT.\nThank you — Zentix.",
+      "type": "Auto · Shipped",
+      "status": "delivered",
+      "sentAt": "2026-06-03 20:45",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780497899077-4q0toq",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour order has been updated.\nInvoice: ZENTIX-1006.\nUpdated Amount: 850 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Edit Order",
+      "status": "delivered",
+      "sentAt": "2026-06-03 20:44",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780497858801-9xehfd",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour order has been updated.\nInvoice: ZENTIX-1006.\nUpdated Amount: 850 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Edit Order",
+      "status": "delivered",
+      "sentAt": "2026-06-03 20:44",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780497706180-udq8ve",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour order has been updated.\nInvoice: ZENTIX-1006.\nUpdated Amount: 950 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Edit Order",
+      "status": "pending",
+      "sentAt": "2026-06-03 20:41",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780497601939-1qoykr",
+      "phone": "001616618286",
+      "message": "Dear Zentix,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1006.\nAmount: 1050 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "pending",
+      "sentAt": "2026-06-03 20:40",
+      "cost": 1,
+      "providerText": "Shoot started successfully"
+    },
     {
       "id": "sms-1780487873898-fqmax7",
       "phone": "001616618286",

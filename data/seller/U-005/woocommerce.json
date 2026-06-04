@@ -1,0 +1,263 @@
+{
+  "storeUrl": "https://turume.com/",
+  "consumerKey": "ck_fb3d1d2f2539db96afc1d7c7dd4b29ced1bf4f68",
+  "consumerSecret": "cs_4b7f16fd1c0a6226ee85d529f754349623834c74",
+  "connected": true,
+  "orderStatusOnImport": "on-hold",
+  "syncViaPlugin": true,
+  "fetchFullOrderViaApi": false,
+  "businessId": "biz_mpfht1nepym1bo",
+  "apiKey": "yai_mpfht1nebgh0ur",
+  "logs": [
+    {
+      "at": "22 May 2026, 14:01",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:40",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:38",
+      "level": "success",
+      "message": "Order sync: 0 new, 11 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 13:36",
+      "level": "success",
+      "message": "Order sync: 4 new, 7 updated, 301 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 11:47",
+      "level": "success",
+      "message": "Order sync: 0 new, 4 updated, 303 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 11:46",
+      "level": "success",
+      "message": "Order sync: 0 new, 4 updated, 303 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 11:45",
+      "level": "success",
+      "message": "Order sync: 0 new, 4 updated, 303 on Web List (0 repaired)"
+    },
+    {
+      "at": "22 May 2026, 11:45",
+      "level": "success",
+      "message": "Order sync: 13 new, 17 updated, 303 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 20:14",
+      "level": "success",
+      "message": "Order sync: 0 new, 15 updated, 293 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:50",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:49",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:49",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:37",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:37",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:36",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:35",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:34",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:34",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:34",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:32",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:32",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:32",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:31",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:31",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:24",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:23",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:22",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:20",
+      "level": "success",
+      "message": "Order sync: 0 new, 13 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:19",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:18",
+      "level": "success",
+      "message": "Order sync: 0 new, 14 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:18",
+      "level": "success",
+      "message": "Order sync: 0 new, 15 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:17",
+      "level": "success",
+      "message": "Order sync: 0 new, 15 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:16",
+      "level": "success",
+      "message": "Order sync: 0 new, 15 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:15",
+      "level": "success",
+      "message": "Order sync: 0 new, 15 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:15",
+      "level": "success",
+      "message": "Order sync: 0 new, 17 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:10",
+      "level": "success",
+      "message": "Order sync: 0 new, 17 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:10",
+      "level": "success",
+      "message": "Order sync: 0 new, 17 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:09",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 291 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:07",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:07",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:07",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:06",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:06",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:06",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:05",
+      "level": "success",
+      "message": "Order sync: 441 new, 50 updated, 292 on Web List (0 repaired)"
+    },
+    {
+      "at": "21 May 2026, 19:05",
+      "level": "success",
+      "message": "Order sync: 0 new, 18 updated, 258 on Web List (0 repaired)"
+    }
+  ]
+}

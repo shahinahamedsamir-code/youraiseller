@@ -10,6 +10,7 @@ import {
   type OverviewDatePreset,
 } from "@/lib/dashboard-stats";
 import clsx from "clsx";
+import { ORDER_SOURCES_UPDATED } from "@/lib/order-source-store";
 
 export function OrdersBySource() {
   const [view, setView] = useState<"chart" | "table">("chart");
@@ -32,9 +33,11 @@ export function OrdersBySource() {
     refresh();
     window.addEventListener("youraiseller-data-updated", refresh);
     window.addEventListener("storage", refresh);
+    window.addEventListener(ORDER_SOURCES_UPDATED, refresh);
     return () => {
       window.removeEventListener("youraiseller-data-updated", refresh);
       window.removeEventListener("storage", refresh);
+      window.removeEventListener(ORDER_SOURCES_UPDATED, refresh);
     };
   }, [datePreset]);
 

@@ -39,7 +39,7 @@ export function CourierTrackingCell({
   const hasTracking = orderHasCourierTracking(order);
   const panelUrl =
     hasTracking && showPanelLink ? getCourierPanelTrackingUrl(order) : null;
-  const parcelLabel = getCourierPanelTrackingLabel(order);
+  const parcelLabel = getCourierPanelTrackingLabel();
   const displayId = hasTracking ? getCourierTrackingDisplayId(order) : null;
   const brand = getCourierBrandName(order);
   const riderAssigned = hasTracking && isCourierDeliveryRiderAssigned(order);

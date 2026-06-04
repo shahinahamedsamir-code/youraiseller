@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { isDevAdminAuthenticated } from "@/lib/dev-admin-auth-server";
-import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
 import { loadSmsPlatformControl } from "@/lib/sms-platform-control";
 import { applySmsRecharge, smsCreditsFromTaka } from "@/lib/sms-recharge-server";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
@@ -61,7 +60,7 @@ export async function POST(req: Request) {
       seller: row,
       message:
         taka > 0
-          ? `Added ৳${Math.floor(taka)} → +${smsCreditsFromTaka(taka, control.smsPriceTaka)} SMS`
+          ? `Added BDT ${Math.floor(taka)} → +${smsCreditsFromTaka(taka, control.smsPriceTaka)} SMS`
           : `Added ${extraCredits} SMS credits`,
     });
   } catch (e) {

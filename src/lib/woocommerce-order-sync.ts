@@ -3,7 +3,6 @@ import {
   loadOrders,
   repairWebOrdersInQueue,
 } from "./orders-store";
-import { WEB_DEFAULT_ORDER_SOURCE, resolveOrderSourceOnWooSync } from "./order-source";
 import type { Order, OrderLine, PaymentMethod, WebDisplayStatus } from "./orders-store";
 import { loadWooCommerceSettings, appendWooLog } from "./woocommerce-integration-store";
 import { findProductForWooLine } from "./inventory-store";

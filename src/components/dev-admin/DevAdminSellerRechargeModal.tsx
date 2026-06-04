@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Coins, Loader2, Wallet, X } from "lucide-react";
 import type { SellerSmsSummary } from "@/lib/sms-admin-server";
+import { formatSmsBdt } from "@/lib/sms-types";
 
 export type AdminRechargeMode = "taka" | "credits";
 
@@ -59,8 +60,8 @@ export function DevAdminSellerRechargeModal({
 
   const isTaka = mode === "taka";
   const Icon = isTaka ? Wallet : Coins;
-  const title = isTaka ? "Recharge ৳" : "Add SMS credits";
-  const label = isTaka ? "Amount (৳ BDT)" : "SMS credits (count)";
+  const title = isTaka ? "Recharge (BDT)" : "Add SMS credits";
+  const label = isTaka ? "Amount (BDT)" : "SMS credits (count)";
 
   return createPortal(
     <div className="fixed inset-0 z-[240] flex items-center justify-center p-4">
@@ -108,7 +109,7 @@ export function DevAdminSellerRechargeModal({
               <span>
                 Loaded:{" "}
                 <strong className="text-white">
-                  ৳{seller.walletTaka.toLocaleString("en-BD")}
+                  {formatSmsBdt(seller.walletTaka)}
                 </strong>
               </span>
             </p>
@@ -131,7 +132,7 @@ export function DevAdminSellerRechargeModal({
           {isTaka ? (
             <p className="text-sm text-slate-400">
               ≈{" "}
-              <strong className="text-teal-300">{smsPreview ?? 0} SMS</strong> at ৳
+              <strong className="text-teal-300">{smsPreview ?? 0} SMS</strong> at BDT{" "}
               {smsPriceTaka}/SMS
             </p>
           ) : null}

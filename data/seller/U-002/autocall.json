@@ -1,0 +1,322 @@
+{
+  "balanceTaka": 0,
+  "walletTaka": 30,
+  "totalRechargedTaka": 30,
+  "settings": {
+    "senderId": "",
+    "questionVoiceId": "voice-1780588936992",
+    "defaultDeliveryMethodId": "dm-1779425614752",
+    "maxAttempts": 2,
+    "retryGapMinutes": 15,
+    "perCallDurationMinutes": 3,
+    "dtmfOptions": [
+      {
+        "id": "dtmf-1780574986336",
+        "key": "1",
+        "voiceLabel": "Adorix Key1",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588964354-t8xllv.wav",
+        "orderAction": "approve_pending"
+      },
+      {
+        "id": "dtmf-1780574990042",
+        "key": "2",
+        "voiceLabel": "Adorix Key2",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577900951-fmm27s.wav",
+        "orderAction": "none"
+      }
+    ],
+    "voices": [
+      {
+        "id": "voice-1780588936992",
+        "label": "Adorix Main",
+        "fileName": "1780588936455-bo1z3d.wav",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav"
+      },
+      {
+        "id": "voice-1780588948328",
+        "label": "Adorix Key2",
+        "fileName": "1780588947351-iszmso.wav",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588947351-iszmso.wav"
+      },
+      {
+        "id": "voice-1780588965067",
+        "label": "Adorix Key1",
+        "fileName": "1780588964354-t8xllv.wav",
+        "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588964354-t8xllv.wav"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "new_web",
+      "label": "Call new web orders automatically",
+      "enabled": true
+    },
+    {
+      "id": "retry",
+      "label": "Retry if customer does not answer",
+      "enabled": true
+    },
+    {
+      "id": "max_attempts",
+      "label": "Limit how many times we call",
+      "enabled": true
+    },
+    {
+      "id": "business_hours",
+      "label": "Call only between 9 AM – 9 PM",
+      "enabled": false
+    },
+    {
+      "id": "approved_pending",
+      "label": "Include approved pending orders",
+      "enabled": false
+    }
+  ],
+  "runs": [
+    {
+      "id": "lo8jdy0t",
+      "status": "COMPLETED",
+      "startedAt": "04 Jun 2026, 20:08",
+      "processed": 1,
+      "total": 1,
+      "pressed1": 0,
+      "pressed2": 0,
+      "answeredNoInput": 0,
+      "failed": 0,
+      "noAnswer": 0,
+      "busy": 0
+    },
+    {
+      "id": "lw79vi75",
+      "status": "COMPLETED",
+      "startedAt": "04 Jun 2026, 19:54",
+      "processed": 2,
+      "total": 2,
+      "pressed1": 0,
+      "pressed2": 0,
+      "answeredNoInput": 0,
+      "failed": 0,
+      "noAnswer": 0,
+      "busy": 0
+    },
+    {
+      "id": "qfsfgh09",
+      "status": "COMPLETED",
+      "startedAt": "04 Jun 2026, 19:46",
+      "processed": 1,
+      "total": 1,
+      "pressed1": 0,
+      "pressed2": 0,
+      "answeredNoInput": 0,
+      "failed": 0,
+      "noAnswer": 0,
+      "busy": 0
+    },
+    {
+      "id": "43dkrfh2",
+      "status": "COMPLETED",
+      "startedAt": "04 Jun 2026, 19:43",
+      "processed": 1,
+      "total": 1,
+      "pressed1": 0,
+      "pressed2": 0,
+      "answeredNoInput": 0,
+      "failed": 1,
+      "noAnswer": 0,
+      "busy": 0
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1780591857417-g62p",
+      "orderId": "WO-4458",
+      "phone": "01616618286",
+      "campaignId": "8V4MD6C1NR",
+      "responseCode": "keyP2",
+      "responseLabel": "Pressed 2",
+      "status": "completed",
+      "sentAt": "2026-06-04T16:50:57.417Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "keyP2 · Key 2 → No change",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "orderAction": "none",
+      "orderActionApplied": true
+    },
+    {
+      "id": "log-1780591777056-hd0d",
+      "orderId": "WO-4457",
+      "phone": "01616618286",
+      "campaignId": "7N9CAB0R0D",
+      "responseCode": "keyP1",
+      "responseLabel": "Pressed 1",
+      "status": "completed",
+      "sentAt": "2026-06-04T16:49:37.056Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "keyP1 · Key 1 → Approved → Pending",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "orderAction": "approve_pending",
+      "orderActionApplied": true
+    },
+    {
+      "id": "log-1780591540329-tm72",
+      "orderId": "test",
+      "phone": "01616618286",
+      "campaignId": "TP8AO8L8M6",
+      "responseCode": "RBNIG",
+      "responseLabel": "No Answer",
+      "status": "completed",
+      "sentAt": "2026-06-04T16:45:40.329Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "RBNIG",
+      "source": "TEST",
+      "attempt": 1
+    },
+    {
+      "id": "log-1780591319823-hkyg",
+      "orderId": "WO-4456",
+      "phone": "01616618286",
+      "campaignId": "9MAYI14CAC",
+      "responseCode": "keyP1",
+      "responseLabel": "Pressed 1",
+      "status": "completed",
+      "sentAt": "2026-06-04T16:41:59.823Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "keyP1 · Key 1 → Approved → Pending · Key 1 → Approved → Pending",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "orderAction": "approve_pending",
+      "orderActionApplied": true
+    },
+    {
+      "id": "log-1780589459645-66z3",
+      "orderId": "WO-4455",
+      "phone": "01616618286",
+      "campaignId": "93Q4VVDBD5",
+      "responseCode": "keyP1",
+      "responseLabel": "Confirmed · Key 1",
+      "status": "completed",
+      "sentAt": "2026-06-04T16:10:59.645Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "keyP1 · Key 1 → Approved → Pending",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "orderActionApplied": true,
+      "orderAction": "approve_pending"
+    },
+    {
+      "id": "log-1780589287654-nfyk",
+      "orderId": "test",
+      "phone": "01616618286",
+      "campaignId": "9SA9IB6JCB",
+      "responseCode": "RBNIG",
+      "responseLabel": "Answered, no key pressed",
+      "status": "completed",
+      "sentAt": "2026-06-04T16:08:07.654Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "RBNIG",
+      "source": "TEST",
+      "attempt": 1
+    },
+    {
+      "id": "log-1780589011108-xk0z",
+      "orderId": "test",
+      "phone": "01616618286",
+      "responseCode": "7533",
+      "responseLabel": "Voice file could not be loaded for calling",
+      "status": "failed",
+      "sentAt": "2026-06-04T16:03:31.112Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav",
+      "providerMessage": "Audio File Unavailable: https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588964354-t8xllv.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588947351-iszmso.wav Fix: deploy latest app + data/seller on NEXT_PUBLIC_APP_URL (https://lethargy-clever-dupe.ngrok-free.dev), or paste TeamITQAN panel .wav URLs in Voice Library.",
+      "source": "TEST",
+      "attempt": 1,
+      "error": "Audio File Unavailable: https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588936455-bo1z3d.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588964354-t8xllv.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780588947351-iszmso.wav Fix: deploy latest app + data/seller on NEXT_PUBLIC_APP_URL (https://lethargy-clever-dupe.ngrok-free.dev), or paste TeamITQAN panel .wav URLs in Voice Library."
+    },
+    {
+      "id": "log-1780588591704-0ofn",
+      "orderId": "WO-4454",
+      "phone": "01616618286",
+      "responseCode": "7533",
+      "responseLabel": "7533",
+      "status": "failed",
+      "sentAt": "2026-06-04T15:56:31.704Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav",
+      "providerMessage": "Audio File Unavailable: https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577473840-wp31mc.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577900951-fmm27s.wav",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "error": "Audio File Unavailable: https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577473840-wp31mc.wav, https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577900951-fmm27s.wav"
+    },
+    {
+      "id": "log-1780582127003-01l8",
+      "orderId": "WO-4449",
+      "phone": "01616618286",
+      "campaignId": "BB0C4UOYRD",
+      "responseCode": "CD",
+      "responseLabel": "Recipient declined the call",
+      "status": "completed",
+      "sentAt": "2026-06-04T14:08:30.815Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav",
+      "providerMessage": "CD",
+      "source": "WORKFLOW",
+      "attempt": 1
+    },
+    {
+      "id": "log-1780581263919-4pd9",
+      "orderId": "WO-4449",
+      "phone": "01616618286",
+      "campaignId": "FNB5TVIFL8",
+      "responseCode": "keyP1",
+      "responseLabel": "Recipient received the call and pressed 1",
+      "status": "completed",
+      "sentAt": "2026-06-04T13:54:09.604Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav",
+      "providerMessage": "keyP1 · Key 1 → Approved → Pending",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "orderActionApplied": true,
+      "orderAction": "approve_pending"
+    },
+    {
+      "id": "log-1780581276505-1hu5",
+      "orderId": "WO-4448",
+      "phone": "01874748282",
+      "campaignId": "7TMXH2AR50",
+      "responseCode": "RBNIG",
+      "responseLabel": "Call received but no key pressed",
+      "status": "completed",
+      "sentAt": "2026-06-04T13:54:09.604Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav",
+      "providerMessage": "RBNIG",
+      "source": "WORKFLOW",
+      "attempt": 1
+    },
+    {
+      "id": "log-1780580817174-eb7h",
+      "orderId": "WO-4449",
+      "phone": "01616618286",
+      "campaignId": "MLFBMHN0JF",
+      "responseCode": "keyP1",
+      "responseLabel": "Recipient received the call and pressed 1",
+      "status": "completed",
+      "sentAt": "2026-06-04T13:46:42.168Z",
+      "audioUrl": "https://lethargy-clever-dupe.ngrok-free.dev/api/auto-call/audio/U-002/1780577618279-5bzsyq.wav",
+      "providerMessage": "keyP1",
+      "source": "WORKFLOW",
+      "attempt": 1
+    },
+    {
+      "id": "log-1780580587414-ys4d",
+      "orderId": "WO-4449",
+      "phone": "01616618286",
+      "status": "failed",
+      "sentAt": "2026-06-04T13:43:07.414Z",
+      "providerMessage": "Insufficient auto call balance",
+      "responseLabel": "Insufficient balance",
+      "source": "WORKFLOW",
+      "attempt": 1,
+      "error": "Insufficient auto call balance — recharge first"
+    }
+  ]
+}

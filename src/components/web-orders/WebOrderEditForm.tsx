@@ -537,13 +537,6 @@ export function WebOrderEditForm({ orderId }: Props) {
       setError("Uncheck preorder or save as preorder from Preorder List.");
       return;
     }
-    if (
-      !window.confirm(
-        "Create Order করলে Approved Pending-এ যাবে + Web list Complete। তারপর আপনি Web Order List (Processing) এ ফিরে যাবেন।"
-      )
-    ) {
-      return;
-    }
 
     setSaving(true);
     try {
@@ -1072,7 +1065,14 @@ export function WebOrderEditForm({ orderId }: Props) {
 
       <WebOrderSummaryAside>
         <WebOrderWooSummary
-          order={order}
+          order={{
+            ...order,
+            phone: phone.trim(),
+            customerName: customerName.trim(),
+            total: grandTotal,
+            wooNumber: order.wooNumber,
+            wooOrderId: order.wooOrderId,
+          }}
           wooSnapshot={order.wooSnapshot}
           webStatus={webStatus}
           subtotal={subtotal}

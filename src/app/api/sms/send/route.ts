@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
-import { isSmsSystemEnabled } from "@/lib/sms-platform-control";
+import { isSmsSystemEnabled, loadSmsPlatformControl } from "@/lib/sms-platform-control";
 import {
   formatSmsTimestamp,
+  smsLogStatusFromSend,
   type SmsLogRow,
 } from "@/lib/sms-types";
 import {
@@ -68,6 +69,8 @@ export async function POST(req: Request) {
     }
 
     const account = await loadSmsAccount(scope);
+    const control = await loadSmsPlatformControl();
+    const rateTaka = control.smsPriceTaka;
     const count = numbers.length;
     const smsType = detectSmsType(message);
     const costPer =
@@ -99,13 +102,17 @@ export async function POST(req: Request) {
       });
     }
 
+    const credits = result.ok ? count * costPer : 0;
     const logBase: Omit<SmsLogRow, "id"> = {
       phone: numbers.map((n) => n.replace(/^88/, "0")).join(", "),
       message,
       type: mode === "transactional" ? "Manual · Transactional" : "Manual",
-      status: result.ok ? "pending" : "failed",
+      status: smsLogStatusFromSend(result.ok),
       sentAt: formatSmsTimestamp(),
-      cost: result.ok ? count * costPer : 0,
+      cost: credits,
+      rateTaka,
+      totalTaka:
+        credits > 0 ? Math.round(credits * rateTaka * 100) / 100 : undefined,
       shootId: result.shootId,
       providerCode: result.code,
       providerText: result.message,

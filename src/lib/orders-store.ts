@@ -2,6 +2,18 @@ import { getSessionUser, type TeamRole } from "./dev-users";
 import { syncCustomersFromOrderList } from "./customers-store";
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
 import { pushSellerData } from "./seller-sync";
+import {
+  shouldTriggerEditOrderSms,
+  shouldTriggerNewOrderSms,
+  shouldTriggerNewApprovedOrderSms,
+  shouldTriggerPreorderCreatedSms,
+  shouldTriggerWebReceivedSms,
+  triggerAutoSms,
+} from "./sms-auto-trigger";
+import {
+  shouldTriggerWebAutoCall,
+  triggerAutoCallWebOrder,
+} from "./auto-call-auto-trigger";
 import { loadBusinessSettings, saveBusinessSettings } from "./business-settings-store";
 import {
   createActivityEntry,
@@ -246,6 +258,8 @@ export type OrderAttachment = {
 
 export type Order = {
   id: string;
+  /** Customer invoice number (e.g. TURU-1001). May differ from panel WO- id. */
+  invoiceNumber?: string;
   customerName: string;
   phone: string;
   email?: string;
@@ -786,8 +800,10 @@ export function createOrder(input: CreateOrderInput): Order {
   const source = input.source ?? "manual";
   const delivery = resolveDeliveryFieldsForOrderInput(input);
   const creator = sessionCreatorFields();
+  const invoiceId = nextOrderId();
   const order: Order = {
-    id: nextOrderId(),
+    id: invoiceId,
+    invoiceNumber: invoiceId,
     customerName: input.customerName.trim(),
     phone: input.phone.trim(),
     email: input.email?.trim(),
@@ -896,6 +912,18 @@ export function createOrder(input: CreateOrderInput): Order {
     reserveStockForOrder(order);
   }
 
+  if (shouldTriggerNewOrderSms(order)) {
+    triggerAutoSms("new_order_created", order);
+  } else if (shouldTriggerWebReceivedSms(order)) {
+    triggerAutoSms("web_received", order);
+  } else if (shouldTriggerPreorderCreatedSms(order)) {
+    triggerAutoSms("preorder_created", order);
+  }
+
+  if (shouldTriggerWebAutoCall(order)) {
+    triggerAutoCallWebOrder(order);
+  }
+
   return order;
 }
 
@@ -973,6 +1001,16 @@ export function upsertWooCommerceOrder(
         : shouldStayInWebQueueAfterWooSync(prev, panelWebStatus),
       updatedAt: nowLabel(),
     };
+
+    // Auto-call or staff already moved this order — do not revert on Woo sync.
+    if (prev.webStatusStaffSetAt) {
+      merged.webStatus = prev.webStatus ?? merged.webStatus;
+      merged.webStatusStaffSetAt = prev.webStatusStaffSetAt;
+      merged.inWebQueue = shouldStayInWebQueueAfterWooSync(prev, merged.webStatus);
+      merged.status = prev.status;
+      if (prev.invoiceNumber) merged.invoiceNumber = prev.invoiceNumber;
+      if (prev.tags?.length) merged.tags = prev.tags;
+    }
     const next: Order = syncWooStatus
       ? pushActivity(merged, logForWooSync())
       : merged;
@@ -1026,6 +1064,14 @@ export function upsertWooCommerceOrder(
 
   data.orders.unshift(order);
   saveRaw(data);
+
+  if (shouldTriggerWebReceivedSms(order)) {
+    triggerAutoSms("web_received", order);
+  }
+  if (shouldTriggerWebAutoCall(order)) {
+    triggerAutoCallWebOrder(order);
+  }
+
   return { order, created: true };
 }
 
@@ -1081,6 +1127,21 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
 
   data.orders[idx] = next;
   saveRaw(data);
+
+  if (prev.status !== "shipped" && next.status === "shipped") {
+    triggerAutoSms("new_order_shipped", next);
+  } else if (
+    isOrderPreorder(prev) &&
+    !isOrderPreorder(next) &&
+    next.status === "pending"
+  ) {
+    triggerAutoSms("preorder_pending", next);
+  } else if (shouldTriggerNewApprovedOrderSms(prev, next)) {
+    triggerAutoSms("new_order_created", next);
+  } else if (shouldTriggerEditOrderSms(prev, patch)) {
+    triggerAutoSms("new_order_edited", next);
+  }
+
   return next;
 }
 
@@ -1354,8 +1415,10 @@ export function promoteWebOrderToApproved(
 ): Order | null {
   const prev = getOrder(id);
   if (!prev) return null;
+  const invoiceNumber = prev.invoiceNumber?.trim() || nextOrderId();
   const updated = updateOrder(id, {
     ...patch,
+    invoiceNumber,
     inWebQueue: false,
     webQueueReleased: false,
     status: "pending",

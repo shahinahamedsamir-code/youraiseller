@@ -212,8 +212,14 @@ export function WebOrderTable() {
     };
   }, [refreshCallLogs, refresh]);
 
-  const storeSite = useMemo(() => siteLabel(), [tick]);
-  const storeHref = useMemo(() => siteUrl(), [tick]);
+  const storeSite = useMemo(() => {
+    void tick;
+    return siteLabel();
+  }, [tick]);
+  const storeHref = useMemo(() => {
+    void tick;
+    return siteUrl();
+  }, [tick]);
 
   const orders = useMemo(() => {
     void tick;

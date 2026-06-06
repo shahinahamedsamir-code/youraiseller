@@ -48,7 +48,6 @@ import {
   resolveAutoCallReportSource,
   type AutoCallOutcomeBucket,
   type AutoCallReportFilters,
-  type AutoCallReportPeriod,
   type AutoCallReportOrderTypeFilter,
   type AutoCallReportSourceFilter,
 } from "@/lib/auto-call-report-analytics";
@@ -289,7 +288,7 @@ export function AutoCallReportPanel() {
             <button
               type="button"
               onClick={() =>
-                downloadAutoCallReportCsv(filteredLogs, orders, settings, rules)
+                downloadAutoCallReportCsv(filteredLogs, orders)
               }
               className={acBtnPrimary}
             >
@@ -540,7 +539,7 @@ export function AutoCallReportPanel() {
         <section className={acCard}>
           <h3 className="mb-4 text-sm font-extrabold text-slate-900">Source Mix</h3>
           <div className="space-y-4">
-            {sourceMix.map((row, i) => (
+            {sourceMix.map((row) => (
               <div
                 key={row.id}
                 className="rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-3"

@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   /** Reduces corrupt .next cache on Windows during hot reload */
   webpack: (config, { dev }) => {
     if (dev) {

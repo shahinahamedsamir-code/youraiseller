@@ -8,7 +8,6 @@ import { loadAutoCallPlatformControl } from "@/lib/auto-call-platform-control";
 import { deductAutoCallBalance } from "@/lib/auto-call-recharge-server";
 import {
   autoCallKeyDigit,
-  autoCallResponseLabel,
   normalizeAutoCallResponseCode,
 } from "@/lib/auto-call-response-codes";
 import type { AutoCallLogRow, AutoCallRun } from "@/lib/auto-call-types";

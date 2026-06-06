@@ -1,4 +1,4 @@
-import { DEFAULT_FEATURES, FEATURE_LIST, normalizeStoredFeatures, type FeatureKey } from "./features";
+import { FEATURE_LIST, normalizeStoredFeatures, type FeatureKey } from "./features";
 import {
   saveStoredFeatures,
   SESSION_FEATURES_KEY,

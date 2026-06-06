@@ -597,9 +597,7 @@ export function formatAutoCallReportTime(sentAt: string): string {
 
 export function exportAutoCallReportCsv(
   logs: AutoCallLogRow[],
-  orders: Order[],
-  settings: AutoCallSettings,
-  rules: AutoCallRule[]
+  orders: Order[]
 ): string {
   const orderIndex = new Map(orders.map((o) => [o.id, o]));
   const header = [
@@ -648,11 +646,9 @@ export function exportAutoCallReportCsv(
 export function downloadAutoCallReportCsv(
   logs: AutoCallLogRow[],
   orders: Order[],
-  settings: AutoCallSettings,
-  rules: AutoCallRule[],
   filename = "auto-call-report.csv"
 ): void {
-  const csv = exportAutoCallReportCsv(logs, orders, settings, rules);
+  const csv = exportAutoCallReportCsv(logs, orders);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import clsx from "clsx";
-import { BRAND_ALT, BRAND_LOGO, BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
+import { BRAND_ALT, BRAND_LOGO, BRAND_TAGLINE } from "@/lib/brand";
 
 const SIZE_MAP = {
   xs: { box: "h-8 w-8 rounded-lg", img: 32, name: "text-sm", tag: "text-[9px]" },

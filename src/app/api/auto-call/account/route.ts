@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     const control = await loadAutoCallPlatformControl();
     const config = getTeamItqanAudioConfig();
     const providerConfigured = Boolean(config);
-    const callPayload = await prepareAutoCallPostPayload(scope, account.settings);
+    const callPayload = await prepareAutoCallPostPayload(scope, account.settings, req);
 
     return NextResponse.json({
       ok: true,

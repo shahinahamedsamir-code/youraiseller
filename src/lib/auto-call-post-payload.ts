@@ -2,12 +2,17 @@ import type { AutoCallSettings } from "./auto-call-types";
 import {
   autoCallAudioFileExists,
   buildAutoCallAudioPublicUrl,
+  getAppBaseUrl,
   parseAutoCallAudioUrl,
 } from "./auto-call-audio-server";
 
-export function getPublicAppBaseUrl(): string | null {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
-  return base || null;
+export function getPublicAppBaseUrl(req?: Request): string | null {
+  const base = getAppBaseUrl(req).replace(/\/$/, "");
+  const hasEnv = Boolean(
+    process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim()
+  );
+  if (base === "http://localhost:3000" && !hasEnv && !req) return null;
+  return base;
 }
 
 export function isTeamItqanHostedAudioUrl(url: string): boolean {
@@ -87,6 +92,11 @@ async function resolveVoicePostUrl(
 }
 
 async function isPublicAudioUrlReachable(url: string): Promise<boolean> {
+  const parsed = parseAutoCallAudioUrl(url);
+  if (parsed) {
+    return autoCallAudioFileExists(parsed.scope, parsed.fileName);
+  }
+
   try {
     const head = await fetch(url, {
       method: "HEAD",
@@ -119,13 +129,14 @@ function voiceUrlByLabel(
 }
 
 async function getPublicAudioReachabilityWarning(
-  urls: string[]
+  urls: string[],
+  req?: Request
 ): Promise<string | undefined> {
   const unique = Array.from(new Set(urls.filter(Boolean)));
   const checks = await Promise.all(unique.map((url) => isPublicAudioUrlReachable(url)));
   if (checks.every(Boolean)) return undefined;
 
-  const publicBase = getPublicAppBaseUrl();
+  const publicBase = getPublicAppBaseUrl(req);
   const unreachable = unique.filter((_, i) => !checks[i]);
   const onSelfHosted =
     publicBase && unreachable.every((url) => url.startsWith(publicBase));
@@ -139,7 +150,8 @@ async function getPublicAudioReachabilityWarning(
 
 export async function prepareAutoCallPostPayload(
   scope: string,
-  settings: AutoCallSettings
+  settings: AutoCallSettings,
+  req?: Request
 ): Promise<{
   ok: boolean;
   audiofile?: string;
@@ -147,7 +159,7 @@ export async function prepareAutoCallPostPayload(
   warning?: string;
   error?: string;
 }> {
-  const publicBase = getPublicAppBaseUrl();
+  const publicBase = getPublicAppBaseUrl(req);
 
   const question = settings.voices.find((v) => v.id === settings.questionVoiceId);
   if (!question) {
@@ -188,7 +200,7 @@ export async function prepareAutoCallPostPayload(
   const allUrls = [audiofile, ...Object.values(dtmfAudioFiles)];
   const warning =
     allUrls.some((url) => !isTeamItqanHostedAudioUrl(url))
-      ? await getPublicAudioReachabilityWarning(allUrls)
+      ? await getPublicAudioReachabilityWarning(allUrls, req)
       : undefined;
 
   return { ok: true, audiofile, dtmfAudioFiles, warning };

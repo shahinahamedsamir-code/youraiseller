@@ -18,13 +18,15 @@ function audioDir(scope: string): string {
 }
 
 export function getAppBaseUrl(req?: Request): string {
-  const env = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  const env =
+    process.env.APP_URL?.trim().replace(/\/$/, "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   if (env) return env;
 
   if (req) {
     const hostRaw = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
     const host = hostRaw?.split(",")[0]?.trim();
-    const proto = req.headers.get("x-forwarded-proto") ?? "http";
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
     if (host) return `${proto}://${host}`;
   }
 

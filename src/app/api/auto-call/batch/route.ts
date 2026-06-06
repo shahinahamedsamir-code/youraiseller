@@ -104,7 +104,7 @@ export async function POST(req: Request) {
       account.settings.perCallDurationMinutes,
       control.callPriceTaka
     );
-    const payload = await prepareAutoCallPostPayload(scope, account.settings);
+    const payload = await prepareAutoCallPostPayload(scope, account.settings, req);
     if (!payload.ok || !payload.audiofile) {
       return NextResponse.json({ error: payload.error }, { status: 400 });
     }

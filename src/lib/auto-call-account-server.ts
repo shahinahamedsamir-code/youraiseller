@@ -12,6 +12,7 @@ import {
 import {
   autoCallAudioFileExists,
   buildAutoCallAudioPublicUrl,
+  getAppBaseUrl,
   parseAutoCallAudioUrl,
 } from "./auto-call-audio-server";
 
@@ -19,6 +20,73 @@ const DATA_DIR = path.join(process.cwd(), "data", "seller");
 
 function fileFor(scope: string): string {
   return path.join(DATA_DIR, scope, "autocall.json");
+}
+
+function persistedAppBase(): string {
+  return getAppBaseUrl().replace(/\/$/, "");
+}
+
+async function rewriteAudioUrl(
+  scope: string,
+  audioUrl: string | undefined,
+  base: string
+): Promise<{ url?: string; changed: boolean }> {
+  if (!audioUrl?.trim()) return { changed: false };
+
+  const parsed = parseAutoCallAudioUrl(audioUrl);
+  const fileName = parsed?.fileName;
+  if (!fileName) return { url: audioUrl, changed: false };
+
+  const voiceScope = parsed.scope || scope;
+  if (!(await autoCallAudioFileExists(voiceScope, fileName))) {
+    return { url: audioUrl, changed: false };
+  }
+
+  const nextUrl = buildAutoCallAudioPublicUrl(voiceScope, fileName, base);
+  return { url: nextUrl, changed: nextUrl !== audioUrl };
+}
+
+async function repairAutoCallVoiceUrls(
+  scope: string,
+  account: AutoCallAccount
+): Promise<AutoCallAccount> {
+  const base = persistedAppBase();
+  let changed = false;
+
+  const voices: AutoCallVoice[] = [];
+  for (const raw of account.settings.voices) {
+    let v = raw;
+    const fileName = v.fileName || parseAutoCallAudioUrl(v.audioUrl)?.fileName;
+    if (fileName && !v.fileName) {
+      changed = true;
+      v = { ...v, fileName };
+    }
+    const { url, changed: urlChanged } = await rewriteAudioUrl(scope, v.audioUrl, base);
+    if (urlChanged && url) {
+      changed = true;
+      voices.push({ ...v, audioUrl: url });
+    } else {
+      voices.push(v);
+    }
+  }
+
+  const dtmfOptions = await Promise.all(
+    account.settings.dtmfOptions.map(async (opt) => {
+      const { url, changed: urlChanged } = await rewriteAudioUrl(scope, opt.audioUrl, base);
+      if (urlChanged && url) {
+        changed = true;
+        return { ...opt, audioUrl: url };
+      }
+      return opt;
+    })
+  );
+
+  if (!changed) return account;
+
+  account.settings.voices = voices;
+  account.settings.dtmfOptions = dtmfOptions;
+  await saveAutoCallAccount(scope, account);
+  return account;
 }
 
 export async function loadAutoCallAccount(scope: string): Promise<AutoCallAccount> {
@@ -29,33 +97,6 @@ export async function loadAutoCallAccount(scope: string): Promise<AutoCallAccoun
   } catch {
     return createDefaultAutoCallAccount();
   }
-}
-
-async function repairAutoCallVoiceUrls(
-  scope: string,
-  account: AutoCallAccount
-): Promise<AutoCallAccount> {
-  let changed = false;
-  const voices = await Promise.all(
-    account.settings.voices.map(async (v) => {
-      const fileName = v.fileName || parseAutoCallAudioUrl(v.audioUrl)?.fileName;
-      if (!fileName) return v;
-      const exists = await autoCallAudioFileExists(scope, fileName);
-      if (!exists) return v;
-
-      const base =
-        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
-      const nextUrl = buildAutoCallAudioPublicUrl(scope, fileName, base);
-      if (nextUrl === v.audioUrl) return v;
-      changed = true;
-      return { ...v, audioUrl: nextUrl };
-    })
-  );
-
-  if (!changed) return account;
-  account.settings.voices = voices;
-  await saveAutoCallAccount(scope, account);
-  return account;
 }
 
 export async function saveAutoCallAccount(
@@ -131,6 +172,11 @@ export async function removeAutoCallVoice(
   if (account.settings.questionVoiceId === voiceId) {
     account.settings.questionVoiceId = account.settings.voices[0]?.id ?? "";
   }
+  account.settings.dtmfOptions = account.settings.dtmfOptions.map((opt) =>
+    opt.voiceLabel && account.settings.voices.some((v) => v.label === opt.voiceLabel)
+      ? opt
+      : { ...opt, voiceLabel: "", audioUrl: undefined }
+  );
   await saveAutoCallAccount(scope, account);
   return account;
 }

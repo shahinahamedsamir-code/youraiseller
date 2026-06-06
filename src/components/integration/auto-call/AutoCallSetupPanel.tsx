@@ -252,9 +252,10 @@ export function AutoCallSetupPanel() {
       {audioDeployWarning ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <p className="font-bold">Voice file not ready yet</p>
-          <p className="mt-1 text-xs leading-relaxed">
-            Your uploaded voice could not be loaded for calling. Please upload the audio file
-            again below. If the problem continues, contact support.
+          <p className="mt-1 text-xs leading-relaxed">{audioDeployWarning}</p>
+          <p className="mt-2 text-xs leading-relaxed text-amber-900/90">
+            Live server-এ ngrok লাগবে না। Setup-এ voice file আবার upload করুন — URL
+            automatically <strong>youraiseller.com</strong> use করবে।
           </p>
         </div>
       ) : null}

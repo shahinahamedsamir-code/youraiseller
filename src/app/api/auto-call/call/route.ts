@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const payload = await prepareAutoCallPostPayload(scope, account.settings);
+    const payload = await prepareAutoCallPostPayload(scope, account.settings, req);
     if (!payload.ok || !payload.audiofile) {
       return NextResponse.json({ error: payload.error }, { status: 400 });
     }

@@ -1,4 +1,7 @@
-import { buildAutoCallAudioPublicUrl } from "./auto-call-audio-server";
+import {
+  autoCallAudioFileExists,
+  buildAutoCallAudioPublicUrl,
+} from "./auto-call-audio-server";
 import { getPublicAppBaseUrl } from "./auto-call-post-payload";
 
 export function getAutoCallAudioSyncConfig(): {
@@ -8,6 +11,12 @@ export function getAutoCallAudioSyncConfig(): {
   const syncUrl = process.env.AUTO_CALL_AUDIO_SYNC_URL?.trim();
   const secret = process.env.AUTO_CALL_AUDIO_SYNC_SECRET?.trim();
   if (!syncUrl || !secret) return null;
+
+  const appBase = getPublicAppBaseUrl()?.replace(/\/$/, "");
+  const syncBase = syncUrl.replace(/\/api\/auto-call\/receive-audio.*$/i, "").replace(/\/$/, "");
+  // On live server, skip dev → production sync when already on production.
+  if (appBase && syncBase && appBase === syncBase) return null;
+
   return { syncUrl, secret };
 }
 
@@ -19,7 +28,7 @@ export async function syncAutoCallAudioToProduction(opts: {
 }): Promise<{ ok: boolean; error?: string }> {
   const config = getAutoCallAudioSyncConfig();
   if (!config) {
-    return { ok: false, error: "AUTO_CALL_AUDIO_SYNC_URL not configured" };
+    return { ok: true };
   }
 
   try {
@@ -58,35 +67,26 @@ export async function syncAutoCallAudioToProduction(opts: {
 
 export async function verifyAutoCallPublicAudioUrl(
   scope: string,
-  fileName: string
+  fileName: string,
+  req?: Request
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
-  const publicBase = getPublicAppBaseUrl();
+  const exists = await autoCallAudioFileExists(scope, fileName);
+  if (!exists) {
+    return {
+      ok: false,
+      error:
+        "Audio file missing on this server. Upload the voice file again on live (ngrok is not needed).",
+    };
+  }
+
+  const publicBase = getPublicAppBaseUrl(req);
   if (!publicBase) {
-    return { ok: false, error: "Set NEXT_PUBLIC_APP_URL in .env.local" };
+    return {
+      ok: false,
+      error: "Set APP_URL or NEXT_PUBLIC_APP_URL to https://youraiseller.com on Hostinger.",
+    };
   }
 
   const url = buildAutoCallAudioPublicUrl(scope, fileName, publicBase);
-  try {
-    const head = await fetch(url, {
-      method: "HEAD",
-      cache: "no-store",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (head.ok) return { ok: true, url };
-
-    const probe = await fetch(url, {
-      method: "GET",
-      headers: { Range: "bytes=0-0" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (probe.ok) return { ok: true, url };
-    return {
-      ok: false,
-      url,
-      error: `Audio not reachable at ${url} (HTTP ${head.status})`,
-    };
-  } catch {
-    return { ok: false, url, error: `Audio not reachable at ${url}` };
-  }
+  return { ok: true, url };
 }

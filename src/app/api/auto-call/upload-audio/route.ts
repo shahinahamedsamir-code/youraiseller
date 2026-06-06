@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         })
       : { ok: false, error: "Could not read saved file" };
 
-    const reachability = await verifyAutoCallPublicAudioUrl(scope, saved.fileName);
+    const reachability = await verifyAutoCallPublicAudioUrl(scope, saved.fileName, req);
 
     const voice: AutoCallVoice = {
       id: `voice-${Date.now()}`,

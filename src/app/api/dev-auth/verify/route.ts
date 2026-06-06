@@ -2,22 +2,20 @@ import { NextResponse } from "next/server";
 import { DEV_AUTH_COOKIE } from "@/lib/dev-auth-cookie";
 
 function normalizeEnvPassword(raw: string | undefined): string {
-  if (!raw) return "youraiseller-dev-2026";
+  if (!raw?.trim()) return "youraiseller-dev-2026";
   let v = raw.trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
   ) {
-    v = v.slice(1, -1);
+    v = v.slice(1, -1).trim();
   }
-  return v;
+  return v || "youraiseller-dev-2026";
 }
 
 function expectedPassword(): string {
-  const raw =
-    process.env.DEV_ADMIN_PASSWORD ??
-    process.env.NEXT_PUBLIC_DEV_ADMIN_PASSWORD;
-  return normalizeEnvPassword(raw);
+  // Server-only — never use NEXT_PUBLIC_* (would expose in client bundle).
+  return normalizeEnvPassword(process.env.DEV_ADMIN_PASSWORD);
 }
 
 export async function POST(req: Request) {
@@ -34,6 +32,7 @@ export async function POST(req: Request) {
         httpOnly: true,
         path: "/",
         sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 24 * 30,
       });
     }

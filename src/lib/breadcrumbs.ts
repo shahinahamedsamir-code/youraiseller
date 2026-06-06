@@ -20,6 +20,7 @@ const labels: Record<string, string> = {
   hrm: "HRM",
   automation: "Automation",
   delivery: "Delivery Methods",
+  "auto-call-center": "Auto Call Center",
   "auto-call": "Auto Call",
   shopify: "Shopify Integration",
   courier: "Courier Integration",

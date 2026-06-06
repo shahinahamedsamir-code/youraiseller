@@ -3,8 +3,8 @@
     "id": "C-8286",
     "name": "Samir",
     "phone": "01616618286",
-    "orders": 21,
-    "spent": 24820,
+    "orders": 25,
+    "spent": 29700,
     "email": ""
   },
   {
@@ -44,7 +44,8 @@
     "name": "Mahin",
     "phone": "01924770845",
     "orders": 1,
-    "spent": 0
+    "spent": 0,
+    "email": ""
   },
   {
     "id": "C-8811",
@@ -79,9 +80,9 @@
   {
     "id": "C-1046",
     "name": "Md Abdullah Al Amin",
-    "phone": "01833401046",
+    "phone": "+8801833401046",
     "orders": 1,
-    "spent": 900,
+    "spent": 820,
     "email": ""
   },
   {

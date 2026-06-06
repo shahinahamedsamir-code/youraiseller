@@ -1,6 +1,7 @@
 import {
   DEFAULT_FEATURES,
   FEATURE_LIST,
+  normalizeStoredFeatures,
   type FeatureKey,
 } from "./features";
 
@@ -19,7 +20,7 @@ export function loadStoredFeatures(storageKey: string): Record<FeatureKey, boole
         ? localStorage.getItem(SESSION_FEATURES_KEY)
         : localStorage.getItem(storageKey);
     if (!raw) return { ...DEFAULT_FEATURES };
-    return { ...DEFAULT_FEATURES, ...JSON.parse(raw) };
+    return normalizeStoredFeatures(JSON.parse(raw));
   } catch {
     return { ...DEFAULT_FEATURES };
   }

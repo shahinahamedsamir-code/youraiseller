@@ -1,9 +1,11 @@
 "use client";
 
-import { Sparkles, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthSessionRedirect } from "@/components/auth/AuthSessionRedirect";
+import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BRAND_NAME } from "@/lib/brand";
 
 const STEPS = [
   "Sign in with Google",
@@ -47,16 +49,13 @@ export function AuthPageShell({
             <div className="absolute inset-0 opacity-40" aria-hidden>
               <div className="h-full w-full bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[length:24px_24px]" />
             </div>
-            <div className="relative flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-violet-500 shadow-lg shadow-teal-500/30">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-lg font-bold tracking-tight">YourAI Seller</p>
-                <p className="text-xs font-medium text-teal-300/90">
-                  Seller Dashboard
-                </p>
-              </div>
+            <div className="relative z-10">
+              <BrandLogo
+                size="lg"
+                priority
+                subtitle="Seller Dashboard"
+                textClassName="[&_p:first-child]:text-white [&_p:last-child]:text-teal-300/90 [&_span]:text-teal-300"
+              />
             </div>
             <div className="relative mt-10 lg:mt-0">
               <h2 className="max-w-md text-3xl font-bold leading-tight tracking-tight lg:text-4xl">
@@ -77,22 +76,14 @@ export function AuthPageShell({
               </ul>
             </div>
             <p className="relative mt-8 text-xs text-slate-500 lg:mt-0">
-              © 2026 YourAI Seller
+              © 2026 {BRAND_NAME}
             </p>
           </div>
 
           {/* Form panel */}
           <div className="flex flex-1 items-center justify-center px-6 py-10 lg:px-12">
             <div className="w-full max-w-[420px]">
-              <div className="mb-6 flex items-center gap-3 lg:hidden">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-violet-600 text-white">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900">YourAI Seller</p>
-                  <p className="text-xs text-slate-500">Seller Dashboard</p>
-                </div>
-              </div>
+              <BrandLogo size="sm" subtitle="Seller Dashboard" />
 
               <div className="mb-6">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">

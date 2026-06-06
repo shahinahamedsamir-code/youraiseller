@@ -12,6 +12,7 @@ export type FeatureKey =
   | "web_orders"
   | "web_order_list"
   | "auto_call_center"
+  | "auto_call_integration"
   | "preorders"
   | "sync_products"
   | "woocommerce"
@@ -115,6 +116,7 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "additional_sites", label: "Additional Sites", description: "Multi-site management", category: "operations", parent: "integrations" },
   { key: "sync_products", label: "Sync Products", description: "Product catalog sync", category: "operations", parent: "integrations" },
   { key: "sms", label: "SMS Integration", description: "SMS gateway, templates & send", category: "operations", parent: "integrations" },
+  { key: "auto_call_integration", label: "Auto Call Integration", description: "Setup, rules & admin for IVR auto calls", category: "operations", parent: "integrations" },
   // Settings parent + children
   { key: "settings", label: "Setting", description: "System settings (parent menu)", category: "extras" },
   { key: "settings_users", label: "User List", description: "Team members & roles", category: "extras", parent: "settings" },
@@ -122,6 +124,7 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "settings_invoice", label: "Select Invoice", description: "Invoice template & paper", category: "extras", parent: "settings" },
   { key: "settings_sticker", label: "Select Sticker", description: "Parcel sticker template & size", category: "extras", parent: "settings" },
   { key: "settings_order_source", label: "New Order Source", description: "Add/disable order source channels", category: "extras", parent: "settings" },
+  { key: "settings_order_tags", label: "Order Tags", description: "Tags for New Order (Engraving, Scammer, etc.)", category: "extras", parent: "settings" },
   { key: "settings_shipping_note", label: "Shipping Note Template", description: "Reusable shipping note presets", category: "extras", parent: "settings" },
   { key: "settings_advance", label: "Advance Setting", description: "Required/optional order fields", category: "extras", parent: "settings" },
   { key: "reports", label: "Reports", description: "Business reports", category: "extras" },
@@ -142,6 +145,19 @@ export function isParentFeature(key: FeatureKey): boolean {
   return PARENT_FEATURE_KEYS.includes(key);
 }
 
+/** Parent ON/OFF → all direct children match. */
+export function applyParentCascade(
+  flags: Record<FeatureKey, boolean>,
+  parentKey: FeatureKey,
+  on: boolean
+): Record<FeatureKey, boolean> {
+  const next = { ...flags, [parentKey]: on };
+  for (const child of getChildFeatures(parentKey)) {
+    next[child.key] = on;
+  }
+  return next;
+}
+
 /**
  * Apply parent → child cascade: any child whose parent is OFF is forced OFF.
  * Child's own stored flag is preserved, so re-enabling the parent restores it.
@@ -159,6 +175,18 @@ export function cascadeFeatures(
 export const DEFAULT_FEATURES: Record<FeatureKey, boolean> = Object.fromEntries(
   FEATURE_LIST.map((f) => [f.key, true])
 ) as Record<FeatureKey, boolean>;
+
+/** Merge stored flags with defaults; migrate legacy auto_call_center → integration split. */
+export function normalizeStoredFeatures(raw: unknown): Record<FeatureKey, boolean> {
+  const merged = { ...DEFAULT_FEATURES };
+  if (!raw || typeof raw !== "object") return merged;
+  const r = raw as Partial<Record<FeatureKey, boolean>>;
+  Object.assign(merged, r);
+  if (typeof r.auto_call_integration !== "boolean" && typeof r.auto_call_center === "boolean") {
+    merged.auto_call_integration = r.auto_call_center;
+  }
+  return merged;
+}
 
 export const CATEGORY_LABELS: Record<FeatureDef["category"], string> = {
   core: "Core",
@@ -180,14 +208,17 @@ export function getFeatureKeyFromPath(pathname: string): FeatureKey | null {
     ["/dashboard/integration/sms/templates", "sms"],
     ["/dashboard/integration/sms/log", "sms"],
     ["/dashboard/integration/sms", "sms"],
-    ["/dashboard/integration/auto-call/setup", "auto_call_center"],
-    ["/dashboard/integration/auto-call/rules", "auto_call_center"],
-    ["/dashboard/integration/auto-call/report", "auto_call_center"],
-    ["/dashboard/integration/auto-call", "auto_call_center"],
+    ["/dashboard/integration/auto-call/setup", "auto_call_integration"],
+    ["/dashboard/integration/auto-call/rules", "auto_call_integration"],
+    ["/dashboard/integration/auto-call/report", "auto_call_integration"],
+    ["/dashboard/integration/auto-call/logs", "auto_call_integration"],
+    ["/dashboard/integration/auto-call", "auto_call_integration"],
     ["/dashboard/integration", "integrations"],
     ["/dashboard/orders/web/block-list", "order_block_list"],
     ["/dashboard/orders/web/manual", "manual_web_order"],
     ["/dashboard/orders/web/preorders", "preorders"],
+    ["/dashboard/orders/web/auto-call-center/report", "auto_call_center"],
+    ["/dashboard/orders/web/auto-call-center/logs", "auto_call_center"],
     ["/dashboard/orders/web/auto-call-center", "auto_call_center"],
     ["/dashboard/orders/web/view", "web_order_list"],
     ["/dashboard/orders/web", "web_order_list"],

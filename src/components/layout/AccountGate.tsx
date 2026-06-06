@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { refreshCurrentSessionUser } from "@/lib/dev-users";
 import { syncSellerDataFromServer } from "@/lib/seller-sync";
+import { BrandLoadingScreen } from "@/components/brand/BrandLoadingScreen";
 
 export function AccountGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -57,9 +58,5 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center text-slate-500">
-      Loading dashboard…
-    </div>
-  );
+  return <BrandLoadingScreen message="Loading dashboard…" />;
 }

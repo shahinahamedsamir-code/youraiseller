@@ -1,5 +1,5 @@
 {
-  "balance": 36,
+  "balance": 27,
   "walletTaka": 8,
   "totalRechargedTaka": 8,
   "autoSettings": {
@@ -84,6 +84,114 @@
     }
   ],
   "logs": [
+    {
+      "id": "sms-1780671891179-se0d73",
+      "phone": "001616618286",
+      "message": "Reminder: your advance payment is still due. Please pay soon.",
+      "type": "Manual",
+      "status": "delivered",
+      "sentAt": "2026-06-05 21:04",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780660675213-jne4e9",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4462.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 17:57",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780660517258-5io9ld",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4461.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 17:55",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780660511961-p28pel",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4461.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 17:55",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780660288424-rpjipy",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4460.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 17:51",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780660249547-2kjge6",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4460.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 17:50",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780646473926-g6k3mi",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1015.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 14:01",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780646410172-nwoqcw",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nOrder ID: 4459.\nAmount: 1220 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · Web Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 14:00",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
+    {
+      "id": "sms-1780640004494-8xiy43",
+      "phone": "001616618286",
+      "message": "Dear Samir,\n\nYour order has been confirmed.\nInvoice: ZENTIX-1014.\nAmount: 2370 BDT.\nThank you for shopping with Zentix.",
+      "type": "Auto · New Order",
+      "status": "delivered",
+      "sentAt": "2026-06-05 12:13",
+      "cost": 1,
+      "rateTaka": 0.35,
+      "totalTaka": 0.35,
+      "providerText": "Shoot started successfully"
+    },
     {
       "id": "sms-1780591839340-on0j06",
       "phone": "001616618286",

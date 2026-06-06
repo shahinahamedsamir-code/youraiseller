@@ -3,19 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { mainNav } from "@/lib/navigation";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
+import { useWebOrderCounts } from "@/components/web-orders/useWebOrderCounts";
 import clsx from "clsx";
 
 type SidebarProps = { mobileOpen?: boolean };
 
 export function Sidebar({ mobileOpen = false }: SidebarProps) {
   const pathname = usePathname();
-  const { isEnabled } = useFeatures();
+  const { isEnabled, hydrated } = useFeatures();
+  const { processing: webProcessingCount } = useWebOrderCounts();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const filteredNav = useMemo(() => {
+    if (!hydrated) return [];
     return mainNav
       .filter((item) => isEnabled(item.featureKey))
       .map((item) => {
@@ -25,7 +29,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         return { ...item, children };
       })
       .filter(Boolean) as typeof mainNav;
-  }, [isEnabled]);
+  }, [isEnabled, hydrated]);
 
   useEffect(() => {
     filteredNav.forEach((item) => {
@@ -42,18 +46,8 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
     >
-      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-rose-500 shadow-lg shadow-indigo-300/40">
-          <Sparkles className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="text-lg font-extrabold tracking-tight text-slate-900">
-            Your<span className="text-indigo-600">AI</span>
-          </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-            Seller OS
-          </p>
-        </div>
+      <div className="border-b border-slate-100 px-5 py-5">
+        <BrandLogo size="md" priority />
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
@@ -80,11 +74,15 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
                 >
                   <Icon className="h-[18px] w-[18px] shrink-0" />
                   <span className="flex-1 truncate text-left">{item.label}</span>
-                  {item.badge && (
+                  {item.label === "Web Orders" && webProcessingCount > 0 ? (
+                    <span className="rounded-md bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {webProcessingCount}
+                    </span>
+                  ) : item.badge ? (
                     <span className="rounded-md bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       {item.badge}
                     </span>
-                  )}
+                  ) : null}
                   <ChevronDown
                     className={clsx(
                       "h-4 w-4 transition",

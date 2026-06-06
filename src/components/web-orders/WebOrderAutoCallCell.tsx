@@ -23,10 +23,8 @@ export function WebOrderAutoCallCell({ log }: Props) {
         icon={display.icon}
         pulsing={display.pulsing}
       />
-      {display.attempt && display.attempt > 1 ? (
-        <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
-          Try {display.attempt}
-        </p>
+      {display.subtitle ? (
+        <p className="mt-1.5 text-[10px] font-semibold text-slate-400">{display.subtitle}</p>
       ) : null}
     </div>
   );

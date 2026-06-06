@@ -1,8 +1,20 @@
 import type { AutoCallKeyOrderAction } from "./auto-call-key-actions";
 
 export const AUTO_CALL_ORDER_TAG = "Auto Call";
-export const APPROVE_ORDER_TAG = "Approve Order";
 export const REJECTED_ORDER_TAG = "Rejected";
+
+const WOO_STATUS_TAG_LABELS = new Set([
+  "processing",
+  "pending",
+  "on-hold",
+  "on hold",
+  "completed",
+  "complete",
+  "cancelled",
+  "canceled",
+  "failed",
+  "refunded",
+]);
 
 export function pressedKeyOrderTag(digit: number): string {
   return `Pressed ${digit}`;
@@ -23,20 +35,29 @@ function appendUniqueTag(tags: string[], label: string): void {
   tags.push(label.trim());
 }
 
+/** Drop Woo status chips and legacy auto-call labels we no longer show. */
+export function stripAutoCallNoiseTags(tags: string[]): string[] {
+  return tags.filter((label) => {
+    const key = label.trim().toLowerCase();
+    if (!key) return false;
+    if (key === "approve order") return false;
+    if (WOO_STATUS_TAG_LABELS.has(key)) return false;
+    if (WOO_STATUS_TAG_LABELS.has(key.replace(/-/g, " "))) return false;
+    return true;
+  });
+}
+
 /** Tags to show on the order after an auto-call key press is processed. */
 export function buildAutoCallOrderTags(
   action: AutoCallKeyOrderAction,
   digit: number,
   existing?: unknown
 ): string[] {
-  const tags = normalizeTagList(existing);
+  void action;
+  const tags = stripAutoCallNoiseTags(normalizeTagList(existing));
 
   appendUniqueTag(tags, AUTO_CALL_ORDER_TAG);
   appendUniqueTag(tags, pressedKeyOrderTag(digit));
-
-  if (action === "approve_pending" || action === "approve_rts") {
-    appendUniqueTag(tags, APPROVE_ORDER_TAG);
-  }
 
   return tags;
 }

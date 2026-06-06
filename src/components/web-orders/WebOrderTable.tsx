@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { OrderLine } from "@/lib/orders-store";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
+import { pullOrdersFromServer } from "@/lib/seller-sync";
 import { repairWebOrdersInQueue } from "@/lib/orders-store";
 import { WooOrderSyncBar } from "@/components/web-orders/WooOrderSyncBar";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
@@ -168,8 +169,8 @@ export function WebOrderTable() {
 
   useEffect(() => {
     repairWebOrdersInQueue();
-    refresh();
-  }, []);
+    void pullOrdersFromServer().finally(refresh);
+  }, [refresh]);
 
   useEffect(() => {
     const onData = () => refresh();
@@ -304,6 +305,7 @@ export function WebOrderTable() {
         <WebOrderStatusTabs
           active={activeFilter}
           counts={counts}
+          activeVisibleCount={filtered.length}
           onChange={(tab) => {
             setActiveFilter(tab);
             router.replace(

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { AutoCallBatchPanel } from "@/components/integration/auto-call/AutoCallBatchPanel";
 
-export default function WebAutoCallCenterRedirect() {
-  redirect("/dashboard/integration/auto-call");
+export default function WebAutoCallCenterPage() {
+  return <AutoCallBatchPanel />;
 }

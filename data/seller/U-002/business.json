@@ -13,14 +13,14 @@
   "city": "Dhaka",
   "country": "Bangladesh",
   "invoiceSlug": "ZENTIX",
-  "nextInvoiceNumber": 1014,
+  "nextInvoiceNumber": 1016,
   "currency": "BDT",
   "invoiceFooter": "Thank you for your order!",
   "invoiceTemplate": "fancy",
-  "invoicePaper": "a4",
+  "invoicePaper": "pos",
   "deliveryInvoices": {},
   "stickerTemplate": "bold",
-  "stickerSize": "3x3",
+  "stickerSize": "3x4",
   "defaultDeliveryCost": 0,
   "orderNote": ""
 }

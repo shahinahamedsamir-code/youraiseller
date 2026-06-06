@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { stripAutoCallNoiseTags } from "@/lib/auto-call-order-tags";
 import {
   loadOrderTags,
   orderTagChipClass,
@@ -42,9 +43,15 @@ export function OrderTagChips({
     return <span className="text-slate-400">{emptyLabel}</span>;
   }
 
+  const displayTags = stripAutoCallNoiseTags(tags);
+
+  if (displayTags.length === 0) {
+    return <span className="text-slate-400">{emptyLabel}</span>;
+  }
+
   return (
     <div className={clsx("flex flex-wrap gap-1", className)}>
-      {tags.map((label) => (
+      {displayTags.map((label) => (
         <span
           key={label}
           className={clsx(

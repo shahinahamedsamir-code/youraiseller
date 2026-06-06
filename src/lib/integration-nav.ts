@@ -36,7 +36,7 @@ export const integrationNav: IntegrationNavItem[] = [
     label: "Auto Call Integration",
     href: "/dashboard/integration/auto-call",
     description: "Automated IVR calls to verify web orders",
-    featureKey: "auto_call_center",
+    featureKey: "auto_call_integration",
   },
   {
     label: "Additional Sites",

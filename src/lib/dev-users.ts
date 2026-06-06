@@ -1,4 +1,4 @@
-import { DEFAULT_FEATURES, FEATURE_LIST, type FeatureKey } from "./features";
+import { DEFAULT_FEATURES, FEATURE_LIST, normalizeStoredFeatures, type FeatureKey } from "./features";
 import {
   saveStoredFeatures,
   SESSION_FEATURES_KEY,
@@ -176,8 +176,7 @@ function normalizeStatus(s: unknown, authProvider?: DevUser["authProvider"]): Us
 }
 
 function normalizeFeatures(raw: unknown): Record<FeatureKey, boolean> {
-  if (!raw || typeof raw !== "object") return { ...DEFAULT_FEATURES };
-  return { ...DEFAULT_FEATURES, ...(raw as Record<FeatureKey, boolean>) };
+  return normalizeStoredFeatures(raw);
 }
 
 function normalizeAddress(raw: unknown): CompanyAddress | undefined {

@@ -102,10 +102,9 @@ export function countWebOrdersByTab(orders: Order[]): Record<WebOrderTabKey, num
     WEB_ORDER_TABS.map((t) => [t.key, 0])
   ) as Record<WebOrderTabKey, number>;
 
-  for (const o of orders) {
-    for (const tab of WEB_ORDER_TABS) {
-      if (matchesWebOrderTab(o, tab.key)) counts[tab.key]++;
-    }
+  for (const tab of WEB_ORDER_TABS) {
+    counts[tab.key] = orders.filter((o) => matchesWebOrderTab(o, tab.key)).length;
   }
+
   return counts;
 }

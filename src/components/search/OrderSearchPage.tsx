@@ -34,6 +34,8 @@ const TABS: { key: SearchFieldMode; label: string; icon: typeof Search }[] = [
   { key: "mobile", label: "Mobile Number", icon: Phone },
 ];
 
+type ResultTab = "all" | "approved" | "website";
+
 const PLACEHOLDERS: Record<SearchFieldMode, string> = {
   all: "Invoice, phone, customer name, courier ID, SKU, product…",
   invoice: "Order ID · WooCommerce # · Tracking number",
@@ -52,6 +54,7 @@ function useDebounced(value: string, ms = 280): string {
 export function OrderSearchPage() {
   const router = useRouter();
   const [mode, setMode] = useState<SearchFieldMode>("all");
+  const [resultTab, setResultTab] = useState<ResultTab>("all");
   const [input, setInput] = useState("");
   const [active, setActive] = useState(false);
   const [tick, setTick] = useState(0);
@@ -98,6 +101,14 @@ export function OrderSearchPage() {
     if (debounced) setActive(true);
     else setActive(false);
   }, [debounced]);
+
+  useEffect(() => {
+    setResultTab("all");
+  }, [debounced, mode]);
+
+  const selectResultTab = (tab: "approved" | "website") => {
+    setResultTab((prev) => (prev === tab ? "all" : tab));
+  };
 
   const clear = () => {
     setInput("");
@@ -229,22 +240,12 @@ export function OrderSearchPage() {
         </div>
       </div>
 
-      {/* Summary cards */}
+      {/* Result tabs — inline: Approved left, Website right */}
       {searching && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SummaryCard
-            icon={Store}
-            title="Website / WooCommerce"
-            count={partition.websiteOrders.length}
-            sub={
-              partition.websiteOrders.length > 0
-                ? `${partition.websiteOnWebList} on web list · ${partition.websiteApproved} approved`
-                : undefined
-            }
-            tone="teal"
-            loading={pending}
-          />
-          <SummaryCard
+        <div className="grid grid-cols-2 gap-3">
+          <ResultTabButton
+            active={resultTab === "approved"}
+            onClick={() => selectResultTab("approved")}
             icon={ClipboardList}
             title="Approved Orders"
             count={partition.approved.length}
@@ -254,6 +255,20 @@ export function OrderSearchPage() {
                 : undefined
             }
             tone="indigo"
+            loading={pending}
+          />
+          <ResultTabButton
+            active={resultTab === "website"}
+            onClick={() => selectResultTab("website")}
+            icon={Store}
+            title="Website / WooCommerce"
+            count={partition.websiteOrders.length}
+            sub={
+              partition.websiteOrders.length > 0
+                ? `${partition.websiteOnWebList} on web list · ${partition.websiteApproved} approved`
+                : undefined
+            }
+            tone="teal"
             loading={pending}
           />
         </div>
@@ -285,40 +300,44 @@ export function OrderSearchPage() {
         </div>
       )}
 
-      {/* Results */}
+      {/* Results — both by default, single section when tab filtered */}
       {searching ? (
         <div className="space-y-8">
-          <ResultSection
-            title="Website / WooCommerce orders"
-            count={partition.websiteOrders.length}
-            query={debounced}
-            emptyLabel="website or WooCommerce orders"
-            hint="All orders that came from your store — including after Create Order"
-          >
-            {partition.websiteOrders.map((o) => (
-              <WebsiteResultRow
-                key={`web-${o.id}`}
-                order={o}
-                onOpen={() => openWebsiteOrder(o)}
-              />
-            ))}
-          </ResultSection>
+          {(resultTab === "all" || resultTab === "approved") && (
+            <ResultSection
+              title="Approved Orders"
+              count={partition.approved.length}
+              query={debounced}
+              emptyLabel="approved orders"
+              hint="Includes website orders after you clicked Create Order"
+            >
+              {partition.approved.map((o) => (
+                <ApprovedResultRow
+                  key={`ap-${o.id}`}
+                  order={o}
+                  onOpen={() => openApproved(o.id)}
+                />
+              ))}
+            </ResultSection>
+          )}
 
-          <ResultSection
-            title="Approved Orders"
-            count={partition.approved.length}
-            query={debounced}
-            emptyLabel="approved orders"
-            hint="Includes website orders after you clicked Create Order"
-          >
-            {partition.approved.map((o) => (
-              <ApprovedResultRow
-                key={`ap-${o.id}`}
-                order={o}
-                onOpen={() => openApproved(o.id)}
-              />
-            ))}
-          </ResultSection>
+          {(resultTab === "all" || resultTab === "website") && (
+            <ResultSection
+              title="Website / WooCommerce orders"
+              count={partition.websiteOrders.length}
+              query={debounced}
+              emptyLabel="website or WooCommerce orders"
+              hint="All orders that came from your store — including after Create Order"
+            >
+              {partition.websiteOrders.map((o) => (
+                <WebsiteResultRow
+                  key={`web-${o.id}`}
+                  order={o}
+                  onOpen={() => openWebsiteOrder(o)}
+                />
+              ))}
+            </ResultSection>
+          )}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-16 text-center">
@@ -338,7 +357,9 @@ export function OrderSearchPage() {
   );
 }
 
-function SummaryCard({
+function ResultTabButton({
+  active,
+  onClick,
   icon: Icon,
   title,
   count,
@@ -346,6 +367,8 @@ function SummaryCard({
   tone,
   loading,
 }: {
+  active: boolean;
+  onClick: () => void;
   icon: typeof ClipboardList;
   title: string;
   count: number;
@@ -355,28 +378,36 @@ function SummaryCard({
 }) {
   const found = count > 0;
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
       className={clsx(
-        "flex items-center gap-4 rounded-2xl border bg-white p-4 shadow-sm transition",
+        "relative flex min-w-0 items-start gap-2.5 rounded-2xl border bg-white p-3 text-left shadow-sm transition sm:gap-3 sm:p-4",
         tone === "indigo" ? "border-indigo-100" : "border-teal-100",
-        found && (tone === "indigo" ? "ring-2 ring-indigo-100" : "ring-2 ring-teal-100")
+        active &&
+          (tone === "indigo"
+            ? "ring-2 ring-indigo-400 shadow-md shadow-indigo-100"
+            : "ring-2 ring-teal-400 shadow-md shadow-teal-100"),
+        !active && "opacity-80 hover:opacity-100 hover:shadow-md"
       )}
     >
       <div
         className={clsx(
-          "flex h-12 w-12 items-center justify-center rounded-xl",
-          tone === "indigo" ? "bg-indigo-100 text-indigo-600" : "bg-teal-100 text-teal-600"
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11",
+          tone === "indigo" ? "bg-indigo-100 text-indigo-600" : "bg-teal-100 text-teal-600",
+          active && (tone === "indigo" ? "bg-indigo-600 text-white" : "bg-teal-600 text-white")
         )}
       >
-        <Icon className="h-6 w-6" />
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
       </div>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[10px] font-bold uppercase tracking-wide text-slate-500 sm:text-xs">
           {title}
         </p>
         <p
           className={clsx(
-            "text-2xl font-extrabold tabular-nums transition",
+            "text-lg font-extrabold tabular-nums transition sm:text-2xl",
             loading && "opacity-60",
             found
               ? tone === "indigo"
@@ -388,10 +419,22 @@ function SummaryCard({
           {found ? `${count} found` : "No matches"}
         </p>
         {sub && found && (
-          <p className="text-[11px] font-semibold text-slate-500">{sub}</p>
+          <p className="line-clamp-2 text-[10px] font-semibold leading-tight text-slate-500 sm:text-[11px]">
+            {sub}
+          </p>
         )}
       </div>
-    </div>
+      {active && (
+        <span
+          className={clsx(
+            "absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide sm:static sm:shrink-0 sm:px-2.5 sm:py-1 sm:text-[10px]",
+            tone === "indigo" ? "bg-indigo-100 text-indigo-700" : "bg-teal-100 text-teal-700"
+          )}
+        >
+          Active
+        </span>
+      )}
+    </button>
   );
 }
 

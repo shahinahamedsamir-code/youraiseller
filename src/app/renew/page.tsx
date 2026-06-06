@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  Sparkles,
   Mail,
   LogOut,
   RefreshCw,
@@ -14,6 +13,7 @@ import {
   CheckCircle2,
   Circle,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
   clearUserSession,
   refreshCurrentSessionUser,
@@ -107,11 +107,8 @@ export default function RenewPage() {
       />
 
       <div className="relative mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-12">
-        <div className="mb-6 flex items-center justify-center gap-2 lg:justify-start">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-violet-600 text-white">
-            <Sparkles className="h-4 w-4" />
-          </div>
-          <span className="text-sm font-bold text-slate-800">YourAI Seller</span>
+        <div className="mb-6 flex justify-center lg:justify-start">
+          <BrandLogo size="sm" subtitle="Seller Dashboard" />
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-white/80 bg-white shadow-xl shadow-slate-200/60 ring-1 ring-slate-100">

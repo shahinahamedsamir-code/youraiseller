@@ -12,6 +12,9 @@ import {
   cascadeFeatures,
   DEFAULT_FEATURES,
   FEATURE_LIST,
+  applyParentCascade,
+  getChildFeatures,
+  isParentFeature,
   type FeatureKey,
 } from "@/lib/features";
 import {
@@ -23,6 +26,11 @@ import {
   SESSION_FEATURES_KEY,
   SESSION_FEATURES_UPDATED,
 } from "@/lib/feature-storage";
+import {
+  fetchGlobalFeaturesFromServer,
+  GLOBAL_FEATURES_SERVER_UPDATED,
+  saveGlobalFeaturesToServer,
+} from "@/lib/global-features-client";
 
 type FeatureContextValue = {
   features: Record<FeatureKey, boolean>;
@@ -69,15 +77,24 @@ export function FeatureProvider({
   }, []);
 
   useEffect(() => {
-    reloadGlobal();
-    if (mode === "session") reloadUser();
-    setHydrated(true);
-  }, [mode, reloadGlobal, reloadUser]);
+    let cancelled = false;
+    (async () => {
+      const fromServer = await fetchGlobalFeaturesFromServer();
+      if (cancelled) return;
+      setGlobalFeatures(fromServer);
+      if (mode === "session") reloadUser();
+      setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, reloadUser]);
 
   useEffect(() => {
     if (!hydrated || mode !== "session") return;
 
     const onGlobal = () => reloadGlobal();
+    const onGlobalServer = () => reloadGlobal();
     const onSession = () => reloadUser();
     const onStorage = (e: StorageEvent) => {
       if (e.key === GLOBAL_FEATURES_KEY) reloadGlobal();
@@ -85,12 +102,14 @@ export function FeatureProvider({
     };
 
     window.addEventListener(GLOBAL_FEATURES_UPDATED, onGlobal);
+    window.addEventListener(GLOBAL_FEATURES_SERVER_UPDATED, onGlobalServer);
     window.addEventListener(SESSION_FEATURES_UPDATED, onSession);
     window.addEventListener("youraiseller-users-updated", onSession);
     window.addEventListener("storage", onStorage);
 
     return () => {
       window.removeEventListener(GLOBAL_FEATURES_UPDATED, onGlobal);
+      window.removeEventListener(GLOBAL_FEATURES_SERVER_UPDATED, onGlobalServer);
       window.removeEventListener(SESSION_FEATURES_UPDATED, onSession);
       window.removeEventListener("youraiseller-users-updated", onSession);
       window.removeEventListener("storage", onStorage);
@@ -105,6 +124,7 @@ export function FeatureProvider({
   useEffect(() => {
     if (!hydrated || mode !== "global") return;
     saveStoredFeatures(GLOBAL_FEATURES_KEY, globalFeatures);
+    void saveGlobalFeaturesToServer(globalFeatures);
   }, [globalFeatures, hydrated, mode]);
 
   const patchGlobal = useCallback(
@@ -126,9 +146,17 @@ export function FeatureProvider({
   const toggle = useCallback(
     (key: FeatureKey) => {
       if (mode !== "global") return;
-      // Parent → child cascade is applied at read time (cascadeFeatures), so we
-      // only flip this one flag; children keep their own stored state.
-      patchGlobal((prev) => ({ ...prev, [key]: !prev[key] }));
+      patchGlobal((prev) => {
+        if (isParentFeature(key)) {
+          const turningOn = !prev[key];
+          const children = getChildFeatures(key);
+          const allChildrenOn =
+            children.length === 0 || children.every((c) => prev[c.key]);
+          const turnOn = turningOn || !allChildrenOn;
+          return applyParentCascade(prev, key, turnOn);
+        }
+        return { ...prev, [key]: !prev[key] };
+      });
     },
     [mode, patchGlobal]
   );

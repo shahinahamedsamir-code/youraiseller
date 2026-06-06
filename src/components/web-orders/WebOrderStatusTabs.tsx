@@ -33,16 +33,26 @@ type Props = {
   active: WebOrderTabKey;
   counts: Record<WebOrderTabKey, number>;
   onChange: (tab: WebOrderTabKey) => void;
+  /** Visible rows for the active tab (search applied) — keeps badge in sync with table */
+  activeVisibleCount?: number;
 };
 
-export function WebOrderStatusTabs({ active, counts, onChange }: Props) {
+export function WebOrderStatusTabs({
+  active,
+  counts,
+  onChange,
+  activeVisibleCount,
+}: Props) {
   return (
     <div className="overflow-x-auto rounded-t-2xl border border-b-0 border-slate-200/80 bg-white yai-tab-strip">
       <div className="flex min-w-max items-stretch px-1 pt-1">
         {WEB_ORDER_TABS.map((tab) => {
           const Icon = TAB_ICONS[tab.key];
           const isActive = active === tab.key;
-          const count = counts[tab.key] ?? 0;
+          const count =
+            isActive && activeVisibleCount != null
+              ? activeVisibleCount
+              : counts[tab.key] ?? 0;
           return (
             <button
               key={tab.key}

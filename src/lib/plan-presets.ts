@@ -1,37 +1,27 @@
-import { DEFAULT_FEATURES, FEATURE_LIST, type FeatureKey } from "./features";
+import type { FeatureKey } from "./features";
 import type { DevUser } from "./dev-users";
+import {
+  PLAN_PRESETS,
+  countEnabledFeatures,
+  normalizePlanConfig,
+  planFeaturesFromConfig,
+} from "./plan-config-utils";
 
-function build(
-  overrides: Partial<Record<FeatureKey, boolean>>
-): Record<FeatureKey, boolean> {
-  return { ...DEFAULT_FEATURES, ...overrides };
-}
+export { PLAN_PRESETS, countEnabledFeatures };
 
-/** Default features per plan when creating a new user */
-export const PLAN_PRESETS: Record<DevUser["plan"], Record<FeatureKey, boolean>> = {
-  basic: build({
-    founder_dashboard: false,
-    meta_ads: false,
-    hrm: false,
-    automation: false,
-    accounting: false,
-    woocommerce: false,
-    additional_sites: false,
-    auto_call_center: false,
-    preorders: false,
-  }),
-  pro: build({
-    founder_dashboard: false,
-    hrm: false,
-    automation: false,
-  }),
-  enterprise: { ...DEFAULT_FEATURES },
-};
+const STORAGE_KEY = "youraiseller-plan-config";
 
+/** Reads cached plan config in browser; falls back to static defaults on server. */
 export function getPlanFeatures(plan: DevUser["plan"]): Record<FeatureKey, boolean> {
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        return planFeaturesFromConfig(normalizePlanConfig(JSON.parse(raw)), plan);
+      }
+    } catch {
+      /* use fallback */
+    }
+  }
   return { ...PLAN_PRESETS[plan] };
-}
-
-export function countEnabledFeatures(features: Record<FeatureKey, boolean>): number {
-  return FEATURE_LIST.filter((f) => features[f.key]).length;
 }

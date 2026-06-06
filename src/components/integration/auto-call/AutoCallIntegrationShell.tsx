@@ -5,12 +5,22 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { autoCallNav, autoCallBasePath } from "@/lib/auto-call-nav";
+import { getAutoCallBasePath, getAutoCallNav } from "@/lib/auto-call-nav";
 import { AutoCallWalletBar } from "@/components/integration/auto-call/AutoCallWalletBar";
 import { useAutoCallAccount } from "@/components/integration/auto-call/useAutoCallAccount";
 
-export function AutoCallIntegrationShell({ children }: { children: React.ReactNode }) {
+type AutoCallShellVariant = "center" | "integration";
+
+export function AutoCallIntegrationShell({
+  children,
+  variant = "integration",
+}: {
+  children: React.ReactNode;
+  variant?: AutoCallShellVariant;
+}) {
   const pathname = usePathname();
+  const nav = getAutoCallNav(variant);
+  const basePath = getAutoCallBasePath(variant);
   const {
     account,
     setAccount,
@@ -61,56 +71,55 @@ export function AutoCallIntegrationShell({ children }: { children: React.ReactNo
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <nav className="shrink-0 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm lg:w-[220px] xl:w-[240px]">
-          <p className="px-3 pb-2 pt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-            Auto Call menu
-          </p>
-          <ul className="space-y-1">
-            {autoCallNav.map((item) => {
-              const Icon = item.icon;
-              const active =
-                item.href === autoCallBasePath
-                  ? pathname === item.href
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav
+        aria-label="Auto Call sections"
+        className="rounded-2xl border border-violet-100/80 bg-gradient-to-r from-violet-50/60 via-white to-indigo-50/40 p-2 shadow-sm shadow-violet-100/40"
+      >
+        <div
+          className={clsx(
+            "grid grid-cols-2 gap-1.5 sm:grid-cols-3",
+            variant === "integration" ? "lg:grid-cols-5" : "lg:grid-cols-3"
+          )}
+        >
+          {nav.map((item) => {
+            const Icon = item.icon;
+            const active =
+              item.href === basePath
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={clsx(
-                      "group flex items-start gap-3 rounded-xl px-3 py-2.5 transition",
-                      active
-                        ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-200/50"
-                        : "text-slate-600 hover:bg-violet-50 hover:text-violet-900"
-                    )}
-                  >
-                    <Icon
-                      className={clsx(
-                        "mt-0.5 h-4 w-4 shrink-0",
-                        active ? "text-white" : "text-violet-500 group-hover:text-violet-600"
-                      )}
-                    />
-                    <span>
-                      <span className="block text-sm font-bold leading-tight">{item.label}</span>
-                      <span
-                        className={clsx(
-                          "mt-0.5 block text-[11px] font-medium leading-snug",
-                          active ? "text-violet-100" : "text-slate-400"
-                        )}
-                      >
-                        {item.description}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.description}
+                className={clsx(
+                  "group flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 transition sm:gap-2.5 sm:px-3 sm:py-2.5",
+                  active
+                    ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-200/50"
+                    : "bg-white/70 text-slate-600 ring-1 ring-slate-200/70 hover:bg-violet-50 hover:text-violet-900 hover:ring-violet-200"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition sm:h-8 sm:w-8",
+                    active
+                      ? "bg-white/15 text-white"
+                      : "bg-violet-100 text-violet-600 group-hover:bg-violet-200 group-hover:text-violet-700"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </span>
+                <span className="min-w-0 truncate text-xs font-extrabold leading-tight sm:text-sm">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
-        <div className="min-w-0 flex-1">{children}</div>
-      </div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

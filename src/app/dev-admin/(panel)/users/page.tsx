@@ -19,8 +19,16 @@ import {
 import clsx from "clsx";
 import { countEffectiveFeatures, GLOBAL_FEATURES_UPDATED } from "@/lib/feature-storage";
 import { getPlanFeatures } from "@/lib/plan-presets";
+import {
+  fetchPlanConfigFromServer,
+  getPlanDefinitionLocal,
+  loadPlanConfigLocal,
+  PLAN_CONFIG_UPDATED,
+} from "@/lib/plan-config-client";
+import type { PlanConfig } from "@/lib/plan-config-types";
 import { FEATURE_LIST, type FeatureKey } from "@/lib/features";
 import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+import { PlanSelectorCards } from "@/components/dev-admin/PlanSelectorCards";
 import { UserDetailsEditModal } from "@/components/dev-admin/UserDetailsEditModal";
 import {
   formatCompanyAddressShort,
@@ -77,6 +85,22 @@ const planColors = {
   enterprise: "bg-amber-600 text-white",
 };
 
+function planBadgeLabel(planId: DevUser["plan"], config: PlanConfig | null): string {
+  if (config) {
+    const def = config.plans.find((p) => p.id === planId);
+    if (def) return def.name;
+  }
+  return getPlanDefinitionLocal(planId).name;
+}
+
+function planBadgeClass(planId: DevUser["plan"], config: PlanConfig | null): string {
+  if (config) {
+    const def = config.plans.find((p) => p.id === planId);
+    if (def?.badgeClass) return def.badgeClass;
+  }
+  return planColors[planId];
+}
+
 const statusColors: Record<UserStatus, string> = {
   pending: "bg-amber-500/20 text-amber-300",
   inactive: "bg-orange-500/20 text-orange-300",
@@ -87,6 +111,7 @@ const statusColors: Record<UserStatus, string> = {
 
 export default function DevUsersPage() {
   const [users, setUsers] = useState<DevUser[]>([]);
+  const [planConfig, setPlanConfig] = useState<PlanConfig | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -119,16 +144,21 @@ export default function DevUsersPage() {
 
   useEffect(() => {
     const load = async () => {
+      const cfg = await fetchPlanConfigFromServer();
+      setPlanConfig(cfg);
       await syncDevUsersFromServer(true);
       refresh();
     };
     load();
     const onUpdate = () => refresh();
+    const onPlans = () => setPlanConfig(loadPlanConfigLocal());
     window.addEventListener("youraiseller-users-updated", onUpdate);
     window.addEventListener(GLOBAL_FEATURES_UPDATED, onUpdate);
+    window.addEventListener(PLAN_CONFIG_UPDATED, onPlans);
     return () => {
       window.removeEventListener("youraiseller-users-updated", onUpdate);
       window.removeEventListener(GLOBAL_FEATURES_UPDATED, onUpdate);
+      window.removeEventListener(PLAN_CONFIG_UPDATED, onPlans);
     };
   }, []);
 
@@ -284,17 +314,20 @@ export default function DevUsersPage() {
               placeholder="Company"
               value={form.company}
               onChange={(e) => setForm({ ...form, company: e.target.value })}
-              className="rounded-xl border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-white"
+              className="rounded-xl border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-white sm:col-span-2"
             />
-            <select
-              value={form.plan}
-              onChange={(e) => handlePlanChange(e.target.value as DevUser["plan"])}
-              className="rounded-xl border border-slate-600 bg-slate-900 px-4 py-2.5 text-sm text-white"
-            >
-              <option value="basic">Basic</option>
-              <option value="pro">Pro</option>
-              <option value="enterprise">Enterprise</option>
-            </select>
+          </div>
+          <div className="mb-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Package plan</p>
+            {planConfig ? (
+              <PlanSelectorCards
+                plans={planConfig.plans}
+                selected={form.plan}
+                onSelect={handlePlanChange}
+              />
+            ) : (
+              <p className="text-sm text-slate-500">Loading plans…</p>
+            )}
           </div>
           <UserFeatureEditor
             features={form.features}
@@ -370,9 +403,9 @@ export default function DevUsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ${planColors[u.plan]}`}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ring-1 ${planBadgeClass(u.plan, planConfig)}`}
                     >
-                      {u.plan}
+                      {planBadgeLabel(u.plan, planConfig)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -493,12 +526,28 @@ export default function DevUsersPage() {
                 {editingId === u.id && (
                   <tr className="border-t border-slate-700 bg-slate-900/50">
                     <td colSpan={6} className="min-w-0 px-4 py-4">
+                      {planConfig ? (
+                        <div className="mb-4">
+                          <p className="mb-2 text-xs font-semibold uppercase text-slate-500">
+                            Change package (resets features to plan defaults)
+                          </p>
+                          <PlanSelectorCards
+                            plans={planConfig.plans}
+                            selected={u.plan}
+                            onSelect={(plan) => {
+                              updateDevUser(u.id, { plan, features: getPlanFeatures(plan) });
+                              setEditFeatures(getPlanFeatures(plan));
+                              refresh();
+                            }}
+                          />
+                        </div>
+                      ) : null}
                       <UserFeatureEditor
                         features={editFeatures}
                         onChange={setEditFeatures}
                         compact
                       />
-                      <div className="mt-4 flex gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => saveEdit(u.id)}
@@ -511,7 +560,7 @@ export default function DevUsersPage() {
                           onClick={() => setEditFeatures(getPlanFeatures(u.plan))}
                           className="rounded-lg border border-slate-600 px-4 py-2 text-xs text-slate-400"
                         >
-                          Reset to {u.plan} plan
+                          Reset to {planBadgeLabel(u.plan, planConfig)} plan
                         </button>
                       </div>
                     </td>

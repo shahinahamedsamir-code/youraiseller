@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { checkDevSession, verifyDevPassword } from "@/lib/dev-auth";
-import { Code2, Lock, ShieldAlert } from "lucide-react";
+import { Lock, ShieldAlert } from "lucide-react";
+import { BrandMark } from "@/components/brand/BrandLogo";
 
 export default function DevAdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -35,9 +36,7 @@ export default function DevAdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-rose-600">
-            <Code2 className="h-7 w-7 text-white" />
-          </div>
+          <BrandMark size="lg" priority className="mx-auto mb-4 shadow-orange-500/20" />
           <h1 className="text-2xl font-bold text-white">Developer Access</h1>
           <p className="mt-2 text-sm text-slate-500">
             Private control panel — not visible to customers

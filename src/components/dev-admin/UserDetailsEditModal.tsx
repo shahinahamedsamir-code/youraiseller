@@ -9,6 +9,14 @@ import {
   findUserByCustomerId,
   CUSTOMER_ID_PREFIX,
 } from "@/lib/dev-users";
+import { getPlanFeatures } from "@/lib/plan-presets";
+import {
+  fetchPlanConfigFromServer,
+  loadPlanConfigLocal,
+  PLAN_CONFIG_UPDATED,
+} from "@/lib/plan-config-client";
+import type { PlanConfig } from "@/lib/plan-config-types";
+import { PlanSelectorCards } from "@/components/dev-admin/PlanSelectorCards";
 import { X, Plus, Trash2, MapPin, Users, StickyNote } from "lucide-react";
 
 function emptyAddress(): CompanyAddress {
@@ -49,7 +57,8 @@ type Props = {
       | "companyAddress"
       | "contacts"
       | "adminNotes"
-    >
+      | "plan"
+    > & { features?: DevUser["features"] }
   ) => void;
 };
 
@@ -67,6 +76,16 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
   const [address, setAddress] = useState<CompanyAddress>(emptyAddress());
   const [contacts, setContacts] = useState<UserContact[]>([]);
   const [adminNotes, setAdminNotes] = useState("");
+  const [plan, setPlan] = useState<DevUser["plan"]>("basic");
+  const [planConfig, setPlanConfig] = useState<PlanConfig | null>(null);
+  const [applyPlanFeatures, setApplyPlanFeatures] = useState(false);
+
+  useEffect(() => {
+    fetchPlanConfigFromServer().then(setPlanConfig);
+    const onPlans = () => setPlanConfig(loadPlanConfigLocal());
+    window.addEventListener(PLAN_CONFIG_UPDATED, onPlans);
+    return () => window.removeEventListener(PLAN_CONFIG_UPDATED, onPlans);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +100,8 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
       user.contacts?.length ? user.contacts.map((c) => ({ ...c })) : []
     );
     setAdminNotes(user.adminNotes ?? "");
+    setPlan(user.plan);
+    setApplyPlanFeatures(false);
   }, [user]);
 
   if (!open || !user) return null;
@@ -125,6 +146,8 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
         }))
         .filter((c) => c.name || c.phone || c.email || c.whatsapp),
       adminNotes: adminNotes.trim(),
+      plan,
+      ...(applyPlanFeatures ? { features: getPlanFeatures(plan) } : {}),
     });
   };
 
@@ -221,6 +244,35 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
                 />
               </div>
             </div>
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-sm font-bold text-orange-300">Subscription plan</h3>
+            {planConfig ? (
+              <>
+                <PlanSelectorCards
+                  plans={planConfig.plans}
+                  selected={plan}
+                  onSelect={(next) => {
+                    setPlan(next);
+                    if (next !== user.plan) setApplyPlanFeatures(true);
+                  }}
+                />
+                {plan !== user.plan ? (
+                  <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={applyPlanFeatures}
+                      onChange={(e) => setApplyPlanFeatures(e.target.checked)}
+                      className="rounded border-slate-600"
+                    />
+                    Also reset features to this plan&apos;s package defaults
+                  </label>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-xs text-slate-500">Loading plans…</p>
+            )}
           </section>
 
           <section>

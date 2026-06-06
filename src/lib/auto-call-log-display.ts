@@ -40,7 +40,30 @@ export function autoCallLogSource(log: AutoCallLogRow): string {
 export function isAutoCallLogCalling(log: AutoCallLogRow): boolean {
   if (log.status === "failed" || log.status === "completed") return false;
   if (!log.campaignId) return false;
+  if (isStaleAutoCallCalling(log)) return false;
   return log.status === "pending" || isAutoCallResponsePending(log.responseCode);
+}
+
+/** Pending too long — provider never returned a final code. */
+export const STALE_AUTO_CALL_MS = 4 * 60 * 1000;
+
+export function isStaleAutoCallCalling(log: AutoCallLogRow): boolean {
+  if (log.status !== "pending" && !isAutoCallResponsePending(log.responseCode)) {
+    return false;
+  }
+  if (!log.campaignId && log.status !== "pending") return false;
+  const sent = new Date(log.sentAt).getTime();
+  return Number.isFinite(sent) && Date.now() - sent > STALE_AUTO_CALL_MS;
+}
+
+export function staleAutoCallAsNoAnswer(log: AutoCallLogRow): AutoCallLogRow {
+  return {
+    ...log,
+    status: "completed",
+    responseCode: "CRBNR",
+    responseLabel: "No Answer",
+    providerMessage: log.providerMessage || "No answer — call timed out",
+  };
 }
 
 export function autoCallLogStatusLabel(log: AutoCallLogRow): string {
@@ -119,6 +142,8 @@ function keyPressOutcome(digit: number): AutoCallOutcomeStyle {
 }
 
 export function autoCallLogOutcome(log: AutoCallLogRow): AutoCallOutcomeStyle {
+  if (isStaleAutoCallCalling(log)) return NO_ANSWER_STYLE;
+
   if (isAutoCallLogCalling(log)) return CALLING_STYLE;
 
   const code = normalizeAutoCallResponseCode(log.responseCode);

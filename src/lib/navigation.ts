@@ -56,7 +56,6 @@ export const mainNav: NavItem[] = [
   {
     label: "Web Orders",
     icon: Globe,
-    badge: String(webOrdersNav.length),
     featureKey: "web_orders",
     expandPath: webOrdersBasePath,
     children: webOrdersNav.map(({ label, href, featureKey }) => ({

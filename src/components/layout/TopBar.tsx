@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Bell, Menu, Search, Zap } from "lucide-react";
 import { quickLinks } from "@/lib/navigation";
+import { BrandMark } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
 import { useMemo } from "react";
 import { HeaderQuickSms } from "./HeaderQuickSms";
@@ -30,6 +31,8 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       >
         <Menu className="h-5 w-5" />
       </button>
+
+      <BrandMark size="xs" className="md:hidden" />
 
       <div className="hidden flex-1 items-center gap-2 md:flex">
         <div className="flex max-w-md flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5">

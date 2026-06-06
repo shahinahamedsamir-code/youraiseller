@@ -1,6 +1,311 @@
 {
   "orders": [
     {
+      "id": "WO-4462",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4462,
+      "wooNumber": "4462",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-05T17:57:50",
+        "dateModified": "2026-06-05T17:57:53",
+        "syncedAt": "2026-06-05T17:30:38.087Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "05 Jun 2026, 17:57",
+      "updatedAt": "05 Jun 2026, 23:30",
+      "activityLog": [
+        {
+          "id": "log-1780660671961-q7l1",
+          "at": "2026-06-05T11:57:51.961Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4462",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "WO-4461",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000674",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - S",
+          "productCode": "Sky Stripe-zentix001-S",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3865
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4461,
+      "wooNumber": "4461",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-05T17:54:52",
+        "dateModified": "2026-06-05T17:54:56",
+        "syncedAt": "2026-06-05T17:30:38.159Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "05 Jun 2026, 17:54",
+      "updatedAt": "05 Jun 2026, 23:30",
+      "activityLog": [
+        {
+          "id": "log-1780660504469-ghhb",
+          "at": "2026-06-05T11:55:04.469Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4461",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "WO-4460",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4460,
+      "wooNumber": "4460",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-05T17:50:12",
+        "dateModified": "2026-06-05T17:50:16",
+        "syncedAt": "2026-06-05T17:30:38.237Z"
+      },
+      "webStatus": "processing",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": true,
+      "createdAt": "05 Jun 2026, 17:50",
+      "updatedAt": "05 Jun 2026, 23:30",
+      "activityLog": [
+        {
+          "id": "log-1780660281161-9y72",
+          "at": "2026-06-05T11:51:21.161Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4460",
+          "actor": "WooCommerce Sync"
+        }
+      ],
+      "webQueueReleased": false
+    },
+    {
+      "id": "WO-4459",
+      "customerName": "Samir",
+      "phone": "01616618286",
+      "email": "",
+      "address": "Nikunjo 2 road 9",
+      "district": "Dhaka",
+      "paymentMethod": "cod",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
+      "status": "pending",
+      "items": [
+        {
+          "productId": "PRD-48000673",
+          "productName": "Zentix SkyLine Classic Stripe Shirt - XL",
+          "productCode": "Sky Stripe-zentix001-SL",
+          "qty": 1,
+          "price": 1150,
+          "total": 1150,
+          "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_00000000a3c47208af942c763a5f3ec6.webp",
+          "wooProductId": 3860,
+          "wooVariationId": 3866
+        }
+      ],
+      "subtotal": 1150,
+      "shippingCharge": 70,
+      "discount": 0,
+      "advance": 0,
+      "total": 1220,
+      "note": "",
+      "source": "web",
+      "wooOrderId": 4459,
+      "wooNumber": "4459",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.158.4.235",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "typein",
+        "dateCreated": "2026-06-05T13:59:53",
+        "dateModified": "2026-06-05T13:59:57",
+        "syncedAt": "2026-06-05T14:10:40.018Z"
+      },
+      "webStatus": "complete",
+      "tags": [
+        "WooCommerce",
+        "PROCESSING",
+        "Auto Call",
+        "Pressed 1",
+        "Approve Order"
+      ],
+      "printed": false,
+      "handledBy": "WooCommerce",
+      "isPreorder": false,
+      "orderSource": "website",
+      "inWebQueue": false,
+      "createdAt": "05 Jun 2026, 13:59",
+      "updatedAt": "05 Jun 2026, 20:10",
+      "activityLog": [
+        {
+          "id": "log-1780646407399-j33d",
+          "at": "2026-06-05T08:00:07.399Z",
+          "type": "woo_import",
+          "title": "Imported from WooCommerce",
+          "detail": "Website order #4459",
+          "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780646473340-8h4v",
+          "at": "2026-06-05T08:01:13.311Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
+        }
+      ],
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-05T08:01:13.184Z",
+      "invoiceNumber": "ZENTIX-1015"
+    },
+    {
       "id": "WO-4458",
       "customerName": "Samir",
       "phone": "01616618286",
@@ -46,21 +351,24 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T22:50:34",
-        "dateModified": "2026-06-04T22:50:37",
-        "syncedAt": "2026-06-04T16:55:35.842Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:45.233Z"
       },
-      "webStatus": "processing",
+      "webStatus": "complete",
       "tags": [
         "WooCommerce",
-        "PROCESSING"
+        "PROCESSING",
+        "Auto Call",
+        "Pressed 1",
+        "Approve Order"
       ],
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
       "orderSource": "website",
-      "inWebQueue": true,
+      "inWebQueue": false,
       "createdAt": "04 Jun 2026, 22:50",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780591837832-fe9j",
@@ -69,9 +377,19 @@
           "title": "Imported from WooCommerce",
           "detail": "Website order #4458",
           "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780640002890-270e",
+          "at": "2026-06-05T06:13:22.858Z",
+          "type": "approved",
+          "title": "Created approved order",
+          "detail": "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "actor": "Zentix"
         }
       ],
-      "webQueueReleased": false
+      "webQueueReleased": false,
+      "webStatusStaffSetAt": "2026-06-05T06:13:22.774Z",
+      "invoiceNumber": "ZENTIX-1014"
     },
     {
       "id": "WO-4457",
@@ -119,8 +437,8 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T22:49:09",
-        "dateModified": "2026-06-04T22:49:13",
-        "syncedAt": "2026-06-04T16:55:35.923Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:45.364Z"
       },
       "webStatus": "complete",
       "tags": [
@@ -136,7 +454,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "04 Jun 2026, 22:49",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780591755688-a2om",
@@ -205,8 +523,8 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T22:41:27",
-        "dateModified": "2026-06-04T22:41:31",
-        "syncedAt": "2026-06-04T16:55:36.017Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:45.502Z"
       },
       "webStatus": "complete",
       "tags": [
@@ -222,7 +540,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "04 Jun 2026, 22:41",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780591302143-f72f",
@@ -291,8 +609,8 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T22:10:34",
-        "dateModified": "2026-06-04T22:10:38",
-        "syncedAt": "2026-06-04T16:55:36.129Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:45.646Z"
       },
       "webStatus": "complete",
       "tags": [
@@ -308,7 +626,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "04 Jun 2026, 22:10",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780589436545-2r2l",
@@ -377,8 +695,8 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T21:56:25",
-        "dateModified": "2026-06-04T21:56:29",
-        "syncedAt": "2026-06-04T16:55:36.218Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:45.784Z"
       },
       "webStatus": "processing",
       "tags": [
@@ -391,7 +709,7 @@
       "orderSource": "website",
       "inWebQueue": true,
       "createdAt": "04 Jun 2026, 21:56",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780588587437-dhnj",
@@ -400,6 +718,22 @@
           "title": "Imported from WooCommerce",
           "detail": "Website order #4454",
           "actor": "WooCommerce Sync"
+        },
+        {
+          "id": "log-1780645725097-jjrp",
+          "at": "2026-06-05T07:48:45.097Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4454 · Order source: Website\nWooCommerce #4454\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780645725229-dyrz",
+          "at": "2026-06-05T07:48:45.229Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: WooCommerce\nImported from your WooCommerce website\nStore order #4454 · Order source: Website\nWooCommerce #4454\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
         }
       ],
       "webQueueReleased": false
@@ -450,8 +784,8 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T21:51:35",
-        "dateModified": "2026-06-04T21:51:39",
-        "syncedAt": "2026-06-04T16:55:36.304Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:45.930Z"
       },
       "webStatus": "processing",
       "tags": [
@@ -464,7 +798,7 @@
       "orderSource": "website",
       "inWebQueue": true,
       "createdAt": "04 Jun 2026, 21:51",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780588308833-6sey",
@@ -523,8 +857,8 @@
         "deviceLabel": "Mobile",
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T20:56:30",
-        "dateModified": "2026-06-04T20:56:34",
-        "syncedAt": "2026-06-04T16:55:36.385Z"
+        "dateModified": "2026-06-05T01:14:53",
+        "syncedAt": "2026-06-05T11:49:46.069Z"
       },
       "webStatus": "processing",
       "tags": [
@@ -537,7 +871,7 @@
       "orderSource": "website",
       "inWebQueue": true,
       "createdAt": "04 Jun 2026, 20:56",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780585005856-era8",
@@ -647,7 +981,7 @@
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T12:17:57",
         "dateModified": "2026-06-04T13:02:16",
-        "syncedAt": "2026-06-04T13:18:13.214Z"
+        "syncedAt": "2026-06-05T11:49:46.208Z"
       },
       "webStatus": "complete",
       "tags": [
@@ -660,7 +994,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "04 Jun 2026, 12:17",
-      "updatedAt": "04 Jun 2026, 19:18",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780553893472-eq1j",
@@ -745,7 +1079,7 @@
         "attributionSource": "typein",
         "dateCreated": "2026-06-04T12:06:07",
         "dateModified": "2026-06-04T13:02:16",
-        "syncedAt": "2026-06-04T13:18:13.464Z"
+        "syncedAt": "2026-06-05T11:49:46.349Z"
       },
       "webStatus": "complete",
       "tags": [
@@ -758,7 +1092,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "04 Jun 2026, 12:06",
-      "updatedAt": "04 Jun 2026, 19:18",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780553205089-c4iv",
@@ -915,7 +1249,7 @@
         "attributionSource": "typein",
         "dateCreated": "2026-06-03T21:24:50",
         "dateModified": "2026-06-04T01:02:14",
-        "syncedAt": "2026-06-04T04:40:13.184Z"
+        "syncedAt": "2026-06-05T11:49:46.490Z"
       },
       "webStatus": "complete",
       "tags": [
@@ -931,7 +1265,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "03 Jun 2026, 21:24",
-      "updatedAt": "04 Jun 2026, 22:46",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780500306525-7ba2",
@@ -1147,7 +1481,7 @@
       "orderSource": "website",
       "inWebQueue": true,
       "createdAt": "03 Jun 2026, 13:15",
-      "updatedAt": "04 Jun 2026, 10:40",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780470953101-auur",
@@ -1285,7 +1619,7 @@
         "attributionSource": "typein",
         "dateCreated": "2026-06-03T13:15:15",
         "dateModified": "2026-06-04T01:02:14",
-        "syncedAt": "2026-06-04T04:40:13.930Z"
+        "syncedAt": "2026-06-05T11:49:46.633Z"
       }
     },
     {
@@ -1330,7 +1664,7 @@
       "orderSource": "website",
       "inWebQueue": false,
       "createdAt": "03 Jun 2026, 13:08",
-      "updatedAt": "04 Jun 2026, 10:40",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1780470542733-po9r",
@@ -1428,7 +1762,7 @@
         "attributionSource": "typein",
         "dateCreated": "2026-06-03T13:08:58",
         "dateModified": "2026-06-04T01:02:14",
-        "syncedAt": "2026-06-04T04:40:14.562Z"
+        "syncedAt": "2026-06-05T11:49:46.775Z"
       },
       "webStatusStaffSetAt": "2026-06-03T15:23:29.024Z",
       "email": "",
@@ -1474,7 +1808,7 @@
       "orderSource": "website",
       "isPreorder": false,
       "createdAt": "03 Jun 2026, 12:40",
-      "updatedAt": "03 Jun 2026, 12:57",
+      "updatedAt": "05 Jun 2026, 21:08",
       "activityLog": [
         {
           "id": "log-1780468845597-n2bp",
@@ -1539,6 +1873,38 @@
           "title": "Opened for edit — Web Order List · Open",
           "detail": "Opened via: Web Order List · Open\nCame from: Web order\nCame from website / web channel\nOrder source: Website · Web Order List\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
           "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672079272-haez",
+          "at": "2026-06-05T15:07:59.272Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: Web order\nCame from website / web channel\nOrder source: Website · Web Order List\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672079420-xngq",
+          "at": "2026-06-05T15:07:59.420Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: Web order\nCame from website / web channel\nOrder source: Website · Web Order List\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672107684-dgdx",
+          "at": "2026-06-05T15:08:27.684Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: Web order\nCame from website / web channel\nOrder source: Website · Web Order List\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672107863-4zqi",
+          "at": "2026-06-05T15:08:27.863Z",
+          "type": "opened",
+          "title": "Opened for edit — Web Order List · Open",
+          "detail": "Opened via: Web Order List · Open\nCame from: Web order\nCame from website / web channel\nOrder source: Website · Web Order List\nChannel tag: web\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
         }
       ],
       "printed": false
@@ -1581,7 +1947,7 @@
       "orderSource": "instagram",
       "isPreorder": false,
       "createdAt": "03 Jun 2026, 12:19",
-      "updatedAt": "03 Jun 2026, 12:19",
+      "updatedAt": "05 Jun 2026, 21:09",
       "activityLog": [
         {
           "id": "log-1780467542084-3mwg",
@@ -1597,6 +1963,22 @@
           "type": "note",
           "title": "Advance payment recorded",
           "detail": "Amount: ৳100\nPayment method: bKash\nTransaction ID: 545446545646545454",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672169375-0elt",
+          "at": "2026-06-05T15:09:29.375Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Instagram · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672169550-1ey5",
+          "at": "2026-06-05T15:09:29.550Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Instagram · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
           "actor": "Zentix"
         }
       ],
@@ -1639,7 +2021,7 @@
       "orderSource": "direct",
       "isPreorder": false,
       "createdAt": "03 Jun 2026, 11:28",
-      "updatedAt": "03 Jun 2026, 12:16",
+      "updatedAt": "05 Jun 2026, 21:09",
       "activityLog": [
         {
           "id": "log-1780464490645-dbbl",
@@ -1671,6 +2053,22 @@
           "type": "edited",
           "title": "Order saved — Approved Order List · Edit",
           "detail": "Saved via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Direct · New Order form\nChannel tag: manual\nNo field changes (re-saved)\nItems now: Baby Pink Oxford Full Sleeve Cotton Shirt — size: L ×1\nTotal: ৳1,050",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672149913-zdnx",
+          "at": "2026-06-05T15:09:09.913Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Direct · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780672150110-58pd",
+          "at": "2026-06-05T15:09:10.110Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Direct · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
           "actor": "Zentix"
         }
       ],
@@ -1729,7 +2127,7 @@
       "orderSource": "facebook",
       "isPreorder": false,
       "createdAt": "03 Jun 2026, 11:16",
-      "updatedAt": "03 Jun 2026, 11:16",
+      "updatedAt": "05 Jun 2026, 17:04",
       "activityLog": [
         {
           "id": "log-1780463810032-c8at",
@@ -1745,6 +2143,54 @@
           "type": "note",
           "title": "Advance payment recorded",
           "detail": "Amount: ৳100\nPayment method: bKash\nTransaction ID: dsagsdgdsagasdgdsagsdag",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780655304199-nbwt",
+          "at": "2026-06-05T10:28:24.199Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780655305185-92ts",
+          "at": "2026-06-05T10:28:25.185Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780657445379-ahyk",
+          "at": "2026-06-05T11:04:05.379Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780657445573-mrrn",
+          "at": "2026-06-05T11:04:05.573Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780657482807-2srk",
+          "at": "2026-06-05T11:04:42.807Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
+          "actor": "Zentix"
+        },
+        {
+          "id": "log-1780657482991-otbi",
+          "at": "2026-06-05T11:04:42.991Z",
+          "type": "opened",
+          "title": "Opened for edit — Approved Order List · Edit",
+          "detail": "Opened via: Approved Order List · Edit\nCame from: Panel\nCreated manually in Approved Orders\nOrder source: Facebook · New Order form\nChannel tag: manual\nYou can change customer, items, status, note, and totals.",
           "actor": "Zentix"
         }
       ],
@@ -1782,7 +2228,7 @@
       "orderSource": "unknown",
       "isPreorder": false,
       "createdAt": "02 Jun 2026, 13:12",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 23:30",
       "activityLog": [
         {
           "id": "log-1780384322785-ul6n",
@@ -1846,7 +2292,7 @@
       "courierConsignmentId": "255895689",
       "courierStatus": "unknown",
       "courierRiderAssigned": false,
-      "courierSyncedAt": "2026-06-04T16:55:36.802Z",
+      "courierSyncedAt": "2026-06-05T17:30:22.355Z",
       "approvedAt": "02 Jun 2026, 22:08"
     },
     {
@@ -1949,10 +2395,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "custom",
       "inWebQueue": false,
       "createdAt": "24 May 2026, 17:38",
-      "updatedAt": "03 Jun 2026, 13:07",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779622816485-zgt4",
@@ -2027,7 +2473,24 @@
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
       "courierSyncedAt": "2026-05-24T17:36:01.214Z",
-      "approvedAt": "24 May 2026, 23:35"
+      "approvedAt": "24 May 2026, 23:35",
+      "customOrderSource": "utm",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 130,
+        "discountTotal": 0,
+        "customerIp": "2404:1c40:5c:6a78:1:0:6075:205e",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-24T17:38:19",
+        "dateModified": "2026-05-24T22:17:43",
+        "syncedAt": "2026-06-05T11:49:46.914Z"
+      }
     },
     {
       "id": "WO-4377",
@@ -2068,10 +2531,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "24 May 2026, 16:08",
-      "updatedAt": "02 Jun 2026, 10:31",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779620143744-prks",
@@ -2130,7 +2593,23 @@
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
       "courierSyncedAt": "2026-05-24T17:36:01.434Z",
-      "approvedAt": "24 May 2026, 23:35"
+      "approvedAt": "24 May 2026, 23:35",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.147.106.8",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 13; 22011119TI Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.175 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/562.0.0.51.73;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "referral",
+        "dateCreated": "2026-05-24T16:08:37",
+        "dateModified": "2026-05-24T22:17:43",
+        "syncedAt": "2026-06-05T11:49:47.068Z"
+      }
     },
     {
       "id": "WO-4376",
@@ -2173,10 +2652,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "24 May 2026, 09:56",
-      "updatedAt": "03 Jun 2026, 12:37",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779603823320-nk3y",
@@ -2203,7 +2682,23 @@
           "actor": "Zentix"
         }
       ],
-      "webQueueReleased": false
+      "webQueueReleased": false,
+      "wooSnapshot": {
+        "wcStatus": "cancelled",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.100.234.18",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 15; CPH2725 Build/AP3A.240617.008) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.175 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/562.0.0.51.73;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-24T09:56:24",
+        "dateModified": "2026-05-24T11:21:27",
+        "syncedAt": "2026-06-05T11:49:47.212Z"
+      }
     },
     {
       "id": "WO-4375",
@@ -2225,8 +2720,7 @@
           "total": 750,
           "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/ChatGPT-Image-May-16-2026-07_43_35-PM.jpg",
           "wooProductId": 4159,
-          "wooVariationId": 4232,
-          "imageDataUrl": "https://zentixbd.com/wp-content/uploads/2026/05/ChatGPT-Image-May-16-2026-07_43_35-PM.jpg"
+          "wooVariationId": 4232
         }
       ],
       "subtotal": 750,
@@ -2245,10 +2739,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "instagram",
       "inWebQueue": false,
       "createdAt": "23 May 2026, 21:54",
-      "updatedAt": "24 May 2026, 23:35",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779552637645-ltia",
@@ -2293,9 +2787,26 @@
       ],
       "webQueueReleased": false,
       "webStatusStaffSetAt": "24 May 2026, 23:35",
-      "note": "Cancel: Out of stock",
+      "note": "",
       "cancelReason": "out_of_stock",
-      "stockRestoredOnCancel": false
+      "stockRestoredOnCancel": false,
+      "email": "",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 130,
+        "discountTotal": 0,
+        "customerIp": "103.172.139.228",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 15; CPH2605 Build/AP3A.240617.008; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.172 Mobile Safari/537.36 Instagram 430.0.0.53.80 Android (35/15; 480dpi; 1080x2400; OnePlus; CPH2605; OP5955L1; mt6833; en_BD; 974607039; IABMV/1)",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-23T21:54:27",
+        "dateModified": "2026-05-23T22:16:41",
+        "syncedAt": "2026-06-05T11:49:47.340Z"
+      }
     },
     {
       "id": "AO-8829",
@@ -2346,7 +2857,7 @@
       "orderSource": "facebook",
       "isPreorder": false,
       "createdAt": "23 May 2026, 20:36",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 23:30",
       "activityLog": [
         {
           "id": "log-1779546968404-3oih",
@@ -2396,7 +2907,7 @@
       "courierConsignmentId": "254471356",
       "courierStatus": "partial_delivered",
       "courierRiderAssigned": true,
-      "courierSyncedAt": "2026-06-04T16:55:39.035Z",
+      "courierSyncedAt": "2026-06-05T17:30:24.311Z",
       "approvedAt": "23 May 2026, 20:51"
     },
     {
@@ -2580,10 +3091,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "22 May 2026, 08:23",
-      "updatedAt": "23 May 2026, 20:57",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779438252159-txy7",
@@ -4968,7 +5479,23 @@
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
       "courierSyncedAt": "2026-05-22T17:44:04.421Z",
-      "approvedAt": "22 May 2026, 23:44"
+      "approvedAt": "22 May 2026, 23:44",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 130,
+        "discountTotal": 0,
+        "customerIp": "37.111.242.238",
+        "customerUserAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 26_4_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/23E261 Safari/604.1 [FBAN/FBIOS;FBAV/561.0.0.61.68;FBBV/968394897;FBDV/iPhone15,3;FBMD/iPhone;FBSN/iOS;FBSV/26.4.2;FBSS/3;FBID/phone;FBLC/en_GB;FBOP/5;FBRV/976108093;IABMV/1]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-22T14:23:29",
+        "dateModified": "2026-05-22T22:13:16",
+        "syncedAt": "2026-06-05T11:49:47.480Z"
+      }
     },
     {
       "id": "WO-4373",
@@ -5009,10 +5536,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "22 May 2026, 08:08",
-      "updatedAt": "23 May 2026, 20:57",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779437342395-z3vi",
@@ -7349,17 +7876,33 @@
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
       "courierSyncedAt": "2026-05-22T17:44:04.760Z",
-      "approvedAt": "22 May 2026, 23:44"
+      "approvedAt": "22 May 2026, 23:44",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "2400:c600:337f:b9c5:bc07:f8ff:feb6:a30f",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 14; RMX3834 Build/UP1A.231005.007) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.163 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/561.0.0.42.67;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "referral",
+        "dateCreated": "2026-05-22T14:08:51",
+        "dateModified": "2026-05-22T22:13:16",
+        "syncedAt": "2026-06-05T11:49:47.642Z"
+      }
     },
     {
       "id": "WO-4372",
       "customerName": "Md Abdullah Al Amin",
-      "phone": "01833401046",
+      "phone": "+8801833401046",
       "address": "Saidpur",
       "district": "Dhaka",
       "paymentMethod": "cod",
-      "deliveryMethodId": "dm-1779425614752",
-      "courier": "STEADFAST",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
       "status": "rts",
       "items": [
         {
@@ -7371,15 +7914,14 @@
           "total": 750,
           "imageUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_0000000080247208bc17d8de8498ce63.webp",
           "wooProductId": 3871,
-          "wooVariationId": 3875,
-          "imageDataUrl": "https://zentixbd.com/wp-content/uploads/2026/05/file_0000000080247208bc17d8de8498ce63.webp"
+          "wooVariationId": 3875
         }
       ],
       "subtotal": 750,
-      "shippingCharge": 150,
+      "shippingCharge": 70,
       "discount": 0,
       "advance": 0,
-      "total": 900,
+      "total": 820,
       "source": "web",
       "wooOrderId": 4372,
       "wooNumber": "4372",
@@ -7391,10 +7933,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "22 May 2026, 07:58",
-      "updatedAt": "23 May 2026, 21:18",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779436758474-q3z3",
@@ -9898,7 +10440,24 @@
       "courierSyncedAt": "2026-05-22T17:44:09.237Z",
       "approvedAt": "22 May 2026, 23:44",
       "cancelReason": "duplicate_order",
-      "stockRestoredOnCancel": false
+      "stockRestoredOnCancel": false,
+      "note": "",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "2401:1900:8092:dd5f::1",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 14; TECNO KJ7 Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.163 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/561.0.0.42.67;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-22T13:58:18",
+        "dateModified": "2026-05-22T22:13:16",
+        "syncedAt": "2026-06-05T11:49:47.780Z"
+      }
     },
     {
       "id": "WO-4371",
@@ -9939,10 +10498,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "22 May 2026, 06:11",
-      "updatedAt": "23 May 2026, 20:57",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779430353755-adeo",
@@ -12278,7 +12837,23 @@
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
       "courierSyncedAt": "2026-05-22T17:44:09.434Z",
-      "approvedAt": "22 May 2026, 23:44"
+      "approvedAt": "22 May 2026, 23:44",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.73.47.117",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 16; TECNO CN7c Build/BP2A.250605.031.A3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.163 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/561.0.0.42.67;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "referral",
+        "dateCreated": "2026-05-22T12:11:59",
+        "dateModified": "2026-05-22T22:13:16",
+        "syncedAt": "2026-06-05T11:49:47.944Z"
+      }
     },
     {
       "id": "WO-4369",
@@ -12287,8 +12862,8 @@
       "address": "Savar,nayabari",
       "district": "Dhaka",
       "paymentMethod": "cod",
-      "deliveryMethodId": "dm-1779425614752",
-      "courier": "STEADFAST",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
       "status": "delivered",
       "items": [
         {
@@ -12319,10 +12894,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "instagram",
       "inWebQueue": false,
       "createdAt": "21 May 2026, 19:55",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779425438229-co8f",
@@ -13985,8 +14560,24 @@
       "trackingId": "SFR260522ST91CE511BD",
       "courierStatus": "delivered",
       "courierRiderAssigned": true,
-      "courierSyncedAt": "2026-06-04T16:55:40.381Z",
-      "approvedAt": "22 May 2026, 23:44"
+      "courierSyncedAt": "2026-06-05T11:49:30.445Z",
+      "approvedAt": "22 May 2026, 23:44",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "45.248.151.220",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 14; SM-S928B Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/147.0.7727.137 Mobile Safari/537.36 Instagram 430.0.0.53.80 Android (34/14; 450dpi; 1080x2340; samsung; SM-S928B; e3q; qcom; en_GB; 974607439; IABMV/1)",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-22T01:55:16",
+        "dateModified": "2026-05-22T10:11:23",
+        "syncedAt": "2026-06-05T11:49:48.262Z"
+      }
     },
     {
       "id": "WO-4370",
@@ -13995,8 +14586,8 @@
       "address": "56 New Eskaton Road",
       "district": "Dhaka",
       "paymentMethod": "cod",
-      "deliveryMethodId": "dm-1779425614752",
-      "courier": "STEADFAST",
+      "deliveryMethodId": "dm-1779433659383",
+      "courier": "carrybe",
       "status": "rts",
       "items": [
         {
@@ -14027,10 +14618,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "22 May 2026, 00:14",
-      "updatedAt": "04 Jun 2026, 22:55",
+      "updatedAt": "05 Jun 2026, 17:52",
       "activityLog": [
         {
           "id": "log-1779425438207-mo1z",
@@ -15708,9 +16299,25 @@
       "trackingId": "SFR260522STE46491ABD",
       "courierStatus": "in_review",
       "courierRiderAssigned": false,
-      "courierSyncedAt": "2026-06-04T16:55:40.851Z",
+      "courierSyncedAt": "2026-06-05T11:52:11.354Z",
       "approvedAt": "22 May 2026, 23:44",
-      "courierConsignmentId": "254071250"
+      "courierConsignmentId": "254071250",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "155.35.46.19",
+        "customerUserAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_15 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/20H380 Safari/604.1 [FBAN/FBIOS;FBAV/561.0.0.61.68;FBBV/968394897;FBDV/iPhone10,5;FBMD/iPhone;FBSN/iOS;FBSV/16.7.15;FBSS/3;FBID/phone;FBLC/en_GB;FBOP/5;FBRV/976108093;IABMV/1]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-22T06:14:38",
+        "dateModified": "2026-05-22T10:11:23",
+        "syncedAt": "2026-06-05T11:49:48.095Z"
+      }
     },
     {
       "id": "WO-4359",
@@ -15751,10 +16358,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "instagram",
       "inWebQueue": false,
       "createdAt": "21 May 2026, 14:18",
-      "updatedAt": "23 May 2026, 20:57",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779373291823-o890",
@@ -16014,7 +16621,24 @@
       "courierSyncedAt": "2026-05-22T09:18:00.828Z",
       "approvedAt": "22 May 2026, 12:28",
       "courierRiderAssigned": false,
-      "note": ""
+      "note": "",
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 70,
+        "discountTotal": 0,
+        "customerIp": "103.24.88.215",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 13; SM-M127G Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.160 Mobile Safari/537.36 Instagram 429.1.0.44.70 Android (33/13; 300dpi; 720x1600; samsung; SM-M127G; m12; exynos850; en_GB; 968419440; IABMV/1)",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-21T20:18:25",
+        "dateModified": "2026-05-21T22:10:47",
+        "datePaid": "2026-05-21T20:31:00",
+        "syncedAt": "2026-06-05T11:49:48.409Z"
+      }
     },
     {
       "id": "WO-4353",
@@ -16055,10 +16679,10 @@
       "printed": false,
       "handledBy": "WooCommerce",
       "isPreorder": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "inWebQueue": false,
       "createdAt": "21 May 2026, 11:23",
-      "updatedAt": "23 May 2026, 20:57",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779364257207-wzvn",
@@ -18254,7 +18878,24 @@
       "courierStatus": "pending",
       "courierSyncedAt": "2026-05-22T09:18:01.074Z",
       "approvedAt": "22 May 2026, 12:31",
-      "courierRiderAssigned": false
+      "courierRiderAssigned": false,
+      "wooSnapshot": {
+        "wcStatus": "processing",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 130,
+        "discountTotal": 0,
+        "customerIp": "202.181.19.251",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 13; CPH2481 Build/SP1A.210812.016) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.163 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/561.0.0.42.67;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-21T17:23:16",
+        "dateModified": "2026-05-21T22:10:47",
+        "datePaid": "2026-05-21T17:24:53",
+        "syncedAt": "2026-06-05T11:49:48.561Z"
+      }
     },
     {
       "id": "WO-4352",
@@ -21117,7 +21758,7 @@
       "handledBy": "WooCommerce",
       "isPreorder": false,
       "createdAt": "19 May 2026, 09:35",
-      "updatedAt": "22 May 2026, 15:18",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779348013802-nj2x",
@@ -23073,9 +23714,25 @@
         }
       ],
       "inWebQueue": false,
-      "orderSource": "website",
+      "orderSource": "direct",
       "webQueueReleased": false,
-      "wooCommerceStatus": "cancelled"
+      "wooCommerceStatus": "cancelled",
+      "wooSnapshot": {
+        "wcStatus": "cancelled",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 130,
+        "discountTotal": 0,
+        "customerIp": "203.188.249.130",
+        "customerUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+        "deviceLabel": "Desktop",
+        "attributionSource": "organic",
+        "dateCreated": "2026-05-19T15:35:32",
+        "dateModified": "2026-05-19T22:04:33",
+        "syncedAt": "2026-06-05T11:49:48.866Z"
+      }
     },
     {
       "id": "WO-4324",
@@ -23130,7 +23787,7 @@
       "handledBy": "WooCommerce",
       "isPreorder": false,
       "createdAt": "19 May 2026, 16:04",
-      "updatedAt": "22 May 2026, 15:18",
+      "updatedAt": "05 Jun 2026, 17:49",
       "activityLog": [
         {
           "id": "log-1779348013800-j0qu",
@@ -25070,9 +25727,25 @@
         }
       ],
       "inWebQueue": false,
-      "orderSource": "website",
+      "orderSource": "facebook",
       "webQueueReleased": false,
-      "wooCommerceStatus": "cancelled"
+      "wooCommerceStatus": "cancelled",
+      "wooSnapshot": {
+        "wcStatus": "cancelled",
+        "paymentMethod": "cod",
+        "paymentMethodTitle": "Cash On Delivery (ক্যাশ অন ডেলিভারী)",
+        "needsPayment": false,
+        "currency": "BDT",
+        "shippingTotal": 130,
+        "discountTotal": 0,
+        "customerIp": "103.157.246.136",
+        "customerUserAgent": "Mozilla/5.0 (Linux; Android 11; SM-A107F Build/RP1A.200720.012) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/148.0.7778.120 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/561.0.0.42.67;IABMV/1;]",
+        "deviceLabel": "Mobile",
+        "attributionSource": "utm",
+        "dateCreated": "2026-05-19T22:04:01",
+        "dateModified": "2026-05-20T12:34:57",
+        "syncedAt": "2026-06-05T11:49:48.713Z"
+      }
     },
     {
       "id": "AO-8821",

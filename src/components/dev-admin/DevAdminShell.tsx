@@ -6,15 +6,16 @@ import { useEffect, useState } from "react";
 import {
   ToggleLeft,
   Users,
-  Code2,
   Package,
   LogOut,
   ClipboardList,
   Menu,
   MessageSquare,
   Phone,
+  Layers,
   X,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { clearDevAuthenticated } from "@/lib/dev-auth";
 import { getPendingUsers, syncDevUsersFromServer } from "@/lib/dev-users";
 import clsx from "clsx";
@@ -23,6 +24,7 @@ const devNav = [
   { label: "Feature Control", href: "/dev-admin", icon: ToggleLeft, exact: true },
   { label: "Request", href: "/dev-admin/requests", icon: ClipboardList },
   { label: "Software Users", href: "/dev-admin/users", icon: Users },
+  { label: "Plan Packages", href: "/dev-admin/plans", icon: Layers },
   { label: "SMS Control", href: "/dev-admin/sms", icon: MessageSquare },
   { label: "Auto Call Control", href: "/dev-admin/auto-call", icon: Phone },
 ];
@@ -73,17 +75,11 @@ export function DevAdminShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="border-b border-orange-500/20 px-5 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-rose-600">
-              <Code2 className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="font-bold text-white">Dev Admin</p>
-              <p className="text-[10px] uppercase tracking-wider text-orange-400">
-                YourAI Seller
-              </p>
-            </div>
-          </div>
+          <BrandLogo
+            size="sm"
+            subtitle="Dev Admin"
+            textClassName="[&_p:first-child]:text-white [&_p:last-child]:text-orange-400/90"
+          />
         </div>
 
         <nav className="flex-1 space-y-1 p-3">

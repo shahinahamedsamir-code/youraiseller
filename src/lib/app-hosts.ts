@@ -30,6 +30,11 @@ export function isMarketingHost(host: string): boolean {
   return hostsMatch(host, getMarketingHost());
 }
 
+/** True when marketing site and dashboard use different hostnames */
+export function isSplitDomainMode(): boolean {
+  return getAppHost() !== getMarketingHost();
+}
+
 /** Prefer proxy headers used by Hostinger / reverse proxies */
 export function resolveRequestHost(
   headerGet: (name: string) => string | null
@@ -66,9 +71,11 @@ export function getAppBaseUrl(): string {
 }
 
 export function getAppLoginUrl(): string {
+  if (!isSplitDomainMode()) return "/login";
   return `${getAppBaseUrl()}/login`;
 }
 
 export function getAppSignupUrl(): string {
+  if (!isSplitDomainMode()) return "/signup";
   return `${getAppBaseUrl()}/signup`;
 }

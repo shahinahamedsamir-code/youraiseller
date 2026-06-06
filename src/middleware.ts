@@ -5,6 +5,7 @@ import {
   isAppHost,
   isAppPath,
   isMarketingHost,
+  isSplitDomainMode,
   resolveRequestHost,
 } from "@/lib/app-hosts";
 
@@ -18,6 +19,10 @@ export function middleware(request: NextRequest) {
     host.endsWith(".localhost") ||
     host.includes("127.0.0.1")
   ) {
+    return NextResponse.next();
+  }
+
+  if (!isSplitDomainMode()) {
     return NextResponse.next();
   }
 

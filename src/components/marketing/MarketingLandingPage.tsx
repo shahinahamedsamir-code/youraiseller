@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { BRAND_NAME } from "@/lib/brand";
-import { getAppLoginUrl, getAppSignupUrl } from "@/lib/app-hosts";
+import { getAppHost, getAppLoginUrl, getAppSignupUrl, isSplitDomainMode } from "@/lib/app-hosts";
 
 const features = [
   {
@@ -94,10 +94,12 @@ export function MarketingLandingPage() {
                 Create account
               </Link>
             </div>
-            <p className="mt-4 text-sm text-slate-500">
-              Dashboard runs on{" "}
-              <span className="font-semibold text-slate-700">app.youraiseller.com</span>
-            </p>
+            {isSplitDomainMode() ? (
+              <p className="mt-4 text-sm text-slate-500">
+                Dashboard runs on{" "}
+                <span className="font-semibold text-slate-700">{getAppHost()}</span>
+              </p>
+            ) : null}
           </div>
         </section>
 

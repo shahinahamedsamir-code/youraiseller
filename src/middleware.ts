@@ -1,40 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-function stripHost(raw: string | undefined): string {
-  return (raw ?? "")
-    .trim()
-    .replace(/^https?:\/\//, "")
-    .replace(/\/$/, "")
-    .split(":")[0]
-    .toLowerCase();
-}
-
-const APP_HOST = stripHost(process.env.APP_HOST) || "app.youraiseller.com";
-const MARKETING_HOST = stripHost(process.env.MARKETING_HOST) || "youraiseller.com";
-
-/** App-only routes — marketing domain redirects these to APP_HOST */
-const APP_PATH_PREFIXES = [
-  "/dashboard",
-  "/login",
-  "/signup",
-  "/renew",
-  "/dev-admin",
-  "/api",
-];
-
-function isAppPath(pathname: string): boolean {
-  return APP_PATH_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
-}
-
-function hostsMatch(host: string, target: string): boolean {
-  return host === target || host === `www.${target}`;
-}
+import {
+  getAppHost,
+  isAppHost,
+  isAppPath,
+  isMarketingHost,
+  resolveRequestHost,
+} from "@/lib/app-hosts";
 
 export function middleware(request: NextRequest) {
-  const host = stripHost(request.headers.get("host") ?? "");
+  const host = resolveRequestHost((name) => request.headers.get(name));
   const { pathname } = request.nextUrl;
 
   if (
@@ -46,13 +21,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const onMarketing = hostsMatch(host, MARKETING_HOST);
-  const onApp = hostsMatch(host, APP_HOST);
+  const onMarketing = isMarketingHost(host);
+  const onApp = isAppHost(host);
 
   if (onMarketing && isAppPath(pathname)) {
     const url = request.nextUrl.clone();
     url.protocol = "https:";
-    url.host = APP_HOST;
+    url.host = getAppHost();
     return NextResponse.redirect(url);
   }
 

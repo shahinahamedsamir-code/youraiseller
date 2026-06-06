@@ -58,7 +58,7 @@ export function CancelOrderModal({ order, open, onClose, onDone }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValidCancelReason(reason)) {
-      setError("Cancel reason বাছাই করুন (required).");
+      setError("Select a cancel reason.");
       return;
     }
     setSaving(true);

@@ -10,10 +10,6 @@ export default function HomePage() {
       <h1 className="bg-gradient-to-r from-slate-900 via-teal-700 to-violet-700 bg-clip-text text-center text-5xl font-extrabold tracking-tight text-transparent">
         {BRAND_NAME}
       </h1>
-      <p className="mt-4 max-w-lg text-center text-lg text-slate-600">
-        Full ecommerce admin panel — orders, inventory, web orders, SMS &amp;
-        reports.
-      </p>
 
       <div className="mt-10">
         <Link
@@ -25,10 +21,6 @@ export default function HomePage() {
           <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
         </Link>
       </div>
-
-      <p className="mt-8 text-xs text-slate-400">
-        Ecommerce management for your business
-      </p>
     </div>
   );
 }

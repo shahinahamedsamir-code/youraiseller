@@ -1432,7 +1432,7 @@ export function promoteWebOrderToApproved(
         type: "approved",
         title: "Created approved order",
         detail:
-          "Approved Orders → Pending · Web Order List-এ Complete হিসেবে ইতিহাসে রাখা হয়েছে",
+          "Moved to Approved Orders → Pending · marked Complete on web list",
         actor: staffActor(),
       })
     );

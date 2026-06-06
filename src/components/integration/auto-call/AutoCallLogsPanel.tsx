@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { List, Loader2, Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import {
   autoCallLogOutcome,
   autoCallLogSource,
@@ -23,8 +23,6 @@ import {
   acCard,
   acInput,
   acLabel,
-  acSectionSub,
-  acSectionTitle,
 } from "@/lib/auto-call-ui";
 
 export function AutoCallLogsPanel() {
@@ -74,21 +72,6 @@ export function AutoCallLogsPanel() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/60 via-white to-violet-50/30 p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
-            <List className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className={acSectionTitle}>Call logs</h2>
-            <p className={acSectionSub}>
-              Every verification call — who was called, whether they pressed a key, and what
-              happened. Updates every 20 seconds while calls are running.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <section className={acCard}>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <label className="block min-w-[200px] flex-1 max-w-sm">

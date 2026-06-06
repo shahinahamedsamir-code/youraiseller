@@ -139,16 +139,6 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
           );
         })}
       </nav>
-
-      <div className="border-t border-slate-100 p-4">
-        <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-4 text-white">
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-200">
-            Pro Plan
-          </p>
-          <p className="mt-1 text-sm font-semibold">Smart inventory + orders</p>
-          <p className="mt-2 text-[10px] text-indigo-200">Renews 17 Jun 2026</p>
-        </div>
-      </div>
     </aside>
   );
 }

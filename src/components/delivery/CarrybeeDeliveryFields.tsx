@@ -232,9 +232,6 @@ export function CarrybeeDeliveryFields({
             Webhook (optional)
           </h4>
         </div>
-        <p className="mb-3 text-[11px] text-violet-900/80">
-          Carrybee panel-এ webhook URL + X-Carrybee-Webhook-Signature বসান।
-        </p>
         <div className="space-y-2">
           <div className="flex gap-2">
             <input

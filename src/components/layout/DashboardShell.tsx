@@ -3,21 +3,13 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
-import { HelpAssistant } from "@/components/dashboard/HelpAssistant";
 import { WooAutoSyncRunner } from "@/components/web-orders/WooAutoSyncRunner";
 import { CourierAutoSyncRunner } from "@/components/orders/CourierAutoSyncRunner";
 import { CourierWebhookPullRunner } from "@/components/orders/CourierWebhookPullRunner";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FeatureGuard } from "./FeatureGuard";
 import { DisabledBanner } from "./DisabledBanner";
-import { useFeatures } from "@/context/FeatureContext";
 import { Suspense } from "react";
-
-function HelpWidget() {
-  const { isEnabled } = useFeatures();
-  if (!isEnabled("help_assistant")) return null;
-  return <HelpAssistant />;
-}
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,7 +38,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <HelpWidget />
       <WooAutoSyncRunner />
       <CourierAutoSyncRunner />
       <CourierWebhookPullRunner />

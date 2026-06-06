@@ -37,7 +37,6 @@ import { AutoCallRecentRuns } from "@/components/integration/auto-call/AutoCallR
 import {
   acBtnPrimary,
   acCard,
-  acHint,
   acInput,
   acLabel,
 } from "@/lib/auto-call-ui";
@@ -301,9 +300,6 @@ export function AutoCallBatchPanel() {
     <div className="space-y-5">
       <section className={acCard}>
         <h2 className="text-base font-extrabold text-slate-900">Manual Call Batches</h2>
-        <p className={`${acHint} mt-1 mb-4`}>
-          Filter orders, review key actions, then start verification calls in one batch.
-        </p>
 
         <div className="mb-4 inline-flex overflow-hidden rounded-t-lg border border-b-0 border-slate-200 bg-slate-50">
           {(
@@ -596,9 +592,6 @@ export function AutoCallBatchPanel() {
                   Setup
                 </Link>
               </div>
-              <p className="text-xs leading-relaxed text-slate-500">
-                Multiple actions can run in order when the customer presses key 1.
-              </p>
               <p className="mt-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-800 ring-1 ring-slate-200">
                 {autoCallKeyOrderActionLabel(key1Action)}
               </p>
@@ -615,9 +608,6 @@ export function AutoCallBatchPanel() {
                   Setup
                 </Link>
               </div>
-              <p className="text-xs leading-relaxed text-slate-500">
-                Multiple actions can run in order when the customer presses key 2.
-              </p>
               <p className="mt-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-800 ring-1 ring-slate-200">
                 {autoCallKeyOrderActionLabel(key2Action)}
               </p>

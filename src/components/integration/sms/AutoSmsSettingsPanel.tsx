@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import {
   Globe,
-  HelpCircle,
   Loader2,
   MessageSquarePlus,
   Package,
@@ -78,17 +77,7 @@ export function AutoSmsSettingsPanel() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-extrabold text-slate-900">Auto SMS Settings</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Automatic SMS rules by order status
-            </p>
           </div>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-800"
-          >
-            <HelpCircle className="h-4 w-4" />
-            How to configure SMS settings?
-          </button>
         </div>
       </div>
 

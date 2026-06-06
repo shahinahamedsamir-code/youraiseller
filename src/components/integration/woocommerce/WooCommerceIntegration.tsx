@@ -293,7 +293,6 @@ function ConnectionTab({
             value={settings.storeUrl}
             onChange={(v) => patch({ storeUrl: v })}
             placeholder="https://yourstore.com/"
-            hint="Enter your WooCommerce store URL (e.g., https://example.com)"
           />
           <Field
             label="Consumer Key"
@@ -301,7 +300,6 @@ function ConnectionTab({
             value={settings.consumerKey}
             onChange={(v) => patch({ consumerKey: v })}
             placeholder="ck_xxxxxxxx"
-            hint="Starts with 'ck_'. Generated in WooCommerce → Settings → Advanced → REST API"
           />
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase text-slate-500">
@@ -419,7 +417,6 @@ function ConnectionTab({
                           </span>
                         )}
                       </p>
-                      <p className="mt-1 text-xs text-slate-600">{opt.description}</p>
                     </div>
                   </button>
                 );
@@ -440,10 +437,6 @@ function ConnectionTab({
                 <span className="ml-2 text-xs font-bold text-teal-700">
                   Recommended
                 </span>
-              </p>
-              <p className="mt-1 text-xs text-slate-600">
-                Background live sync runs automatically when API keys are saved.
-                Sync New Orders forces a full 45-day pull.
               </p>
             </div>
           </label>
@@ -467,10 +460,6 @@ function ConnectionTab({
               <p className="font-bold text-slate-800">
                 Fetch complete order data via REST API
               </p>
-              <p className="mt-1 text-xs text-slate-600">
-                When enabled, each synced order is re-fetched via REST API for
-                full meta (IP, transaction, Facebook source). Slightly slower sync.
-              </p>
             </div>
           </label>
         </div>
@@ -480,10 +469,6 @@ function ConnectionTab({
         <h2 className="text-lg font-bold text-slate-900">
           Integration URLs &amp; Keys
         </h2>
-        <p className="text-sm text-slate-500">
-          Use in your WordPress plugin (Plugin Settings will be a separate module
-          later).
-        </p>
 
         <div className="mt-4 space-y-3">
           <CopyField
@@ -599,7 +584,6 @@ function ComingSoonTab({ name }: { name: string }) {
     <div className="py-16 text-center">
       <Package className="mx-auto mb-3 h-12 w-12 text-slate-300" />
       <p className="font-bold text-slate-700">{name}</p>
-      <p className="mt-1 text-sm text-slate-500">Coming soon — WooCommerce core first.</p>
     </div>
   );
 }
@@ -610,14 +594,12 @@ function Field({
   value,
   onChange,
   placeholder,
-  hint,
 }: {
   label: string;
   icon: typeof Link2;
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
-  hint: string;
 }) {
   return (
     <div>
@@ -633,7 +615,6 @@ function Field({
           className="flex-1 bg-transparent text-sm outline-none"
         />
       </div>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
     </div>
   );
 }

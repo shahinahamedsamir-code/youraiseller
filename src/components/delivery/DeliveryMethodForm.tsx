@@ -418,10 +418,6 @@ export function DeliveryMethodForm() {
                 STEADFAST Webhook Configuration
               </h4>
             </div>
-            <p className="mb-4 text-xs text-violet-900/80">
-              Steadfast Developer Portal → Webhook Integration এ নিচের URL ও Auth
-              Token বসান। Delivery status change হলে অর্ডার tab auto update হবে।
-            </p>
             <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs font-bold text-slate-700">

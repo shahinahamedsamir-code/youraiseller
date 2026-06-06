@@ -687,9 +687,6 @@ export function WebOrderEditForm({ orderId }: Props) {
                 ? "Saving…"
                 : `Save changes (৳${grandTotal.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
             </button>
-            <p className="text-[10px] leading-snug text-slate-500">
-              Status change করলে Save চাপুন — list-এ সঠিক tab-এ যাবে
-            </p>
           </div>
         </div>
 
@@ -749,7 +746,6 @@ export function WebOrderEditForm({ orderId }: Props) {
               onCustomLabelChange={setCustomOrderSource}
               inputClassName={orderFormInputCls}
               compact
-              hint="Defaults to Website for web orders — change if needed."
             />
             <label className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
               <input
@@ -783,9 +779,6 @@ export function WebOrderEditForm({ orderId }: Props) {
               <div className="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
                 <Package className="mb-3 h-12 w-12 text-rose-300" />
                 <p className="font-semibold text-rose-500">No products added yet</p>
-                <p className="mt-1 max-w-xs text-sm text-slate-500">
-                  Tap a product on the right → it will appear here instantly
-                </p>
               </div>
             ) : (
               <ul className="space-y-2">
@@ -852,8 +845,7 @@ export function WebOrderEditForm({ orderId }: Props) {
 
         <div className="yai-panel flex flex-col overflow-hidden">
           <div className="border-b border-slate-100 bg-indigo-50 px-4 py-3">
-            <h3 className="font-bold text-indigo-900">Click To Add Products</h3>
-            <p className="text-xs text-indigo-600/80">Tap any card to add to order</p>
+            <h3 className="font-bold text-indigo-900">Add Products</h3>
           </div>
           <div className="border-b border-slate-100 p-3">
             <div className="flex gap-2">
@@ -990,11 +982,6 @@ export function WebOrderEditForm({ orderId }: Props) {
             cashReference={cashReference}
             onCashReferenceChange={setCashReference}
           />
-        ) : advanceNum === 0 ? (
-          <p className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-xs text-slate-500">
-            Enter an <strong>Advance</strong> amount above to record how the customer
-            paid (saved in activity log).
-          </p>
         ) : null}
 
         {error && (
@@ -1028,18 +1015,6 @@ export function WebOrderEditForm({ orderId }: Props) {
                   : `Create Order (৳${grandTotal.toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
               </span>
             </button>
-          )}
-          {canCreateApprovedOrder ? (
-            <p className="text-center text-xs text-slate-500">
-              <strong className="text-indigo-700">Create Order</strong> → Approved
-              Pending + Web list-এ <strong>Complete</strong> ইতিহাস ·{" "}
-              <strong className="text-emerald-700">Save changes</strong> দিয়ে শুধু
-              status/তথ্য আপডেট
-            </p>
-          ) : (
-            <p className="text-center text-xs text-slate-500">
-              Web status-এর নিচে Save changes — activity log-এ সব পরিবর্তন
-            </p>
           )}
         </div>
       </section>

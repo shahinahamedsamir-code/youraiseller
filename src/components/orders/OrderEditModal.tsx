@@ -946,16 +946,10 @@ export function OrderEditModal({
                 onCashReferenceChange={setCashReference}
               />
               <p className="mt-2 text-center text-[10px] text-slate-500">
-                Saved to order activity log — method, transaction ID, or cash
-                receiver are stored securely on this order.
+                Saved to order activity log.
               </p>
             </section>
-          ) : (
-            <p className="mb-5 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-xs text-slate-500">
-              Enter an <strong>Advance</strong> amount above to record payment
-              method (bKash, Nagad, hand cash, etc.) in the activity log.
-            </p>
-          )}
+          ) : null}
 
           {isWeb && originInfo && (
             <section className="mt-5 rounded-xl border border-teal-100 bg-teal-50/40 p-3">

@@ -265,19 +265,6 @@ export function PathaoDeliveryFields({
           <label className="mb-1.5 block text-xs font-bold text-slate-600">
             Store ID
           </label>
-          <p className="mb-2 text-[11px] text-slate-500">
-            Pathao Merchant Panel →{" "}
-            <a
-              href="https://merchant.pathao.com/courier/stores"
-              target="_blank"
-              rel="noreferrer"
-              className="font-bold text-emerald-700 hover:underline"
-            >
-              Stores
-            </a>{" "}
-            থেকে আপনার store_id কপি করে বসান। Sandbox-এ অনেক store থাকলে search
-            ব্যবহার করুন।
-          </p>
           <div className="grid gap-2 sm:grid-cols-2">
             <input
               required
@@ -320,11 +307,6 @@ export function PathaoDeliveryFields({
                 </option>
               ))}
             </select>
-          )}
-          {stores.length > 100 && storeSearch.trim() === "" && (
-            <p className="mt-1 text-[11px] text-amber-700">
-              {stores.length} stores loaded — search দিয়ে আপনার store খুঁজুন।
-            </p>
           )}
         </div>
         <div>

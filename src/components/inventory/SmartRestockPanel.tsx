@@ -8,7 +8,6 @@ import {
   ArrowRight,
   BarChart3,
   Bell,
-  BookOpen,
   Calculator,
   Calendar,
   CheckCircle2,
@@ -48,7 +47,6 @@ export function SmartRestockPanel() {
   const [filter, setFilter] = useState<Filter>("all");
   const [quickView, setQuickView] = useState<QuickView>("main");
   const [showAll, setShowAll] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
   const [showAlertDetails, setShowAlertDetails] = useState(false);
   const [qtyById, setQtyById] = useState<Record<string, number>>({});
   const [success, setSuccess] = useState("");
@@ -129,13 +127,6 @@ export function SmartRestockPanel() {
       <div className="flex flex-wrap items-center justify-end gap-2">
         <button
           type="button"
-          onClick={() => setShowGuide(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          <BookOpen className="h-4 w-4" /> Guide
-        </button>
-        <button
-          type="button"
           onClick={recalculate}
           disabled={recalculating}
           className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"
@@ -196,21 +187,18 @@ export function SmartRestockPanel() {
           <QuickActionCard
             icon={Skull}
             title="Dead Stock"
-            sub="Find stuck inventory"
             active={quickView === "dead"}
             onClick={() => setQuickView(quickView === "dead" ? "main" : "dead")}
           />
           <QuickActionCard
             icon={BarChart3}
             title="ABC Analysis"
-            sub="Prioritize products"
             active={quickView === "abc"}
             onClick={() => setQuickView(quickView === "abc" ? "main" : "abc")}
           />
           <QuickActionCard
             icon={Calendar}
             title="Forecast"
-            sub="Predict demand"
             active={quickView === "forecast"}
             onClick={() => setQuickView(quickView === "forecast" ? "main" : "forecast")}
           />
@@ -220,7 +208,6 @@ export function SmartRestockPanel() {
           >
             <ShoppingCart className="mb-2 h-8 w-8 text-teal-600" />
             <p className="text-sm font-bold text-slate-900">New Purchase</p>
-            <p className="mt-0.5 text-xs text-slate-500">Add stock</p>
           </Link>
         </div>
       </div>
@@ -229,7 +216,7 @@ export function SmartRestockPanel() {
       {quickView === "dead" && (
         <InsightPanel title="Dead Stock" onClose={() => setQuickView("main")}>
           {deadStock.length === 0 ? (
-            <p className="text-sm text-slate-500">No dead stock detected — all stocked items have sales movement.</p>
+            <p className="text-sm text-slate-500">No dead stock.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {deadStock.slice(0, 10).map((p) => (
@@ -246,7 +233,7 @@ export function SmartRestockPanel() {
       {quickView === "abc" && (
         <InsightPanel title="ABC Analysis" onClose={() => setQuickView("main")}>
           {abcRows.length === 0 ? (
-            <p className="text-sm text-slate-500">Not enough sales data yet. Record stock decreases to build ABC grades.</p>
+            <p className="text-sm text-slate-500">No data yet.</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -276,11 +263,8 @@ export function SmartRestockPanel() {
 
       {quickView === "forecast" && (
         <InsightPanel title="Demand Forecast" onClose={() => setQuickView("main")}>
-          <p className="mb-3 text-sm text-slate-600">
-            Estimates based on last 30 days of stock decrease movements.
-          </p>
           {items.filter((i) => i.daysToStockout != null && i.product.stockQty > 0).length === 0 ? (
-            <p className="text-sm text-slate-500">No forecast data yet — need sales movement history.</p>
+            <p className="text-sm text-slate-500">No forecast data.</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {items
@@ -396,17 +380,15 @@ export function SmartRestockPanel() {
         )}
       </div>
 
-      {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
       {showAlertDetails && (
         <GuideModal
           title="Attention Details"
           onClose={() => setShowAlertDetails(false)}
           body={
             <ul className="space-y-2 text-sm text-slate-600">
-              <li>• Out of stock: {analytics.outOfStock} products at zero quantity.</li>
-              <li>• Critically low: {analytics.critical} products at or below reorder point.</li>
-              <li>• Low stock warning: {analytics.lowStock} products approaching reorder point.</li>
-              <li>• Use Restock buttons or New Purchase to add inventory.</li>
+              <li>Out of stock: {analytics.outOfStock}</li>
+              <li>Critically low: {analytics.critical}</li>
+              <li>Low stock: {analytics.lowStock}</li>
             </ul>
           }
         />
@@ -448,13 +430,11 @@ function StatCard({
 function QuickActionCard({
   icon: Icon,
   title,
-  sub,
   active,
   onClick,
 }: {
   icon: typeof Skull;
   title: string;
-  sub: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -471,7 +451,6 @@ function QuickActionCard({
     >
       <Icon className={clsx("mb-2 h-8 w-8", active ? "text-teal-600" : "text-slate-600")} />
       <p className="text-sm font-bold text-slate-900">{title}</p>
-      <p className="mt-0.5 text-xs text-slate-500">{sub}</p>
     </button>
   );
 }
@@ -563,17 +542,7 @@ function GuideModal({
             <X className="h-5 w-5" />
           </button>
         </div>
-        {body ?? (
-          <div className="space-y-3 text-sm text-slate-600">
-            <p>Smart Restock monitors inventory and flags products that need attention.</p>
-            <ul className="list-inside list-disc space-y-1">
-              <li><strong>Out of Stock</strong> — quantity is zero.</li>
-              <li><strong>Critical</strong> — at or below reorder point (alert qty).</li>
-              <li><strong>Low Stock</strong> — approaching reorder point.</li>
-            </ul>
-            <p>Use Quick Actions for dead stock, ABC analysis, and demand forecast. Click Restock to add suggested quantity instantly.</p>
-          </div>
-        )}
+        {body ?? null}
       </div>
     </div>
   );

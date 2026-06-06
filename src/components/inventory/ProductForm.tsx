@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Upload,
   Plus,
-  Sparkles,
   ImageIcon,
   AlertCircle,
   CheckCircle2,
@@ -35,7 +34,6 @@ export function ProductForm({ onSuccess }: Props) {
   const [success, setSuccess] = useState("");
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState("");
-  const [smartHints, setSmartHints] = useState<string[]>([]);
   const [modalKind, setModalKind] = useState<ModalKind>(null);
 
   const [form, setForm] = useState({
@@ -54,30 +52,6 @@ export function ProductForm({ onSuccess }: Props) {
     weight: "0",
     weightUnit: "kg" as "kg" | "g",
   });
-
-  const runSmartCheck = () => {
-    const hints: string[] = [];
-    const sell = parseFloat(form.sellPrice) || 0;
-    const cost = parseFloat(form.costPrice) || 0;
-    const stock = parseInt(form.stockQty, 10) || 0;
-    const alert = parseInt(form.alertQty, 10) || 0;
-
-    if (sell > 0 && cost > 0 && sell < cost) {
-      hints.push("Sell price is lower than cost — check margin.");
-    }
-    if (sell > 0 && cost > 0) {
-      const margin = ((sell - cost) / sell) * 100;
-      if (margin < 15) hints.push(`Low margin (${margin.toFixed(0)}%). Consider higher sell price.`);
-      else hints.push(`Healthy margin ~${margin.toFixed(0)}%.`);
-    }
-    if (form.manageStock && alert > stock) {
-      hints.push("Stock below alert level — Smart Restock will flag this product.");
-    }
-    if (!form.code.trim()) {
-      hints.push("Tip: Product code auto-suggests from name on save.");
-    }
-    setSmartHints(hints);
-  };
 
   const handleImage = (file: File | undefined) => {
     if (!file) return;
@@ -402,38 +376,9 @@ export function ProductForm({ onSuccess }: Props) {
                 placeholder="https://example.com/product.jpg"
                 className={inputCls}
               />
-              <p className="mt-1.5 text-[11px] text-slate-400">
-                Paste a direct image link, or upload a file above. Upload takes priority if both are set.
-              </p>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-bold text-violet-800">
-            <Sparkles className="h-4 w-4" /> Smart Inventory Check
-          </span>
-          <button
-            type="button"
-            onClick={runSmartCheck}
-            className="text-xs font-semibold text-violet-600 hover:underline"
-          >
-            Run check
-          </button>
-        </div>
-        {smartHints.length === 0 ? (
-          <p className="text-xs text-violet-600/80">
-            Click Run check for margin, stock alert &amp; pricing tips before save.
-          </p>
-        ) : (
-          <ul className="space-y-1 text-xs text-violet-900">
-            {smartHints.map((h) => (
-              <li key={h}>• {h}</li>
-            ))}
-          </ul>
-        )}
       </div>
 
       {error && (

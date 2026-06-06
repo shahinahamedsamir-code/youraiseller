@@ -295,8 +295,7 @@ export function WebOrderTable() {
 
       {createdFlash && (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-          {createdFlash} Created — Approved Pending · Web list-এ Complete। Processing
-          থেকে পরের order Open করুন।
+          {createdFlash} Created
           <button
             type="button"
             onClick={() => setCreatedFlash(null)}
@@ -387,8 +386,7 @@ export function WebOrderTable() {
                     colSpan={10}
                     className="px-4 py-12 text-center text-sm text-slate-500"
                   >
-                    No web orders in this tab. Live sync runs every ~20s — or click{" "}
-                    <strong>Sync New Orders</strong> for a full pull.
+                    No web orders in this tab.
                   </td>
                 </tr>
               ) : (

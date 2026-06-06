@@ -14,7 +14,6 @@ import {
 } from "recharts";
 import {
   BarChart3,
-  BookOpen,
   Calendar,
   Download,
   Filter,
@@ -64,10 +63,8 @@ import {
   acBtnPrimary,
   acBtnSecondary,
   acCard,
-  acHint,
   acInput,
   acLabel,
-  acSectionSub,
   acSectionTitle,
 } from "@/lib/auto-call-ui";
 
@@ -86,12 +83,10 @@ const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 function KpiCard({
   label,
   value,
-  sub,
   tone = "default",
 }: {
   label: string;
   value: number | string;
-  sub: string;
   tone?: "default" | "success" | "warn" | "danger" | "info";
 }) {
   const tones = {
@@ -106,7 +101,6 @@ function KpiCard({
     <div className={clsx("rounded-2xl border p-4 shadow-sm", tones[tone])}>
       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-3xl font-extrabold tabular-nums text-slate-900">{value}</p>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500">{sub}</p>
     </div>
   );
 }
@@ -134,7 +128,6 @@ function MixBar({
           style={{ width: `${Math.max(percent, count > 0 ? 4 : 0)}%` }}
         />
       </div>
-      <p className="mt-1 text-[11px] text-slate-400">{percent.toFixed(1)}% of visible activity</p>
     </div>
   );
 }
@@ -144,7 +137,6 @@ export function AutoCallReportPanel() {
   const [logs, setLogs] = useState(() => loadAutoCallLogs());
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
 
   const settings = loadAutoCallSettings();
   const rules = loadAutoCallRules();
@@ -256,11 +248,6 @@ export function AutoCallReportPanel() {
                 Reports / Auto Call Center
               </p>
               <h2 className={`${acSectionTitle} mt-2`}>Auto Call Center Report</h2>
-              <p className={acSectionSub}>
-                Date wise, month wise, year wise, and lifetime auto-call activity in one place.
-                See total calls, Pressed 1 and 2, rejected, failed, live in progress, retry queue,
-                and detailed order-level activity.
-              </p>
             </div>
           </div>
 
@@ -269,14 +256,6 @@ export function AutoCallReportPanel() {
               <Calendar className="mr-1.5 inline h-3.5 w-3.5 text-violet-500" />
               {dateRange.label}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowHelp((v) => !v)}
-              className={acBtnSecondary}
-            >
-              <BookOpen className="h-4 w-4" />
-              How it Works
-            </button>
             <button
               type="button"
               onClick={() => patchFilters(DEFAULT_FILTERS)}
@@ -297,16 +276,6 @@ export function AutoCallReportPanel() {
             </button>
           </div>
         </div>
-
-        {showHelp ? (
-          <div className="relative mt-4 rounded-xl border border-violet-100 bg-white/80 px-4 py-3 text-sm text-slate-600">
-            <strong className="text-slate-800">Pressed 1</strong> means the customer confirmed on
-            the call. <strong className="text-slate-800">Rejected</strong> is when the call was cut.
-            <strong className="text-slate-800"> No Answer</strong> is no pick-up.
-            <strong className="text-slate-800"> Try again</strong> shows orders waiting for the
-            next retry attempt. Filters apply to all cards and the table below.
-          </div>
-        ) : null}
       </section>
 
       <section className={acCard}>
@@ -429,9 +398,6 @@ export function AutoCallReportPanel() {
                 );
               })}
             </div>
-            <p className={`${acHint} mt-1`}>
-              Leave empty to show all outcomes. Click to filter by one or more states.
-            </p>
           </label>
 
           <div className="flex items-end lg:col-span-1">
@@ -449,51 +415,14 @@ export function AutoCallReportPanel() {
       </section>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Total Calls"
-          value={stats.totalCalls}
-          sub="Completed auto-call attempts in the selected filter"
-        />
-        <KpiCard
-          label="Success"
-          value={stats.success}
-          sub={`${stats.successRate.toFixed(1)}% Pressed 1 confirmation rate`}
-          tone="success"
-        />
-        <KpiCard
-          label="Not Confirmed"
-          value={stats.notConfirmed}
-          sub="Calls that did not end with Pressed 1"
-          tone="warn"
-        />
-        <KpiCard
-          label="Live Queue"
-          value={stats.liveQueue}
-          sub="In progress, retry queue, and queued items"
-          tone="info"
-        />
-        <KpiCard
-          label="In Progress"
-          value={stats.inProgress}
-          sub="Currently waiting for customer response"
-        />
-        <KpiCard
-          label="Try Again"
-          value={stats.tryAgain}
-          sub="Retry is scheduled for another attempt"
-        />
-        <KpiCard
-          label="Pressed 2"
-          value={stats.pressed2}
-          sub="Customers pressed key 2 on the call"
-          tone="danger"
-        />
-        <KpiCard
-          label="Failed"
-          value={stats.failed}
-          sub={`${stats.rejected} rejected and ${stats.busy} busy`}
-          tone="danger"
-        />
+        <KpiCard label="Total Calls" value={stats.totalCalls} />
+        <KpiCard label="Success" value={stats.success} tone="success" />
+        <KpiCard label="Not Confirmed" value={stats.notConfirmed} tone="warn" />
+        <KpiCard label="Live Queue" value={stats.liveQueue} tone="info" />
+        <KpiCard label="In Progress" value={stats.inProgress} />
+        <KpiCard label="Try Again" value={stats.tryAgain} />
+        <KpiCard label="Pressed 2" value={stats.pressed2} tone="danger" />
+        <KpiCard label="Failed" value={stats.failed} tone="danger" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
@@ -580,9 +509,6 @@ export function AutoCallReportPanel() {
           <h3 className="text-sm font-extrabold text-slate-900">
             Confirmed Order Status Chart
           </h3>
-          <p className={`${acHint} mb-4`}>
-            Orders confirmed by Pressed 1 and where they are now in your approved pipeline.
-          </p>
           {confirmedReport.statusRows.length === 0 ? (
             <p className="flex h-[280px] items-center justify-center text-sm text-slate-400">
               No Pressed 1 confirmed orders in this filter
@@ -719,9 +645,6 @@ export function AutoCallReportPanel() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">Detailed Auto Call Activity</h3>
-            <p className={acHint}>
-              Combined call history rows for the selected filters.
-            </p>
           </div>
           <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-100">
             {filteredLogs.length} rows

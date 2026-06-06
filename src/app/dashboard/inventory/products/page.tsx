@@ -17,9 +17,6 @@ export default function ProductListPage() {
             <Package className="h-7 w-7 text-indigo-500" />
             Product List
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            Search, filter, adjust stock inline — tap +/- on any row
-          </p>
         </div>
         <div className="flex flex-wrap items-start gap-2">
           {isEnabled("sync_products") ? <InventorySyncProductsButton /> : null}

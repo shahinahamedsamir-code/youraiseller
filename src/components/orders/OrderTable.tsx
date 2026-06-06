@@ -32,7 +32,6 @@ import {
   MessageCircle,
   Phone,
   Check,
-  Info,
 } from "lucide-react";
 import {
   TablePagination,
@@ -220,19 +219,6 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
         <OrderStatusTabs active={activeTab} onChange={setActiveTab} />
       )}
 
-      {showStatusTabs && activeTab !== "pending" && (
-        <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/90 px-3 py-2.5 text-xs text-sky-950">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
-          <p>
-            <span className="font-bold">Upload column:</span>{" "}
-            <span className="font-mono">Consignment ID</span> +{" "}
-            <span className="font-bold text-blue-700 underline">Parcel Link</span>{" "}
-            — click to open courier tracking (Steadfast / Pathao / Carrybee). Pending
-            tab-এ push করার আগে link দেখাবে না।
-          </p>
-        </div>
-      )}
-
       <div className="yai-panel overflow-x-hidden overflow-y-visible rounded-t-none border-t-0">
         {/* Courier / channel chips */}
         <div className="flex gap-1.5 overflow-x-auto border-b border-slate-100 bg-slate-50/90 px-3 py-2">
@@ -330,14 +316,6 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
         {/* Turume-style table — horizontal + vertical scroll, larger text */}
         {view === "compact" && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40 px-4 py-2.5 text-sm text-slate-600">
-              <span className="font-semibold text-slate-700">
-                ← → Scroll করুন — সব column দেখতে
-              </span>
-              <span className="text-xs text-slate-500">
-                Invoice-এর পাশে ⋮ = Order actions (Print, Edit, RTS…)
-              </span>
-            </div>
             <div className="max-h-[min(75vh,780px)] overflow-auto overscroll-x-contain scroll-smooth">
               <table className="w-full min-w-[1400px] border-collapse text-sm">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">

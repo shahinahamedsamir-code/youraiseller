@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Plus, Package, Zap, ArrowUpRight } from "lucide-react";
+import { Plus, Package } from "lucide-react";
 import { getSessionUser } from "@/lib/dev-users";
 
 export function DashboardHero() {
@@ -34,7 +34,7 @@ export function DashboardHero() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            Smart AI Seller · Live
+            Live
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">
             {greeting},{" "}
@@ -42,10 +42,6 @@ export function DashboardHero() {
               {userName || "…"}
             </span>
           </h1>
-          <p className="mt-2 max-w-lg text-sm text-indigo-200/90">
-            Your store pulse in one view — orders, revenue, and inventory alerts in
-            real time.
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -66,39 +62,6 @@ export function DashboardHero() {
         </div>
       </div>
 
-      <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
-        {[
-          {
-            label: "AI Insight",
-            value: "3 orders need follow-up today",
-            icon: Sparkles,
-            color: "text-amber-300",
-          },
-          {
-            label: "Fulfillment",
-            value: "RTS queue healthy",
-            icon: Zap,
-            color: "text-cyan-300",
-          },
-          {
-            label: "Growth",
-            value: "+12% vs last week",
-            icon: ArrowUpRight,
-            color: "text-emerald-300",
-          },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur"
-          >
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300/80">
-              <item.icon className={`h-3.5 w-3.5 ${item.color}`} />
-              {item.label}
-            </div>
-            <p className="mt-1 text-sm font-medium text-white/95">{item.value}</p>
-          </div>
-        ))}
-      </div>
     </motion.section>
   );
 }

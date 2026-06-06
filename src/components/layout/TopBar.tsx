@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, Search, Zap } from "lucide-react";
+import { Bell, Menu, Search } from "lucide-react";
 import { quickLinks } from "@/lib/navigation";
 import { BrandMark } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
@@ -62,13 +62,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
       <div className="ml-auto flex items-center gap-2">
         <HeaderQuickSms />
-        <button
-          type="button"
-          className="hidden items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 sm:flex"
-        >
-          <Zap className="h-4 w-4" />
-          AI Assist
-        </button>
         <button
           type="button"
           aria-label="Notifications"

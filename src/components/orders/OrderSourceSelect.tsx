@@ -221,7 +221,6 @@ export function OrderSourceSelect({
             <span className="block truncate text-sm font-bold text-slate-800">
               {selectedLabel}
             </span>
-            <span className="text-[10px] text-slate-500">Tap to change source</span>
           </span>
           <ChevronDown
             className={clsx(

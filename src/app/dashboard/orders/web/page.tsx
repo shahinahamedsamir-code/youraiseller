@@ -12,7 +12,7 @@ export default function WebOrderListPage() {
     <div className="min-w-0">
       <PageHeader
         title="Web Order List"
-        description="All incoming orders from your website and connected channels"
+        description=""
         actions={
           <>
             <button

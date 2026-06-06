@@ -24,12 +24,9 @@ import {
   acBtnPrimary,
   acCard,
   acCardSoft,
-  acHint,
   acInput,
   acLabel,
-  acSectionSub,
   acSectionTitle,
-  acTipBox,
 } from "@/lib/auto-call-ui";
 
 const inputCls = acInput;
@@ -253,16 +250,11 @@ export function AutoCallSetupPanel() {
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <p className="font-bold">Voice file not ready yet</p>
           <p className="mt-1 text-xs leading-relaxed">{audioDeployWarning}</p>
-          <p className="mt-2 text-xs leading-relaxed text-amber-900/90">
-            Live server-এ ngrok লাগবে না। Setup-এ voice file আবার upload করুন — URL
-            automatically <strong>youraiseller.com</strong> use করবে।
-          </p>
         </div>
       ) : null}
 
       <section className={acCardSoft}>
         <h2 className={acSectionTitle}>Your balance</h2>
-        <p className={acSectionSub}>Call minutes are deducted from this balance each time you call.</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl bg-violet-50 p-4 ring-1 ring-violet-100">
             <p className="text-xs font-semibold text-violet-600">Available balance</p>
@@ -292,16 +284,12 @@ export function AutoCallSetupPanel() {
 
       <section className={acCard}>
         <h2 className={acSectionTitle}>Test your setup</h2>
-        <p className={`${acSectionSub} mb-4`}>
-          Enter your mobile number and hear exactly what customers will hear on a real order call.
-        </p>
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
             <span className={labelCls}>Caller number (shown to customer)</span>
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold tabular-nums text-slate-800">
               {platformDid ?? "Not set yet"}
             </p>
-            <p className={`${acHint} mt-1.5`}>This is the number customers see when you call them.</p>
           </div>
           <label>
             <span className={labelCls}>Your mobile number</span>
@@ -331,14 +319,6 @@ export function AutoCallSetupPanel() {
 
       <section className={acCard}>
         <h2 className={acSectionTitle}>Voice messages</h2>
-        <p className={`${acSectionSub} mb-3`}>
-          Upload the audio customers hear when they pick up. You need at least two files — one
-          main question and one for when they press a key.
-        </p>
-        <div className={acTipBox}>
-          <strong>Tip:</strong> Use clear .wav or .mp3 files (max 5 MB). Example: &quot;Your order
-          from Adorix — press 1 to confirm, press 2 to cancel.&quot;
-        </div>
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
           <label className="sm:col-span-1">
             <span className={labelCls}>Name (e.g. Order confirm)</span>
@@ -431,10 +411,6 @@ export function AutoCallSetupPanel() {
         <div className="mb-3 flex items-center justify-between">
           <div>
             <h2 className={acSectionTitle}>Keypad responses</h2>
-            <p className={acSectionSub}>
-              Pick the voice for each key. Auto Call column only shows what the customer
-              pressed (Pressed 1, Pressed 2…). You choose below where the order goes.
-            </p>
           </div>
           <button
             type="button"
@@ -444,11 +420,6 @@ export function AutoCallSetupPanel() {
             <Plus className="h-3.5 w-3.5" /> Add key
           </button>
         </div>
-        <p className={`${acHint} mb-4`}>
-          <strong>Call status</strong> shows: Calling · Pressed 1/2/3 · Rejected (call cut) ·
-          No Answer (no key). <strong>Order goes to</strong> is your choice per key — default
-          Key 1 → Approved Pending, Key 2 → Cancel.
-        </p>
         <div className="space-y-3">
           {settings.dtmfOptions.map((row) => {
             const keyLabel = row.key.trim() ? `Key ${row.key.trim()}` : "Key ?";
@@ -517,14 +488,6 @@ export function AutoCallSetupPanel() {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                    {
-                      AUTO_CALL_KEY_ORDER_ACTIONS.find(
-                        (a) =>
-                          a.value === (row.orderAction ?? defaultOrderActionForKey(row.key))
-                      )?.description
-                    }
-                  </p>
                 </label>
 
                 <button
@@ -542,12 +505,6 @@ export function AutoCallSetupPanel() {
 
       <section className={acCard}>
         <h2 className={`${acSectionTitle} mb-4`}>Call preferences</h2>
-        <p className={`${acHint} mb-4`}>
-          If the customer does not pick up, cuts the call (Rejected), or does not press a key
-          (No Answer), we call again — up to <strong>Max call attempts</strong>, waiting{" "}
-          <strong>Wait before retry</strong> minutes between tries. Key presses stop retries.
-          Enable <strong>Retry if customer does not answer</strong> in Rules.
-        </p>
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
           <label className="lg:col-span-2">
             <span className={labelCls}>Default delivery method</span>

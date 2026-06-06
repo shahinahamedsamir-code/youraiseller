@@ -7,18 +7,14 @@ import { AuthSessionRedirect } from "@/components/auth/AuthSessionRedirect";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { BRAND_NAME } from "@/lib/brand";
 
-const STEPS = [
-  "Sign in with Google",
-  "Admin reviews your account",
-  "Dashboard unlocks when active",
-];
+const STEPS: string[] = [];
 
 type Props = {
   mode: "login" | "signup";
   title: string;
-  subtitle: string;
+  subtitle?: string;
   heroTitle: string;
-  heroSubtitle: string;
+  heroSubtitle?: string;
   footerLink?: { href: string; label: string; text: string };
 };
 
@@ -61,19 +57,23 @@ export function AuthPageShell({
               <h2 className="max-w-md text-3xl font-bold leading-tight tracking-tight lg:text-4xl">
                 {heroTitle}
               </h2>
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-300/95 lg:text-base">
-                {heroSubtitle}
-              </p>
-              <ul className="mt-8 hidden space-y-3 lg:block">
-                {STEPS.map((step, i) => (
-                  <li key={step} className="flex items-center gap-3 text-sm text-slate-200">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-teal-300">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ul>
+              {heroSubtitle ? (
+                <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-300/95 lg:text-base">
+                  {heroSubtitle}
+                </p>
+              ) : null}
+              {STEPS.length > 0 ? (
+                <ul className="mt-8 hidden space-y-3 lg:block">
+                  {STEPS.map((step, i) => (
+                    <li key={step} className="flex items-center gap-3 text-sm text-slate-200">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-teal-300">
+                        {i + 1}
+                      </span>
+                      {step}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
             <p className="relative mt-8 text-xs text-slate-500 lg:mt-0">
               © 2026 {BRAND_NAME}
@@ -89,7 +89,9 @@ export function AuthPageShell({
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                   {title}
                 </h1>
-                <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+                {subtitle ? (
+                  <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+                ) : null}
               </div>
 
               <div className="rounded-3xl border border-white/80 bg-white/90 p-6 shadow-xl shadow-slate-200/50 ring-1 ring-slate-100 backdrop-blur-sm sm:p-8">

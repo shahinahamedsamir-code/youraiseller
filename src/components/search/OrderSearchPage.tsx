@@ -11,7 +11,6 @@ import {
   FileText,
   Sparkles,
   ArrowRight,
-  HelpCircle,
   MessageCircle,
   ExternalLink,
 } from "lucide-react";
@@ -144,24 +143,12 @@ export function OrderSearchPage() {
           <div>
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-100">
               <Sparkles className="h-4 w-4" />
-              Global order search
+              Search
             </p>
             <h1 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl">
               Search Orders
             </h1>
-            <p className="mt-1 max-w-xl text-sm text-indigo-100/90">
-              Invoice, phone, customer, courier ID, SKU — results update as you
-              type
-            </p>
           </div>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-white/25"
-            title="Search tips"
-          >
-            <HelpCircle className="h-3.5 w-3.5" />
-            How to use search?
-          </button>
         </div>
 
         {/* Tabs */}
@@ -309,7 +296,6 @@ export function OrderSearchPage() {
               count={partition.approved.length}
               query={debounced}
               emptyLabel="approved orders"
-              hint="Includes website orders after you clicked Create Order"
             >
               {partition.approved.map((o) => (
                 <ApprovedResultRow
@@ -327,7 +313,6 @@ export function OrderSearchPage() {
               count={partition.websiteOrders.length}
               query={debounced}
               emptyLabel="website or WooCommerce orders"
-              hint="All orders that came from your store — including after Create Order"
             >
               {partition.websiteOrders.map((o) => (
                 <WebsiteResultRow
@@ -346,10 +331,6 @@ export function OrderSearchPage() {
           </div>
           <p className="mt-4 text-lg font-bold text-slate-800">
             Start typing to search
-          </p>
-          <p className="mt-1 text-sm text-slate-500">
-            Try a phone number, invoice ID, or customer name — switch tabs to
-            narrow the field
           </p>
         </div>
       )}
@@ -443,14 +424,12 @@ function ResultSection({
   count,
   query,
   emptyLabel,
-  hint,
   children,
 }: {
   title: string;
   count: number;
   query: string;
   emptyLabel: string;
-  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -460,9 +439,6 @@ function ResultSection({
           {title}{" "}
           <span className="font-bold text-indigo-600">— {count}</span>
         </h2>
-        {hint && (
-          <p className="mt-0.5 text-[11px] font-medium text-slate-500">{hint}</p>
-        )}
       </div>
       {count === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-slate-500">

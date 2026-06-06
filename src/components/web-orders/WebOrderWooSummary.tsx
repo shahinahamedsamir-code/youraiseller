@@ -6,7 +6,6 @@ import clsx from "clsx";
 import {
   RefreshCw,
   CreditCard,
-  Globe,
   Package,
   Receipt,
   Shield,
@@ -358,13 +357,9 @@ export function WebOrderWooSummary({
               <RefreshCw
                 className={clsx("h-3.5 w-3.5", wooRefreshing && "animate-spin")}
               />
-              {wooRefreshing ? "Woo theke load…" : "Refresh from WooCommerce"}
+              {wooRefreshing ? "Loading…" : "Refresh from WooCommerce"}
             </button>
           ) : null}
-          <p className="flex items-start gap-1.5 rounded-xl border border-dashed border-teal-200 bg-teal-50/50 px-3 py-2 text-[10px] leading-relaxed text-teal-800">
-            <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            Full API sync: gateway, transaction, IP, source (Facebook, etc.)
-          </p>
         </div>
       ) : null}
     </div>

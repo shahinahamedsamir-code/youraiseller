@@ -196,11 +196,6 @@ export function ManualWebOrderForm() {
             <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
               Manual Web Order
             </h1>
-            <p className="mt-2 max-w-lg text-sm text-slate-600">
-              Website order manually add করুন — সরাসরি{" "}
-              <span className="font-bold text-slate-800">Web Order List</span>{" "}
-              এ যাবে (Approved Orders এ নয়)।
-            </p>
           </div>
           <button
             type="button"

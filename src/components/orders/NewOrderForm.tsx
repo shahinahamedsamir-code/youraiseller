@@ -550,9 +550,6 @@ export function NewOrderForm({ orderId }: Props = {}) {
                 <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
                   New Order
                 </h1>
-                <p className="text-sm text-slate-500">
-                  Tap products to build a smart cart with live totals
-                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -778,9 +775,6 @@ export function NewOrderForm({ orderId }: Props = {}) {
                   <Package className="h-8 w-8 text-violet-300" />
                 </div>
                 <p className="mt-4 font-bold text-violet-600">No products added yet</p>
-                <p className="mt-1 max-w-xs text-sm text-slate-500">
-                  Tap a product on the right — it appears here instantly
-                </p>
               </div>
             ) : (
               <ul className="space-y-2">
@@ -850,8 +844,7 @@ export function NewOrderForm({ orderId }: Props = {}) {
                 <Package className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="font-extrabold text-indigo-950">Click To Add Products</h3>
-                <p className="text-xs text-indigo-600/80">Tap any card to add to order</p>
+                <h3 className="font-extrabold text-indigo-950">Add Products</h3>
               </div>
             </div>
           </div>
@@ -1010,10 +1003,6 @@ export function NewOrderForm({ orderId }: Props = {}) {
             onCashReferenceChange={setCashReference}
             proofRequired={requiredFields.transactionId}
           />
-        ) : advanceNum === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-center text-xs text-slate-500">
-            Enter an <strong>Advance</strong> amount above to record how the customer paid.
-          </p>
         ) : null}
 
         {error && (

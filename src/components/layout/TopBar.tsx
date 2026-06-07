@@ -32,7 +32,13 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         <Menu className="h-5 w-5" />
       </button>
 
-      <BrandMark size="xs" className="md:hidden" />
+      <Link
+        href="/dashboard"
+        className="rounded-lg transition hover:opacity-90 md:hidden"
+        aria-label="Go to dashboard"
+      >
+        <BrandMark size="xs" />
+      </Link>
 
       <div className="hidden flex-1 items-center gap-2 md:flex">
         <div className="flex max-w-md flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5">

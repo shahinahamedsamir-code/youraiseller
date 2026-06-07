@@ -138,6 +138,7 @@ export function autoCallResponseLabel(code: string | undefined): string {
 /** User-facing label — never show raw API codes like 7533. */
 export function friendlyAutoCallCodeLabel(code: string | undefined): string {
   const normalized = normalizeAutoCallResponseCode(code).toUpperCase();
+  if (normalized === "PENDING") return "Calling";
   if (normalized === "7533") return "Voice not ready";
   if (normalized === "CD") return "Rejected";
   if (normalized === "CRBNR") return "No Answer";

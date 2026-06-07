@@ -47,7 +47,13 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
       )}
     >
       <div className="border-b border-slate-100 px-5 py-5">
-        <BrandLogo size="md" priority />
+        <Link
+          href="/dashboard"
+          className="inline-flex rounded-xl transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          aria-label="Go to dashboard"
+        >
+          <BrandLogo size="md" priority />
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">

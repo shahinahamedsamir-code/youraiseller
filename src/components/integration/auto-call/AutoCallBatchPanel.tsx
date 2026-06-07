@@ -145,7 +145,10 @@ export function AutoCallBatchPanel() {
 
   const deliveryMethods = useMemo(() => loadActiveDeliveryMethods(), [tick]);
   const orderTags = useMemo(() => loadOrderTags(), [tick]);
-  const logIndex = useMemo(() => buildAutoCallLogIndex(autoCallLogs), [autoCallLogs]);
+  const logIndex = useMemo(
+    () => buildAutoCallLogIndex(autoCallLogs, { maxAttempts }),
+    [autoCallLogs, maxAttempts]
+  );
 
   const key1Action =
     settings.dtmfOptions.find((row) => row.key === "1")?.orderAction ??

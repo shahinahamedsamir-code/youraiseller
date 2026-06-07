@@ -38,10 +38,29 @@ export function autoCallLogSource(log: AutoCallLogRow): string {
 }
 
 export function isAutoCallLogCalling(log: AutoCallLogRow): boolean {
-  if (log.status === "failed" || log.status === "completed") return false;
-  if (!log.campaignId) return false;
+  if (log.status === "failed") return false;
+
+  const code = normalizeAutoCallResponseCode(log.responseCode);
+  if (
+    log.status === "completed" &&
+    code &&
+    code !== "PENDING" &&
+    !isAutoCallResponsePending(code)
+  ) {
+    return false;
+  }
+
+  if (code && code !== "PENDING" && !isAutoCallResponsePending(code)) {
+    return false;
+  }
+
   if (isStaleAutoCallCalling(log)) return false;
-  return log.status === "pending" || isAutoCallResponsePending(log.responseCode);
+
+  if (!log.campaignId) {
+    return log.status === "pending" || isAutoCallResponsePending(code);
+  }
+
+  return log.status === "pending" || isAutoCallResponsePending(code);
 }
 
 /** Pending too long — provider never returned a final code. */
@@ -147,9 +166,6 @@ export function autoCallLogOutcome(log: AutoCallLogRow): AutoCallOutcomeStyle {
   if (isAutoCallLogCalling(log)) return CALLING_STYLE;
 
   const code = normalizeAutoCallResponseCode(log.responseCode);
-  if (log.status === "pending" || isAutoCallResponsePending(code)) {
-    return CALLING_STYLE;
-  }
 
   const digit = autoCallKeyDigit(code);
   if (digit != null && isConnectedAutoCallKeyPress(log)) {
@@ -191,8 +207,12 @@ export function autoCallLogOutcome(log: AutoCallLogRow): AutoCallOutcomeStyle {
     };
   }
 
+  if (log.status === "pending" || isAutoCallResponsePending(code)) {
+    return CALLING_STYLE;
+  }
+
   return {
-    label: log.responseLabel || autoCallResponseLabel(code) || "—",
+    label: log.responseLabel || friendlyAutoCallCodeLabel(code) || "—",
     className: "bg-slate-100 text-slate-600 ring-slate-200/80",
   };
 }

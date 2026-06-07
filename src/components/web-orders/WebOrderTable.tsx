@@ -45,6 +45,7 @@ import {
 import clsx from "clsx";
 import { buildAutoCallLogIndex } from "@/lib/auto-call-order-status";
 import {
+  loadAutoCallAccountLocal,
   loadAutoCallLogs,
   pollAutoCallStatuses,
   refreshAutoCallAccount,
@@ -233,10 +234,13 @@ export function WebOrderTable() {
     return loadAutoCallLogs();
   }, [callLogTick]);
 
-  const autoCallByOrderId = useMemo(
-    () => buildAutoCallLogIndex(autoCallLogs),
-    [autoCallLogs]
-  );
+  const autoCallByOrderId = useMemo(() => {
+    void callLogTick;
+    const account = loadAutoCallAccountLocal();
+    return buildAutoCallLogIndex(autoCallLogs, {
+      maxAttempts: account?.settings.maxAttempts ?? 2,
+    });
+  }, [autoCallLogs, callLogTick]);
 
   const filtered = useMemo(() => {
     let list = orders.filter((o) => matchesWebOrderTab(o, activeFilter));

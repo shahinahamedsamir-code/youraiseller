@@ -6,6 +6,11 @@ import {
 } from "./auto-call-log-display";
 import type { AutoCallStatusIcon } from "./auto-call-log-display";
 import type { AutoCallLogRow } from "./auto-call-types";
+import {
+  isAutoCallFinalErrorCode,
+  isAutoCallResponsePending,
+  normalizeAutoCallResponseCode,
+} from "./auto-call-response-codes";
 
 export type AutoCallOrderDisplay = {
   label: string;
@@ -14,6 +19,10 @@ export type AutoCallOrderDisplay = {
   attempt?: number;
   pulsing?: boolean;
   subtitle?: string;
+};
+
+export type AutoCallDisplayOptions = {
+  maxAttempts?: number;
 };
 
 export function findAutoCallLogsForOrder(
@@ -32,9 +41,49 @@ export function getLatestAutoCallLogForOrder(
   return findAutoCallLogsForOrder(logs, orderId)[0] ?? null;
 }
 
-function effectiveLog(log: AutoCallLogRow): AutoCallLogRow {
+function countWorkflowAttempts(logs: AutoCallLogRow[]): number {
+  return logs.filter((log) => log.source === "WORKFLOW" || log.source === "BATCH").length;
+}
+
+/** Normalize rows that have a final provider code but were never marked completed. */
+export function normalizeFinalAutoCallLog(log: AutoCallLogRow): AutoCallLogRow {
   if (isStaleAutoCallCalling(log)) return staleAutoCallAsNoAnswer(log);
+
+  const code = normalizeAutoCallResponseCode(log.responseCode);
+
+  if (
+    (log.status === "completed" || log.status === "failed") &&
+    isAutoCallResponsePending(code)
+  ) {
+    const asPending: AutoCallLogRow = { ...log, status: "pending" };
+    if (isStaleAutoCallCalling(asPending)) return staleAutoCallAsNoAnswer(log);
+    return asPending;
+  }
+
+  if (
+    log.status === "pending" &&
+    code &&
+    code !== "PENDING" &&
+    !isAutoCallResponsePending(code)
+  ) {
+    return {
+      ...log,
+      status: isAutoCallFinalErrorCode(code) ? "failed" : "completed",
+      responseLabel: log.responseLabel || undefined,
+    };
+  }
+
   return log;
+}
+
+export function isFinalizedAutoCallLog(log: AutoCallLogRow): boolean {
+  if (isStaleAutoCallCalling(log)) return true;
+  if (isAutoCallLogCalling(log)) return false;
+  return log.status === "completed" || log.status === "failed";
+}
+
+function effectiveLog(log: AutoCallLogRow): AutoCallLogRow {
+  return normalizeFinalAutoCallLog(log);
 }
 
 export function autoCallOrderDisplay(log: AutoCallLogRow | null): AutoCallOrderDisplay {
@@ -81,30 +130,50 @@ export function autoCallOrderDisplay(log: AutoCallLogRow | null): AutoCallOrderD
 /** Pick the log row that best represents what the seller should see. */
 export function pickAutoCallDisplayLog(
   logs: AutoCallLogRow[],
-  orderId: string
+  orderId: string,
+  opts?: AutoCallDisplayOptions
 ): AutoCallLogRow | null {
   const related = findAutoCallLogsForOrder(logs, orderId);
   if (related.length === 0) return null;
 
   const latest = related[0];
-  if (isAutoCallLogCalling(latest) || isStaleAutoCallCalling(latest)) {
+
+  if (isAutoCallLogCalling(latest) && !isStaleAutoCallCalling(latest)) {
     return latest;
   }
 
-  return latest;
+  if (isFinalizedAutoCallLog(latest)) {
+    return normalizeFinalAutoCallLog(latest);
+  }
+
+  const maxAttempts = Math.min(3, Math.max(1, opts?.maxAttempts ?? 2));
+  const workflowAttempts = countWorkflowAttempts(related);
+
+  if (workflowAttempts >= maxAttempts) {
+    const lastFinal = related.find((log) => isFinalizedAutoCallLog(log));
+    if (lastFinal) return normalizeFinalAutoCallLog(lastFinal);
+  }
+
+  for (const log of related) {
+    if (isFinalizedAutoCallLog(log)) {
+      return normalizeFinalAutoCallLog(log);
+    }
+  }
+
+  return normalizeFinalAutoCallLog(latest);
 }
 
 export function buildAutoCallLogIndex(
-  logs: AutoCallLogRow[]
+  logs: AutoCallLogRow[],
+  opts?: AutoCallDisplayOptions
 ): Map<string, AutoCallLogRow> {
   const index = new Map<string, AutoCallLogRow>();
+
   for (const log of logs) {
-    if (log.orderId && log.orderId !== "unknown" && log.orderId !== "test") {
-      const prev = index.get(log.orderId);
-      if (!prev || new Date(log.sentAt).getTime() > new Date(prev.sentAt).getTime()) {
-        index.set(log.orderId, log);
-      }
-    }
+    if (!log.orderId || log.orderId === "unknown" || log.orderId === "test") continue;
+    const picked = pickAutoCallDisplayLog(logs, log.orderId, opts);
+    if (picked) index.set(log.orderId, picked);
   }
+
   return index;
 }

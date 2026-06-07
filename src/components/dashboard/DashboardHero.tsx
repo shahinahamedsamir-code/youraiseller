@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles, Plus, Package, Zap, ArrowUpRight } from "lucide-react";
 import { getSessionUser } from "@/lib/dev-users";
-import { BRAND_NAME } from "@/lib/brand";
 
 export function DashboardHero() {
   const [userName, setUserName] = useState("");
@@ -25,48 +24,28 @@ export function DashboardHero() {
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-3xl border border-indigo-100/80 bg-gradient-to-br from-[#1a1630] via-[#2d2650] to-[#1e1b3a] p-6 text-white shadow-2xl shadow-indigo-900/20 lg:p-8"
     >
-      <div className="pointer-events-none absolute inset-0 opacity-30" aria-hidden>
-        <div className="h-full w-full bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:28px_28px]" />
-      </div>
       <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/30 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-rose-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute right-8 top-8 hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right backdrop-blur lg:block">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300/80">
-          Seller OS
-        </p>
-        <p className="mt-1 text-sm font-semibold text-white/90">
-          Orders · Stock · Courier · SMS
-        </p>
-      </div>
 
       <div className="relative flex flex-wrap items-start justify-between gap-6">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            Smart AI Seller · Live
+            Live
           </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight lg:text-4xl">
-            <span className="text-white/95">{greeting},</span>{" "}
+          <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">
+            {greeting},{" "}
             <span className="bg-gradient-to-r from-indigo-300 via-rose-300 to-cyan-300 bg-clip-text text-transparent">
               {userName || "…"}
             </span>
           </h1>
 
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-indigo-200/90 lg:text-[15px]">
-            Your store pulse in one view — orders, revenue, and inventory alerts in
-            real time.
-          </p>
-          <p className="mt-2 text-sm font-medium text-white/80">
-            Built for{" "}
-            <strong className="bg-gradient-to-r from-violet-300 via-rose-300 to-cyan-300 bg-clip-text font-extrabold text-transparent">
-              YourAI
-            </strong>{" "}
-            Seller — automate smarter, sell faster.
+          <p className="mt-2 max-w-md text-sm text-indigo-200/90">
+            Your store at a glance — orders, revenue &amp; stock.
           </p>
         </div>
 
@@ -92,26 +71,26 @@ export function DashboardHero() {
         {[
           {
             label: "AI Insight",
-            value: "3 orders need follow-up today",
+            value: "3 follow-ups today",
             icon: Sparkles,
             color: "text-amber-300",
           },
           {
             label: "Fulfillment",
-            value: "RTS queue healthy",
+            value: "RTS healthy",
             icon: Zap,
             color: "text-cyan-300",
           },
           {
             label: "Growth",
-            value: "+12% vs last week",
+            value: "+12% this week",
             icon: ArrowUpRight,
             color: "text-emerald-300",
           },
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur transition hover:border-white/20 hover:bg-white/10"
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur"
           >
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-300/80">
               <item.icon className={`h-3.5 w-3.5 ${item.color}`} />
@@ -121,10 +100,6 @@ export function DashboardHero() {
           </div>
         ))}
       </div>
-
-      <p className="relative mt-4 hidden text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300/60 lg:block">
-        {BRAND_NAME} · Bangladesh ecommerce sellers
-      </p>
     </motion.section>
   );
 }

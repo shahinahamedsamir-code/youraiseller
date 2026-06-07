@@ -4,6 +4,11 @@ import { pushSellerData } from "./seller-sync";
 /** How WooCommerce order status is handled when synced */
 export type WooOrderStatusPolicy = "on-hold" | "web" | "none";
 
+export const WOO_INITIAL_IMPORT_HOURS_OPTIONS = [
+  { value: 12 as const, label: "Last 12 hours" },
+  { value: 24 as const, label: "Last 24 hours" },
+];
+
 export const WOO_ORDER_STATUS_POLICIES: {
   value: WooOrderStatusPolicy;
   label: string;
@@ -48,6 +53,8 @@ export type WooCommerceSettings = {
   orderStatusOnImport: WooOrderStatusPolicy;
   syncViaPlugin: boolean;
   fetchFullOrderViaApi: boolean;
+  /** First sync after connect — only import orders from this window (hours). */
+  initialImportHours: 12 | 24;
   businessId: string;
   apiKey: string;
   logs: { at: string; level: "info" | "success" | "error"; message: string }[];
@@ -61,6 +68,7 @@ const DEFAULT: WooCommerceSettings = {
   orderStatusOnImport: "on-hold",
   syncViaPlugin: true,
   fetchFullOrderViaApi: false,
+  initialImportHours: 24,
   businessId: "",
   apiKey: "",
   logs: [],
@@ -106,6 +114,8 @@ export function loadWooCommerceSettings(): WooCommerceSettings {
       orderStatusOnImport: normalizeOrderStatusPolicy(
         String(parsed.orderStatusOnImport ?? "on-hold")
       ),
+      fetchFullOrderViaApi: parsed.fetchFullOrderViaApi === true,
+      initialImportHours: parsed.initialImportHours === 12 ? 12 : 24,
       businessId: parsed.businessId || genId("biz"),
       apiKey: parsed.apiKey || genId("yai"),
       logs: parsed.logs ?? [],

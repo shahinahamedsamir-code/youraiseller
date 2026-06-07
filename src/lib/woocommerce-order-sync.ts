@@ -53,6 +53,9 @@ type SyncMeta = {
   autoSyncEnabled: boolean;
   lastSyncAt: string | null;
   lastResult: OrderSyncResult | null;
+  /** False until the first import window sync finishes for this store URL. */
+  firstSyncCompleted: boolean;
+  syncedStoreUrl: string | null;
 };
 
 function metaKey(): string | null {
@@ -61,17 +64,63 @@ function metaKey(): string | null {
 
 function loadMeta(): SyncMeta {
   if (typeof window === "undefined") {
-    return { autoSyncEnabled: false, lastSyncAt: null, lastResult: null };
+    return {
+      autoSyncEnabled: false,
+      lastSyncAt: null,
+      lastResult: null,
+      firstSyncCompleted: false,
+      syncedStoreUrl: null,
+    };
   }
   const key = metaKey();
-  if (!key) return { autoSyncEnabled: false, lastSyncAt: null, lastResult: null };
+  if (!key) {
+    return {
+      autoSyncEnabled: false,
+      lastSyncAt: null,
+      lastResult: null,
+      firstSyncCompleted: false,
+      syncedStoreUrl: null,
+    };
+  }
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) return { autoSyncEnabled: false, lastSyncAt: null, lastResult: null };
-    return JSON.parse(raw) as SyncMeta;
+    if (!raw) {
+      return {
+        autoSyncEnabled: false,
+        lastSyncAt: null,
+        lastResult: null,
+        firstSyncCompleted: false,
+        syncedStoreUrl: null,
+      };
+    }
+    const parsed = JSON.parse(raw) as Partial<SyncMeta>;
+    return {
+      autoSyncEnabled: parsed.autoSyncEnabled === true,
+      lastSyncAt: parsed.lastSyncAt ?? null,
+      lastResult: parsed.lastResult ?? null,
+      firstSyncCompleted: parsed.firstSyncCompleted === true,
+      syncedStoreUrl:
+        typeof parsed.syncedStoreUrl === "string" ? parsed.syncedStoreUrl : null,
+    };
   } catch {
-    return { autoSyncEnabled: false, lastSyncAt: null, lastResult: null };
+    return {
+      autoSyncEnabled: false,
+      lastSyncAt: null,
+      lastResult: null,
+      firstSyncCompleted: false,
+      syncedStoreUrl: null,
+    };
   }
+}
+
+/** New store connect or URL change — next sync uses the 12/24h import window only. */
+export function resetWooFirstOrderSync() {
+  return saveOrderSyncMeta({
+    firstSyncCompleted: false,
+    syncedStoreUrl: null,
+    lastSyncAt: null,
+    lastResult: null,
+  });
 }
 
 export function saveOrderSyncMeta(patch: Partial<SyncMeta>) {
@@ -267,17 +316,28 @@ export async function refreshWooOrderFromApi(wooOrderId: number): Promise<Order 
 
 const SYNC_STATUSES =
   "pending,processing,on-hold,completed,cancelled,failed,refunded";
-const SYNC_LOOKBACK_DAYS = 45;
-const SYNC_MAX_PAGES = 10;
-const FAST_SYNC_MAX_PAGES = 2;
-const FAST_SYNC_PER_PAGE = 30;
+const INITIAL_SYNC_MAX_PAGES = 5;
+const INCREMENTAL_MAX_PAGES = 2;
+const INCREMENTAL_PER_PAGE = 30;
 
 export type WooSyncMode = "fast" | "full";
 
-function syncAfterIso(): string {
+function initialImportAfterIso(hours: 12 | 24): string {
   const d = new Date();
-  d.setDate(d.getDate() - SYNC_LOOKBACK_DAYS);
+  d.setHours(d.getHours() - hours);
   return d.toISOString();
+}
+
+function normalizeStoreUrl(url: string): string {
+  return url.trim().replace(/\/$/, "").toLowerCase();
+}
+
+function shouldUseInitialImportWindow(storeUrl: string): boolean {
+  const meta = loadMeta();
+  const normalized = normalizeStoreUrl(storeUrl);
+  if (!meta.firstSyncCompleted) return true;
+  if (!meta.syncedStoreUrl) return true;
+  return normalizeStoreUrl(meta.syncedStoreUrl) !== normalized;
 }
 
 /** Woo `modified_after` — catch new/changed orders since last pull */
@@ -349,10 +409,9 @@ export function isWooAutoSyncEnabled(): boolean {
   return isWooCommerceReadyForSync();
 }
 
-export async function syncNewOrdersFromWooCommerce(options?: {
+export async function syncNewOrdersFromWooCommerce(_options?: {
   mode?: WooSyncMode;
 }): Promise<OrderSyncResult> {
-  const mode = options?.mode ?? "fast";
   const woo = loadWooCommerceSettings();
   if (!isWooCommerceReadyForSync()) {
     throw new Error(
@@ -366,6 +425,9 @@ export async function syncNewOrdersFromWooCommerce(options?: {
     consumerSecret: woo.consumerSecret.trim(),
   };
 
+  const initialImport = shouldUseInitialImportWindow(creds.storeUrl);
+  const importHours: 12 | 24 = woo.initialImportHours === 12 ? 12 : 24;
+
   const result: OrderSyncResult = {
     imported: 0,
     updated: 0,
@@ -374,26 +436,20 @@ export async function syncNewOrdersFromWooCommerce(options?: {
     errors: [],
   };
 
-  const full = mode === "full";
-  const cutoffMs = new Date(syncAfterIso()).getTime();
-  const maxPages = full ? SYNC_MAX_PAGES : FAST_SYNC_MAX_PAGES;
+  const maxPages = initialImport ? INITIAL_SYNC_MAX_PAGES : INCREMENTAL_MAX_PAGES;
   let page = 1;
   let totalPages = 1;
 
   while (page <= totalPages && page <= maxPages) {
     const { rows, totalPages: tp } = await fetchWooOrdersPage(creds, page, {
       allStatuses: true,
-      perPage: full ? 50 : FAST_SYNC_PER_PAGE,
-      after: full ? syncAfterIso() : undefined,
-      modified_after: full ? undefined : incrementalModifiedAfter(),
+      perPage: initialImport ? 50 : INCREMENTAL_PER_PAGE,
+      after: initialImport ? initialImportAfterIso(importHours) : undefined,
+      modified_after: initialImport ? undefined : incrementalModifiedAfter(),
     });
     totalPages = tp;
 
     for (const row of rows) {
-      if (full && row.date_created) {
-        const createdMs = new Date(row.date_created).getTime();
-        if (!Number.isNaN(createdMs) && createdMs < cutoffMs) continue;
-      }
       if (!row.line_items?.length) {
         result.skipped++;
         if (result.errors.length < 8) {
@@ -425,12 +481,17 @@ export async function syncNewOrdersFromWooCommerce(options?: {
   saveOrderSyncMeta({
     lastSyncAt: new Date().toISOString(),
     lastResult: result,
+    firstSyncCompleted: true,
+    syncedStoreUrl: creds.storeUrl,
   });
 
   const onWebList = getWebOrdersFromStore().length;
+  const syncLabel = initialImport
+    ? `First import (${importHours}h): ${result.imported} new, ${result.updated} updated`
+    : `Order sync: ${result.imported} new, ${result.updated} updated`;
   appendWooLog(
     "success",
-    `Order sync: ${result.imported} new, ${result.updated} updated, ${onWebList} on Web List (${repaired} repaired)`
+    `${syncLabel}, ${onWebList} on Web List (${repaired} repaired)`
   );
 
   if (repaired > 0) {

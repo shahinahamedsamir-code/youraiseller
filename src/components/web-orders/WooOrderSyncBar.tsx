@@ -35,7 +35,7 @@ export function WooOrderSyncBar({ onSynced }: Props) {
     if (!isWooCommerceReadyForSync()) return;
     setSyncing(true);
     try {
-      const result = await syncNewOrdersFromWooCommerce({ mode: "full" });
+      const result = await syncNewOrdersFromWooCommerce();
       void result;
       setLastSync(new Date().toISOString());
       onSynced?.();

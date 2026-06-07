@@ -29,8 +29,10 @@ import {
   saveWooCommerceSettings,
   testWooCommerceConnection,
   WOO_ORDER_STATUS_POLICIES,
+  WOO_INITIAL_IMPORT_HOURS_OPTIONS,
   type WooCommerceSettings,
 } from "@/lib/woocommerce-integration-store";
+import { resetWooFirstOrderSync } from "@/lib/woocommerce-order-sync";
 import { WooCommerceStockSync } from "@/components/integration/woocommerce/WooCommerceStockSync";
 
 type TabId =
@@ -95,6 +97,9 @@ export function WooCommerceIntegration() {
     const result = await testWooCommerceConnection(settings);
     setTesting(false);
     const next = appendWooLog(result.ok ? "success" : "error", result.message);
+    if (result.ok) {
+      resetWooFirstOrderSync();
+    }
     persist({
       ...next,
       connected: result.ok,
@@ -135,8 +140,8 @@ export function WooCommerceIntegration() {
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">
               Connect your WooCommerce store — API credentials, stock sync, and
-              webhook URLs. Orders sync live to Web Order List every ~20s while the
-              dashboard is open (use Sync New Orders for a full refresh).
+              webhook URLs. First sync imports only recent orders (12h or 24h);
+              then new orders sync live every ~20s on the dashboard.
             </p>
           </div>
         </div>
@@ -373,6 +378,36 @@ function ConnectionTab({
         </p>
 
         <div className="mt-4 space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              First order import window
+            </label>
+            <p className="mb-3 text-xs text-slate-500">
+              When you connect WooCommerce, only orders from this period are imported.
+              Older store history is skipped. After that, only new orders sync.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {WOO_INITIAL_IMPORT_HOURS_OPTIONS.map((opt) => {
+                const selected = settings.initialImportHours === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => patch({ initialImportHours: opt.value })}
+                    className={clsx(
+                      "rounded-xl border px-4 py-2.5 text-sm font-bold transition",
+                      selected
+                        ? "border-indigo-400 bg-indigo-50 text-indigo-800 ring-2 ring-indigo-100"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div>
             <label className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
               Order Status Update

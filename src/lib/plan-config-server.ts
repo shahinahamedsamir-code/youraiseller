@@ -1,13 +1,13 @@
 import { promises as fs } from "fs";
-import path from "path";
 import type { PlanConfig } from "./plan-config-types";
 import {
   DEFAULT_PLAN_CONFIG,
   DEFAULT_PLAN_DEFINITIONS,
   normalizePlanConfig,
 } from "./plan-config-utils";
+import { getPlatformDataDir, platformDataFile } from "./platform-data-path";
 
-const DATA_FILE = path.join(process.cwd(), "data", "platform", "plan-config.json");
+const DATA_FILE = platformDataFile("plan-config.json");
 
 export {
   DEFAULT_PLAN_CONFIG,
@@ -37,7 +37,7 @@ export async function loadPlanConfig(): Promise<PlanConfig> {
 export async function savePlanConfig(config: PlanConfig): Promise<PlanConfig> {
   const next = normalizePlanConfig(config);
   next.updatedAt = new Date().toISOString();
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+  await fs.mkdir(getPlatformDataDir(), { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), "utf-8");
   return next;
 }

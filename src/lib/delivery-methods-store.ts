@@ -1,4 +1,5 @@
 import { sellerStorageKey } from "./seller-storage";
+import { pushSellerData } from "./seller-sync";
 import {
   DEFAULT_STEADFAST_CONFIG,
   type SteadfastConfig,
@@ -179,6 +180,7 @@ function saveRaw(methods: DeliveryMethod[]) {
   const key = storageKey();
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(methods));
+  pushSellerData("deliverymethods", methods);
   window.dispatchEvent(new Event("youraiseller-delivery-methods-updated"));
 }
 

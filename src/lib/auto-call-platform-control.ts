@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import path from "path";
+import { getPlatformDataDir, platformDataFile } from "./platform-data-path";
 
 export type AutoCallPlatformControl = {
   enabled: boolean;
@@ -10,8 +10,7 @@ export type AutoCallPlatformControl = {
   updatedAt: string;
 };
 
-const DATA_FILE = path.join(process.cwd(), "data", "platform", "auto-call-control.json");
-
+const DATA_FILE = platformDataFile("auto-call-control.json");
 export const DEFAULT_AUTO_CALL_PLATFORM_CONTROL: AutoCallPlatformControl = {
   enabled: true,
   callPriceTaka: 1,
@@ -49,7 +48,7 @@ export async function saveAutoCallPlatformControl(
     selfRechargeEnabled: patch.selfRechargeEnabled ?? current.selfRechargeEnabled,
     updatedAt: new Date().toISOString(),
   };
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+  await fs.mkdir(getPlatformDataDir(), { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), "utf-8");
   return next;
 }

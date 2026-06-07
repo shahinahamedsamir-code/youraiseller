@@ -1,8 +1,0 @@
-{
-  "required": {
-    "deliveryMethod": true,
-    "shippingNote": false,
-    "orderSource": true,
-    "transactionId": false
-  }
-}

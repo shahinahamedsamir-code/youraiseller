@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import path from "path";
-
-const DATA_DIR = path.join(process.cwd(), "data", "seller");
+import { sellerDataFile, sellerScopeDir } from "@/lib/seller-data-path";
+import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
+import { normalizeSmsAccount } from "@/lib/sms-types";
 
 /** Whitelisted data kinds that may be synced per business. */
 const ALLOWED_KINDS = new Set([
@@ -15,18 +15,18 @@ const ALLOWED_KINDS = new Set([
   "shippingnotes",
   "ordertags",
   "advancesettings",
+  "deliverymethods",
   "sms",
 ]);
 
 function sanitize(part: string): string | null {
   const s = String(part || "").trim();
-  // Allow only safe id/kind characters to prevent path traversal.
   if (!s || !/^[A-Za-z0-9_-]+$/.test(s)) return null;
   return s;
 }
 
 function fileFor(scope: string, kind: string): string {
-  return path.join(DATA_DIR, scope, `${kind}.json`);
+  return sellerDataFile(scope, `${kind}.json`);
 }
 
 export async function GET(req: Request) {
@@ -37,11 +37,16 @@ export async function GET(req: Request) {
     if (!scope || !kind || !ALLOWED_KINDS.has(kind)) {
       return NextResponse.json({ error: "Invalid scope or kind" }, { status: 400 });
     }
+
+    if (kind === "sms") {
+      const account = await loadSmsAccount(scope);
+      return NextResponse.json({ ok: true, data: account });
+    }
+
     try {
       const raw = await fs.readFile(fileFor(scope, kind), "utf-8");
       return NextResponse.json({ ok: true, data: JSON.parse(raw) });
     } catch {
-      // Not found yet — nothing synced for this business/kind.
       return NextResponse.json({ ok: true, data: null });
     }
   } catch {
@@ -60,8 +65,14 @@ export async function POST(req: Request) {
     if (body?.data === undefined) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
     }
-    const dir = path.join(DATA_DIR, scope);
-    await fs.mkdir(dir, { recursive: true });
+
+    if (kind === "sms") {
+      const account = normalizeSmsAccount(body.data);
+      await saveSmsAccount(scope, account);
+      return NextResponse.json({ ok: true });
+    }
+
+    await fs.mkdir(sellerScopeDir(scope), { recursive: true });
     await fs.writeFile(
       fileFor(scope, kind),
       JSON.stringify(body.data, null, 2),

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import path from "path";
+import { appDataFile, getAppDataDir } from "@/lib/platform-data-path";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "dev-users.json");
-
+const DATA_FILE = appDataFile("dev-users.json");
 type StoredUser = {
   email?: string;
   status?: string;
@@ -99,7 +97,7 @@ export async function POST(req: Request) {
     }
 
     const merged = Array.from(byEmail.values());
-    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.mkdir(getAppDataDir(), { recursive: true });
     await fs.writeFile(DATA_FILE, JSON.stringify(merged, null, 2), "utf-8");
     return NextResponse.json({ ok: true, count: merged.length });
   } catch (e) {

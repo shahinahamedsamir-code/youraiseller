@@ -1,5 +1,4 @@
 import { promises as fs } from "fs";
-import path from "path";
 import {
   createDefaultAutoCallAccount,
   normalizeAutoCallAccount,
@@ -10,16 +9,47 @@ import {
   type AutoCallVoice,
 } from "./auto-call-types";
 import {
+  applyWalletSnapshotToAccount,
+  loadAutoCallWalletSnapshot,
+  pickAuthoritativeWallet,
+  saveAutoCallWalletSnapshot,
+} from "./auto-call-wallet-server";
+import { sellerDataFile, sellerScopeDir } from "./seller-data-path";
+
+import {
   autoCallAudioFileExists,
   buildAutoCallAudioPublicUrl,
   getAppBaseUrl,
   parseAutoCallAudioUrl,
 } from "./auto-call-audio-server";
 
-const DATA_DIR = path.join(process.cwd(), "data", "seller");
-
 function fileFor(scope: string): string {
-  return path.join(DATA_DIR, scope, "autocall.json");
+  return sellerDataFile(scope, "autocall.json");
+}
+
+async function hydrateAutoCallWallet(
+  scope: string,
+  account: AutoCallAccount
+): Promise<AutoCallAccount> {
+  const snapshot = await loadAutoCallWalletSnapshot(scope);
+  const wallet = pickAuthoritativeWallet(account, snapshot);
+  const hydrated = applyWalletSnapshotToAccount(account, {
+    balanceTaka: wallet.balanceTaka,
+    walletTaka: wallet.walletTaka,
+    totalRechargedTaka: wallet.totalRechargedTaka,
+    updatedAt: snapshot?.updatedAt ?? new Date().toISOString(),
+  });
+
+  if (
+    !snapshot ||
+    wallet.balanceTaka !== snapshot.balanceTaka ||
+    wallet.walletTaka !== snapshot.walletTaka ||
+    wallet.totalRechargedTaka !== snapshot.totalRechargedTaka
+  ) {
+    await saveAutoCallWalletSnapshot(scope, wallet);
+  }
+
+  return hydrated;
 }
 
 function persistedAppBase(): string {
@@ -90,20 +120,28 @@ async function repairAutoCallVoiceUrls(
 }
 
 export async function loadAutoCallAccount(scope: string): Promise<AutoCallAccount> {
+  let account: AutoCallAccount;
   try {
     const raw = await fs.readFile(fileFor(scope), "utf-8");
-    const account = normalizeAutoCallAccount(JSON.parse(raw));
-    return await repairAutoCallVoiceUrls(scope, account);
+    account = normalizeAutoCallAccount(JSON.parse(raw));
   } catch {
-    return createDefaultAutoCallAccount();
+    account = createDefaultAutoCallAccount();
   }
+
+  account = await hydrateAutoCallWallet(scope, account);
+  return await repairAutoCallVoiceUrls(scope, account);
 }
 
 export async function saveAutoCallAccount(
   scope: string,
   account: AutoCallAccount
 ): Promise<void> {
-  await fs.mkdir(path.join(DATA_DIR, scope), { recursive: true });
+  await saveAutoCallWalletSnapshot(scope, {
+    balanceTaka: account.balanceTaka,
+    walletTaka: account.walletTaka,
+    totalRechargedTaka: account.totalRechargedTaka,
+  });
+  await fs.mkdir(sellerScopeDir(scope), { recursive: true });
   await fs.writeFile(fileFor(scope), JSON.stringify(account, null, 2), "utf-8");
 }
 

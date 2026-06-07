@@ -1,9 +1,10 @@
 import { promises as fs } from "fs";
-import path from "path";
 import { loadAutoCallAccount } from "./auto-call-account-server";
+import { getSellerDataDir } from "./seller-data-path";
+import { appDataFile } from "./platform-data-path";
 
-const DEV_USERS_FILE = path.join(process.cwd(), "data", "dev-users.json");
-const SELLER_DIR = path.join(process.cwd(), "data", "seller");
+const DEV_USERS_FILE = appDataFile("dev-users.json");
+const SELLER_DIR = getSellerDataDir();
 
 export type SellerAutoCallSummary = {
   scope: string;

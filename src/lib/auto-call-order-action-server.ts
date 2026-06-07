@@ -1,5 +1,4 @@
 import { promises as fs } from "fs";
-import path from "path";
 import type { AutoCallAccount, AutoCallLogRow } from "./auto-call-types";
 import {
   autoCallKeyOrderActionLabel,
@@ -8,15 +7,14 @@ import {
 } from "./auto-call-key-actions";
 import { buildAutoCallOrderTags } from "./auto-call-order-tags";
 import { autoCallKeyDigit } from "./auto-call-response-codes";
-
-const DATA_DIR = path.join(process.cwd(), "data", "seller");
+import { sellerDataFile, sellerScopeDir } from "./seller-data-path";
 
 type OrdersFile = {
   orders: Array<Record<string, unknown>>;
 };
 
 function ordersPath(scope: string): string {
-  return path.join(DATA_DIR, scope, "orders.json");
+  return sellerDataFile(scope, "orders.json");
 }
 
 function nowLabel(): string {
@@ -111,7 +109,7 @@ async function loadOrdersFile(scope: string): Promise<OrdersFile | null> {
 }
 
 async function saveOrdersFile(scope: string, data: OrdersFile): Promise<void> {
-  await fs.mkdir(path.join(DATA_DIR, scope), { recursive: true });
+  await fs.mkdir(sellerScopeDir(scope), { recursive: true });
   await fs.writeFile(ordersPath(scope), JSON.stringify(data, null, 2), "utf-8");
 }
 

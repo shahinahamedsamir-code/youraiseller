@@ -32,6 +32,19 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Seller wallet balances — persisted on server, never overwrite from git deploy
+data/seller/**/autocall-wallet.json
+data/seller/**/sms-wallet.json
+
+# Runtime seller + platform data — production lives outside git deploy
+/data/seller/
+/data/dev-users.json
+/data/platform/sms-control.json
+/data/platform/auto-call-control.json
+/data/platform/plan-config.json
+/data/platform/global-features.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+

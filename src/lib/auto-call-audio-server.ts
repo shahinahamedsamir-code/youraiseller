@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { sellerScopeDir } from "./seller-data-path";
 import { sanitizeSmsScope } from "./teamitqan-sms";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -14,7 +15,7 @@ const ALLOWED_MIME = new Set([
 ]);
 
 function audioDir(scope: string): string {
-  return path.join(process.cwd(), "data", "seller", scope, "autocall-audio");
+  return path.join(sellerScopeDir(scope), "autocall-audio");
 }
 
 export function getAppBaseUrl(req?: Request): string {

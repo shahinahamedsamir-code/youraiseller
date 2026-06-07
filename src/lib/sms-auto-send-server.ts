@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
-import path from "path";
 import { loadSmsAccount, saveSmsAccount } from "./sms-account-server";
+import { sellerDataFile } from "./seller-data-path";
 import { isSmsSystemEnabled, loadSmsPlatformControl } from "./sms-platform-control";
 import type { AutoSmsSetting } from "./sms-integration-mock";
 import {
@@ -29,7 +29,7 @@ export type OrderSmsPayload = {
 
 async function loadStoreName(scope: string): Promise<string> {
   try {
-    const file = path.join(process.cwd(), "data", "seller", scope, "business.json");
+    const file = sellerDataFile(scope, "business.json");
     const raw = await fs.readFile(file, "utf-8");
     const data = JSON.parse(raw) as { name?: string };
     const name = data?.name?.trim();

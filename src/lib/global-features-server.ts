@@ -1,12 +1,12 @@
 import { promises as fs } from "fs";
-import path from "path";
 import {
   DEFAULT_FEATURES,
   normalizeStoredFeatures,
   type FeatureKey,
 } from "./features";
+import { getPlatformDataDir, platformDataFile } from "./platform-data-path";
 
-const DATA_FILE = path.join(process.cwd(), "data", "platform", "global-features.json");
+const DATA_FILE = platformDataFile("global-features.json");
 
 export type GlobalFeaturesConfig = {
   features: Record<FeatureKey, boolean>;
@@ -40,7 +40,7 @@ export async function saveGlobalFeaturesConfig(
     features: normalizeStoredFeatures(features),
     updatedAt: new Date().toISOString(),
   };
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+  await fs.mkdir(getPlatformDataDir(), { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), "utf-8");
   return next;
 }

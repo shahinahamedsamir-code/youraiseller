@@ -11,6 +11,7 @@ export type SellerKind =
   | "shippingnotes"
   | "ordertags"
   | "advancesettings"
+  | "deliverymethods"
   | "sms";
 
 const KINDS: SellerKind[] = [
@@ -23,6 +24,7 @@ const KINDS: SellerKind[] = [
   "shippingnotes",
   "ordertags",
   "advancesettings",
+  "deliverymethods",
   "sms",
 ];
 

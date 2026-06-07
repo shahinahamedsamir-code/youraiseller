@@ -1,5 +1,7 @@
 import { promises as fs } from "fs";
-import path from "path";
+import { getPlatformDataDir, platformDataFile } from "./platform-data-path";
+
+const DATA_FILE = platformDataFile("sms-control.json");
 
 export type SmsPlatformControl = {
   enabled: boolean;
@@ -9,8 +11,6 @@ export type SmsPlatformControl = {
   selfRechargeEnabled: boolean;
   updatedAt: string;
 };
-
-const DATA_FILE = path.join(process.cwd(), "data", "platform", "sms-control.json");
 
 export const DEFAULT_SMS_PLATFORM_CONTROL: SmsPlatformControl = {
   enabled: true,
@@ -49,7 +49,7 @@ export async function saveSmsPlatformControl(
     selfRechargeEnabled: patch.selfRechargeEnabled ?? current.selfRechargeEnabled,
     updatedAt: new Date().toISOString(),
   };
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+  await fs.mkdir(getPlatformDataDir(), { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), "utf-8");
   return next;
 }

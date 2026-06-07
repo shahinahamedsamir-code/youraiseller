@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { sellerScopeDir } from "@/lib/seller-data-path";
 import { getAutoCallAudioSyncConfig } from "@/lib/auto-call-audio-sync";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
 
 const ALLOWED_EXT = new Set(["wav", "mp3"]);
 
 function audioDir(scope: string): string {
-  return path.join(process.cwd(), "data", "seller", scope, "autocall-audio");
+  return path.join(sellerScopeDir(scope), "autocall-audio");
 }
 
 export async function POST(req: Request) {

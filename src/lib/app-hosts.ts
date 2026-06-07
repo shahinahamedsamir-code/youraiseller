@@ -62,6 +62,11 @@ export function isAppPath(pathname: string): boolean {
   );
 }
 
+export function isLocalDevHost(host: string): boolean {
+  const h = stripHost(host);
+  return !h || h === "localhost" || h.endsWith(".localhost") || h.includes("127.0.0.1");
+}
+
 export function getAppBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ||
@@ -70,12 +75,14 @@ export function getAppBaseUrl(): string {
   );
 }
 
-export function getAppLoginUrl(): string {
+export function getAppLoginUrl(requestHost?: string): string {
+  if (requestHost && isLocalDevHost(requestHost)) return "/login";
   if (!isSplitDomainMode()) return "/login";
   return `${getAppBaseUrl()}/login`;
 }
 
-export function getAppSignupUrl(): string {
+export function getAppSignupUrl(requestHost?: string): string {
+  if (requestHost && isLocalDevHost(requestHost)) return "/signup";
   if (!isSplitDomainMode()) return "/signup";
   return `${getAppBaseUrl()}/signup`;
 }

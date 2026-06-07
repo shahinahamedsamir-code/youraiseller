@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/clean-next.js",
+    "predev": "node scripts/clean-next.js --if-idle",
     "dev": "next dev -p 3000",
     "dev:fast": "next dev",
     "dev:clean": "node scripts/clean-next.js && next dev",

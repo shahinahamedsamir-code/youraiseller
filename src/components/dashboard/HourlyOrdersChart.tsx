@@ -32,7 +32,7 @@ export function HourlyOrdersChart() {
   return (
     <div className="yai-panel p-5">
       <h3 className="font-extrabold text-slate-900">Hourly Pulse</h3>
-      <p className="mb-4 text-xs text-slate-500">Today vs Yesterday</p>
+      <p className="mb-4 text-xs text-slate-500">Today vs Yesterday — your orders only</p>
       {!hasData ? (
         <p className="flex h-[280px] items-center justify-center text-sm text-slate-500">
           No orders yet today or yesterday.

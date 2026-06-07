@@ -109,12 +109,12 @@ function GoogleSignInButtonInner({
           googleLogin();
         }}
         className={clsx(
-          "group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-3.5 text-sm font-semibold text-slate-800 shadow-sm transition",
-          "hover:border-slate-300 hover:shadow-md hover:shadow-slate-200/50",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500",
-          "disabled:cursor-not-allowed disabled:opacity-70",
+          "group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 text-sm font-semibold text-slate-800 shadow-sm transition",
+          "hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-lg hover:shadow-violet-500/10",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500",
+          "disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0",
           variant === "signup" &&
-            "border-teal-200/80 hover:border-teal-300 hover:shadow-teal-100/40"
+            "border-violet-200/80 hover:border-violet-300 hover:shadow-violet-100/50"
         )}
       >
         <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-slate-50/80 to-transparent opacity-0 transition group-hover:opacity-100" />
@@ -126,8 +126,8 @@ function GoogleSignInButtonInner({
         <span>{loading ? "Signing in…" : label}</span>
       </button>
 
-      <div className="flex items-start gap-2 rounded-xl bg-slate-50/90 px-3 py-2.5 text-left">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+      <div className="flex items-start gap-2.5 rounded-2xl border border-violet-100/80 bg-gradient-to-br from-violet-50/80 to-slate-50/90 px-3.5 py-3 text-left">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
         <p className="text-xs leading-relaxed text-slate-600">
           {variant === "signup" ? (
             <>

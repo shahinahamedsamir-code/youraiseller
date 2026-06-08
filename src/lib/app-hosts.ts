@@ -32,9 +32,17 @@ function isProductionAppSubdomain(host: string): boolean {
   );
 }
 
-function isProductionMarketingDomain(host: string): boolean {
+export function isProductionMarketingDomain(host: string): boolean {
   const h = stripHost(host);
   return h === PRODUCTION_MARKETING_HOST || h === `www.${PRODUCTION_MARKETING_HOST}`;
+}
+
+/** Main marketing site home (youraiseller.com) — not the app splash subdomain. */
+export function shouldShowMainMarketingPage(host: string): boolean {
+  if (!host || isLocalDevHost(host)) return false;
+  if (isProductionAppSubdomain(host)) return false;
+  if (isProductionMarketingDomain(host)) return true;
+  return isSplitDomainMode() && isMarketingHost(host) && !isAppHost(host);
 }
 
 export function isAppHost(host: string): boolean {
@@ -85,11 +93,21 @@ export function isLocalDevHost(host: string): boolean {
 }
 
 export function getAppBaseUrl(): string {
-  return (
+  const fromEnv =
     process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ||
-    process.env.APP_URL?.trim().replace(/\/$/, "") ||
-    `https://${getAppHost()}`
-  );
+    process.env.APP_URL?.trim().replace(/\/$/, "");
+  if (fromEnv) {
+    const h = stripHost(fromEnv);
+    if (h === PRODUCTION_MARKETING_HOST || h === `www.${PRODUCTION_MARKETING_HOST}`) {
+      return `https://${PRODUCTION_APP_HOST}`;
+    }
+    return fromEnv;
+  }
+  const appHost = stripHost(getAppHost());
+  if (appHost === PRODUCTION_MARKETING_HOST || appHost === `www.${PRODUCTION_MARKETING_HOST}`) {
+    return `https://${PRODUCTION_APP_HOST}`;
+  }
+  return `https://${appHost || PRODUCTION_APP_HOST}`;
 }
 
 export function getAppLoginUrl(requestHost?: string): string {

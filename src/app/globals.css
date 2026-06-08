@@ -670,6 +670,242 @@ body {
 /* ——— Marketing site (youraiseller.com) ——— */
 .marketing-site {
   isolation: isolate;
+  scroll-behavior: smooth;
+  background-color: var(--mkt-bg);
+  color: var(--mkt-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+}
+
+.marketing-site[data-marketing-theme="dark"] {
+  --mkt-bg: #070b14;
+  --mkt-text: #ffffff;
+  --mkt-text-soft: #cbd5e1;
+  --mkt-text-muted: #94a3b8;
+  --mkt-text-subtle: #64748b;
+  --mkt-text-faint: #475569;
+  --mkt-border: rgba(255, 255, 255, 0.1);
+  --mkt-border-soft: rgba(255, 255, 255, 0.06);
+  --mkt-surface: rgba(255, 255, 255, 0.04);
+  --mkt-surface-strong: rgba(255, 255, 255, 0.07);
+  --mkt-surface-hover: rgba(255, 255, 255, 0.08);
+  --mkt-header-bg: rgba(7, 11, 20, 0.92);
+  --mkt-section-alt: rgba(255, 255, 255, 0.02);
+  --mkt-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --mkt-panel-from: rgba(15, 23, 42, 0.92);
+  --mkt-panel-to: rgba(2, 6, 23, 0.95);
+  --mkt-live-ticker: rgba(0, 0, 0, 0.28);
+  --mkt-grid-line: rgba(255, 255, 255, 0.035);
+  --mkt-glow-a: rgba(91, 77, 255, 0.22);
+  --mkt-glow-b: rgba(34, 211, 238, 0.12);
+  --mkt-nav-text: #94a3b8;
+  --mkt-nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --mkt-nav-hover-text: #ffffff;
+  --mkt-nav-active-bg: rgba(255, 255, 255, 0.1);
+  --mkt-package-idle-bg: rgba(217, 70, 239, 0.12);
+  --mkt-package-idle-border: rgba(217, 70, 239, 0.28);
+  --mkt-package-idle-text: #f0abfc;
+  --mkt-package-active-bg: rgba(139, 92, 246, 0.22);
+  --mkt-package-active-border: rgba(167, 139, 250, 0.45);
+  --mkt-package-active-text: #ddd6fe;
+  --mkt-theme-toggle-bg: rgba(255, 255, 255, 0.05);
+  --mkt-theme-toggle-border: rgba(255, 255, 255, 0.12);
+  --mkt-theme-toggle-text: #e2e8f0;
+  --mkt-cta-box-from: rgba(139, 92, 246, 0.2);
+  --mkt-cta-box-to: rgba(34, 211, 238, 0.1);
+  --mkt-orb-a: rgba(217, 70, 239, 0.15);
+  --mkt-orb-b: rgba(34, 211, 238, 0.1);
+  --mkt-badge-cyan-bg: rgba(34, 211, 238, 0.1);
+  --mkt-badge-cyan-border: rgba(34, 211, 238, 0.22);
+  --mkt-badge-cyan-text: #67e8f9;
+  --mkt-badge-fuchsia-bg: rgba(217, 70, 239, 0.1);
+  --mkt-badge-fuchsia-border: rgba(217, 70, 239, 0.25);
+  --mkt-badge-fuchsia-text: #f0abfc;
+  --mkt-btn-ghost-bg: rgba(255, 255, 255, 0.05);
+  --mkt-btn-ghost-border: rgba(255, 255, 255, 0.1);
+  --mkt-btn-ghost-text: #cbd5e1;
+  --mkt-compare-cell: rgba(0, 0, 0, 0.22);
+  --mkt-step-num: rgba(255, 255, 255, 0.1);
+  --mkt-progress-track: rgba(255, 255, 255, 0.12);
+}
+
+.marketing-site[data-marketing-theme="light"] {
+  --mkt-bg: #f3f1fa;
+  --mkt-text: #0c0a14;
+  --mkt-text-soft: #3d3850;
+  --mkt-text-muted: #6b6578;
+  --mkt-text-subtle: #8b8499;
+  --mkt-text-faint: #a8a3b5;
+  --mkt-border: rgba(12, 10, 20, 0.1);
+  --mkt-border-soft: rgba(12, 10, 20, 0.06);
+  --mkt-surface: rgba(255, 255, 255, 0.92);
+  --mkt-surface-strong: #ffffff;
+  --mkt-surface-hover: rgba(255, 255, 255, 1);
+  --mkt-header-bg: rgba(255, 255, 255, 0.9);
+  --mkt-section-alt: rgba(255, 255, 255, 0.55);
+  --mkt-card-shadow: 0 8px 28px rgba(91, 77, 255, 0.08);
+  --mkt-panel-from: #ffffff;
+  --mkt-panel-to: #f8f7fc;
+  --mkt-live-ticker: rgba(91, 77, 255, 0.06);
+  --mkt-grid-line: rgba(91, 77, 255, 0.07);
+  --mkt-glow-a: rgba(91, 77, 255, 0.14);
+  --mkt-glow-b: rgba(255, 92, 122, 0.1);
+  --mkt-nav-text: #6b6578;
+  --mkt-nav-hover-bg: rgba(91, 77, 255, 0.08);
+  --mkt-nav-hover-text: #0c0a14;
+  --mkt-nav-active-bg: rgba(91, 77, 255, 0.12);
+  --mkt-package-idle-bg: rgba(91, 77, 255, 0.08);
+  --mkt-package-idle-border: rgba(91, 77, 255, 0.22);
+  --mkt-package-idle-text: #5b4dff;
+  --mkt-package-active-bg: rgba(91, 77, 255, 0.14);
+  --mkt-package-active-border: rgba(91, 77, 255, 0.35);
+  --mkt-package-active-text: #4338ca;
+  --mkt-theme-toggle-bg: rgba(255, 255, 255, 0.95);
+  --mkt-theme-toggle-border: rgba(12, 10, 20, 0.1);
+  --mkt-theme-toggle-text: #5b4dff;
+  --mkt-cta-box-from: rgba(91, 77, 255, 0.1);
+  --mkt-cta-box-to: rgba(34, 211, 238, 0.08);
+  --mkt-orb-a: rgba(91, 77, 255, 0.12);
+  --mkt-orb-b: rgba(255, 92, 122, 0.08);
+  --mkt-badge-cyan-bg: rgba(34, 211, 238, 0.12);
+  --mkt-badge-cyan-border: rgba(34, 211, 238, 0.28);
+  --mkt-badge-cyan-text: #0891b2;
+  --mkt-badge-fuchsia-bg: rgba(91, 77, 255, 0.1);
+  --mkt-badge-fuchsia-border: rgba(91, 77, 255, 0.22);
+  --mkt-badge-fuchsia-text: #5b4dff;
+  --mkt-btn-ghost-bg: rgba(255, 255, 255, 0.95);
+  --mkt-btn-ghost-border: rgba(12, 10, 20, 0.1);
+  --mkt-btn-ghost-text: #3d3850;
+  --mkt-compare-cell: rgba(91, 77, 255, 0.05);
+  --mkt-step-num: rgba(91, 77, 255, 0.12);
+  --mkt-progress-track: rgba(12, 10, 20, 0.08);
+}
+
+.mkt-text { color: var(--mkt-text); }
+.mkt-text-soft { color: var(--mkt-text-soft); }
+.mkt-text-muted { color: var(--mkt-text-muted); }
+.mkt-text-subtle { color: var(--mkt-text-subtle); }
+.mkt-text-faint { color: var(--mkt-text-faint); }
+.mkt-border-b { border-color: var(--mkt-border-soft); }
+.mkt-border { border-color: var(--mkt-border); }
+.mkt-surface { background-color: var(--mkt-surface); }
+.mkt-surface-strong { background-color: var(--mkt-surface-strong); }
+.mkt-section-alt { background-color: var(--mkt-section-alt); }
+
+.mkt-card {
+  border: 1px solid var(--mkt-border);
+  background-color: var(--mkt-surface);
+  box-shadow: var(--mkt-card-shadow);
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    color 0.25s ease;
+}
+
+.mkt-header {
+  background-color: var(--mkt-header-bg);
+  border-bottom: 1px solid var(--mkt-border-soft);
+}
+
+.mkt-nav-link {
+  color: var(--mkt-nav-text);
+}
+
+.mkt-nav-link:hover {
+  background-color: var(--mkt-nav-hover-bg);
+  color: var(--mkt-nav-hover-text);
+}
+
+.mkt-nav-link--active {
+  background-color: var(--mkt-nav-active-bg);
+  color: var(--mkt-nav-hover-text);
+}
+
+.mkt-nav-link--package {
+  border: 1px solid var(--mkt-package-idle-border);
+  background-color: var(--mkt-package-idle-bg);
+  color: var(--mkt-package-idle-text);
+}
+
+.mkt-nav-link--package:hover,
+.mkt-nav-link--package-active {
+  border-color: var(--mkt-package-active-border);
+  background-color: var(--mkt-package-active-bg);
+  color: var(--mkt-package-active-text);
+}
+
+.mkt-theme-toggle {
+  border: 1px solid var(--mkt-theme-toggle-border);
+  background-color: var(--mkt-theme-toggle-bg);
+  color: var(--mkt-theme-toggle-text);
+}
+
+.mkt-theme-toggle:hover {
+  background-color: var(--mkt-nav-hover-bg);
+  color: var(--mkt-nav-hover-text);
+}
+
+.mkt-btn-ghost {
+  border: 1px solid var(--mkt-btn-ghost-border);
+  background-color: var(--mkt-btn-ghost-bg);
+  color: var(--mkt-btn-ghost-text);
+}
+
+.mkt-btn-ghost:hover {
+  border-color: var(--mkt-border);
+  background-color: var(--mkt-surface-hover);
+  color: var(--mkt-text);
+}
+
+.mkt-badge-cyan {
+  border: 1px solid var(--mkt-badge-cyan-border);
+  background-color: var(--mkt-badge-cyan-bg);
+  color: var(--mkt-badge-cyan-text);
+}
+
+.mkt-badge-fuchsia {
+  border: 1px solid var(--mkt-badge-fuchsia-border);
+  background-color: var(--mkt-badge-fuchsia-bg);
+  color: var(--mkt-badge-fuchsia-text);
+}
+
+.mkt-cta-box {
+  border: 1px solid var(--mkt-border);
+  background: linear-gradient(135deg, var(--mkt-cta-box-from), var(--mkt-section-alt), var(--mkt-cta-box-to));
+}
+
+.mkt-live-panel {
+  border: 1px solid var(--mkt-border);
+  background: linear-gradient(to bottom, var(--mkt-panel-from), var(--mkt-panel-to));
+  box-shadow: var(--mkt-card-shadow);
+}
+
+.mkt-live-ticker {
+  border: 1px solid var(--mkt-border-soft);
+  background-color: var(--mkt-live-ticker);
+}
+
+.mkt-step-card {
+  border: 1px solid var(--mkt-border);
+  background: linear-gradient(to bottom, var(--mkt-surface-strong), transparent);
+}
+
+.mkt-step-num {
+  color: var(--mkt-step-num);
+}
+
+.mkt-compare-cell {
+  background-color: var(--mkt-compare-cell);
+}
+
+.mkt-progress-track {
+  background-color: var(--mkt-progress-track);
+}
+
+.marketing-site-header {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .marketing-site-glow {
@@ -684,7 +920,7 @@ body {
   left: 10%;
   width: 28rem;
   height: 28rem;
-  background: rgba(91, 77, 255, 0.22);
+  background: var(--mkt-glow-a);
   animation: landing-glow-a 14s ease-in-out infinite;
 }
 
@@ -693,14 +929,14 @@ body {
   bottom: 10%;
   width: 32rem;
   height: 32rem;
-  background: rgba(34, 211, 238, 0.12);
+  background: var(--mkt-glow-b);
   animation: landing-glow-c 12s ease-in-out infinite;
 }
 
 .marketing-site-grid {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--mkt-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mkt-grid-line) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(circle at 50% 20%, black 20%, transparent 75%);
 }
@@ -756,7 +992,7 @@ body {
   left: 20%;
   width: 24rem;
   height: 24rem;
-  background: rgba(217, 70, 239, 0.15);
+  background: var(--mkt-orb-a);
 }
 
 .marketing-packages-orb-b {
@@ -764,5 +1000,145 @@ body {
   top: 30%;
   width: 20rem;
   height: 20rem;
-  background: rgba(34, 211, 238, 0.1);
+  background: var(--mkt-orb-b);
+}
+
+.marketing-nav-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.marketing-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.marketing-live-glow {
+  animation: marketing-live-glow 6s ease-in-out infinite;
+}
+
+.marketing-live-panel {
+  animation: marketing-live-float 8s ease-in-out infinite;
+}
+
+.marketing-live-scan {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(34, 211, 238, 0.03) 48%,
+    transparent 100%
+  );
+  background-size: 100% 220%;
+  animation: marketing-live-scan 5s linear infinite;
+}
+
+.marketing-live-dot {
+  animation: marketing-live-dot 2.4s ease-in-out infinite;
+}
+
+.marketing-live-card:nth-child(2) .marketing-live-dot {
+  animation-delay: 0.4s;
+}
+
+.marketing-live-card:nth-child(3) .marketing-live-dot {
+  animation-delay: 0.8s;
+}
+
+.marketing-live-card:nth-child(4) .marketing-live-dot {
+  animation-delay: 1.2s;
+}
+
+.marketing-live-card:nth-child(5) .marketing-live-dot {
+  animation-delay: 1.6s;
+}
+
+.marketing-live-card:nth-child(6) .marketing-live-dot {
+  animation-delay: 2s;
+}
+
+.marketing-live-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-live-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  transform: translateX(-120%);
+  animation: marketing-live-bar-shine 2.8s ease-in-out infinite;
+}
+
+@keyframes marketing-live-glow {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes marketing-live-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes marketing-live-scan {
+  0% {
+    background-position: 0 -120%;
+  }
+  100% {
+    background-position: 0 220%;
+  }
+}
+
+@keyframes marketing-live-dot {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes marketing-live-bar-shine {
+  0%,
+  100% {
+    transform: translateX(-120%);
+  }
+  45% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-live-panel,
+  .marketing-live-glow,
+  .marketing-live-scan,
+  .marketing-live-dot,
+  .marketing-live-bar::after,
+  .marketing-feature-card,
+  .marketing-package-card {
+    animation: none !important;
+  }
+
+  .marketing-live-bar {
+    transition: none !important;
+  }
 }

@@ -666,3 +666,64 @@ body {
     transform: translateX(120%);
   }
 }
+
+/* ——— Marketing site (youraiseller.com) ——— */
+.marketing-site {
+  isolation: isolate;
+}
+
+.marketing-site-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+.marketing-site-glow-a {
+  top: -8rem;
+  left: 10%;
+  width: 28rem;
+  height: 28rem;
+  background: rgba(91, 77, 255, 0.22);
+  animation: landing-glow-a 14s ease-in-out infinite;
+}
+
+.marketing-site-glow-b {
+  right: 5%;
+  bottom: 10%;
+  width: 32rem;
+  height: 32rem;
+  background: rgba(34, 211, 238, 0.12);
+  animation: landing-glow-c 12s ease-in-out infinite;
+}
+
+.marketing-site-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 20%, black 20%, transparent 75%);
+}
+
+.marketing-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: landing-cta-shine 5s ease-in-out infinite;
+}
+
+.marketing-feature-card {
+  animation: landing-fade-up 0.6s ease-out both;
+}

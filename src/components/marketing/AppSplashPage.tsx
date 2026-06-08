@@ -2,11 +2,7 @@ import Link from "next/link";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { BrandMark } from "@/components/brand/BrandLogo";
 
-type MarketingLandingPageProps = {
-  loginUrl: string;
-};
-
-export function MarketingLandingPage({ loginUrl }: MarketingLandingPageProps) {
+export function AppSplashPage() {
   return (
     <div className="landing-page mesh-bg relative min-h-screen overflow-hidden">
       <div className="landing-glow landing-glow-a" aria-hidden />
@@ -43,7 +39,7 @@ export function MarketingLandingPage({ loginUrl }: MarketingLandingPageProps) {
 
           <div className="landing-fade landing-fade-4 mt-8">
             <Link
-              href={loginUrl}
+              href="/login"
               className="landing-cta group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-500 via-violet-600 to-indigo-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-violet-500/25 transition hover:scale-[1.02] hover:shadow-2xl"
             >
               <LayoutDashboard className="h-5 w-5" />

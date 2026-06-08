@@ -93,7 +93,8 @@ export function getAppBaseUrl(): string {
 }
 
 export function getAppLoginUrl(requestHost?: string): string {
-  if (requestHost && isLocalDevHost(requestHost)) return "/login";
+  if (!requestHost || isLocalDevHost(requestHost)) return "/login";
+  if (isAppHost(requestHost)) return "/login";
   if (!isSplitDomainMode()) return "/login";
   return `${getAppBaseUrl()}/login`;
 }

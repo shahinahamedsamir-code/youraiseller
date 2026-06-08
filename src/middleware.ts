@@ -22,12 +22,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!isSplitDomainMode()) {
-    return NextResponse.next();
-  }
-
   const onMarketing = isMarketingHost(host);
   const onApp = isAppHost(host);
+
+  if (!isSplitDomainMode() && !onMarketing && !onApp) {
+    return NextResponse.next();
+  }
 
   if (onMarketing && isAppPath(pathname)) {
     const url = request.nextUrl.clone();

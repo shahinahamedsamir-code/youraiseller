@@ -21,12 +21,29 @@ export function hostsMatch(host: string, target: string): boolean {
   return h === t || h === `www.${t}`;
 }
 
+const PRODUCTION_APP_HOST = "app.youraiseller.com";
+const PRODUCTION_MARKETING_HOST = "youraiseller.com";
+
+function isProductionAppSubdomain(host: string): boolean {
+  const h = stripHost(host);
+  return (
+    h === PRODUCTION_APP_HOST ||
+    h.endsWith(`.${PRODUCTION_APP_HOST}`)
+  );
+}
+
+function isProductionMarketingDomain(host: string): boolean {
+  const h = stripHost(host);
+  return h === PRODUCTION_MARKETING_HOST || h === `www.${PRODUCTION_MARKETING_HOST}`;
+}
+
 export function isAppHost(host: string): boolean {
-  const app = getAppHost();
-  return hostsMatch(host, app);
+  if (isProductionAppSubdomain(host)) return true;
+  return hostsMatch(host, getAppHost());
 }
 
 export function isMarketingHost(host: string): boolean {
+  if (isProductionMarketingDomain(host)) return true;
   return hostsMatch(host, getMarketingHost());
 }
 

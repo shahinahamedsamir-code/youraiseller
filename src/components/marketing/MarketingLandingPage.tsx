@@ -37,10 +37,7 @@ export function MarketingLandingPage({ loginUrl }: MarketingLandingPageProps) {
             </span>
           </h1>
 
-          <p className="landing-fade landing-fade-3 mx-auto mt-3 max-w-sm text-sm font-semibold text-emerald-700">
-            Main domain test — youraiseller.com is live.
-          </p>
-          <p className="landing-fade landing-fade-3 mx-auto mt-2 max-w-sm text-sm text-slate-500">
+          <p className="landing-fade landing-fade-3 mx-auto mt-3 max-w-sm text-sm text-slate-500">
             Orders, inventory &amp; courier — one dashboard.
           </p>
 

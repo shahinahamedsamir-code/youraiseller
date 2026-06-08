@@ -1,8 +1,7 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
 import clsx from "clsx";
-import { ArrowRight, Menu } from "lucide-react";
-import { BrandMark } from "@/components/brand/BrandLogo";
+import { ArrowRight } from "lucide-react";
+import { MarketingAppCta } from "@/components/marketing/MarketingAppCta";
+import { MarketingSiteShell } from "@/components/marketing/MarketingSiteShell";
 import { getAppBaseUrl } from "@/lib/app-hosts";
 import {
   MARKETING_FEATURE_GROUPS,
@@ -10,96 +9,11 @@ import {
   MARKETING_STEPS,
 } from "@/lib/marketing-site-content";
 
-function AppCta({
-  className,
-  children,
-  large,
-}: {
-  className?: string;
-  children: ReactNode;
-  large?: boolean;
-}) {
-  const href = `${getAppBaseUrl()}/login`;
-  return (
-    <Link
-      href={href}
-      className={clsx(
-        "marketing-cta inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-500 via-violet-600 to-indigo-600 font-bold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.02] hover:shadow-xl",
-        large ? "px-8 py-4 text-base" : "px-5 py-2.5 text-sm",
-        className
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
-
 export function MainMarketingPage() {
   const appHost = getAppBaseUrl().replace(/^https?:\/\//, "");
 
   return (
-    <div className="marketing-site relative min-h-screen overflow-x-hidden bg-[#070b14] text-white">
-      <div className="marketing-site-glow marketing-site-glow-a" aria-hidden />
-      <div className="marketing-site-glow marketing-site-glow-b" aria-hidden />
-      <div className="marketing-site-grid pointer-events-none absolute inset-0" aria-hidden />
-
-      <header className="relative z-20 border-b border-white/5 bg-[#070b14]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <BrandMark size="sm" priority className="shadow-lg shadow-violet-500/20" />
-            <div className="hidden sm:block">
-              <p className="text-sm font-extrabold tracking-tight">
-                Your<span className="text-cyan-400">AI</span> Seller
-              </p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                Ecommerce OS
-              </p>
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-400 md:flex">
-            <a href="#features" className="transition hover:text-white">
-              Features
-            </a>
-            <a href="#how-it-works" className="transition hover:text-white">
-              How it works
-            </a>
-            <a href="#integrations" className="transition hover:text-white">
-              Integrations
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <AppCta className="hidden sm:inline-flex">Open app</AppCta>
-            <details className="relative md:hidden">
-              <summary className="flex cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2.5 text-slate-300">
-                <Menu className="h-5 w-5" />
-              </summary>
-              <div className="absolute right-0 top-full z-30 mt-2 w-48 rounded-2xl border border-white/10 bg-slate-900 p-2 shadow-xl">
-                <a
-                  href="#features"
-                  className="block rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
-                >
-                  Features
-                </a>
-                <a
-                  href="#how-it-works"
-                  className="block rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
-                >
-                  How it works
-                </a>
-                <a
-                  href="#integrations"
-                  className="block rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
-                >
-                  Integrations
-                </a>
-              </div>
-            </details>
-          </div>
-        </div>
-      </header>
-
+    <MarketingSiteShell>
       <main className="relative z-10">
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-5 pb-20 pt-16 lg:px-8 lg:pb-28 lg:pt-24">
@@ -120,10 +34,10 @@ export function MainMarketingPage() {
                 so your team ships faster with fewer mistakes.
               </p>
               <div className="marketing-fade marketing-fade-4 mt-8 flex flex-wrap items-center gap-4">
-                <AppCta large>
+                <MarketingAppCta large>
                   Start free — open app
                   <ArrowRight className="h-5 w-5" />
-                </AppCta>
+                </MarketingAppCta>
                 <a
                   href="#features"
                   className="text-sm font-semibold text-slate-400 transition hover:text-white"
@@ -297,10 +211,10 @@ export function MainMarketingPage() {
                 never lose track of stock again.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <AppCta large>
+                <MarketingAppCta large>
                   Open YourAI Seller
                   <ArrowRight className="h-5 w-5" />
-                </AppCta>
+                </MarketingAppCta>
               </div>
               <p className="mt-5 text-xs text-slate-500">
                 App login:{" "}
@@ -310,13 +224,6 @@ export function MainMarketingPage() {
           </div>
         </section>
       </main>
-
-      <footer className="relative z-10 border-t border-white/5 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 text-center text-sm text-slate-500 sm:flex-row sm:text-left lg:px-8">
-          <p>© {new Date().getFullYear()} YourAI Seller — Ecommerce OS for Bangladesh</p>
-          <AppCta>Open app</AppCta>
-        </div>
-      </footer>
-    </div>
+    </MarketingSiteShell>
   );
 }

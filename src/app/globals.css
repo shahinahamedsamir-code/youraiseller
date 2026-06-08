@@ -727,3 +727,42 @@ body {
 .marketing-feature-card {
   animation: landing-fade-up 0.6s ease-out both;
 }
+
+.marketing-package-card {
+  animation: landing-fade-up 0.65s ease-out both;
+}
+
+.marketing-package-card:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.marketing-package-card:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.marketing-package-card:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.marketing-packages-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.marketing-packages-orb-a {
+  top: 0;
+  left: 20%;
+  width: 24rem;
+  height: 24rem;
+  background: rgba(217, 70, 239, 0.15);
+}
+
+.marketing-packages-orb-b {
+  right: 10%;
+  top: 30%;
+  width: 20rem;
+  height: 20rem;
+  background: rgba(34, 211, 238, 0.1);
+}

@@ -72,6 +72,35 @@ export function resolveRequestHost(
   );
 }
 
+/**
+ * Hostinger may send the Node app's primary hostname in headers even when the
+ * browser URL is youraiseller.com — trust the request URL hostname when known.
+ */
+export function resolveEffectiveHost(
+  headerGet: (name: string) => string | null,
+  urlHostname?: string
+): string {
+  const fromUrl = stripHost(urlHostname);
+  if (fromUrl && (isProductionMarketingDomain(fromUrl) || isProductionAppSubdomain(fromUrl))) {
+    return fromUrl;
+  }
+  const fromHeaders = resolveRequestHost(headerGet);
+  return fromHeaders || fromUrl;
+}
+
+/** Host to use when redirecting dashboard paths off the marketing domain. */
+export function getAppHostForRedirect(): string {
+  const h = stripHost(getAppHost());
+  if (
+    h === PRODUCTION_MARKETING_HOST ||
+    h === `www.${PRODUCTION_MARKETING_HOST}` ||
+    !h
+  ) {
+    return PRODUCTION_APP_HOST;
+  }
+  return h;
+}
+
 export const APP_PATH_PREFIXES = [
   "/dashboard",
   "/login",

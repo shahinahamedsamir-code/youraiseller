@@ -1,14 +1,6 @@
-import { headers } from "next/headers";
 import { AppSplashPage } from "@/components/marketing/AppSplashPage";
-import { MainMarketingPage } from "@/components/marketing/MainMarketingPage";
-import { resolveRequestHost, shouldShowMainMarketingPage } from "@/lib/app-hosts";
 
+/** App splash at `/` — marketing home is served via `/marketing` rewrite on youraiseller.com */
 export default function HomePage() {
-  const host = resolveRequestHost((name) => headers().get(name));
-
-  if (shouldShowMainMarketingPage(host)) {
-    return <MainMarketingPage />;
-  }
-
   return <AppSplashPage />;
 }

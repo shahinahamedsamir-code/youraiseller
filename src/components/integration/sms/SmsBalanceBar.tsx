@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { Coins, Loader2, MessageSquare, Plus, Signal } from "lucide-react";
+import { Coins, Loader2, MessageSquare, Plus, Power, Signal } from "lucide-react";
 import type { SmsAccount } from "@/lib/sms-types";
 import { SmsRechargeModal } from "@/components/integration/sms/SmsRechargeModal";
 
@@ -10,9 +10,12 @@ type Props = {
   balance: number;
   smsPriceTaka?: number;
   systemEnabled?: boolean;
+  serviceEnabled?: boolean;
   selfRechargeEnabled?: boolean;
   compact?: boolean;
   loading?: boolean;
+  togglingService?: boolean;
+  onServiceToggle?: (enabled: boolean) => void;
   onRechargeSuccess?: (account: SmsAccount, message: string) => void;
   onRechargeError?: (message: string) => void;
 };
@@ -21,9 +24,12 @@ export function SmsBalanceBar({
   balance,
   smsPriceTaka = 1,
   systemEnabled = true,
+  serviceEnabled = false,
   selfRechargeEnabled = false,
   compact,
   loading,
+  togglingService = false,
+  onServiceToggle,
   onRechargeSuccess,
   onRechargeError,
 }: Props) {
@@ -112,6 +118,12 @@ export function SmsBalanceBar({
           </div>
         ) : null}
 
+        {systemEnabled && !serviceEnabled ? (
+          <div className="border-b border-amber-100 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900">
+            SMS is off. Turn it on below when you are ready to send messages.
+          </div>
+        ) : null}
+
         <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:gap-5 lg:p-4 xl:p-5">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-200/50">
@@ -158,13 +170,43 @@ export function SmsBalanceBar({
                 Add balance
               </button>
             ) : null}
+
+            {onServiceToggle ? (
+              <button
+                type="button"
+                disabled={!systemEnabled || loading || togglingService}
+                onClick={() => onServiceToggle(!serviceEnabled)}
+                className={clsx(
+                  "inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition disabled:cursor-not-allowed disabled:opacity-60",
+                  serviceEnabled
+                    ? "bg-emerald-600 text-white shadow-emerald-200/40 hover:bg-emerald-700"
+                    : "bg-slate-700 text-white shadow-slate-200/40 hover:bg-slate-800"
+                )}
+              >
+                {togglingService ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Power className="h-4 w-4" />
+                )}
+                {serviceEnabled ? "ON" : "OFF"}
+              </button>
+            ) : null}
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/70 px-4 py-2.5">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
-            <Signal className="h-3 w-3 text-emerald-500" />
-            {systemEnabled ? "Service active" : "Service paused"}
+            <Signal
+              className={clsx(
+                "h-3 w-3",
+                systemEnabled && serviceEnabled ? "text-emerald-500" : "text-slate-400"
+              )}
+            />
+            {!systemEnabled
+              ? "Platform paused"
+              : serviceEnabled
+                ? "SMS on"
+                : "SMS off"}
           </span>
           <span className="text-[11px] font-medium text-slate-500">
             Self recharge via bKash · Sending stops when balance is zero

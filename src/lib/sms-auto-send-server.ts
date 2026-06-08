@@ -61,6 +61,9 @@ export async function sendAutoOrderSms(
   }
 
   const account = await loadSmsAccount(scope);
+  if (!account.serviceEnabled) {
+    return { ok: false, skipped: "service_disabled" };
+  }
   const control = await loadSmsPlatformControl();
   const rateTaka = control.smsPriceTaka;
   const rule = findAutoRule(account.autoSettings, ruleId);

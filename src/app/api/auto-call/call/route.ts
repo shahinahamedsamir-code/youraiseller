@@ -43,10 +43,13 @@ export async function POST(req: Request) {
 
     const account = await loadAutoCallAccount(scope);
     const control = await loadAutoCallPlatformControl();
-    const chargeTaka = autoCallPerAttemptChargeTaka(
-      account.settings.perCallDurationMinutes,
-      control.callPriceTaka
-    );
+    const chargeTaka = autoCallPerAttemptChargeTaka(control.callPriceTaka);
+    if (!account.serviceEnabled) {
+      return NextResponse.json(
+        { error: "Auto Call is off — turn it on from the Auto Call page first" },
+        { status: 403 }
+      );
+    }
     if (account.balanceTaka + 1e-9 < chargeTaka) {
       return NextResponse.json(
         { error: "Insufficient auto call balance — recharge first", account },

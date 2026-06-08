@@ -398,6 +398,38 @@ export function saveAutoCallAccountFromApi(account: AutoCallAccount): void {
   saveAccountLocal(normalizeAutoCallAccount(account));
 }
 
+export async function setAutoCallServiceEnabled(enabled: boolean): Promise<{
+  ok: boolean;
+  error?: string;
+  account?: AutoCallAccount;
+  message?: string;
+}> {
+  const scope = getSellerStorageScope();
+  if (!scope) return { ok: false, error: "Not signed in" };
+
+  try {
+    const res = await fetch("/api/auto-call/service", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scope, enabled }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: json.error ?? "Could not update Auto Call status" };
+    }
+    if (json.account) {
+      saveAutoCallAccountFromApi(json.account as AutoCallAccount);
+    }
+    return {
+      ok: true,
+      account: json.account as AutoCallAccount | undefined,
+      message: json.message as string | undefined,
+    };
+  } catch {
+    return { ok: false, error: "Network error — try again." };
+  }
+}
+
 export function hasPendingAutoCallLogs(): boolean {
   return loadAutoCallLogs().some((log) => isAutoCallLogCalling(log));
 }

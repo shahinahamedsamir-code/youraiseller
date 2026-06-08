@@ -69,6 +69,12 @@ export async function POST(req: Request) {
     }
 
     const account = await loadSmsAccount(scope);
+    if (!account.serviceEnabled) {
+      return NextResponse.json(
+        { error: "SMS is off — turn it on from the SMS page first" },
+        { status: 403 }
+      );
+    }
     const control = await loadSmsPlatformControl();
     const rateTaka = control.smsPriceTaka;
     const count = numbers.length;

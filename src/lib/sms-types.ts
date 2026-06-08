@@ -55,6 +55,8 @@ export type SmsAccount = {
   walletTaka: number;
   /** Lifetime recharge total (BDT) */
   totalRechargedTaka: number;
+  /** Seller-controlled master switch — new accounts default off. */
+  serviceEnabled: boolean;
   autoSettings: Record<AutoSmsTab, AutoSmsSetting[]>;
   /** Saved messages for Quick Send dropdown */
   quickTemplates: SmsQuickTemplate[];
@@ -66,6 +68,7 @@ export function createDefaultSmsAccount(): SmsAccount {
     balance: 0,
     walletTaka: 0,
     totalRechargedTaka: 0,
+    serviceEnabled: false,
     autoSettings: structuredClone(AUTO_SMS_SETTINGS),
     quickTemplates: structuredClone(DEFAULT_SMS_QUICK_TEMPLATES),
     logs: [],
@@ -110,6 +113,7 @@ export function normalizeSmsAccount(raw: unknown): SmsAccount {
       typeof r.totalRechargedTaka === "number"
         ? r.totalRechargedTaka
         : base.totalRechargedTaka,
+    serviceEnabled: r.serviceEnabled === true,
     autoSettings: mergeAutoSettings(
       r.autoSettings as Record<AutoSmsTab, AutoSmsSetting[]> | undefined
     ),

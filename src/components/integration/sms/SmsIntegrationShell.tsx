@@ -6,6 +6,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { smsIntegrationBasePath, smsNav } from "@/lib/sms-nav";
+import { setSmsServiceEnabled } from "@/lib/sms-store";
 import { SmsBalanceBar } from "@/components/integration/sms/SmsBalanceBar";
 import { useSmsAccount } from "@/components/integration/sms/useSmsAccount";
 
@@ -23,6 +24,22 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
     type: "ok" | "err";
     text: string;
   } | null>(null);
+  const [togglingService, setTogglingService] = useState(false);
+
+  const handleServiceToggle = async (enabled: boolean) => {
+    setTogglingService(true);
+    const result = await setSmsServiceEnabled(enabled);
+    setTogglingService(false);
+    if (!result.ok || !result.account) {
+      setFeedback({ type: "err", text: result.error ?? "Could not update SMS status" });
+      return;
+    }
+    setAccount(result.account);
+    setFeedback({
+      type: "ok",
+      text: result.message ?? (enabled ? "SMS turned on" : "SMS turned off"),
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -30,8 +47,11 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
         balance={account.balance}
         smsPriceTaka={smsPriceTaka}
         systemEnabled={systemEnabled}
+        serviceEnabled={account.serviceEnabled}
         selfRechargeEnabled={selfRechargeEnabled}
         loading={loading}
+        togglingService={togglingService}
+        onServiceToggle={handleServiceToggle}
         onRechargeSuccess={(next, message) => {
           setAccount(next);
           setFeedback({ type: "ok", text: message });

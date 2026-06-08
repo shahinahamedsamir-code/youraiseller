@@ -101,6 +101,38 @@ export async function sendSmsViaApi(opts: {
   };
 }
 
+export async function setSmsServiceEnabled(enabled: boolean): Promise<{
+  ok: boolean;
+  error?: string;
+  account?: SmsAccount;
+  message?: string;
+}> {
+  const scope = getSellerStorageScope();
+  if (!scope) return { ok: false, error: "Not signed in" };
+
+  try {
+    const res = await fetch("/api/sms/service", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scope, enabled }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: json.error ?? "Could not update SMS status" };
+    }
+    if (json.account) {
+      saveSmsAccountLocal(normalizeSmsAccount(json.account));
+    }
+    return {
+      ok: true,
+      account: json.account ? normalizeSmsAccount(json.account) : undefined,
+      message: json.message as string | undefined,
+    };
+  } catch {
+    return { ok: false, error: "Network error — try again." };
+  }
+}
+
 export async function selfRechargeViaBkash(smsCount: number): Promise<{
   ok: boolean;
   error?: string;

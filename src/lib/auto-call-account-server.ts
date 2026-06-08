@@ -155,6 +155,16 @@ export async function updateAutoCallSettings(
   return account;
 }
 
+export async function updateAutoCallServiceEnabled(
+  scope: string,
+  enabled: boolean
+): Promise<AutoCallAccount> {
+  const account = await loadAutoCallAccount(scope);
+  account.serviceEnabled = enabled === true;
+  await saveAutoCallAccount(scope, account);
+  return account;
+}
+
 export async function appendAutoCallRun(
   scope: string,
   run: AutoCallRun,

@@ -207,7 +207,7 @@ export function AutoCallControlPanel() {
           <div className="mt-5 flex flex-wrap items-end gap-4">
             <label className="block">
               <span className="mb-1 block text-xs font-bold uppercase text-slate-500">
-                Price per call minute (BDT)
+                Price per call (BDT)
               </span>
               <input
                 type="number"
@@ -376,7 +376,7 @@ export function AutoCallControlPanel() {
                           }
                           className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/5"
                         >
-                          + Minutes
+                          + Calls
                         </button>
                       </div>
                     </td>

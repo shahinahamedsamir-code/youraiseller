@@ -99,11 +99,14 @@ export async function POST(req: Request) {
     }
 
     const account = await loadAutoCallAccount(scope);
+    if (!account.serviceEnabled) {
+      return NextResponse.json(
+        { error: "Auto Call is off — turn it on from the Auto Call page first" },
+        { status: 403 }
+      );
+    }
     const control = await loadAutoCallPlatformControl();
-    const chargeTaka = autoCallPerAttemptChargeTaka(
-      account.settings.perCallDurationMinutes,
-      control.callPriceTaka
-    );
+    const chargeTaka = autoCallPerAttemptChargeTaka(control.callPriceTaka);
     const payload = await prepareAutoCallPostPayload(scope, account.settings, req);
     if (!payload.ok || !payload.audiofile) {
       return NextResponse.json({ error: payload.error }, { status: 400 });

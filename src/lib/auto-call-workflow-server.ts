@@ -158,6 +158,10 @@ export async function placeAutoCallForWebOrder(
   const account = await loadAutoCallAccount(scope);
   const rules = getAutoCallRulesFromAccount(account);
 
+  if (!account.serviceEnabled) {
+    return { ok: false, skipped: "service_disabled" };
+  }
+
   if (!opts?.manual && !ruleEnabled(rules, "new_web")) {
     return { ok: false, skipped: "rule_disabled" };
   }
@@ -177,10 +181,7 @@ export async function placeAutoCallForWebOrder(
   }
 
   const control = await loadAutoCallPlatformControl();
-  const chargeTaka = autoCallPerAttemptChargeTaka(
-    account.settings.perCallDurationMinutes,
-    control.callPriceTaka
-  );
+  const chargeTaka = autoCallPerAttemptChargeTaka(control.callPriceTaka);
 
   if (account.balanceTaka + 1e-9 < chargeTaka) {
     const failedLog: AutoCallLogRow = {

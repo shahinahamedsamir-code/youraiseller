@@ -271,7 +271,7 @@ export function AutoCallSetupPanel() {
           <div className="rounded-xl bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Rate</p>
             <p className="text-xl font-bold text-slate-900">
-              {formatAutoCallTaka(wallet.ratePerMinute)} BDT/min
+              {formatAutoCallTaka(wallet.ratePerMinute)} BDT/call
             </p>
           </div>
         </div>
@@ -548,22 +548,6 @@ export function AutoCallSetupPanel() {
                 setSettings({
                   ...settings,
                   retryGapMinutes: Number(e.target.value) || 15,
-                })
-              }
-            />
-          </label>
-          <label>
-            <span className={labelCls}>Minutes charged per call</span>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              className={inputCls}
-              value={settings.perCallDurationMinutes}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  perCallDurationMinutes: Number(e.target.value) || 3,
                 })
               }
             />

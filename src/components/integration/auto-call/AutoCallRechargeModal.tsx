@@ -100,7 +100,7 @@ export function AutoCallRechargeModal({
         <div className="space-y-4 px-5 py-5">
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-500">
-              Call minutes to buy
+              Number of calls to buy
             </span>
             <input
               type="number"
@@ -116,7 +116,7 @@ export function AutoCallRechargeModal({
             <span className="text-rose-600">{formatAutoCallBdt(totalTaka)}</span>
           </p>
           <p className="text-[11px] text-slate-500">
-            {formatAutoCallTaka(callPriceTaka)} BDT per minute of call time
+            {formatAutoCallTaka(callPriceTaka)} BDT per call
           </p>
 
           <button

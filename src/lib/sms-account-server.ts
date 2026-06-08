@@ -62,3 +62,13 @@ export async function saveSmsAccount(
   await fs.mkdir(sellerScopeDir(scope), { recursive: true });
   await fs.writeFile(fileFor(scope), JSON.stringify(account, null, 2), "utf-8");
 }
+
+export async function updateSmsServiceEnabled(
+  scope: string,
+  enabled: boolean
+): Promise<SmsAccount> {
+  const account = await loadSmsAccount(scope);
+  account.serviceEnabled = enabled === true;
+  await saveSmsAccount(scope, account);
+  return account;
+}

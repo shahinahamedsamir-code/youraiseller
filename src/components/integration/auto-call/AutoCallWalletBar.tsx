@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { Coins, Loader2, Phone, PhoneCall, Plus, Signal } from "lucide-react";
+import { Coins, Loader2, Phone, PhoneCall, Plus, Power, Signal } from "lucide-react";
 import type { AutoCallAccount } from "@/lib/auto-call-types";
 import { formatAutoCallBdt, formatAutoCallTaka } from "@/lib/auto-call-store";
 import { AutoCallRechargeModal } from "@/components/integration/auto-call/AutoCallRechargeModal";
@@ -12,9 +12,12 @@ type Props = {
   callPriceTaka?: number;
   defaultDid?: string | null;
   systemEnabled?: boolean;
+  serviceEnabled?: boolean;
   selfRechargeEnabled?: boolean;
   providerConfigured?: boolean;
   loading?: boolean;
+  togglingService?: boolean;
+  onServiceToggle?: (enabled: boolean) => void;
   onRechargeSuccess?: (account: AutoCallAccount, message: string) => void;
   onRechargeError?: (message: string) => void;
 };
@@ -24,9 +27,12 @@ export function AutoCallWalletBar({
   callPriceTaka = 1,
   defaultDid,
   systemEnabled = true,
+  serviceEnabled = false,
   selfRechargeEnabled = false,
   providerConfigured = false,
   loading,
+  togglingService = false,
+  onServiceToggle,
   onRechargeSuccess,
   onRechargeError,
 }: Props) {
@@ -48,6 +54,12 @@ export function AutoCallWalletBar({
         {!systemEnabled ? (
           <div className="border-b border-rose-100 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-800">
             Call service is temporarily unavailable. Please contact support if this continues.
+          </div>
+        ) : null}
+
+        {systemEnabled && !serviceEnabled ? (
+          <div className="border-b border-amber-100 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900">
+            Auto Call is off. Turn it on below when you are ready to send calls.
           </div>
         ) : null}
 
@@ -83,7 +95,7 @@ export function AutoCallWalletBar({
                   {loading ? "…" : formatAutoCallBdt(balanceTaka)}
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  {formatAutoCallTaka(callPriceTaka)} BDT/min
+                  {formatAutoCallTaka(callPriceTaka)} BDT/call
                 </p>
               </div>
             </div>
@@ -98,13 +110,43 @@ export function AutoCallWalletBar({
                 Recharge
               </button>
             ) : null}
+
+            {onServiceToggle ? (
+              <button
+                type="button"
+                disabled={!systemEnabled || loading || togglingService}
+                onClick={() => onServiceToggle(!serviceEnabled)}
+                className={clsx(
+                  "inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition disabled:cursor-not-allowed disabled:opacity-60",
+                  serviceEnabled
+                    ? "bg-emerald-600 text-white shadow-emerald-200/40 hover:bg-emerald-700"
+                    : "bg-slate-700 text-white shadow-slate-200/40 hover:bg-slate-800"
+                )}
+              >
+                {togglingService ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Power className="h-4 w-4" />
+                )}
+                {serviceEnabled ? "ON" : "OFF"}
+              </button>
+            ) : null}
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/70 px-4 py-2.5">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
-            <Signal className="h-3 w-3 text-emerald-500" />
-            {systemEnabled ? "Service active" : "Service paused"}
+            <Signal
+              className={clsx(
+                "h-3 w-3",
+                systemEnabled && serviceEnabled ? "text-emerald-500" : "text-slate-400"
+              )}
+            />
+            {!systemEnabled
+              ? "Platform paused"
+              : serviceEnabled
+                ? "Auto Call on"
+                : "Auto Call off"}
           </span>
           {defaultDid ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">

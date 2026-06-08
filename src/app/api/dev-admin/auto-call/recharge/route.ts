@@ -64,8 +64,8 @@ export async function POST(req: Request) {
       seller: row,
       message:
         taka > 0
-          ? `Added BDT ${Math.floor(taka)} → +${autoCallMinutesFromTaka(taka, control.callPriceTaka)} min call time`
-          : `Added ${extraMinutes} min call time`,
+          ? `Added BDT ${Math.floor(taka)} → +${autoCallMinutesFromTaka(taka, control.callPriceTaka)} calls`
+          : `Added ${extraMinutes} calls`,
     });
   } catch (e) {
     console.error("[dev-admin/auto-call/recharge]", e);

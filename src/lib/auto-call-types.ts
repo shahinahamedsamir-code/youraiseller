@@ -47,6 +47,8 @@ export type AutoCallAccount = {
   balanceTaka: number;
   walletTaka: number;
   totalRechargedTaka: number;
+  /** Seller-controlled master switch — new accounts default off. */
+  serviceEnabled: boolean;
   settings: AutoCallSettings;
   rules: AutoCallRule[];
   runs: AutoCallRun[];
@@ -126,6 +128,7 @@ export function createDefaultAutoCallAccount(): AutoCallAccount {
     balanceTaka: 0,
     walletTaka: 0,
     totalRechargedTaka: 0,
+    serviceEnabled: false,
     settings: createDefaultAutoCallSettings(),
     rules: DEFAULT_AUTO_CALL_RULES.map((r) => ({ ...r })),
     runs: [],
@@ -204,6 +207,7 @@ export function normalizeAutoCallAccount(raw: unknown): AutoCallAccount {
       typeof r.totalRechargedTaka === "number"
         ? Math.max(0, r.totalRechargedTaka)
         : base.totalRechargedTaka,
+    serviceEnabled: r.serviceEnabled === true,
     settings: normalizeAutoCallSettings(r.settings),
     rules: normalizeAutoCallRules(r.rules),
     runs: Array.isArray(r.runs) ? r.runs.slice(0, 50) : [],

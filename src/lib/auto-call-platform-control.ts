@@ -3,7 +3,7 @@ import { getPlatformDataDir, platformDataFile } from "./platform-data-path";
 
 export type AutoCallPlatformControl = {
   enabled: boolean;
-  /** BDT per auto call minute (billing reference) */
+  /** BDT per auto call attempt (set in dev admin) */
   callPriceTaka: number;
   /** Sellers can pay via bKash (self recharge) */
   selfRechargeEnabled: boolean;

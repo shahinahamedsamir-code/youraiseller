@@ -60,8 +60,8 @@ export function DevAdminAutoCallRechargeModal({
 
   const isTaka = mode === "taka";
   const Icon = isTaka ? Wallet : Coins;
-  const title = isTaka ? "Recharge (BDT)" : "Add call minutes";
-  const label = isTaka ? "Amount (BDT)" : "Call minutes";
+  const title = isTaka ? "Recharge (BDT)" : "Add calls";
+  const label = isTaka ? "Amount (BDT)" : "Number of calls";
 
   return createPortal(
     <div className="fixed inset-0 z-[240] flex items-center justify-center p-4">
@@ -132,8 +132,8 @@ export function DevAdminAutoCallRechargeModal({
 
           {isTaka ? (
             <p className="text-sm text-slate-400">
-              ≈ <strong className="text-violet-300">{minutesPreview ?? 0} min</strong> at BDT{" "}
-              {formatAutoCallTaka(callPriceTaka)}/min
+              ≈ <strong className="text-violet-300">{minutesPreview ?? 0} calls</strong> at BDT{" "}
+              {formatAutoCallTaka(callPriceTaka)}/call
             </p>
           ) : null}
 
@@ -156,7 +156,7 @@ export function DevAdminAutoCallRechargeModal({
               )}
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {isTaka ? "Confirm recharge" : "Add minutes"}
+              {isTaka ? "Confirm recharge" : "Add calls"}
             </button>
           </div>
         </div>

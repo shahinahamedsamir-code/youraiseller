@@ -6,6 +6,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { getAutoCallBasePath, getAutoCallNav } from "@/lib/auto-call-nav";
+import { setAutoCallServiceEnabled } from "@/lib/auto-call-store";
 import { AutoCallWalletBar } from "@/components/integration/auto-call/AutoCallWalletBar";
 import { useAutoCallAccount } from "@/components/integration/auto-call/useAutoCallAccount";
 
@@ -35,6 +36,22 @@ export function AutoCallIntegrationShell({
     type: "ok" | "err";
     text: string;
   } | null>(null);
+  const [togglingService, setTogglingService] = useState(false);
+
+  const handleServiceToggle = async (enabled: boolean) => {
+    setTogglingService(true);
+    const result = await setAutoCallServiceEnabled(enabled);
+    setTogglingService(false);
+    if (!result.ok || !result.account) {
+      setFeedback({ type: "err", text: result.error ?? "Could not update Auto Call status" });
+      return;
+    }
+    setAccount(result.account);
+    setFeedback({
+      type: "ok",
+      text: result.message ?? (enabled ? "Auto Call turned on" : "Auto Call turned off"),
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -43,9 +60,12 @@ export function AutoCallIntegrationShell({
         callPriceTaka={callPriceTaka}
         defaultDid={defaultDid}
         systemEnabled={systemEnabled}
+        serviceEnabled={account.serviceEnabled}
         selfRechargeEnabled={selfRechargeEnabled}
         providerConfigured={providerConfigured}
         loading={loading}
+        togglingService={togglingService}
+        onServiceToggle={handleServiceToggle}
         onRechargeSuccess={(next, message) => {
           setAccount(next);
           setFeedback({ type: "ok", text: message });

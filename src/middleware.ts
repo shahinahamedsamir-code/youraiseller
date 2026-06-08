@@ -8,6 +8,12 @@ import {
   shouldShowMainMarketingPage,
 } from "@/lib/app-hosts";
 
+function nextWithHost(request: NextRequest, host: string): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  if (host) requestHeaders.set("x-effective-host", host);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = resolveEffectiveHost(
@@ -24,7 +30,9 @@ export function middleware(request: NextRequest) {
   if (onMarketingHome && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/marketing";
-    return NextResponse.rewrite(url);
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-effective-host", host);
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
   }
 
   if (onMarketingHome && isAppPath(pathname)) {
@@ -34,7 +42,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  return nextWithHost(request, host);
 }
 
 export const config = {

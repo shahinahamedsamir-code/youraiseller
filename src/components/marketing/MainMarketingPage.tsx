@@ -13,11 +13,11 @@ import {
   MARKETING_STEPS,
 } from "@/lib/marketing-site-content";
 
-export function MainMarketingPage() {
+export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
   const appHost = getAppBaseUrl().replace(/^https?:\/\//, "");
 
   return (
-    <MarketingSiteShell>
+    <MarketingSiteShell homeHref={homeHref}>
       <main className="relative z-10">
         <section className={clsx(marketingSectionClass, "pb-14 pt-8 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-20")}>
           <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">

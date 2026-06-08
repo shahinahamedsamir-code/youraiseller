@@ -19,6 +19,43 @@ type BrandLogoProps = {
   priority?: boolean;
 };
 
+function BrandImage({
+  size,
+  priority,
+}: {
+  size: keyof typeof SIZE_MAP;
+  priority: boolean;
+}) {
+  const s = SIZE_MAP[size];
+  const imgClass = "h-full w-full object-cover";
+
+  if (priority) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={BRAND_LOGO}
+        alt={BRAND_ALT}
+        width={s.img}
+        height={s.img}
+        fetchPriority="high"
+        decoding="sync"
+        loading="eager"
+        className={imgClass}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={BRAND_LOGO}
+      alt={BRAND_ALT}
+      width={s.img}
+      height={s.img}
+      className={imgClass}
+    />
+  );
+}
+
 export function BrandLogo({
   size = "md",
   showText = true,
@@ -28,23 +65,15 @@ export function BrandLogo({
   priority = false,
 }: BrandLogoProps) {
   const s = SIZE_MAP[size];
+  const boxClass = clsx(
+    s.box,
+    "relative shrink-0 overflow-hidden shadow-lg shadow-indigo-300/30"
+  );
 
   return (
     <div className={clsx("flex items-center gap-3", className)}>
-      <div
-        className={clsx(
-          s.box,
-          "relative shrink-0 overflow-hidden shadow-lg shadow-indigo-300/30"
-        )}
-      >
-        <Image
-          src={BRAND_LOGO}
-          alt={BRAND_ALT}
-          width={s.img}
-          height={s.img}
-          priority={priority}
-          className="h-full w-full object-cover"
-        />
+      <div className={boxClass}>
+        <BrandImage size={size} priority={priority} />
       </div>
       {showText ? (
         <div className={textClassName}>
@@ -88,14 +117,7 @@ export function BrandMark({
         className
       )}
     >
-      <Image
-        src={BRAND_LOGO}
-        alt={BRAND_ALT}
-        width={s.img}
-        height={s.img}
-        priority={priority}
-        className="h-full w-full object-cover"
-      />
+      <BrandImage size={size} priority={priority} />
     </div>
   );
 }

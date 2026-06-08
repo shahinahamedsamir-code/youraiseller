@@ -1,6 +1,16 @@
+import { headers } from "next/headers";
 import { MainMarketingPage } from "@/components/marketing/MainMarketingPage";
+import { resolveEffectiveHost, shouldShowMainMarketingPage } from "@/lib/app-hosts";
 
-/** Local preview of youraiseller.com marketing home (production main domain). */
+/** Production home (rewrite from /) or local preview at /marketing */
 export default function MarketingPreviewPage() {
-  return <MainMarketingPage />;
+  const h = headers();
+  const host = resolveEffectiveHost(
+    (name) => h.get(name),
+    h.get("x-url-hostname") ?? undefined
+  );
+  const isLiveHome =
+    h.get("x-marketing-home") === "1" || shouldShowMainMarketingPage(host);
+
+  return <MainMarketingPage homeHref={isLiveHome ? "/" : "/marketing"} />;
 }

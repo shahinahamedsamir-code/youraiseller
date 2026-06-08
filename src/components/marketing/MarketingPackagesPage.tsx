@@ -7,9 +7,9 @@ import { marketingSectionClass } from "@/lib/marketing-layout";
 import { MarketingSiteShell } from "@/components/marketing/MarketingSiteShell";
 import { MARKETING_PACKAGE_FAQ } from "@/lib/marketing-packages-content";
 
-export function MarketingPackagesPage() {
+export function MarketingPackagesPage({ homeHref = "/" }: { homeHref?: string }) {
   return (
-    <MarketingSiteShell active="package">
+    <MarketingSiteShell active="package" homeHref={homeHref}>
       <main className="relative z-10">
         <section className="relative overflow-hidden mkt-border-b border-b">
           <div className="marketing-packages-orb marketing-packages-orb-a" aria-hidden />

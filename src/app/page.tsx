@@ -2,18 +2,20 @@ import { headers } from "next/headers";
 import { AppSplashPage } from "@/components/marketing/AppSplashPage";
 import { MainMarketingPage } from "@/components/marketing/MainMarketingPage";
 import { HomePageClientFallback } from "@/components/marketing/HomePageClientFallback";
-import { shouldShowMainMarketingPage } from "@/lib/app-hosts";
+import { resolveEffectiveHost, shouldShowMainMarketingPage } from "@/lib/app-hosts";
 
 export default function HomePage() {
   const h = headers();
-  const host =
-    h.get("x-effective-host") ??
-    h.get("x-forwarded-host") ??
-    h.get("host") ??
-    "";
+  const host = resolveEffectiveHost(
+    (name) => h.get(name),
+    h.get("x-url-hostname") ?? undefined
+  );
 
-  if (shouldShowMainMarketingPage(host)) {
-    return <MainMarketingPage />;
+  if (
+    h.get("x-marketing-home") === "1" ||
+    shouldShowMainMarketingPage(host)
+  ) {
+    return <MainMarketingPage homeHref="/" />;
   }
 
   return (

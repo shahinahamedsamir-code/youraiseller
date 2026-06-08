@@ -2,5 +2,5 @@ import { MarketingPackagesPage } from "@/components/marketing/MarketingPackagesP
 
 /** Local preview — localhost:3000/marketing/packages */
 export default function MarketingPackagesPreviewPage() {
-  return <MarketingPackagesPage />;
+  return <MarketingPackagesPage homeHref="/marketing" />;
 }

@@ -8,10 +8,24 @@ import {
   shouldShowMainMarketingPage,
 } from "@/lib/app-hosts";
 
-function nextWithHost(request: NextRequest, host: string): NextResponse {
+function withRequestHostHeaders(
+  request: NextRequest,
+  host: string,
+  extra?: Record<string, string>
+): Headers {
   const requestHeaders = new Headers(request.headers);
   if (host) requestHeaders.set("x-effective-host", host);
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  requestHeaders.set("x-url-hostname", request.nextUrl.hostname);
+  for (const [key, value] of Object.entries(extra ?? {})) {
+    requestHeaders.set(key, value);
+  }
+  return requestHeaders;
+}
+
+function nextWithHost(request: NextRequest, host: string): NextResponse {
+  return NextResponse.next({
+    request: { headers: withRequestHostHeaders(request, host) },
+  });
 }
 
 export function middleware(request: NextRequest) {
@@ -22,7 +36,7 @@ export function middleware(request: NextRequest) {
   );
 
   if (!host || isLocalDevHost(host)) {
-    return NextResponse.next();
+    return nextWithHost(request, host || request.nextUrl.hostname);
   }
 
   const onMarketingHome = shouldShowMainMarketingPage(host);
@@ -30,9 +44,13 @@ export function middleware(request: NextRequest) {
   if (onMarketingHome && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/marketing";
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-effective-host", host);
-    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    return NextResponse.rewrite(url, {
+      request: {
+        headers: withRequestHostHeaders(request, host, {
+          "x-marketing-home": "1",
+        }),
+      },
+    });
   }
 
   if (onMarketingHome && isAppPath(pathname)) {

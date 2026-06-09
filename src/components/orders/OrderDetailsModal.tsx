@@ -23,6 +23,7 @@ import {
   Link2,
   Tag,
   Paperclip,
+  Wallet,
 } from "lucide-react";
 import clsx from "clsx";
 import { getOrder, isOrderPreorder } from "@/lib/orders-store";
@@ -76,6 +77,7 @@ function activityIcon(type: OrderActivityType) {
     tracking: Truck,
     printed: Printer,
     approved: History,
+    payment: Wallet,
   };
   return map[type] ?? History;
 }
@@ -87,6 +89,7 @@ function activityDotClass(type: OrderActivityType, isWeb: boolean) {
     return isWeb ? "bg-teal-100 text-teal-700" : "bg-indigo-100 text-indigo-600";
   if (type === "created")
     return isWeb ? "bg-teal-100 text-teal-600" : "bg-indigo-100 text-indigo-600";
+  if (type === "payment") return "bg-emerald-100 text-emerald-700";
   if (type === "status" || type === "approved")
     return "bg-amber-100 text-amber-700";
   return "bg-slate-100 text-slate-600";

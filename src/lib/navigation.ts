@@ -22,11 +22,14 @@ import { inventoryNav, inventoryBasePath } from "./inventory-nav";
 import { approvedOrdersNav, approvedOrdersBasePath } from "./approved-orders-nav";
 import { deliveryNav, deliveryBasePath } from "./delivery-nav";
 import { integrationNav, integrationBasePath } from "./integration-nav";
+import { accountingNav, accountingBasePath } from "./accounting-nav";
 
 export type NavChild = {
   label: string;
-  href: string;
+  href?: string;
   featureKey: FeatureKey;
+  expandPath?: string;
+  children?: NavChild[];
 };
 
 export type NavItem = {
@@ -78,9 +81,20 @@ export const mainNav: NavItem[] = [
   { label: "Meta Ads", href: "/dashboard/meta-ads", icon: Megaphone, featureKey: "meta_ads" },
   {
     label: "Accounting",
-    href: "/dashboard/accounting",
     icon: Calculator,
     featureKey: "accounting",
+    expandPath: accountingBasePath,
+    children: accountingNav.map(({ label, href, featureKey, expandPath, children }) => ({
+      label,
+      href,
+      featureKey,
+      expandPath,
+      children: children?.map(({ label: l, href: h, featureKey: k }) => ({
+        label: l,
+        href: h,
+        featureKey: k,
+      })),
+    })),
   },
   { label: "Task & Follow-up", href: "/dashboard/tasks", icon: ListTodo, featureKey: "tasks" },
   { label: "HRM", href: "/dashboard/hrm", icon: Users, featureKey: "hrm" },

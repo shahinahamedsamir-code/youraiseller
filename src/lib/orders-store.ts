@@ -151,6 +151,20 @@ function migrateOrder(o: Order): Order {
   if (!migrated.activityLog?.length) {
     migrated.activityLog = buildSyntheticActivityLog(migrated);
   }
+  if (
+    (migrated.advance ?? 0) > 0 &&
+    !migrated.advanceAccountingIncomeId &&
+    migrated.advancePaymentCollectionStatus !== "recorded"
+  ) {
+    migrated.advancePaymentCollectionStatus = migrated.advancePaymentCollectionStatus ?? "pending";
+  }
+  if (
+    ["delivered", "partial"].includes(migrated.status) &&
+    !migrated.accountingIncomeId &&
+    migrated.paymentCollectionStatus !== "recorded"
+  ) {
+    migrated.paymentCollectionStatus = migrated.paymentCollectionStatus ?? "pending";
+  }
   return migrated;
 }
 
@@ -328,6 +342,23 @@ export type Order = {
   createdAt: string;
   updatedAt: string;
   approvedAt?: string;
+  /** Advance paid at order create — awaiting accounting approval */
+  advancePaymentCollectionStatus?: "pending" | "recorded";
+  advancePaymentCollectedAt?: string;
+  advancePaymentCollectedAmount?: number;
+  advanceCollectedViaAccountId?: string;
+  advanceCollectedPaymentMethodLabel?: string;
+  advanceAccountingIncomeId?: string;
+  /** Delivered order awaiting payment confirmation in Accounting → Payment */
+  paymentCollectionStatus?: "pending" | "recorded";
+  paymentCollectedAt?: string;
+  paymentCollectedAmount?: number;
+  /** Extra discount applied at payment approval */
+  paymentCollectionDiscount?: number;
+  collectedViaAccountId?: string;
+  collectedPaymentMethodLabel?: string;
+  accountingIncomeId?: string;
+  accountingInvoiceId?: string;
   activityLog?: OrderActivity[];
 };
 
@@ -848,6 +879,7 @@ export function createOrder(input: CreateOrderInput): Order {
     createdAt: nowLabel(),
     updatedAt: nowLabel(),
     approvedAt: status === "rts" ? nowLabel() : undefined,
+    ...(advance > 0 ? { advancePaymentCollectionStatus: "pending" as const } : {}),
   };
 
   const logBase = Date.now();
@@ -980,6 +1012,7 @@ export function upsertWooCommerceOrder(
       shippingCharge: input.shippingCharge,
       discount: input.discount,
       advance,
+      advancePayment: input.advancePayment ?? prev.advancePayment,
       total,
       note: input.note?.trim() ?? prev.note,
       source: "web",
@@ -1036,9 +1069,11 @@ export function upsertWooCommerceOrder(
     shippingCharge: input.shippingCharge,
     discount: input.discount,
     advance,
+    advancePayment: input.advancePayment,
     total,
     note: input.note?.trim(),
     source: "web",
+    ...(advance > 0 ? { advancePaymentCollectionStatus: "pending" as const } : {}),
     wooOrderId: input.wooOrderId,
     wooNumber: input.wooNumber,
     wooSnapshot: input.wooSnapshot,
@@ -1123,6 +1158,27 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
     next.items = items;
     next.subtotal = subtotal;
     next.total = total;
+  }
+
+  const advanceAmt = next.advance ?? 0;
+  const advanceCollected = next.advancePaymentCollectedAmount ?? 0;
+  if (
+    advanceAmt > 0 &&
+    (advanceCollected < advanceAmt ||
+      (next.advancePaymentCollectionStatus !== "recorded" && !next.advanceAccountingIncomeId))
+  ) {
+    next.advancePaymentCollectionStatus = "pending";
+  }
+  if (advanceAmt <= 0) {
+    next.advancePaymentCollectionStatus = undefined;
+    next.advancePaymentCollectedAmount = undefined;
+  }
+  if (
+    (next.status === "delivered" || next.status === "partial") &&
+    next.paymentCollectionStatus !== "recorded" &&
+    !next.accountingIncomeId
+  ) {
+    next.paymentCollectionStatus = next.paymentCollectionStatus ?? "pending";
   }
 
   data.orders[idx] = next;
@@ -1260,6 +1316,13 @@ export function updateOrderStatus(id: string, status: OrderStatus): Order | null
   const patch: Partial<Order> = { status };
   if (status === "preorder") patch.isPreorder = true;
   if (order.status === "preorder" && status !== "preorder") patch.isPreorder = false;
+  if (
+    (status === "delivered" || status === "partial") &&
+    order.paymentCollectionStatus !== "recorded" &&
+    !order.accountingIncomeId
+  ) {
+    patch.paymentCollectionStatus = "pending";
+  }
   if (status === "rts" && !order.approvedAt) {
     patch.approvedAt = nowLabel();
     if (!order.isPreorder && order.status === "pending") {

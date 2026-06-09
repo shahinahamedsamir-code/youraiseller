@@ -33,6 +33,16 @@ export type FeatureKey =
   | "inv_dashboard"
   | "meta_ads"
   | "accounting"
+  | "acct_chart"
+  | "acct_accounts"
+  | "acct_transfer"
+  | "acct_transactions"
+  | "acct_assets"
+  | "acct_expenses"
+  | "acct_income"
+  | "acct_liabilities"
+  | "acct_invoice"
+  | "acct_payment"
   | "tasks"
   | "hrm"
   | "automation"
@@ -100,7 +110,16 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "inv_smart_restock", label: "Smart Restock", description: "Restock suggestions", category: "operations", parent: "inventory" },
   { key: "inv_dashboard", label: "Inventory Dashboard", description: "Inventory KPIs", category: "operations", parent: "inventory" },
   { key: "meta_ads", label: "Meta Ads", description: "Facebook/Instagram ads", category: "operations" },
-  { key: "accounting", label: "Accounting", description: "Income, expense, profit", category: "operations" },
+  { key: "accounting", label: "Accounting", description: "Income, expense, profit (parent menu)", category: "operations" },
+  { key: "acct_chart", label: "Chart Of Account", description: "Expense names, bank & cash accounts", category: "operations", parent: "accounting" },
+  { key: "acct_accounts", label: "Accounts", description: "Cash, bank & wallet accounts", category: "operations", parent: "accounting" },
+  { key: "acct_transfer", label: "Account Transfer", description: "Move money between bKash, bank & cash", category: "operations", parent: "accounting" },
+  { key: "acct_assets", label: "Assets", description: "Business assets & equipment", category: "operations", parent: "accounting" },
+  { key: "acct_expenses", label: "Expense", description: "Expense list and entries", category: "operations", parent: "accounting" },
+  { key: "acct_income", label: "Income", description: "Income entries & order payments", category: "operations", parent: "accounting" },
+  { key: "acct_liabilities", label: "Liabilities", description: "Loans & payables", category: "operations", parent: "accounting" },
+  { key: "acct_invoice", label: "Invoice", description: "Sales & purchase invoices", category: "operations", parent: "accounting" },
+  { key: "acct_payment", label: "Payment", description: "Received & paid transactions", category: "operations", parent: "accounting" },
   { key: "tasks", label: "Task & Follow-up", description: "Team tasks", category: "operations" },
   { key: "hrm", label: "HRM", description: "Employee management", category: "operations" },
   { key: "automation", label: "Automation", description: "Workflow automations", category: "operations" },
@@ -245,6 +264,16 @@ export function getFeatureKeyFromPath(pathname: string): FeatureKey | null {
     ["/dashboard/inventory/dashboard", "inv_dashboard"],
     ["/dashboard/inventory", "inventory"],
     ["/dashboard/meta-ads", "meta_ads"],
+    ["/dashboard/accounting/chart-of-accounts", "acct_chart"],
+    ["/dashboard/accounting/expenses", "acct_expenses"],
+    ["/dashboard/accounting/accounts", "acct_accounts"],
+    ["/dashboard/accounting/transfers", "acct_transfer"],
+    ["/dashboard/accounting/transactions", "acct_transactions"],
+    ["/dashboard/accounting/assets", "acct_assets"],
+    ["/dashboard/accounting/income", "acct_income"],
+    ["/dashboard/accounting/liabilities", "acct_liabilities"],
+    ["/dashboard/accounting/invoice", "acct_invoice"],
+    ["/dashboard/accounting/payment", "acct_payment"],
     ["/dashboard/accounting", "accounting"],
     ["/dashboard/tasks", "tasks"],
     ["/dashboard/hrm", "hrm"],

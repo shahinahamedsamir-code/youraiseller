@@ -17,6 +17,7 @@ const ALLOWED_KINDS = new Set([
   "advancesettings",
   "deliverymethods",
   "sms",
+  "accounting",
 ]);
 
 function sanitize(part: string): string | null {

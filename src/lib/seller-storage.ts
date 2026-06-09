@@ -86,6 +86,7 @@ export const SELLER_SCOPED_PREFIXES = [
   "shippingnotes",
   "ordertags",
   "advancesettings",
+  "accounting",
   "woo-stock-sync",
   "woo-product-sync-meta",
   "woo-order-sync-meta",

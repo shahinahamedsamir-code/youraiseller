@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { ChevronDown } from "lucide-react";
-import { mainNav } from "@/lib/navigation";
+import { mainNav, type NavChild } from "@/lib/navigation";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
 import { useWebOrderCounts } from "@/components/web-orders/useWebOrderCounts";
@@ -20,11 +20,23 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
 
   const filteredNav = useMemo(() => {
     if (!hydrated) return [];
+
+    const filterNavChildren = (children: NavChild[]): NavChild[] =>
+      children
+        .filter((c) => isEnabled(c.featureKey))
+        .map((c) => {
+          if (!c.children?.length) return c;
+          const nested = filterNavChildren(c.children);
+          if (nested.length === 0) return null;
+          return { ...c, children: nested };
+        })
+        .filter(Boolean) as NavChild[];
+
     return mainNav
       .filter((item) => isEnabled(item.featureKey))
       .map((item) => {
         if (!item.children) return item;
-        const children = item.children.filter((c) => isEnabled(c.featureKey));
+        const children = filterNavChildren(item.children);
         if (children.length === 0) return null;
         return { ...item, children };
       })
@@ -36,6 +48,11 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
       if (item.expandPath && pathname.startsWith(item.expandPath)) {
         setOpenGroups((g) => ({ ...g, [item.label]: true }));
       }
+      item.children?.forEach((child) => {
+        if (child.expandPath && pathname.startsWith(child.expandPath)) {
+          setOpenGroups((g) => ({ ...g, [child.label]: true }));
+        }
+      });
     });
   }, [pathname, filteredNav]);
 
@@ -99,23 +116,15 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
 
                 {isOpen && (
                   <div className="ml-4 space-y-0.5 border-l-2 border-indigo-100 pl-2">
-                    {item.children.map((child) => {
-                      const active = pathname === child.href;
-                      return (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          className={clsx(
-                            "block rounded-lg px-3 py-2 text-[13px] font-medium transition",
-                            active
-                              ? "bg-indigo-600 text-white shadow-sm"
-                              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                          )}
-                        >
-                          {child.label}
-                        </Link>
-                      );
-                    })}
+                    {item.children.map((child) => (
+                      <SidebarNavChild
+                        key={child.label}
+                        child={child}
+                        pathname={pathname}
+                        openGroups={openGroups}
+                        setOpenGroups={setOpenGroups}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -146,5 +155,77 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         })}
       </nav>
     </aside>
+  );
+}
+
+function SidebarNavChild({
+  child,
+  pathname,
+  openGroups,
+  setOpenGroups,
+}: {
+  child: NavChild;
+  pathname: string;
+  openGroups: Record<string, boolean>;
+  setOpenGroups: Dispatch<SetStateAction<Record<string, boolean>>>;
+}) {
+  if (child.children?.length) {
+    const groupActive = child.expandPath
+      ? pathname.startsWith(child.expandPath)
+      : false;
+    const isOpen = openGroups[child.label] ?? groupActive;
+
+    return (
+      <div className="space-y-0.5">
+        <button
+          type="button"
+          onClick={() =>
+            setOpenGroups((g) => ({ ...g, [child.label]: !isOpen }))
+          }
+          className={clsx(
+            "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition",
+            groupActive
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-slate-600 hover:bg-slate-100"
+          )}
+        >
+          <span className="flex-1 truncate text-left">{child.label}</span>
+          <ChevronDown
+            className={clsx("h-3.5 w-3.5 shrink-0 transition", isOpen && "rotate-180")}
+          />
+        </button>
+        {isOpen && (
+          <div className="ml-3 space-y-0.5 border-l border-indigo-100 pl-2">
+            {child.children.map((nested) => (
+              <SidebarNavChild
+                key={nested.href ?? nested.label}
+                child={nested}
+                pathname={pathname}
+                openGroups={openGroups}
+                setOpenGroups={setOpenGroups}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!child.href) return null;
+
+  const active = pathname === child.href;
+
+  return (
+    <Link
+      href={child.href}
+      className={clsx(
+        "block rounded-lg px-3 py-2 text-[13px] font-medium transition",
+        active
+          ? "bg-indigo-600 text-white shadow-sm"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+      )}
+    >
+      {child.label}
+    </Link>
   );
 }

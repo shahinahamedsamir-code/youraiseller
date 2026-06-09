@@ -12,7 +12,8 @@ export type OrderActivityType =
   | "note"
   | "tracking"
   | "printed"
-  | "approved";
+  | "approved"
+  | "payment";
 
 /** Where the user opened or saved an edit in the panel */
 export type OrderEditContext = {

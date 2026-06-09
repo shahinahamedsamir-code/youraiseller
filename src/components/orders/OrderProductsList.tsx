@@ -81,7 +81,16 @@ function ProductLineButton({
   );
 
   if (!onShowAll) {
-    return <p className={clsx("text-sm font-medium text-slate-800", className)}>{content}</p>;
+    return (
+      <p
+        className={clsx(
+          "break-words text-sm font-medium leading-snug text-slate-800",
+          className
+        )}
+      >
+        {content}
+      </p>
+    );
   }
 
   return (

@@ -16,6 +16,16 @@ const labels: Record<string, string> = {
   list: "List",
   "meta-ads": "Meta Ads",
   accounting: "Accounting",
+  "chart-of-accounts": "Chart Of Account",
+  accounts: "Accounts",
+  transfers: "Account Transfer",
+  transactions: "Transaction",
+  assets: "Assets",
+  expenses: "Expenses",
+  income: "Income",
+  liabilities: "Liabilities",
+  invoice: "Invoice",
+  payment: "Payment",
   tasks: "Task & Follow-up",
   hrm: "HRM",
   automation: "Automation",
@@ -60,6 +70,7 @@ export function getBreadcrumbs(pathname: string): { label: string; href: string 
     let label = labels[seg] ?? seg.replace(/-/g, " ");
     if (path === "/dashboard/inventory/dashboard") label = "Inventory Dashboard";
     if (seg === "new" && path.includes("/inventory/")) label = "New";
+    if (seg === "new" && path.includes("/accounting/expenses")) label = "New Expense";
     crumbs.push({ label, href: path });
   });
 

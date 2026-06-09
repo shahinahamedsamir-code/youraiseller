@@ -12,7 +12,8 @@ export type SellerKind =
   | "ordertags"
   | "advancesettings"
   | "deliverymethods"
-  | "sms";
+  | "sms"
+  | "accounting";
 
 const KINDS: SellerKind[] = [
   "orders",
@@ -26,6 +27,7 @@ const KINDS: SellerKind[] = [
   "advancesettings",
   "deliverymethods",
   "sms",
+  "accounting",
 ];
 
 function localKey(kind: SellerKind, scope: string): string {
@@ -116,7 +118,12 @@ export async function syncSellerDataFromServer(): Promise<boolean> {
     }
 
     if (serverData != null) {
-      adopt(key, serverData);
+      const since = lastPush[`${scope}:${kind}`] ?? 0;
+      if (Date.now() - since < 5000 && localRaw && isOwner) {
+        await pushSellerData(kind, local);
+      } else {
+        adopt(key, serverData);
+      }
     } else if (localRaw && isOwner) {
       const since = lastPush[`${scope}:${kind}`] ?? 0;
       if (Date.now() - since > 2000 && local != null) {

@@ -16,7 +16,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="dashboard-canvas min-h-screen overflow-x-hidden">
-      <Sidebar mobileOpen={sidebarOpen} />
+      <Suspense fallback={null}>
+        <Sidebar mobileOpen={sidebarOpen} />
+      </Suspense>
 
       {sidebarOpen && (
         <button

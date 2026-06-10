@@ -23,12 +23,15 @@ import { approvedOrdersNav, approvedOrdersBasePath } from "./approved-orders-nav
 import { deliveryNav, deliveryBasePath } from "./delivery-nav";
 import { integrationNav, integrationBasePath } from "./integration-nav";
 import { accountingNav, accountingBasePath } from "./accounting-nav";
+import { reportsNav, reportsBasePath } from "./reports-nav";
 
 export type NavChild = {
   label: string;
   href?: string;
   featureKey: FeatureKey;
   expandPath?: string;
+  /** When set, sidebar item stays active if ?tab= matches any value (Reports submenu). */
+  matchQueryTabs?: string[];
   children?: NavChild[];
 };
 
@@ -122,7 +125,18 @@ export const mainNav: NavItem[] = [
     })),
   },
   { label: "Setting", href: "/dashboard/settings", icon: Settings, featureKey: "settings" },
-  { label: "Reports", href: "/dashboard/reports", icon: BarChart3, featureKey: "reports" },
+  {
+    label: "Reports",
+    icon: BarChart3,
+    featureKey: "reports",
+    expandPath: reportsBasePath,
+    children: reportsNav.map(({ label, href, featureKey, matchTabs }) => ({
+      label,
+      href,
+      featureKey,
+      matchQueryTabs: matchTabs,
+    })),
+  },
   { label: "Customer", href: "/dashboard/customers", icon: UserCircle, featureKey: "customers" },
 ];
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { ChevronDown } from "lucide-react";
 import { mainNav, type NavChild } from "@/lib/navigation";
@@ -12,8 +12,31 @@ import clsx from "clsx";
 
 type SidebarProps = { mobileOpen?: boolean };
 
+function navHrefActive(
+  pathname: string,
+  href: string,
+  searchParams: URLSearchParams,
+  matchQueryTabs?: string[]
+): boolean {
+  const [path, query] = href.split("?");
+  if (pathname !== path) return false;
+
+  if (matchQueryTabs?.length) {
+    const currentTab = searchParams.get("tab");
+    if (currentTab && matchQueryTabs.includes(currentTab)) return true;
+  }
+
+  if (!query) return true;
+  const expected = new URLSearchParams(query);
+  for (const [key, value] of expected.entries()) {
+    if (searchParams.get(key) !== value) return false;
+  }
+  return true;
+}
+
 export function Sidebar({ mobileOpen = false }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isEnabled, hydrated } = useFeatures();
   const { processing: webProcessingCount } = useWebOrderCounts();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -121,6 +144,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
                         key={child.label}
                         child={child}
                         pathname={pathname}
+                        searchParams={searchParams}
                         openGroups={openGroups}
                         setOpenGroups={setOpenGroups}
                       />
@@ -161,11 +185,13 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
 function SidebarNavChild({
   child,
   pathname,
+  searchParams,
   openGroups,
   setOpenGroups,
 }: {
   child: NavChild;
   pathname: string;
+  searchParams: URLSearchParams;
   openGroups: Record<string, boolean>;
   setOpenGroups: Dispatch<SetStateAction<Record<string, boolean>>>;
 }) {
@@ -201,6 +227,7 @@ function SidebarNavChild({
                 key={nested.href ?? nested.label}
                 child={nested}
                 pathname={pathname}
+                searchParams={searchParams}
                 openGroups={openGroups}
                 setOpenGroups={setOpenGroups}
               />
@@ -213,7 +240,7 @@ function SidebarNavChild({
 
   if (!child.href) return null;
 
-  const active = pathname === child.href;
+  const active = navHrefActive(pathname, child.href, searchParams, child.matchQueryTabs);
 
   return (
     <Link

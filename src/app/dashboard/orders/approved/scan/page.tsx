@@ -2,20 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { getSessionUser } from "@/lib/dev-users";
 import { getOrder, updateOrderStatus, type OrderStatus } from "@/lib/orders-store";
+import {
+  appendScanLog,
+  loadScanLogs,
+  type ScanLogEntry,
+} from "@/lib/scan-log-store";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { Camera, Keyboard, ScanLine, Send } from "lucide-react";
 import clsx from "clsx";
 
 type ScanTab = "shipping" | "return" | "rts";
 
-type ScanResult = {
-  id: string;
-  type: "success" | "failed" | "duplicate";
-  message: string;
-  scannedAt: string;
-  targetStatus: OrderStatus;
-};
+type ScanResult = ScanLogEntry;
 
 type ScannerMode = "keyboard" | "barcode" | "phone";
 
@@ -53,17 +53,13 @@ function resolveStatusByScanTab(
   return { ok: true, next: "returned" };
 }
 
-function nowTimeLabel(): string {
-  return new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-}
-
 export default function ScanToUpdatePage() {
   const [tab, setTab] = useState<ScanTab>("shipping");
   const [scannerMode, setScannerMode] = useState<ScannerMode>("barcode");
   const [orderId, setOrderId] = useState("");
   const [manualOrderId, setManualOrderId] = useState("");
   const [msg, setMsg] = useState("");
-  const [results, setResults] = useState<ScanResult[]>([]);
+  const [results, setResults] = useState<ScanResult[]>(() => loadScanLogs().slice(0, 25));
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraBusy, setCameraBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -81,12 +77,19 @@ export default function ScanToUpdatePage() {
   const stats = useMemo(() => {
     const total = results.length;
     const success = results.filter((r) => r.type === "success").length;
-    return { total, success, failed: total - success };
+    const duplicate = results.filter((r) => r.type === "duplicate").length;
+    return { total, success, failed: total - success - duplicate, duplicate };
   }, [results]);
 
-  const recordResult = (entry: ScanResult) => {
-    setResults((prev) => [entry, ...prev].slice(0, 25));
-    setMsg(entry.message);
+  const recordResult = (entry: Omit<ScanResult, "id" | "scannedAt" | "scanTab" | "actor">) => {
+    const actor = getSessionUser()?.name?.trim() || "Staff";
+    const saved = appendScanLog({
+      ...entry,
+      scanTab: tab,
+      actor,
+    });
+    setResults((prev) => [saved, ...prev].slice(0, 25));
+    setMsg(saved.message);
   };
 
   const applyScan = (raw: string) => {
@@ -95,10 +98,9 @@ export default function ScanToUpdatePage() {
     const o = getOrder(id);
     if (!o) {
       recordResult({
-        id,
+        orderId: id,
         type: "failed",
         message: `Order ${id} not found`,
-        scannedAt: nowTimeLabel(),
         targetStatus,
       });
       return;
@@ -107,10 +109,9 @@ export default function ScanToUpdatePage() {
     const resolved = resolveStatusByScanTab(tab, o.status);
     if (!resolved.ok) {
       recordResult({
-        id,
+        orderId: id,
         type: "failed",
         message: resolved.message,
-        scannedAt: nowTimeLabel(),
         targetStatus,
       });
       return;
@@ -120,10 +121,9 @@ export default function ScanToUpdatePage() {
     const scanKey = `${nextStatus}:${id}`;
     if (scannedKeysRef.current.has(scanKey) || o.status === nextStatus) {
       recordResult({
-        id,
+        orderId: id,
         type: "duplicate",
         message: `Duplicate scan: ${id} already updated to ${nextStatus}`,
-        scannedAt: nowTimeLabel(),
         targetStatus: nextStatus,
       });
       return;
@@ -131,10 +131,9 @@ export default function ScanToUpdatePage() {
     updateOrderStatus(id, nextStatus);
     scannedKeysRef.current.add(scanKey);
     recordResult({
-      id,
+      orderId: id,
       type: "success",
       message: `Order ${id} → ${nextStatus}`,
-      scannedAt: nowTimeLabel(),
       targetStatus: nextStatus,
     });
     setOrderId("");
@@ -475,8 +474,13 @@ export default function ScanToUpdatePage() {
                     )}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-mono font-semibold text-slate-800">{r.id}</p>
-                      <span className="text-[11px] text-slate-500">{r.scannedAt}</span>
+                      <p className="font-mono font-semibold text-slate-800">{r.orderId}</p>
+                      <span className="text-[11px] text-slate-500">
+                        {new Date(r.scannedAt).toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
                     <p
                       className={clsx(

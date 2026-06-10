@@ -32,7 +32,11 @@ export default function ScanToUpdatePage() {
   const [orderId, setOrderId] = useState("");
   const [msg, setMsg] = useState("");
   const [results, setResults] = useState<ScanResult[]>([]);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraBusy, setCameraBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraRegionId = "scan-camera-region";
+  const qrRef = useRef<any>(null);
   const keyboardBufferRef = useRef("");
   const lastKeyAtRef = useRef(0);
   const targetStatus = TAB_CONFIG[tab].status;
@@ -77,9 +81,60 @@ export default function ScanToUpdatePage() {
 
   const applyManual = () => applyScan(orderId);
 
+  const stopCamera = async () => {
+    const qr = qrRef.current;
+    if (!qr) return;
+    try {
+      await qr.stop();
+    } catch {
+      // ignore stop errors
+    }
+    try {
+      await qr.clear();
+    } catch {
+      // ignore clear errors
+    }
+    qrRef.current = null;
+    setCameraOn(false);
+  };
+
+  const startCamera = async () => {
+    if (cameraBusy || cameraOn) return;
+    setCameraBusy(true);
+    setMsg("");
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const qr = new Html5Qrcode(cameraRegionId);
+      qrRef.current = qr;
+      await qr.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 260, height: 120 } },
+        (decodedText: string) => {
+          applyScan(decodedText);
+        },
+        () => {
+          // scan miss - ignore
+        }
+      );
+      setCameraOn(true);
+    } catch {
+      setMsg("Camera start failed. Check browser permission and HTTPS.");
+      qrRef.current = null;
+      setCameraOn(false);
+    } finally {
+      setCameraBusy(false);
+    }
+  };
+
   useEffect(() => {
     inputRef.current?.focus();
   }, [tab]);
+
+  useEffect(() => {
+    return () => {
+      void stopCamera();
+    };
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -152,11 +207,29 @@ export default function ScanToUpdatePage() {
               </button>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white"
+                onClick={() => {
+                  if (cameraOn) void stopCamera();
+                  else void startCamera();
+                }}
+                disabled={cameraBusy}
+                className={clsx(
+                  "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white",
+                  cameraOn
+                    ? "bg-rose-600 hover:bg-rose-700"
+                    : "bg-teal-600 hover:bg-teal-700",
+                  cameraBusy && "cursor-not-allowed opacity-70"
+                )}
               >
                 <Camera className="h-4 w-4" />
-                Use phone camera
+                {cameraBusy ? "Starting..." : cameraOn ? "Stop camera" : "Use phone camera"}
               </button>
+            </div>
+
+            <div className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">
+              <div
+                id={cameraRegionId}
+                className="mx-auto min-h-[180px] w-full max-w-[520px] rounded-lg bg-white"
+              />
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">

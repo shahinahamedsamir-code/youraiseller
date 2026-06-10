@@ -7,6 +7,8 @@ import {
   CHART_GROUP_LABELS,
   EXPENSE_PAID_FROM_GROUPS,
   addExpense,
+  formatBdt,
+  getAccountBalance,
   listExpensePaidFromAssets,
   type AdPlatform,
   type ExpenseCategory,
@@ -102,6 +104,7 @@ export function ExpenseForm({
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (paidFromAssets.length === 0) {
@@ -126,6 +129,15 @@ export function ExpenseForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!accountId || !expenseCategory || !amount) return;
+
+    const balance = getAccountBalance(accountId);
+    if (Number(amount) > balance + 0.005) {
+      const accountLabel =
+        paidFromAssets.find((a) => a.accountId === accountId)?.chartName ?? "this account";
+      setError(`Insufficient balance in ${accountLabel}. Available ${formatBdt(balance)}`);
+      return;
+    }
+    setError(null);
 
     const pickedCategory = mode === "ad" ? "ad" : guessCategory(expenseCategory);
 
@@ -311,6 +323,12 @@ export function ExpenseForm({
           />
         </div>
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+          {error}
+        </p>
+      )}
 
       <div className="mt-6 flex gap-2">
         <button

@@ -1,14 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { SmartRestockPanel } from "@/components/inventory/SmartRestockPanel";
-
-export default function SmartRestockPage() {
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Smart Restock</h1>
-      </div>
-      <SmartRestockPanel />
-    </div>
-  );
+export default function LegacySmartRestockPage() {
+  redirect("/dashboard/inventory/stock-management");
 }

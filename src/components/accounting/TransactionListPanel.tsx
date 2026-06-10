@@ -5,7 +5,12 @@ import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { Calendar, ChevronDown, Eye, Receipt, Search } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { formatBdt, getAssetById, getLiabilityById } from "@/lib/accounting-store";
+import {
+  formatBdt,
+  getAssetById,
+  getLiabilityById,
+  TRANSFER_STATUS_LABELS,
+} from "@/lib/accounting-store";
 import {
   buildLedgerTransactions,
   filterLedgerByAsset,
@@ -197,7 +202,9 @@ export function TransactionListPanel() {
   const moneyIn = filtered.filter((r) => r.direction === "in").reduce((s, r) => s + r.amount, 0);
   const moneyOut = filtered.filter((r) => r.direction === "out").reduce((s, r) => s + r.amount, 0);
   const transferred = filtered
-    .filter((r) => r.direction === "internal")
+    .filter(
+      (r) => r.direction === "internal" && r.status !== TRANSFER_STATUS_LABELS.cancelled
+    )
     .reduce((s, r) => s + r.amount, 0);
 
   return (

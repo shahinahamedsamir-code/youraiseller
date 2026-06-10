@@ -18,6 +18,15 @@ export function mapCarrybeeStatusToOrderStatus(status: string): OrderStatus | nu
   ) {
     return "cancelled";
   }
+  // Return is in progress: keep order in return pending tab.
+  if (
+    (s.includes("return") && s.includes("pending")) ||
+    (s.includes("return") && s.includes("processing")) ||
+    s.includes("return_in_progress") ||
+    s.includes("waiting_for_return")
+  ) {
+    return "pending_return";
+  }
   if (s.includes("delivery_failed") || s.includes("delivery_on_hold") || s.includes("on_hold")) {
     return "pending_return";
   }

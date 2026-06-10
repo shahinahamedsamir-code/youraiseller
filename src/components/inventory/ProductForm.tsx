@@ -13,8 +13,10 @@ import {
   addBrand,
   addCategory,
   createProduct,
+  getProduct,
   loadBrands,
   loadCategories,
+  updateProduct,
   type Product,
 } from "@/lib/inventory-store";
 import { AddInventoryNameModal } from "@/components/inventory/AddInventoryNameModal";
@@ -23,10 +25,12 @@ type ModalKind = "category" | "brand" | null;
 
 type Props = {
   onSuccess?: (product: Product) => void;
+  editId?: string;
 };
 
-export function ProductForm({ onSuccess }: Props) {
+export function ProductForm({ onSuccess, editId }: Props) {
   const router = useRouter();
+  const isEdit = Boolean(editId);
   const fileRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState(loadCategories);
   const [brands, setBrands] = useState(loadBrands);
@@ -51,6 +55,35 @@ export function ProductForm({ onSuccess }: Props) {
     active: true,
     weight: "0",
     weightUnit: "kg" as "kg" | "g",
+  });
+
+  useState(() => {
+    if (!editId) return;
+    const p = getProduct(editId);
+    if (!p) {
+      setError("Product not found.");
+      return;
+    }
+    setForm({
+      name: p.name,
+      code: p.code,
+      categoryId: p.categoryId,
+      brandId: p.brandId,
+      costPrice: String(p.costPrice),
+      sellPrice: String(p.sellPrice),
+      websitePrice: String(p.websitePrice),
+      stockQty: String(p.stockQty),
+      alertQty: String(p.alertQty),
+      manageStock: p.manageStock,
+      featured: p.featured,
+      active: p.active,
+      weight: String(p.weight),
+      weightUnit: p.weightUnit,
+    });
+    if (p.imageDataUrl) {
+      if (/^https?:\/\//i.test(p.imageDataUrl)) setImageUrl(p.imageDataUrl);
+      else setUploadPreview(p.imageDataUrl);
+    }
   });
 
   const handleImage = (file: File | undefined) => {
@@ -102,26 +135,49 @@ export function ProductForm({ onSuccess }: Props) {
     }
 
     try {
-      const product = createProduct({
-        name: form.name.trim(),
-        code: form.code.trim() || `SKU-${Date.now()}`,
-        categoryId: form.categoryId,
-        brandId: form.brandId,
-        costPrice: parseFloat(form.costPrice) || 0,
-        sellPrice: parseFloat(form.sellPrice) || 0,
-        websitePrice: parseFloat(form.websitePrice) || parseFloat(form.sellPrice) || 0,
-        stockQty: parseInt(form.stockQty, 10) || 0,
-        alertQty: parseInt(form.alertQty, 10) || 10,
-        manageStock: form.manageStock,
-        featured: form.featured,
-        active: form.active,
-        weight: parseFloat(form.weight) || 0,
-        weightUnit: form.weightUnit,
-        imageDataUrl: resolveProductImage(),
-      });
-      setSuccess(`Product "${product.name}" saved!`);
-      onSuccess?.(product);
-      setTimeout(() => router.push("/dashboard/inventory/products"), 1200);
+      if (isEdit && editId) {
+        const updated = updateProduct(editId, {
+          name: form.name.trim(),
+          code: form.code.trim() || `SKU-${Date.now()}`,
+          categoryId: form.categoryId,
+          brandId: form.brandId,
+          costPrice: parseFloat(form.costPrice) || 0,
+          sellPrice: parseFloat(form.sellPrice) || 0,
+          websitePrice: parseFloat(form.websitePrice) || parseFloat(form.sellPrice) || 0,
+          stockQty: parseInt(form.stockQty, 10) || 0,
+          alertQty: parseInt(form.alertQty, 10) || 10,
+          manageStock: form.manageStock,
+          featured: form.featured,
+          active: form.active,
+          weight: parseFloat(form.weight) || 0,
+          weightUnit: form.weightUnit,
+          imageDataUrl: resolveProductImage(),
+        });
+        if (!updated) throw new Error("Could not update product.");
+        setSuccess(`Product "${updated.name}" updated!`);
+        onSuccess?.(updated);
+      } else {
+        const product = createProduct({
+          name: form.name.trim(),
+          code: form.code.trim() || `SKU-${Date.now()}`,
+          categoryId: form.categoryId,
+          brandId: form.brandId,
+          costPrice: parseFloat(form.costPrice) || 0,
+          sellPrice: parseFloat(form.sellPrice) || 0,
+          websitePrice: parseFloat(form.websitePrice) || parseFloat(form.sellPrice) || 0,
+          stockQty: parseInt(form.stockQty, 10) || 0,
+          alertQty: parseInt(form.alertQty, 10) || 10,
+          manageStock: form.manageStock,
+          featured: form.featured,
+          active: form.active,
+          weight: parseFloat(form.weight) || 0,
+          weightUnit: form.weightUnit,
+          imageDataUrl: resolveProductImage(),
+        });
+        setSuccess(`Product "${product.name}" saved!`);
+        onSuccess?.(product);
+      }
+      setTimeout(() => router.push("/dashboard/inventory/products"), 900);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save product.");
     }
@@ -396,7 +452,7 @@ export function ProductForm({ onSuccess }: Props) {
         type="submit"
         className="rounded-xl bg-gradient-to-r from-teal-500 to-violet-600 px-8 py-3 text-sm font-bold text-white shadow-lg hover:brightness-105"
       >
-        Save Product
+        {isEdit ? "Update Product" : "Save Product"}
       </button>
     </form>
 

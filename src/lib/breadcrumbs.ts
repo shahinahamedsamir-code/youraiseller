@@ -6,6 +6,7 @@ const labels: Record<string, string> = {
   approved: "Approved Orders",
   new: "New Order",
   inventory: "Inventory",
+  "stock-management": "Stock Management",
   products: "Products",
   categories: "Categories & Brands",
   stock: "Stock",

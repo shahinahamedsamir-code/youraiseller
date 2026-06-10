@@ -13,6 +13,7 @@ import {
   Minus,
   Package,
   Plus,
+  PlusCircle,
 } from "lucide-react";
 import {
   decreaseStock,
@@ -86,6 +87,9 @@ export function StockMovementForm({
   const [productId, setProductId] = useState("");
   const [qty, setQty] = useState(1);
   const [reason, setReason] = useState(meta.defaultReason);
+  const [reasonOptions, setReasonOptions] = useState<string[]>(meta.reasons);
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [reasonDraft, setReasonDraft] = useState("");
   const [note, setNote] = useState("");
   const [fromLocation, setFromLocation] = useState("Main Warehouse");
   const [toLocation, setToLocation] = useState("Store Front");
@@ -105,6 +109,11 @@ export function StockMovementForm({
     window.addEventListener("youraiseller-data-updated", onData);
     return () => window.removeEventListener("youraiseller-data-updated", onData);
   }, [refreshProducts]);
+
+  useEffect(() => {
+    setReasonOptions(meta.reasons);
+    setReason(meta.defaultReason);
+  }, [meta.reasons, meta.defaultReason]);
 
   const selected = useMemo(
     () => products.find((p) => p.id === productId),
@@ -229,6 +238,25 @@ export function StockMovementForm({
     } finally {
       setSaving(false);
     }
+  };
+
+  const addReasonOption = () => {
+    setReasonDraft("");
+    setReasonModalOpen(true);
+  };
+
+  const saveReasonOption = () => {
+    const value = reasonDraft.trim();
+    if (!value) return;
+    const existing = reasonOptions.find((r) => r.toLowerCase() === value.toLowerCase());
+    if (existing) {
+      setReason(existing);
+      setReasonModalOpen(false);
+      return;
+    }
+    setReasonOptions((prev) => [...prev, value]);
+    setReason(value);
+    setReasonModalOpen(false);
   };
 
   const accentBtn =
@@ -391,20 +419,33 @@ export function StockMovementForm({
               </Field>
             </div>
           ) : (
-            <Field label="Reason" required>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Reason<span className="text-rose-500"> *</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={addReasonOption}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+                  title="Add new reason"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" /> Add
+                </button>
+              </div>
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 className={inputCls}
                 required
               >
-                {meta.reasons.map((r) => (
+                {reasonOptions.map((r) => (
                   <option key={r} value={r}>
                     {r}
                   </option>
                 ))}
               </select>
-            </Field>
+            </div>
           )}
 
           <Field label="Note">
@@ -445,6 +486,55 @@ export function StockMovementForm({
       <aside className="lg:col-span-2">
         <ProductPreviewCard product={selected} mode={mode} qty={qty} />
       </aside>
+
+      {reasonModalOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
+            onClick={() => setReasonModalOpen(false)}
+          />
+          <div
+            className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-slate-900">Add Reason</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Create a custom stock movement reason.
+            </p>
+            <input
+              value={reasonDraft}
+              onChange={(e) => setReasonDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  saveReasonOption();
+                }
+              }}
+              placeholder="e.g. Warehouse Adjustment"
+              className={clsx(inputCls, "mt-4")}
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setReasonModalOpen(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveReasonOption}
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

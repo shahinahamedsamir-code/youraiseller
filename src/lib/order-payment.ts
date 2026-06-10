@@ -288,6 +288,12 @@ export function recordOrderPayment(
   if (amount > due) {
     return { ok: false, message: "Received amount cannot exceed due amount" };
   }
+  if (amount + discount > due + 0.001) {
+    return {
+      ok: false,
+      message: "Received amount plus discount cannot exceed due amount",
+    };
+  }
 
   const data = loadAccountingData();
   const ref = incomeRef(orderId, "delivery");

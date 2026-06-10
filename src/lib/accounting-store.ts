@@ -435,7 +435,10 @@ function pruneOrphanAccounts(
     const balance = accountBalanceFromData(raw, account.id);
     const hasActivity =
       (raw.income ?? []).some((i) => i.accountId === account.id) ||
-      (raw.expenses ?? []).some((e) => e.accountId === account.id);
+      (raw.expenses ?? []).some((e) => e.accountId === account.id) ||
+      (raw.transfers ?? []).some(
+        (t) => t.fromAccountId === account.id || t.toAccountId === account.id
+      );
     if (Math.abs(balance) > 0.005 || hasActivity) return true;
     changed = true;
     return false;
@@ -1128,7 +1131,15 @@ function accountBalanceFromData(data: AccountingData, accountId: string): number
   const expense = data.expenses
     .filter((e) => e.accountId === accountId)
     .reduce((s, e) => s + e.amount, 0);
-  return account.openingBalance + income - expense;
+  const transfersOut = (data.transfers ?? [])
+    .filter(isActiveTransfer)
+    .filter((t) => t.fromAccountId === accountId)
+    .reduce((s, t) => s + t.amount + (t.fee ?? 0), 0);
+  const transfersIn = (data.transfers ?? [])
+    .filter(isActiveTransfer)
+    .filter((t) => t.toAccountId === accountId)
+    .reduce((s, t) => s + t.amount, 0);
+  return account.openingBalance + income - expense - transfersOut + transfersIn;
 }
 
 function pickPrimaryPaymentAccount(
@@ -1987,10 +1998,20 @@ export function deleteAccountTransfer(id: string): boolean {
   return true;
 }
 
+/** Liability receipts / payments and asset purchases / sales are balance-sheet
+ *  movements, not operating income or expense — keep them out of P&L totals. */
+function isBalanceSheetRef(reference?: string): boolean {
+  return Boolean(reference?.startsWith("LIA-") || reference?.startsWith("AST-"));
+}
+
 export function getAccountingSummary() {
   const data = loadAccountingData();
-  const totalIncome = data.income.reduce((s, i) => s + i.amount, 0);
-  const totalExpense = data.expenses.reduce((s, e) => s + e.amount, 0);
+  const totalIncome = data.income
+    .filter((i) => !isBalanceSheetRef(i.reference))
+    .reduce((s, i) => s + i.amount, 0);
+  const totalExpense = data.expenses
+    .filter((e) => !isBalanceSheetRef(e.reference))
+    .reduce((s, e) => s + e.amount, 0);
   const totalAssets = data.assets
     .filter((a) => a.status === "active")
     .reduce((s, a) => s + a.currentValue, 0);
@@ -2039,7 +2060,7 @@ export function getRecentTransactions(limit = 8): RecentTransaction[] {
       amount: -e.amount,
       date: e.date,
     })),
-    ...(data.transfers ?? []).map((t) => ({
+    ...(data.transfers ?? []).filter(isActiveTransfer).map((t) => ({
       id: t.id,
       type: "transfer" as const,
       label: `Transfer · ${formatTransferLabel(t)}`,

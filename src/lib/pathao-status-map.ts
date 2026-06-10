@@ -31,6 +31,16 @@ export function mapPathaoOrderStatusToOrderStatus(
     return "cancelled";
   }
 
+  // Return pipeline states should stay in "pending_return" until truly returned.
+  if (
+    (s.includes("return") && s.includes("pending")) ||
+    (s.includes("return") && s.includes("processing")) ||
+    s.includes("return_in_progress") ||
+    s.includes("waiting_for_return")
+  ) {
+    return "pending_return";
+  }
+
   if (s.includes("delivery_failed") || s.includes("on_hold")) {
     return "pending_return";
   }

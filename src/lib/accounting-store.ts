@@ -2353,7 +2353,7 @@ export function recordAssetSale(
   const sale: AssetSale = {
     id: saleId,
     date: saleDate,
-    time: income.time,
+    time: income.time ?? timeNowLabel(),
     amount,
     accountId: input.accountId,
     note: input.note?.trim() || undefined,

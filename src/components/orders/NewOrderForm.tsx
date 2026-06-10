@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Star,
   Trash2,
@@ -107,6 +107,7 @@ type Props = {
 
 export function NewOrderForm({ orderId }: Props = {}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isEdit = Boolean(orderId);
   const snapshotRef = useRef<ReturnType<typeof getOrder> | null>(null);
   const openedLoggedRef = useRef(false);
@@ -133,6 +134,13 @@ export function NewOrderForm({ orderId }: Props = {}) {
   const [orderTags, setOrderTags] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<OrderAttachment[]>([]);
   const [isPreorder, setIsPreorder] = useState(false);
+  useEffect(() => {
+    if (isEdit) return;
+    if (searchParams.get("preorder") === "1") {
+      setIsPreorder(true);
+    }
+  }, [isEdit, searchParams]);
+
   const [preorderReason, setPreorderReason] =
     useState<PreorderReason>("out_of_stock");
   const [preorderDeliveryLocal, setPreorderDeliveryLocal] = useState("");

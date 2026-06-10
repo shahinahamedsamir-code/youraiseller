@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   loadPreorderOrders,
-  readyPreorderForDelivery,
   markPreorderNotified,
   type Order,
 } from "@/lib/orders-store";
@@ -29,8 +29,11 @@ import {
   Phone,
   MessageCircle,
   ExternalLink,
-  Truck,
   ChevronDown,
+  PlusCircle,
+  AlertTriangle,
+  Clock3,
+  X,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -41,6 +44,11 @@ function whatsAppHref(phone: string): string {
   return `https://wa.me/${wa}`;
 }
 
+function parseDeliveryTs(order: Order): number | null {
+  const ts = Date.parse(order.preorderDeliveryAt ?? "");
+  return Number.isFinite(ts) && ts > 0 ? ts : null;
+}
+
 export function PreorderListPanel() {
   const [tick, setTick] = useState(0);
   const [notifyTab, setNotifyTab] = useState<PreorderNotifyTab>("all");
@@ -49,6 +57,7 @@ export function PreorderListPanel() {
   const [business, setBusiness] = useState<PreorderBusinessFilter>("all");
   const [editOrderId, setEditOrderId] = useState<string | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [notifyPreviewOpen, setNotifyPreviewOpen] = useState(false);
   const [toast, setToast] = useState("");
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -137,36 +146,49 @@ export function PreorderListPanel() {
     return Array.from(map.values()).sort((a, b) => b.qty - a.qty);
   }, [allPreorders]);
 
+  const pendingNotifications = useMemo(
+    () => filtered.filter((o) => !isPreorderNotified(o)),
+    [filtered]
+  );
+
+  const notificationSummary = useMemo(() => {
+    const now = Date.now();
+    const next24 = now + 24 * 60 * 60 * 1000;
+    let overdue = 0;
+    let dueSoon = 0;
+    let noDate = 0;
+
+    for (const order of pendingNotifications) {
+      const ts = parseDeliveryTs(order);
+      if (!ts) {
+        noDate += 1;
+        continue;
+      }
+      if (ts < now) overdue += 1;
+      else if (ts <= next24) dueSoon += 1;
+    }
+
+    return { total: pendingNotifications.length, overdue, dueSoon, noDate };
+  }, [pendingNotifications]);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3200);
   };
 
-  const handleReadyForDelivery = (order: Order) => {
-    if (
-      !window.confirm(
-        `Move ${order.id} to Approved Orders → Pending list as ready for delivery?`
-      )
-    ) {
-      return;
-    }
-    const updated = readyPreorderForDelivery(order.id);
-    if (updated) {
-      setEditOrderId(null);
-      refresh();
-      showToast(`${order.id} is now on the Approved Pending list.`);
-    }
-  };
-
   const handleCheckNotifications = () => {
-    const pending = filtered.filter((o) => !isPreorderNotified(o));
-    if (pending.length === 0) {
+    if (notificationSummary.total === 0) {
       showToast("No pending notifications in this view.");
       return;
     }
-    for (const o of pending) markPreorderNotified(o.id);
+    setNotifyPreviewOpen(true);
+  };
+
+  const handleMarkShownAsNotified = () => {
+    for (const o of pendingNotifications) markPreorderNotified(o.id);
+    setNotifyPreviewOpen(false);
     refresh();
-    showToast(`Marked ${pending.length} order(s) as notified.`);
+    showToast(`Marked ${pendingNotifications.length} order(s) as notified.`);
   };
 
   const handleRefreshStock = () => {
@@ -190,6 +212,15 @@ export function PreorderListPanel() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
           <h1 className="text-xl font-bold text-slate-900">Preorders</h1>
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/dashboard/orders/approved/new?preorder=1"
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700"
+            >
+              <span className="flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Create Pre Order
+              </span>
+            </Link>
             <button
               type="button"
               onClick={() => setSummaryOpen((s) => !s)}
@@ -200,11 +231,26 @@ export function PreorderListPanel() {
             <button
               type="button"
               onClick={handleCheckNotifications}
-              className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700"
+              className={clsx(
+                "rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm",
+                notificationSummary.total > 0
+                  ? "bg-teal-600 hover:bg-teal-700"
+                  : "cursor-not-allowed bg-slate-400"
+              )}
             >
               <span className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
                 Check Notifications
+                <span
+                  className={clsx(
+                    "rounded-full px-2 py-0.5 text-xs font-bold",
+                    notificationSummary.total > 0
+                      ? "bg-rose-600 text-white"
+                      : "bg-white/20 text-white"
+                  )}
+                >
+                  {notificationSummary.total}
+                </span>
               </span>
             </button>
           </div>
@@ -463,14 +509,6 @@ export function PreorderListPanel() {
                             Open
                             <ExternalLink className="h-3 w-3" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReadyForDelivery(order)}
-                            className="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700"
-                          >
-                            <Truck className="h-3 w-3" />
-                            Ready for Delivery
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -500,6 +538,90 @@ export function PreorderListPanel() {
             showToast("Order moved to Approved Orders → Pending list.");
           }}
         />
+      )}
+
+      {notifyPreviewOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            aria-label="Close notification preview"
+            className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
+            onClick={() => setNotifyPreviewOpen(false)}
+          />
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Pending Notifications</h2>
+                <p className="text-xs text-slate-500">
+                  Review preorders before marking them as notified
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotifyPreviewOpen(false)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-200/60"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid gap-2 border-b border-slate-100 bg-white px-5 py-3 text-xs sm:grid-cols-3">
+              <p className="rounded-lg bg-rose-50 px-3 py-2 font-semibold text-rose-700">
+                <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />
+                Overdue: {notificationSummary.overdue}
+              </p>
+              <p className="rounded-lg bg-amber-50 px-3 py-2 font-semibold text-amber-700">
+                <Clock3 className="mr-1 inline h-3.5 w-3.5" />
+                Due in 24h: {notificationSummary.dueSoon}
+              </p>
+              <p className="rounded-lg bg-slate-100 px-3 py-2 font-semibold text-slate-700">
+                No tentative date: {notificationSummary.noDate}
+              </p>
+            </div>
+
+            <div className="max-h-[48vh] overflow-y-auto px-5 py-3">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
+                    <th className="py-2">Invoice</th>
+                    <th className="py-2">Customer</th>
+                    <th className="py-2">Tentative Delivery</th>
+                    <th className="py-2">Products</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingNotifications.map((order) => (
+                    <tr key={order.id} className="border-b border-slate-50 align-top">
+                      <td className="py-2 pr-3 font-semibold text-violet-700">{order.id}</td>
+                      <td className="py-2 pr-3 text-slate-700">{order.customerName}</td>
+                      <td className="py-2 pr-3 text-xs text-slate-600">
+                        {formatPreorderDeliveryAt(order.preorderDeliveryAt)}
+                      </td>
+                      <td className="py-2 text-xs text-slate-600">{preorderProductsSummary(order)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setNotifyPreviewOpen(false)}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleMarkShownAsNotified}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+              >
+                Mark shown as notified ({notificationSummary.total})
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

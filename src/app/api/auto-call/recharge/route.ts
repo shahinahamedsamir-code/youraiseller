@@ -4,6 +4,8 @@ import {
   applySelfBkashAutoCallRecharge,
   calcAutoCallRechargeTotals,
 } from "@/lib/auto-call-recharge-server";
+import { recordPaymentHistory } from "@/lib/payment-history-server";
+import { sellerInfoForScope } from "@/lib/payment-history-user";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
 
 type Body = {
@@ -43,6 +45,15 @@ export async function POST(req: Request) {
 
     const preview = calcAutoCallRechargeTotals(callMinutes, control.callPriceTaka);
     const { account, totalTaka } = await applySelfBkashAutoCallRecharge(scope, callMinutes);
+    const seller = await sellerInfoForScope(scope);
+    await recordPaymentHistory({
+      kind: "auto_call_recharge",
+      amountTaka: totalTaka,
+      method: "bkash",
+      scope,
+      callMinutes: preview.callMinutes,
+      ...seller,
+    });
 
     return NextResponse.json({
       ok: true,

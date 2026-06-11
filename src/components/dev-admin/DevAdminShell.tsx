@@ -13,6 +13,8 @@ import {
   MessageSquare,
   Phone,
   Layers,
+  Receipt,
+  BarChart3,
   X,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -27,6 +29,8 @@ const devNav = [
   { label: "Plan Packages", href: "/dev-admin/plans", icon: Layers },
   { label: "SMS Control", href: "/dev-admin/sms", icon: MessageSquare },
   { label: "Auto Call Control", href: "/dev-admin/auto-call", icon: Phone },
+  { label: "Payment History", href: "/dev-admin/payments", icon: Receipt },
+  { label: "Business Report", href: "/dev-admin/business-report", icon: BarChart3 },
 ];
 
 function isNavActive(pathname: string, href: string, exact?: boolean) {

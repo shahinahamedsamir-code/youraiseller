@@ -419,9 +419,15 @@ export default function DevUsersPage() {
                     >
                       {statusLabels[u.status]}
                     </span>
+                    {u.status === "active" && u.planExpiresAt ? (
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        Renews / expires {u.planExpiresAt}
+                      </p>
+                    ) : null}
                     {u.expiredAt && u.status === "expired" ? (
                       <p className="mt-1 text-[10px] text-slate-500">
                         Expired {u.expiredAt}
+                        {u.planExpiresAt ? ` · due ${u.planExpiresAt}` : ""}
                       </p>
                     ) : null}
                   </td>

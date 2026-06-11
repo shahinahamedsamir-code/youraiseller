@@ -11,6 +11,10 @@ import {
 import { getPlanFeatures, countEnabledFeatures } from "./plan-presets";
 import { hashPasswordDemo, verifyPasswordDemo } from "./auth";
 import { ensureSellerStoresForUser } from "./seller-store-init";
+import {
+  planPeriodFromNow,
+  processSubscriptionLifecycle,
+} from "./subscription-period";
 
 /** pending = signup wait | inactive = deactive/renew | active = dashboard | expired = plan ended | rejected = denied */
 export type UserStatus =
@@ -72,6 +76,10 @@ export type DevUser = {
   features: Record<FeatureKey, boolean>;
   createdAt: string;
   approvedAt?: string;
+  /** When the current paid plan period started (sign / activate / renew). */
+  planStartedAt?: string;
+  /** Auto-expire on this date — same day next month from planStartedAt. */
+  planExpiresAt?: string;
   expiredAt?: string;
   rejectedAt?: string;
   /** Note when signup request was cancelled/rejected */
@@ -280,6 +288,8 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
     features: resolveUserFeatures(plan, u.features),
     createdAt: u.createdAt ?? "—",
     approvedAt: u.approvedAt,
+    planStartedAt: u.planStartedAt,
+    planExpiresAt: u.planExpiresAt,
     expiredAt: u.expiredAt,
     rejectedAt: u.rejectedAt,
     cancelNote: u.cancelNote?.trim() || undefined,
@@ -309,14 +319,20 @@ export function loadDevUsers(): DevUser[] {
       return !before || featuresChanged(before, after);
     });
     const withIds = withAutoCustomerIds(users, needsSave);
-    if (needsSave) {
+    const lifecycle = processSubscriptionLifecycle(withIds);
+    const finalUsers = lifecycle.users;
+    if (needsSave || lifecycle.changed) {
+      if (lifecycle.changed) {
+        writeLocalUsers(finalUsers);
+        void pushUsersToServer(finalUsers).catch(() => {});
+      }
       const sessionId = localStorage.getItem(SESSION_USER_KEY);
       const sessionUser = sessionId
-        ? withIds.find((u) => u.id === sessionId)
+        ? finalUsers.find((u) => u.id === sessionId)
         : undefined;
       if (sessionUser) applyUserToSession(sessionUser);
     }
-    return withIds;
+    return finalUsers;
   } catch {
     return DEFAULT_USERS;
   }
@@ -507,6 +523,8 @@ export async function syncDevUsersFromServer(force = false): Promise<void> {
     merged = mergeUniqueByEmail(merged, backupList);
     merged = dedupeUsersByEmail(merged);
     merged = withAutoCustomerIds(merged, false);
+    const lifecycle = processSubscriptionLifecycle(merged);
+    merged = lifecycle.users;
 
     localStorage.setItem(USERS_KEY, JSON.stringify(merged));
     pushUsersToServer(merged);
@@ -735,6 +753,8 @@ export function updateDevUser(
       | "status"
       | "features"
       | "approvedAt"
+      | "planStartedAt"
+      | "planExpiresAt"
       | "expiredAt"
       | "rejectedAt"
       | "cancelNote"
@@ -810,8 +830,12 @@ export function rejectUser(id: string, cancelNote: string): DevUser | null {
   });
 }
 
-export function activateUser(id: string): DevUser | null {
-  return updateDevUser(id, { status: "active", expiredAt: undefined });
+export function activateUser(id: string, periodMonths = 1): DevUser | null {
+  return updateDevUser(id, {
+    status: "active",
+    expiredAt: undefined,
+    ...planPeriodFromNow(periodMonths),
+  });
 }
 
 export function deactivateUser(id: string): DevUser | null {

@@ -7,6 +7,8 @@ import {
   autoCallMinutesFromTaka,
   autoCallTakaFromMinutes,
 } from "@/lib/auto-call-recharge-server";
+import { recordPaymentHistory } from "@/lib/payment-history-server";
+import { sellerInfoForScope } from "@/lib/payment-history-user";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
 
 type Body = {
@@ -57,6 +59,20 @@ export async function POST(req: Request) {
 
     const sellers = await listSellerAutoCallSummaries();
     const row = sellers.find((s) => s.scope === scope);
+    const seller = await sellerInfoForScope(scope);
+    if (rechargeTaka > 0) {
+      await recordPaymentHistory({
+        kind: "auto_call_recharge",
+        amountTaka: rechargeTaka,
+        method: "admin",
+        scope,
+        callMinutes:
+          extraMinutes > 0
+            ? extraMinutes
+            : autoCallMinutesFromTaka(rechargeTaka, control.callPriceTaka),
+        ...seller,
+      });
+    }
 
     return NextResponse.json({
       ok: true,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  Mail,
+  MessageCircle,
   LogOut,
   RefreshCw,
   Clock,
@@ -12,7 +12,9 @@ import {
   CreditCard,
   CheckCircle2,
   Circle,
+  Wallet,
 } from "lucide-react";
+import { PlanRenewPayModal } from "@/components/renew/PlanRenewPayModal";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
   clearUserSession,
@@ -21,6 +23,10 @@ import {
 } from "@/lib/dev-users";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
+import {
+  buildSellerSupportWhatsAppMessage,
+  supportWhatsAppHref,
+} from "@/lib/support-contact";
 
 const PENDING_STEPS = [
   { id: "signed", label: "Signed in with Google", done: true },
@@ -38,6 +44,10 @@ export default function RenewPage() {
   const router = useRouter();
   const [user, setUser] = useState<DevUser | null>(null);
   const [checking, setChecking] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [toast, setToast] = useState<{ type: "ok" | "err"; text: string } | null>(
+    null
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -58,6 +68,12 @@ export default function RenewPage() {
       cancelled = true;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3500);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const handleLogout = () => {
     clearUserSession();
@@ -151,7 +167,7 @@ export default function RenewPage() {
                 : isRejected
                   ? "This signup was declined. Contact support if you have questions."
                   : isExpired
-                    ? "Your subscription has ended. Contact support to renew access."
+                    ? "Your subscription has ended. Pay now or contact us to renew access."
                     : "Your store is approved. Dashboard opens after activation."}
             </p>
           </div>
@@ -248,8 +264,8 @@ export default function RenewPage() {
               ) : isExpired ? (
                 <>
                   <strong className="font-semibold">Access ended.</strong> Your plan has
-                  expired. Contact support to renew — admin can reactivate your account
-                  from Software Users.
+                  expired. Pay now with bKash to reopen instantly, or contact support on
+                  WhatsApp if you need help.
                 </>
               ) : (
                 <>
@@ -261,32 +277,94 @@ export default function RenewPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-2.5 sm:flex-row">
-              <a
-                href="mailto:support@youraiseller.com?subject=Seller%20account%20help"
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-200/40 transition hover:brightness-105"
-              >
-                <Mail className="h-4 w-4" />
-                {isPending
-                  ? "Contact support"
-                  : isExpired
-                    ? "Contact to renew"
-                    : "Contact to activate"}
-              </a>
-              {!isRejected && !isExpired && (
+            {isExpired ? (
+              <div className="space-y-2.5">
+                <div className="flex flex-col gap-2.5 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => setPayOpen(true)}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#E2136E] px-5 py-3 text-sm font-bold text-white shadow-md shadow-rose-200/40 transition hover:bg-[#c91062]"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Pay now
+                  </button>
+                  <a
+                    href={supportWhatsAppHref(
+                      buildSellerSupportWhatsAppMessage({
+                        name: user.name,
+                        email: user.email,
+                        company: user.company,
+                        plan: user.plan,
+                        status: user.status,
+                      })
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Contact to renew
+                  </a>
+                </div>
                 <button
                   type="button"
                   onClick={handleCheckAgain}
                   disabled={checking}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
                 >
                   <RefreshCw
                     className={clsx("h-4 w-4", checking && "animate-spin")}
                   />
                   {checking ? "Checking…" : "Check status"}
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2.5 sm:flex-row">
+                <a
+                  href={supportWhatsAppHref(
+                    buildSellerSupportWhatsAppMessage({
+                      name: user.name,
+                      email: user.email,
+                      company: user.company,
+                      plan: user.plan,
+                      status: user.status,
+                    })
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-200/40 transition hover:brightness-105"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  {isPending ? "Contact support" : "Contact to activate"}
+                </a>
+                {!isRejected && (
+                  <button
+                    type="button"
+                    onClick={handleCheckAgain}
+                    disabled={checking}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    <RefreshCw
+                      className={clsx("h-4 w-4", checking && "animate-spin")}
+                    />
+                    {checking ? "Checking…" : "Check status"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {toast ? (
+              <p
+                className={clsx(
+                  "rounded-xl px-4 py-3 text-center text-sm font-semibold ring-1",
+                  toast.type === "ok"
+                    ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                    : "bg-rose-50 text-rose-800 ring-rose-200"
+                )}
+              >
+                {toast.text}
+              </p>
+            ) : null}
 
             {user.status === "inactive" && user.approvedAt && (
               <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
@@ -311,6 +389,20 @@ export default function RenewPage() {
           {user.approvedAt ? ` · Approved ${user.approvedAt}` : ""}
         </p>
       </div>
+
+      {isExpired ? (
+        <PlanRenewPayModal
+          open={payOpen}
+          user={user}
+          onClose={() => setPayOpen(false)}
+          onSuccess={(next, message) => {
+            setUser(next);
+            setToast({ type: "ok", text: message });
+            router.replace("/dashboard");
+          }}
+          onError={(text) => setToast({ type: "err", text })}
+        />
+      ) : null}
     </div>
   );
 }

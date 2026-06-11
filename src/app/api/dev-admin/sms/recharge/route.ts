@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isDevAdminAuthenticated } from "@/lib/dev-admin-auth-server";
 import { loadSmsPlatformControl } from "@/lib/sms-platform-control";
 import { applySmsRecharge, smsCreditsFromTaka } from "@/lib/sms-recharge-server";
+import { recordPaymentHistory } from "@/lib/payment-history-server";
+import { sellerInfoForScope } from "@/lib/payment-history-user";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
 
 type Body = {
@@ -53,6 +55,22 @@ export async function POST(req: Request) {
     const { listSellerSmsSummaries } = await import("@/lib/sms-admin-server");
     const sellers = await listSellerSmsSummaries();
     const row = sellers.find((s) => s.scope === scope);
+    const seller = await sellerInfoForScope(scope);
+    const paidTaka = taka > 0 ? Math.floor(taka) : 0;
+    if (paidTaka > 0) {
+      await recordPaymentHistory({
+        kind: "sms_recharge",
+        amountTaka: paidTaka,
+        method: "admin",
+        scope,
+        smsCount:
+          extraCredits > 0
+            ? extraCredits
+            : smsCreditsFromTaka(paidTaka, control.smsPriceTaka),
+        note: body.note,
+        ...seller,
+      });
+    }
 
     return NextResponse.json({
       ok: true,

@@ -66,14 +66,14 @@ export function SmsRechargeModal({
   if (!open || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[240] flex items-end justify-center sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[240] flex items-end justify-center md:items-center md:p-4">
       <button
         type="button"
         aria-label="Close"
         className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
         onClick={() => !paying && onClose()}
       />
-      <div className="relative max-h-[min(92dvh,28rem)] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl ring-1 ring-slate-200 sm:max-h-none sm:max-w-md sm:rounded-2xl">
+      <div className="relative max-h-[min(92dvh,28rem)] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl ring-1 ring-slate-200 md:max-h-none md:max-w-md md:rounded-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-teal-100 bg-gradient-to-r from-teal-50 to-cyan-50/50 px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700">

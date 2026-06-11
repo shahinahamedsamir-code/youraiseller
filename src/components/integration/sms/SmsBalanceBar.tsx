@@ -144,7 +144,7 @@ export function SmsBalanceBar({
 
           <div className="hidden h-11 w-px shrink-0 bg-slate-200 lg:block" />
 
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 lg:w-auto lg:shrink-0">
+          <div className="flex flex-wrap items-center gap-3 max-md:w-full max-md:flex-col max-md:items-stretch lg:shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-teal-100">
                 <Coins className="h-5 w-5" />
@@ -164,7 +164,7 @@ export function SmsBalanceBar({
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-200/40 transition hover:from-teal-700 hover:to-cyan-600 sm:w-auto"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-200/40 transition hover:from-teal-700 hover:to-cyan-600 max-md:w-full"
               >
                 <Plus className="h-4 w-4" />
                 Add balance
@@ -177,7 +177,7 @@ export function SmsBalanceBar({
                 disabled={!systemEnabled || loading || togglingService}
                 onClick={() => onServiceToggle(!serviceEnabled)}
                 className={clsx(
-                  "inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto",
+                  "inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition disabled:cursor-not-allowed disabled:opacity-60 max-md:w-full",
                   serviceEnabled
                     ? "bg-emerald-600 text-white shadow-emerald-200/40 hover:bg-emerald-700"
                     : "bg-slate-700 text-white shadow-slate-200/40 hover:bg-slate-800"

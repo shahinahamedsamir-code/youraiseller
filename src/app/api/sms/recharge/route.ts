@@ -4,6 +4,8 @@ import {
   applySelfBkashRecharge,
   calcRechargeTotals,
 } from "@/lib/sms-recharge-server";
+import { recordPaymentHistory } from "@/lib/payment-history-server";
+import { sellerInfoForScope } from "@/lib/payment-history-user";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
 
 type Body = {
@@ -53,6 +55,15 @@ export async function POST(req: Request) {
     // TODO: bKash Checkout API — create payment session, return redirect URL.
     // Mock: payment succeeds immediately for development.
     const { account, totalTaka } = await applySelfBkashRecharge(scope, smsCount);
+    const seller = await sellerInfoForScope(scope);
+    await recordPaymentHistory({
+      kind: "sms_recharge",
+      amountTaka: totalTaka,
+      method: "bkash",
+      scope,
+      smsCount: preview.smsCount,
+      ...seller,
+    });
 
     return NextResponse.json({
       ok: true,

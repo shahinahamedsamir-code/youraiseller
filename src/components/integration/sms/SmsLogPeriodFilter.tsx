@@ -12,14 +12,15 @@ type Props = {
 
 export function SmsLogPeriodFilter({ value, onChange, compact }: Props) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
+    <div className="max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="inline-flex min-w-max items-center gap-1">
       {PERIOD_OPTIONS.map((opt) => (
         <button
           key={opt.id}
           type="button"
           onClick={() => onChange(opt.id)}
           className={clsx(
-            "rounded-lg px-3 py-1.5 text-xs font-bold transition",
+            "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition",
             compact && "px-2.5",
             value === opt.id
               ? "bg-slate-100 text-slate-900 shadow-sm"
@@ -36,6 +37,7 @@ export function SmsLogPeriodFilter({ value, onChange, compact }: Props) {
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
+      </div>
     </div>
   );
 }

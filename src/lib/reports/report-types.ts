@@ -12,6 +12,7 @@ export type ReportTab =
   | "orders"
   | "inventory"
   | "integrations"
+  | "call_sms"
   | "marketing"
   | "accounting";
 
@@ -22,6 +23,7 @@ export type ReportGroupId =
   | "employee-report"
   | "customer-report"
   | "meta-ads"
+  | "call-sms"
   | "business-finance";
 
 export type ReportGroup = {
@@ -74,6 +76,12 @@ export const REPORT_GROUPS: ReportGroup[] = [
     label: "Meta Ads Report",
     description: "Ad spend, attributed revenue, and ROAS",
     tabs: [{ id: "marketing", label: "Marketing" }],
+  },
+  {
+    id: "call-sms",
+    label: "Call & SMS Reports",
+    description: "SMS delivery, auto-call verification, and communication costs",
+    tabs: [{ id: "call_sms", label: "Call & SMS" }],
   },
   {
     id: "business-finance",

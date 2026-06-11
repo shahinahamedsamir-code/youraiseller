@@ -230,7 +230,7 @@ export function ReportsView(props: ReportsViewProps) {
           {tab === "courier" && tabCompareNotes.courier}
           {tab === "approved_orders" && tabCompareNotes.courier}
           {tab === "preorder" && tabCompareNotes.scans}
-          {tab === "integrations" && tabCompareNotes.sms}
+          {tab === "call_sms" && tabCompareNotes.sms}
           {tab === "marketing" && tabCompareNotes.marketing}
           {tab === "inventory" && tabCompareNotes.inventory}
           {tab === "staff" && periodCompare && (
@@ -2107,20 +2107,9 @@ export function ReportsView(props: ReportsViewProps) {
         </div>
       )}
 
-      {tab === "integrations" && (
+      {tab === "call_sms" && (
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="glass-card rounded-2xl p-4">
-              <p className="text-sm text-slate-500">WooCommerce</p>
-              <p
-                className={clsx(
-                  "text-2xl font-bold",
-                  integrationsReport.woo.connected ? "text-emerald-700" : "text-slate-500"
-                )}
-              >
-                {integrationsReport.woo.connected ? "Connected" : "Not connected"}
-              </p>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="glass-card rounded-2xl p-4">
               <p className="text-sm text-slate-500">SMS Service</p>
               <p
@@ -2147,20 +2136,6 @@ export function ReportsView(props: ReportsViewProps) {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Balance: {formatBdt(integrationsReport.autoCall.balanceTaka)}
-              </p>
-            </div>
-            <div className="glass-card rounded-2xl p-4">
-              <p className="text-sm text-slate-500">Stock Sync</p>
-              <p
-                className={clsx(
-                  "text-2xl font-bold",
-                  integrationsReport.woo.stockSyncEnabled ? "text-indigo-700" : "text-slate-500"
-                )}
-              >
-                {integrationsReport.woo.stockSyncEnabled ? "Enabled" : "Disabled"}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                OK {integrationsReport.woo.stockSuccess} · Fail {integrationsReport.woo.stockFailed}
               </p>
             </div>
           </div>
@@ -2340,6 +2315,38 @@ export function ReportsView(props: ReportsViewProps) {
                   {integrationsReport.autoCall.runs.length}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "integrations" && (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-sm text-slate-500">WooCommerce</p>
+              <p
+                className={clsx(
+                  "text-2xl font-bold",
+                  integrationsReport.woo.connected ? "text-emerald-700" : "text-slate-500"
+                )}
+              >
+                {integrationsReport.woo.connected ? "Connected" : "Not connected"}
+              </p>
+            </div>
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-sm text-slate-500">Stock Sync</p>
+              <p
+                className={clsx(
+                  "text-2xl font-bold",
+                  integrationsReport.woo.stockSyncEnabled ? "text-indigo-700" : "text-slate-500"
+                )}
+              >
+                {integrationsReport.woo.stockSyncEnabled ? "Enabled" : "Disabled"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                OK {integrationsReport.woo.stockSuccess} · Fail {integrationsReport.woo.stockFailed}
+              </p>
             </div>
           </div>
 

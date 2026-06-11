@@ -157,7 +157,7 @@ export type ReportsExportPayload = {
     bySource: { name: string; orders: number; revenue: number }[];
   };
   integrationsReport: {
-    sms: { delivered: number; failed: number; cost: number };
+    sms: { total: number; delivered: number; failed: number; cost: number };
     autoCall: { stats: { totalCalls: number; success: number; successRate: number } };
     woo: { connected: boolean; stockSuccess: number; stockFailed: number };
   };
@@ -336,11 +336,12 @@ export function exportTabCsv(tab: ReportTab, data: ReportsExportPayload): void {
     );
     return;
   }
-  if (tab === "integrations") {
+  if (tab === "call_sms") {
     exportCsv(
-      "integrations-report.csv",
+      "call-sms-report.csv",
       ["Channel", "Metric", "Value"],
       [
+        ["SMS", "Sent", data.integrationsReport.sms.total],
         ["SMS", "Delivered", data.integrationsReport.sms.delivered],
         ["SMS", "Failed", data.integrationsReport.sms.failed],
         ["SMS", "Cost (BDT)", data.integrationsReport.sms.cost],
@@ -351,6 +352,15 @@ export function exportTabCsv(tab: ReportTab, data: ReportsExportPayload): void {
           "Success %",
           data.integrationsReport.autoCall.stats.successRate.toFixed(1),
         ],
+      ]
+    );
+    return;
+  }
+  if (tab === "integrations") {
+    exportCsv(
+      "integrations-report.csv",
+      ["Channel", "Metric", "Value"],
+      [
         ["WooCommerce", "Connected", data.integrationsReport.woo.connected ? "yes" : "no"],
         ["WooCommerce", "Stock Sync OK", data.integrationsReport.woo.stockSuccess],
         ["WooCommerce", "Stock Sync Failed", data.integrationsReport.woo.stockFailed],

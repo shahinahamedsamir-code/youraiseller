@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { Search, Wallet, BookOpen, Info, ArrowRightLeft, Plus, Package } from "lucide-react";
+import {
+  Search,
+  Wallet,
+  BookOpen,
+  Info,
+  ArrowRightLeft,
+  Plus,
+  Package,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import { AccountTransferModal } from "./AccountTransferModal";
 import {
   ACCOUNT_SECTION_HINTS,
@@ -18,6 +28,7 @@ import {
   listVisiblePaymentAccounts,
   PAYMENT_METHOD_KEY_LABELS,
   resolveAccountSectionType,
+  setDefaultPaymentReceiveAccount,
   type AccountType,
   type AccountingAccount,
   type AccountingData,
@@ -34,6 +45,26 @@ function matchesSearch(account: AccountingAccount, q: string): boolean {
     account.name.toLowerCase().includes(q) ||
     ACCOUNT_TYPE_LABELS[account.type].toLowerCase().includes(q) ||
     methodLabel.includes(q)
+  );
+}
+
+const ACCOUNTS_TH =
+  "px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500";
+const ACCOUNTS_TD = "px-3 py-2 text-sm text-slate-700 align-middle";
+
+function AccountsTableHead() {
+  return (
+    <thead className="border-b border-slate-200 bg-slate-50/90">
+      <tr>
+        <th className={clsx(ACCOUNTS_TH, "w-[38%]")}>Name</th>
+        <th className={clsx(ACCOUNTS_TH, "w-[18%] text-right")}>Balance</th>
+        <th className={clsx(ACCOUNTS_TH, "w-[12%]")}>Status</th>
+        <th className={clsx(ACCOUNTS_TH, "w-[10%] text-center")} title="Default on payment approve">
+          Default
+        </th>
+        <th className={clsx(ACCOUNTS_TH, "w-[16%] text-right")}>Action</th>
+      </tr>
+    </thead>
   );
 }
 
@@ -76,12 +107,12 @@ export function AccountListPanel() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900">
-            <Wallet className="h-7 w-7 text-indigo-500" />
+          <h1 className="flex items-center gap-2 text-lg font-extrabold text-slate-900">
+            <Wallet className="h-5 w-5 text-indigo-500" />
             Accounts
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            Mobile banking, bank, cash &amp; fixed asset balances — grouped by type
+          <p className="text-xs text-slate-500">
+            Mobile banking, bank, cash &amp; fixed asset balances
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -91,13 +122,13 @@ export function AccountListPanel() {
               setTransferFromId(undefined);
               setTransferOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"
           >
             <ArrowRightLeft className="h-4 w-4" /> Transfer
           </button>
           <Link
             href="/dashboard/accounting/chart-of-accounts"
-            className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-100"
+            className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100"
           >
             <BookOpen className="h-4 w-4" /> Chart Of Account
           </Link>
@@ -130,22 +161,31 @@ export function AccountListPanel() {
             </p>
           </div>
         ) : (
-          <>
-            {sections.map((section) => (
-              <AccountSection
-                key={section.type}
-                type={section.type}
-                accounts={section.accounts}
-                onTransferFrom={(id) => {
-                  setTransferFromId(id);
-                  setTransferOpen(true);
-                }}
-              />
-            ))}
-            {fixedAssetRows.length > 0 && (
-              <FixedAssetsSection rows={fixedAssetRows} data={data} />
-            )}
-          </>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] table-fixed text-sm">
+              <AccountsTableHead />
+              <tbody>
+                {sections.map((section) => (
+                  <AccountSection
+                    key={section.type}
+                    type={section.type}
+                    accounts={section.accounts}
+                    onTransferFrom={(id) => {
+                      setTransferFromId(id);
+                      setTransferOpen(true);
+                    }}
+                    onToggleDefault={(id) => {
+                      setDefaultPaymentReceiveAccount(id);
+                      refresh();
+                    }}
+                  />
+                ))}
+                {fixedAssetRows.length > 0 && (
+                  <FixedAssetsSection rows={fixedAssetRows} data={data} />
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -163,10 +203,12 @@ function AccountSection({
   type,
   accounts,
   onTransferFrom,
+  onToggleDefault,
 }: {
   type: AccountType;
   accounts: AccountingAccount[];
   onTransferFrom: (accountId: string) => void;
+  onToggleDefault: (accountId: string) => void;
 }) {
   const sectionTotal = accounts.reduce((s, a) => s + getAccountBalance(a.id), 0);
   const headerBg =
@@ -177,74 +219,94 @@ function AccountSection({
         : "bg-emerald-50/90";
 
   return (
-    <div className="border-b border-slate-100 last:border-b-0">
-      <div className={clsx("flex flex-wrap items-center justify-between gap-2 px-4 py-3", headerBg)}>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-800">{ACCOUNT_SECTION_LABELS[type]}</span>
-          <span title={ACCOUNT_SECTION_HINTS[type]} className="text-slate-400">
-            <Info className="h-4 w-4" />
-          </span>
-          <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-bold text-slate-600">
-            {accounts.length}
-          </span>
-        </div>
-        <span className="text-sm font-bold text-indigo-700">{formatBdt(sectionTotal)}</span>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Balance</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.map((a) => (
-              <tr key={a.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-slate-800">{a.name}</p>
-                  {a.paymentMethodKey && (
-                    <p className="mt-0.5 text-xs font-medium text-indigo-600">
-                      {PAYMENT_METHOD_KEY_LABELS[a.paymentMethodKey]}
-                    </p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{ACCOUNT_TYPE_LABELS[a.type]}</td>
-                <td className="px-4 py-3 font-bold text-indigo-600">
-                  {formatBdt(getAccountBalance(a.id))}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={clsx(
-                      "rounded-full px-2 py-0.5 text-xs font-bold",
-                      a.active ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500"
-                    )}
-                  >
-                    {a.active ? "Active" : "Inactive"}
+    <>
+      <tr className={clsx("border-b border-slate-100", headerBg)}>
+        <td colSpan={5} className="px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold text-slate-800">{ACCOUNT_SECTION_LABELS[type]}</span>
+              <span title={ACCOUNT_SECTION_HINTS[type]} className="text-slate-400">
+                <Info className="h-3.5 w-3.5" />
+              </span>
+              <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                {accounts.length}
+              </span>
+            </div>
+            <span className="text-xs font-bold text-indigo-700">{formatBdt(sectionTotal)}</span>
+          </div>
+        </td>
+      </tr>
+      {accounts.map((a) => {
+        const balance = getAccountBalance(a.id);
+        return (
+          <tr key={a.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+            <td className={ACCOUNTS_TD}>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate font-semibold text-slate-800">{a.name}</span>
+                {a.paymentMethodKey && (
+                  <span className="shrink-0 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600">
+                    {PAYMENT_METHOD_KEY_LABELS[a.paymentMethodKey]}
                   </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {a.active && (
-                    <button
-                      type="button"
-                      onClick={() => onTransferFrom(a.id)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-2.5 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-50"
-                    >
-                      <ArrowRightLeft className="h-3.5 w-3.5" />
-                      Transfer
-                    </button>
+                )}
+              </div>
+            </td>
+            <td
+              className={clsx(
+                ACCOUNTS_TD,
+                "text-right font-bold tabular-nums",
+                balance < 0 ? "text-rose-600" : "text-indigo-600"
+              )}
+            >
+              {formatBdt(balance)}
+            </td>
+            <td className={ACCOUNTS_TD}>
+              <span
+                className={clsx(
+                  "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold",
+                  a.active ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500"
+                )}
+              >
+                {a.active ? "Active" : "Inactive"}
+              </span>
+            </td>
+            <td className={clsx(ACCOUNTS_TD, "text-center")}>
+              {a.active ? (
+                <button
+                  type="button"
+                  onClick={() => onToggleDefault(a.id)}
+                  title={
+                    a.defaultPaymentReceive
+                      ? "Default payment receive — click to clear"
+                      : "Set as default payment receive"
+                  }
+                  className="inline-flex items-center justify-center rounded-md p-1 hover:bg-slate-100"
+                >
+                  {a.defaultPaymentReceive ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-slate-300" />
                   )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                </button>
+              ) : (
+                <span className="text-slate-300">—</span>
+              )}
+            </td>
+            <td className={clsx(ACCOUNTS_TD, "text-right")}>
+              {a.active && (
+                <button
+                  type="button"
+                  onClick={() => onTransferFrom(a.id)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-2 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50"
+                >
+                  <ArrowRightLeft className="h-3 w-3" />
+                  Transfer
+                </button>
+              )}
+            </td>
+          </tr>
+        );
+      })}
+    </>
   );
 }
 
@@ -261,79 +323,67 @@ function FixedAssetsSection({
   );
 
   return (
-    <div className="border-b border-slate-100 last:border-b-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-amber-50/90 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-800">Fixed Assets</span>
-          <span
-            title="Equipment, vehicles, property — book value from Assets module"
-            className="text-slate-400"
-          >
-            <Info className="h-4 w-4" />
-          </span>
-          <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-bold text-slate-600">
-            {rows.length}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-indigo-700">{formatBdt(sectionTotal)}</span>
-          <Link
-            href="/dashboard/accounting/chart-of-accounts?tab=asset"
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-bold text-indigo-600 hover:bg-indigo-50"
-          >
-            <Plus className="h-4 w-4" /> Add New
-          </Link>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Balance</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-slate-800">{row.name}</p>
-                  {row.description && (
-                    <p className="mt-0.5 text-xs text-slate-500">{row.description}</p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{CHART_GROUP_LABELS.asset_fixed}</td>
-                <td className="px-4 py-3 font-bold text-indigo-600">
-                  {formatBdt(getFixedAssetCategoryBookValue(row.id, data))}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={clsx(
-                      "rounded-full px-2 py-0.5 text-xs font-bold",
-                      row.active ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500"
-                    )}
-                  >
-                    {row.active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href="/dashboard/accounting/assets"
-                    className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-2.5 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-50"
-                  >
-                    <Package className="h-3.5 w-3.5" />
-                    Assets
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <>
+      <tr className="border-b border-slate-100 bg-amber-50/90">
+        <td colSpan={5} className="px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold text-slate-800">Fixed Assets</span>
+              <span
+                title="Equipment, vehicles, property — book value from Assets module"
+                className="text-slate-400"
+              >
+                <Info className="h-3.5 w-3.5" />
+              </span>
+              <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                {rows.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-indigo-700">{formatBdt(sectionTotal)}</span>
+              <Link
+                href="/dashboard/accounting/chart-of-accounts?tab=asset"
+                className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-50"
+              >
+                <Plus className="h-3 w-3" /> Add New
+              </Link>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {rows.map((row) => (
+        <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+          <td className={ACCOUNTS_TD}>
+            <p className="truncate font-semibold text-slate-800">{row.name}</p>
+            {row.description && (
+              <p className="truncate text-[11px] text-slate-500">{row.description}</p>
+            )}
+          </td>
+          <td className={clsx(ACCOUNTS_TD, "text-right font-bold tabular-nums text-indigo-600")}>
+            {formatBdt(getFixedAssetCategoryBookValue(row.id, data))}
+          </td>
+          <td className={ACCOUNTS_TD}>
+            <span
+              className={clsx(
+                "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold",
+                row.active ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500"
+              )}
+            >
+              {row.active ? "Active" : "Inactive"}
+            </span>
+          </td>
+          <td className={clsx(ACCOUNTS_TD, "text-center text-slate-300")}>—</td>
+          <td className={clsx(ACCOUNTS_TD, "text-right")}>
+            <Link
+              href="/dashboard/accounting/assets"
+              className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-2 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50"
+            >
+              <Package className="h-3 w-3" />
+              Assets
+            </Link>
+          </td>
+        </tr>
+      ))}
+    </>
   );
 }

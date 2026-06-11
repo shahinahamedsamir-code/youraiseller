@@ -2,20 +2,46 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import { Download, MoreVertical, RotateCcw, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import {
+  Download,
+  MoreVertical,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import {
   EXPENSE_STATUS_LABELS,
   deleteExpense,
   formatBdtDecimal,
+  getAccountById,
   getChartAssetLabelForAccount,
+  loadAccountingData,
   listExpensePaidFromAssets,
   type AccountingExpense,
   type ExpenseStatus,
 } from "@/lib/accounting-store";
+import { isOrderDeliveryChargeExpense } from "@/lib/order-delivery-expense";
+import { getOrder } from "@/lib/orders-store";
 import { useAccountingData } from "./useAccountingData";
 import { paginateSlice } from "@/components/ui/TablePagination";
 
 type RangeKey = "all" | "today" | "week" | "month" | "custom";
+
+function isReturnDeliveryChargeExpense(e: AccountingExpense): boolean {
+  return Boolean(e.reference?.trim().endsWith("#return_delivery_expense"));
+}
+
+function isChargeExpense(e: AccountingExpense): boolean {
+  return (
+    e.status === "approved" &&
+    (e.category === "courier" || isReturnDeliveryChargeExpense(e) || isOrderDeliveryChargeExpense(e))
+  );
+}
+
+function isPendingChargeExpense(e: AccountingExpense): boolean {
+  return e.status === "draft" && e.category === "courier";
+}
 
 type ExpenseFilters = {
   expenseFrom: string;
@@ -48,9 +74,44 @@ function expenseInvoiceNo(e: AccountingExpense): string {
   return e.reference?.trim() || e.refNumber || "—";
 }
 
+function expenseDisplayInvoiceNo(e: AccountingExpense): string {
+  if (isReturnDeliveryChargeExpense(e)) {
+    const orderId = e.reference?.replace("#return_delivery_expense", "").trim();
+    if (orderId) return orderId;
+  }
+  if (isOrderDeliveryChargeExpense(e)) {
+    const orderId = e.reference?.replace("#delivery_charge", "").trim();
+    if (orderId) {
+      const order = getOrder(orderId);
+      return order?.invoiceNumber ?? orderId;
+    }
+  }
+  return expenseInvoiceNo(e);
+}
+
+function expenseCategoryLabel(e: AccountingExpense): { main: string; sub?: string } {
+  if (isReturnDeliveryChargeExpense(e)) {
+    return {
+      main: e.expenseTo ?? "Delivery Charge",
+      sub: e.title,
+    };
+  }
+  if (isOrderDeliveryChargeExpense(e)) {
+    return {
+      main: e.expenseTo ?? "Courier Charge",
+      sub: e.title,
+    };
+  }
+  return {
+    main: e.title,
+    sub: e.vendor,
+  };
+}
+
 const TH =
   "whitespace-nowrap px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white";
-const TD = "whitespace-nowrap px-4 py-3.5 text-sm text-slate-700";
+const TD = "px-4 py-3.5 text-sm text-slate-700";
+const TD_NOWRAP = clsx(TD, "whitespace-nowrap");
 
 function parseDisplayDate(label: string): Date | null {
   const t = Date.parse(label);
@@ -156,7 +217,6 @@ export function ExpenseListPanel() {
     () => listExpensePaidFromAssets(data),
     [data]
   );
-
   const expenseToNames = useMemo(() => {
     const fromChart = (data.chartAccounts ?? [])
       .filter((c) => c.group === "expense" && c.active)
@@ -175,6 +235,23 @@ export function ExpenseListPanel() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
+  useEffect(() => {
+    const all = loadAccountingData().expenses;
+    const seen = new Set<string>();
+    const duplicateIds: string[] = [];
+    for (const e of all) {
+      const ref = e.reference?.trim();
+      if (!ref || !ref.endsWith("#return_delivery_expense")) continue;
+      if (seen.has(ref)) duplicateIds.push(e.id);
+      else seen.add(ref);
+    }
+    if (duplicateIds.length === 0) return;
+    for (const id of duplicateIds) {
+      deleteExpense(id);
+    }
+    refresh();
+  }, [data.expenses, refresh]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return data.expenses
@@ -190,10 +267,15 @@ export function ExpenseListPanel() {
       .sort((a, b) => b.date.localeCompare(a.date) || expenseInvoiceNo(b).localeCompare(expenseInvoiceNo(a)));
   }, [data.expenses, appliedFilters, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+  const tableRows = useMemo(
+    () => filtered.filter((e) => !isChargeExpense(e) && !isPendingChargeExpense(e)),
+    [filtered]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(tableRows.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
-  const paged = paginateSlice(filtered, safePage, rowsPerPage);
-  const totalAmount = filtered.reduce((s, e) => s + e.amount, 0);
+  const paged = paginateSlice(tableRows, safePage, rowsPerPage);
+  const totalAmount = tableRows.reduce((s, e) => s + e.amount, 0);
 
   const applyFilters = () => {
     setAppliedFilters(draftFilters);
@@ -232,7 +314,6 @@ export function ExpenseListPanel() {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-      {/* Inline filters */}
       <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-3 py-2.5 sm:px-4">
         <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
           <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -355,7 +436,7 @@ export function ExpenseListPanel() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-3 py-3 sm:px-4">
         <p className="text-sm text-slate-500">
-          <span className="font-bold text-slate-800">{filtered.length}</span> entries
+          <span className="font-bold text-slate-800">{tableRows.length}</span> entries
           <span className="mx-1.5 text-slate-300">·</span>
           <span className="font-bold text-slate-800">{formatBdtDecimal(totalAmount)}</span>
         </p>
@@ -392,7 +473,7 @@ export function ExpenseListPanel() {
 
           <button
             type="button"
-            onClick={() => exportExpensesCsv(filtered)}
+            onClick={() => exportExpensesCsv(tableRows)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
             title="Download CSV"
           >
@@ -416,7 +497,9 @@ export function ExpenseListPanel() {
               </tr>
             </thead>
             <tbody>
-              {paged.map((e, idx) => (
+              {paged.map((e, idx) => {
+                const category = expenseCategoryLabel(e);
+                return (
                 <tr
                   key={e.id}
                   className={clsx(
@@ -424,24 +507,37 @@ export function ExpenseListPanel() {
                     idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
                   )}
                 >
-                  <td className={TD}>
+                  <td className={TD_NOWRAP}>
                     <button
                       type="button"
                       className="font-semibold text-[#2563eb] hover:underline"
                       title={expenseInvoiceNo(e)}
                     >
-                      {expenseInvoiceNo(e)}
+                      {expenseDisplayInvoiceNo(e)}
                     </button>
                   </td>
-                  <td className={TD}>{e.date}</td>
-                  <td className={TD}>{e.time}</td>
-                  <td className={clsx(TD, "max-w-[240px] whitespace-normal")}>
-                    <p className="font-medium text-slate-800">{e.title}</p>
-                    {e.vendor && <p className="text-xs text-slate-500">{e.vendor}</p>}
+                  <td className={TD_NOWRAP}>{e.date}</td>
+                  <td className={TD_NOWRAP}>{e.time}</td>
+                  <td className={clsx(TD, "max-w-[220px] min-w-[160px]")}>
+                    <p className="truncate font-medium text-slate-800" title={category.main}>
+                      {category.main}
+                    </p>
+                    {category.sub && (
+                      <p className="truncate text-xs text-slate-500" title={category.sub}>
+                        {category.sub}
+                      </p>
+                    )}
                   </td>
-                  <td className={TD}>{getChartAssetLabelForAccount(e.accountId)}</td>
-                  <td className={clsx(TD, "font-bold text-slate-900")}>{formatBdtDecimal(e.amount)}</td>
-                  <td className={TD}>
+                  <td className={clsx(TD, "min-w-[140px] max-w-[180px]")}>
+                    <p
+                      className="truncate font-medium text-slate-800"
+                      title={getChartAssetLabelForAccount(e.accountId)}
+                    >
+                      {getChartAssetLabelForAccount(e.accountId)}
+                    </p>
+                  </td>
+                  <td className={clsx(TD_NOWRAP, "font-bold text-slate-900")}>{formatBdtDecimal(e.amount)}</td>
+                  <td className={TD_NOWRAP}>
                     <span
                       className={clsx(
                         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
@@ -453,7 +549,7 @@ export function ExpenseListPanel() {
                       {EXPENSE_STATUS_LABELS[e.status]}
                     </span>
                   </td>
-                  <td className={clsx(TD, "relative text-center")}>
+                  <td className={clsx(TD_NOWRAP, "relative text-center")}>
                     <button
                       type="button"
                       onClick={() => setOpenMenu(openMenu === e.id ? null : e.id)}
@@ -484,7 +580,8 @@ export function ExpenseListPanel() {
                     )}
                   </td>
                 </tr>
-              ))}
+              );
+              })}
               {paged.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
@@ -496,11 +593,11 @@ export function ExpenseListPanel() {
           </table>
         </div>
 
-        {filtered.length > 0 && (
+        {tableRows.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-600">
             <span>
               Showing {(safePage - 1) * rowsPerPage + 1}–
-              {Math.min(safePage * rowsPerPage, filtered.length)} of {filtered.length}
+              {Math.min(safePage * rowsPerPage, tableRows.length)} of {tableRows.length}
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -525,6 +622,7 @@ export function ExpenseListPanel() {
             </div>
           </div>
         )}
+
     </div>
   );
 }

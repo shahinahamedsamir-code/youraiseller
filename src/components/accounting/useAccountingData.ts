@@ -7,6 +7,7 @@ import {
   loadAccountingData,
   type AccountingData,
 } from "@/lib/accounting-store";
+import { syncInvoicedOrderDeliveryCharges } from "@/lib/order-delivery-expense";
 
 export function useAccountingData() {
   const [data, setData] = useState<AccountingData>(() => loadAccountingData());
@@ -16,6 +17,7 @@ export function useAccountingData() {
   }, []);
 
   useEffect(() => {
+    syncInvoicedOrderDeliveryCharges();
     refresh();
     const onUpdate = () => refresh();
     window.addEventListener("youraiseller-data-updated", onUpdate);

@@ -6,6 +6,11 @@ import clsx from "clsx";
 import { Calendar, ChevronDown, Eye, Receipt, Search } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
+  DEFAULT_ROWS_PER_PAGE,
+  paginateSlice,
+  TablePagination,
+} from "@/components/ui/TablePagination";
+import {
   formatBdt,
   getAssetById,
   getLiabilityById,
@@ -39,6 +44,7 @@ const FILTER_TABS: { id: LedgerFilter; label: string }[] = [
   { id: "liability", label: "Liability" },
   { id: "asset", label: "Asset" },
   { id: "income", label: "Income" },
+  { id: "delivery_charge", label: "Delivery Charge" },
   { id: "expense", label: "Expense" },
 ];
 
@@ -51,6 +57,7 @@ function kindBadgeClass(kind: LedgerTransaction["kind"]): string {
   if (kind === "asset_purchase") return "bg-amber-100 text-amber-800";
   if (kind === "asset_sale") return "bg-lime-100 text-lime-800";
   if (kind === "expense") return "bg-rose-100 text-rose-700";
+  if (kind === "delivery_charge") return "bg-orange-100 text-orange-800";
   return "bg-teal-100 text-teal-700";
 }
 
@@ -107,6 +114,8 @@ export function TransactionListPanel() {
   const [pickDate, setPickDate] = useState("");
   const [dateOpen, setDateOpen] = useState(false);
   const [viewTxn, setViewTxn] = useState<LedgerTransaction | null>(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const liaParam = searchParams.get("lia");
   const astParam = searchParams.get("ast");
@@ -115,6 +124,7 @@ export function TransactionListPanel() {
   useEffect(() => {
     if (filterParam === "liability") setFilter("liability");
     if (filterParam === "asset") setFilter("asset");
+    if (filterParam === "delivery_charge") setFilter("delivery_charge");
     if (liaParam) setLiabilityFilter(liaParam);
     if (astParam) setAssetFilter(astParam);
   }, [filterParam, liaParam, astParam]);
@@ -145,6 +155,7 @@ export function TransactionListPanel() {
       liability: 0,
       asset: 0,
       income: 0,
+      delivery_charge: 0,
       expense: 0,
       liability_received: 0,
       liability_payment: 0,
@@ -190,6 +201,15 @@ export function TransactionListPanel() {
       );
     });
   }, [allRows, filter, userFilter, search, activeDateFrom, activeDateTo, liabilityFilter, assetFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, userFilter, search, dateMode, pickDate, liabilityFilter, assetFilter]);
+
+  const paged = useMemo(
+    () => paginateSlice(filtered, page, rowsPerPage),
+    [filtered, page, rowsPerPage]
+  );
 
   const hasActiveFilters =
     filter !== "all" ||
@@ -430,7 +450,7 @@ export function TransactionListPanel() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row, idx) => (
+              {paged.map((row, idx) => (
                 <tr
                   key={row.id}
                   className={clsx(
@@ -464,7 +484,13 @@ export function TransactionListPanel() {
                     {row.orderRef && (
                       <p className="text-xs font-medium text-blue-600">Order {row.orderRef}</p>
                     )}
-                    {row.subtitle && !row.customerName && (
+                    {(row.discountAmount ?? 0) > 0 && (
+                      <p className="text-xs font-semibold text-amber-700">
+                        Discount −{formatBdt(row.discountAmount!)} · Due cleared{" "}
+                        {formatBdt(row.amount + row.discountAmount!)}
+                      </p>
+                    )}
+                    {row.subtitle && !row.customerName && !(row.discountAmount ?? 0) && (
                       <p className="text-xs text-slate-500">{row.subtitle}</p>
                     )}
                   </td>
@@ -514,6 +540,15 @@ export function TransactionListPanel() {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          totalRows={filtered.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={setRowsPerPage}
+          variant="indigo"
+        />
       </div>
 
       <TransactionDetailModal

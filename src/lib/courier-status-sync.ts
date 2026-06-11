@@ -87,6 +87,19 @@ export function applyCourierDeliveryStatus(
 
   let statusChanged = false;
 
+  // If staff already marked an order as returned, do not let courier polling
+  // move it back to an in-progress state (e.g. partial/shipped).
+  if (prevStatus === "returned" && mapped && mapped !== "returned") {
+    return {
+      orderId,
+      ok: true,
+      message: deliveryStatus,
+      courierStatus: deliveryStatus,
+      panelStatus: prevStatus,
+      statusChanged: false,
+    };
+  }
+
   if (mapped && mapped !== prevStatus) {
     updateOrderStatus(orderId, mapped);
     statusChanged = true;

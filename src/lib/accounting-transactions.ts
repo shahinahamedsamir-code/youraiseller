@@ -20,6 +20,7 @@ import {
   TRANSFER_STATUS_LABELS,
   transferStatus,
 } from "./accounting-store";
+import { isDeliveryAndReturnChargeExpense } from "./order-delivery-expense";
 import { getOrder } from "./orders-store";
 
 export type LedgerTransactionKind =
@@ -27,6 +28,7 @@ export type LedgerTransactionKind =
   | "full_payment"
   | "income"
   | "expense"
+  | "delivery_charge"
   | "transfer"
   | "liability_received"
   | "liability_payment"
@@ -43,6 +45,8 @@ export type LedgerTransaction = {
   date: string;
   time?: string;
   amount: number;
+  /** Discount given on this collection (not cash — shown for order payments). */
+  discountAmount?: number;
   title: string;
   subtitle?: string;
   accountLabel: string;
@@ -73,6 +77,7 @@ export const LEDGER_KIND_LABELS: Record<LedgerTransactionKind, string> = {
   full_payment: "Full / Due Payment",
   income: "Income",
   expense: "Expense",
+  delivery_charge: "Delivery Charge",
   transfer: "Account Transfer",
   liability_received: "Liability Received",
   liability_payment: "Liability Payment",
@@ -120,6 +125,22 @@ function isLiabilityExpense(expense: AccountingExpense): boolean {
     Boolean(liabilityIdFromRef(expense.reference)) ||
     expense.title.toLowerCase().includes("liability payment")
   );
+}
+
+function isDeliveryChargeExpense(expense: AccountingExpense): boolean {
+  if (isAssetExpense(expense) || isLiabilityExpense(expense)) return false;
+  return isDeliveryAndReturnChargeExpense(expense);
+}
+
+function orderIdFromDeliveryChargeRef(ref?: string): string | null {
+  if (!ref) return null;
+  if (ref.endsWith("#delivery_charge")) {
+    return ref.replace("#delivery_charge", "").trim() || null;
+  }
+  if (ref.endsWith("#return_delivery_expense")) {
+    return ref.replace("#return_delivery_expense", "").trim() || null;
+  }
+  return null;
 }
 
 function assetSaleTxnNumber(data: AccountingData, incomeId: string): string | undefined {
@@ -179,6 +200,29 @@ function incomeFromLedger(income: AccountingIncome, data: AccountingData): Ledge
     methodLabel = order.collectedPaymentMethodLabel ?? account?.name;
   }
 
+  const deliveryDiscount =
+    kind === "full_payment"
+      ? Math.max(
+          0,
+          income.discount ??
+            order?.paymentCollectionDiscount ??
+            invoice?.payments?.find((p) => p.type === "delivery" && p.incomeId === income.id)
+              ?.discount ??
+            0
+        )
+      : 0;
+
+  let subtitle =
+    kind === "asset_sale" && asset
+      ? getChartFixedAssetLabel(asset)
+      : kind === "liability_received" && liability
+        ? getChartLiabilityLabel(liability)
+        : income.note;
+  if (deliveryDiscount > 0) {
+    const discNote = `Discount −${deliveryDiscount.toLocaleString("en-BD")} · Due cleared ${(income.amount + deliveryDiscount).toLocaleString("en-BD")}`;
+    subtitle = subtitle ? `${subtitle} · ${discNote}` : discNote;
+  }
+
   return {
     id: `income:${income.id}`,
     txnNumber: saleTxn ?? income.txnNumber ?? income.id,
@@ -187,13 +231,9 @@ function incomeFromLedger(income: AccountingIncome, data: AccountingData): Ledge
     date: income.date,
     time: income.time,
     amount: income.amount,
+    discountAmount: deliveryDiscount > 0 ? deliveryDiscount : undefined,
     title: income.title,
-    subtitle:
-      kind === "asset_sale" && asset
-        ? getChartFixedAssetLabel(asset)
-        : kind === "liability_received" && liability
-          ? getChartLiabilityLabel(liability)
-          : income.note,
+    subtitle,
     accountLabel: account?.name ?? "—",
     counterpartyLabel:
       kind === "asset_sale" && asset
@@ -228,13 +268,18 @@ function expenseToLedger(expense: AccountingExpense, data: AccountingData): Ledg
     ? "asset_purchase"
     : isLiabilityExpense(expense)
       ? "liability_payment"
-      : "expense";
+      : isDeliveryChargeExpense(expense)
+        ? "delivery_charge"
+        : "expense";
   const liabilityId = liabilityIdFromRef(expense.reference);
   const liability = liabilityId ? getLiabilityById(liabilityId) : undefined;
   const assetId = assetIdFromRef(expense.reference);
   const asset = assetId ? getAssetById(assetId) : undefined;
   const paymentTxn = liabilityPaymentTxnNumber(data, expense.id);
   const purchaseTxn = asset?.expenseId === expense.id ? expense.refNumber : undefined;
+  const deliveryOrderId = kind === "delivery_charge" ? orderIdFromDeliveryChargeRef(expense.reference) : null;
+  const deliveryOrder = deliveryOrderId ? getOrder(deliveryOrderId) : undefined;
+  const deliveryInvoice = deliveryOrderId ? getInvoiceByOrderId(deliveryOrderId) : undefined;
 
   return {
     id: `expense:${expense.id}`,
@@ -259,6 +304,10 @@ function expenseToLedger(expense: AccountingExpense, data: AccountingData): Ledg
           ? liability.name
           : expense.vendor ?? expense.expenseTo,
     methodLabel: account?.name,
+    orderRef: deliveryOrder?.invoiceNumber ?? deliveryOrder?.id ?? deliveryOrderId ?? undefined,
+    invoiceRef: deliveryInvoice?.invoiceNumber,
+    customerName: deliveryOrder?.customerName,
+    customerPhone: deliveryOrder?.phone,
     reference: expense.reference,
     note: expense.note,
     status:
@@ -266,7 +315,9 @@ function expenseToLedger(expense: AccountingExpense, data: AccountingData): Ledg
         ? "Asset"
         : kind === "liability_payment"
           ? "Liability"
-          : EXPENSE_STATUS_LABELS[expense.status],
+          : kind === "delivery_charge"
+            ? EXPENSE_STATUS_LABELS[expense.status]
+            : EXPENSE_STATUS_LABELS[expense.status],
     ...actorFromFields(expense),
     sourceType: "expense",
     sourceId: expense.id,
@@ -386,6 +437,10 @@ export function ledgerMatchesDateRange(
 
 /** Newest transactions first (higher TXN no. / latest created on top). */
 export function compareLedgerTransactions(a: LedgerTransaction, b: LedgerTransaction): number {
+  const aDate = parseLedgerDateTime(a.date, a.time);
+  const bDate = parseLedgerDateTime(b.date, b.time);
+  if (aDate !== bDate) return bDate - aDate;
+
   const aKey = parseTxnSortKey(a.txnNumber);
   const bKey = parseTxnSortKey(b.txnNumber);
   if (aKey.year !== bKey.year) return bKey.year - aKey.year;
@@ -395,7 +450,7 @@ export function compareLedgerTransactions(a: LedgerTransaction, b: LedgerTransac
   const bCreated = parseRecordCreatedAt(b.sourceId);
   if (aCreated !== bCreated) return bCreated - aCreated;
 
-  return parseLedgerDateTime(b.date, b.time) - parseLedgerDateTime(a.date, a.time);
+  return b.sourceId.localeCompare(a.sourceId);
 }
 
 export function buildLedgerTransactions(data: AccountingData): LedgerTransaction[] {
@@ -462,10 +517,17 @@ export function ledgerKindSummary(kind: LedgerTransactionKind, txn: LedgerTransa
     return `Customer ${txn.customerName} paid advance via ${txn.methodLabel ?? txn.accountLabel}`;
   }
   if (kind === "full_payment" && txn.customerName) {
-    return `Customer ${txn.customerName} paid due/full via ${txn.methodLabel ?? txn.accountLabel}`;
+    const disc =
+      (txn.discountAmount ?? 0) > 0
+        ? ` · Discount ৳${txn.discountAmount!.toLocaleString("en-BD")} · Due cleared ৳${(txn.amount + txn.discountAmount!).toLocaleString("en-BD")}`
+        : "";
+    return `Customer ${txn.customerName} paid ৳${txn.amount.toLocaleString("en-BD")} via ${txn.methodLabel ?? txn.accountLabel}${disc}`;
   }
   if (kind === "transfer") {
     return `Moved ${txn.amount} between accounts`;
+  }
+  if (kind === "delivery_charge") {
+    return `Delivery charge paid from ${txn.accountLabel}${txn.orderRef ? ` · Order ${txn.orderRef}` : ""}`;
   }
   if (kind === "expense") {
     return `Paid from ${txn.accountLabel}${txn.counterpartyLabel ? ` · ${txn.counterpartyLabel}` : ""}`;

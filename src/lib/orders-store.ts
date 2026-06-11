@@ -165,6 +165,15 @@ function migrateOrder(o: Order): Order {
   ) {
     migrated.paymentCollectionStatus = migrated.paymentCollectionStatus ?? "pending";
   }
+  if (
+    migrated.status === "returned" &&
+    (migrated.shippingCharge ?? 0) > 0 &&
+    !migrated.returnDeliveryExpenseId &&
+    migrated.returnDeliveryExpenseStatus !== "recorded" &&
+    migrated.returnDeliveryExpenseStatus !== "declined"
+  ) {
+    migrated.returnDeliveryExpenseStatus = migrated.returnDeliveryExpenseStatus ?? "pending";
+  }
   return migrated;
 }
 
@@ -358,6 +367,16 @@ export type Order = {
   collectedViaAccountId?: string;
   collectedPaymentMethodLabel?: string;
   accountingIncomeId?: string;
+  /** Returned order delivery charge expense awaiting accounting approval */
+  returnDeliveryExpenseStatus?: "pending" | "recorded" | "declined";
+  returnDeliveryExpenseAt?: string;
+  returnDeliveryExpenseAmount?: number;
+  returnDeliveryExpenseAccountId?: string;
+  returnDeliveryExpenseAccountLabel?: string;
+  returnDeliveryExpenseId?: string;
+  /** Invoice order delivery charge (courier) awaiting expense approval */
+  deliveryChargeExpenseStatus?: "pending" | "approved" | "declined";
+  deliveryChargeExpenseId?: string;
   accountingInvoiceId?: string;
   activityLog?: OrderActivity[];
 };
@@ -1179,6 +1198,23 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
     !next.accountingIncomeId
   ) {
     next.paymentCollectionStatus = next.paymentCollectionStatus ?? "pending";
+  }
+  if (
+    next.status === "returned" &&
+    (next.shippingCharge ?? 0) > 0 &&
+    next.returnDeliveryExpenseStatus !== "recorded" &&
+    next.returnDeliveryExpenseStatus !== "declined" &&
+    !next.returnDeliveryExpenseId
+  ) {
+    next.returnDeliveryExpenseStatus = "pending";
+  }
+  if (
+    next.status !== "returned" &&
+    (next.returnDeliveryExpenseStatus === "pending" ||
+      next.returnDeliveryExpenseStatus === "declined") &&
+    !next.returnDeliveryExpenseId
+  ) {
+    next.returnDeliveryExpenseStatus = undefined;
   }
 
   data.orders[idx] = next;

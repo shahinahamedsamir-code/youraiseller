@@ -36,7 +36,7 @@ export function TransactionDetailModal({ txn, open, onClose }: Props) {
     { label: "Transaction No.", value: txn.txnNumber },
     { label: "Type", value: LEDGER_KIND_LABELS[txn.kind] },
     { label: "Date", value: txn.time ? `${txn.date} · ${txn.time}` : txn.date },
-    { label: "Amount", value: formatBdt(txn.amount) },
+    { label: "Received (cash)", value: formatBdt(txn.amount) },
     { label: "Account", value: txn.accountLabel },
     {
       label: "Recorded by",
@@ -44,6 +44,13 @@ export function TransactionDetailModal({ txn, open, onClose }: Props) {
     },
   ];
 
+  if ((txn.discountAmount ?? 0) > 0) {
+    rows.push({ label: "Discount", value: `−${formatBdt(txn.discountAmount!)}` });
+    rows.push({
+      label: "Due cleared",
+      value: formatBdt(txn.amount + txn.discountAmount!),
+    });
+  }
   if (txn.counterpartyLabel) rows.push({ label: "Party", value: txn.counterpartyLabel });
   if (txn.customerName) rows.push({ label: "Customer", value: txn.customerName });
   if (txn.customerPhone) rows.push({ label: "Phone", value: txn.customerPhone });

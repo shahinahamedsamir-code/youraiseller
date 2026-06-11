@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { refreshCurrentSessionUser } from "@/lib/dev-users";
+import { syncInvoicedOrderDeliveryCharges } from "@/lib/order-delivery-expense";
 import { syncSellerDataFromServer } from "@/lib/seller-sync";
 import { BrandLoadingScreen } from "@/components/brand/BrandLoadingScreen";
 
@@ -29,8 +30,10 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
       // members on any device see the same data as the owner.
       try {
         await syncSellerDataFromServer();
+        syncInvoicedOrderDeliveryCharges();
       } catch {
         /* offline — fall back to local data */
+        syncInvoicedOrderDeliveryCharges();
       }
       if (cancelled) return;
       setState("ok");

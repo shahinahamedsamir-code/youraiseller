@@ -14,7 +14,7 @@ export function Breadcrumbs() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-4 flex flex-wrap items-center gap-1 text-sm text-slate-500"
+      className="mb-1.5 flex flex-wrap items-center gap-1 text-xs text-slate-500"
     >
       <Link
         href="/dashboard"

@@ -120,6 +120,7 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "acct_liabilities", label: "Liabilities", description: "Loans & payables", category: "operations", parent: "accounting" },
   { key: "acct_invoice", label: "Invoice", description: "Sales & purchase invoices", category: "operations", parent: "accounting" },
   { key: "acct_payment", label: "Payment", description: "Received & paid transactions", category: "operations", parent: "accounting" },
+  { key: "acct_transactions", label: "Transaction", description: "Ledger & transaction history", category: "operations", parent: "accounting" },
   { key: "tasks", label: "Task & Follow-up", description: "Team tasks", category: "operations" },
   { key: "hrm", label: "HRM", description: "Employee management", category: "operations" },
   { key: "automation", label: "Automation", description: "Workflow automations", category: "operations" },

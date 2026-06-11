@@ -7,15 +7,22 @@ import {
   formatBdt,
   getInvoiceById,
   INVOICE_STATUS_LABELS,
+  invoiceDeliveryChargeDeducted,
   invoiceDueBalance,
+  invoiceNetCollected,
   type AccountingInvoice,
 } from "@/lib/accounting-store";
 import { canPayInvoiceDue } from "@/lib/order-payment";
+import {
+  getOrderPaymentAccountForDeliveryCharge,
+  updateInvoiceDeliveryCharge,
+} from "@/lib/order-delivery-expense";
 import {
   invoicePaymentSummary,
   openSmartInvoicePrint,
   renderSmartInvoicePreviewHtml,
 } from "@/lib/order-invoice";
+import { getOrder } from "@/lib/orders-store";
 import { PayInvoiceDueModal } from "./PayInvoiceDueModal";
 
 type Props = {
@@ -28,6 +35,9 @@ type Props = {
 export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) {
   const [liveInvoice, setLiveInvoice] = useState<AccountingInvoice | null>(invoice);
   const [payDueOpen, setPayDueOpen] = useState(false);
+  const [deliveryInput, setDeliveryInput] = useState("");
+  const [deliverySaving, setDeliverySaving] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
 
   useEffect(() => {
     if (invoice) {
@@ -36,6 +46,16 @@ export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) 
       setLiveInvoice(null);
     }
   }, [invoice, open]);
+
+  useEffect(() => {
+    if (!open || !invoice) return;
+    const fresh = getInvoiceById(invoice.id) ?? invoice;
+    const deducted = invoiceDeliveryChargeDeducted(fresh);
+    const order = getOrder(fresh.orderId);
+    const fallback = order?.shippingCharge ?? 0;
+    setDeliveryInput(String(deducted > 0 ? deducted : fallback > 0 ? fallback : ""));
+    setDeliveryError("");
+  }, [invoice?.id, open, invoice]);
 
   const previewHtml = useMemo(() => {
     if (!liveInvoice) return null;
@@ -60,6 +80,34 @@ export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) 
   const due = invoiceDueBalance(liveInvoice);
   const canPay = canPayInvoiceDue(liveInvoice.id);
   const payments = liveInvoice.payments ?? [];
+  const paymentAccount = getOrderPaymentAccountForDeliveryCharge(liveInvoice.orderId);
+  const parsedDelivery = Number(deliveryInput);
+  const deliveryAmount = Number.isFinite(parsedDelivery) ? Math.max(0, parsedDelivery) : 0;
+  const previewNet = Math.max(0, liveInvoice.paidAmount - deliveryAmount);
+  const savedDelivery = invoiceDeliveryChargeDeducted(liveInvoice);
+  const deliveryDirty =
+    deliveryInput.trim() !== "" &&
+    Math.abs(deliveryAmount - savedDelivery) > 0.001;
+
+  const saveDeliveryCharge = () => {
+    if (!Number.isFinite(parsedDelivery) || parsedDelivery < 0) {
+      setDeliveryError("Enter a valid delivery charge.");
+      return;
+    }
+    setDeliverySaving(true);
+    setDeliveryError("");
+    try {
+      const result = updateInvoiceDeliveryCharge(liveInvoice.id, parsedDelivery);
+      if (!result.ok) {
+        setDeliveryError(result.message);
+        return;
+      }
+      refreshInvoice();
+      window.dispatchEvent(new Event("youraiseller-data-updated"));
+    } finally {
+      setDeliverySaving(false);
+    }
+  };
 
   const handlePrint = () => {
     openSmartInvoicePrint(liveInvoice.orderId);
@@ -165,8 +213,14 @@ export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) 
                 <p className="font-bold text-slate-900">{formatBdt(liveInvoice.amount)}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500">Collected</p>
-                <p className="font-bold text-emerald-700">{formatBdt(liveInvoice.paidAmount)}</p>
+                <p className="text-xs text-slate-500">Gross collected</p>
+                <p className="font-bold text-slate-800">{formatBdt(liveInvoice.paidAmount)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Collected (net)</p>
+                <p className="font-bold text-emerald-700">
+                  {formatBdt(deliveryDirty ? previewNet : invoiceNetCollected(liveInvoice))}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">Due remaining</p>
@@ -174,6 +228,53 @@ export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) 
                   {formatBdt(due)}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50/80 p-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="min-w-[140px] flex-1">
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-orange-800">
+                    Delivery charge
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    max={liveInvoice.paidAmount}
+                    value={deliveryInput}
+                    onChange={(e) => {
+                      setDeliveryInput(e.target.value);
+                      setDeliveryError("");
+                    }}
+                    className="h-9 w-full rounded-lg border border-orange-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+                <div className="min-w-[160px] flex-1 text-xs text-orange-900">
+                  <p className="font-bold uppercase tracking-wide text-orange-700">Minus from</p>
+                  <p className="mt-1 font-semibold text-slate-800">
+                    {paymentAccount?.accountName ?? "Payment account not found"}
+                  </p>
+                  <p className="text-[11px] text-orange-800/80">
+                    Order payment method account
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={saveDeliveryCharge}
+                  disabled={deliverySaving || !deliveryDirty}
+                  className="h-9 shrink-0 rounded-lg bg-orange-600 px-4 text-xs font-bold text-white hover:bg-orange-700 disabled:opacity-50"
+                >
+                  {deliverySaving ? "Saving..." : "Save delivery"}
+                </button>
+              </div>
+              {deliveryError ? (
+                <p className="mt-2 text-xs font-medium text-rose-700">{deliveryError}</p>
+              ) : (
+                <p className="mt-2 text-[11px] text-orange-800">
+                  Gross {formatBdt(liveInvoice.paidAmount)} − Delivery{" "}
+                  {formatBdt(deliveryAmount)} = Net {formatBdt(previewNet)}
+                </p>
+              )}
             </div>
 
             {payments.length > 0 && (

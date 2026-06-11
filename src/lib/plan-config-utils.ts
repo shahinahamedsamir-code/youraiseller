@@ -46,7 +46,6 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
       founder_dashboard: false,
       hrm: false,
       automation: false,
-      accounting: false,
       additional_sites: false,
     }),
   },

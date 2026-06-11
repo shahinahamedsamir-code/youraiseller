@@ -1,4 +1,9 @@
-import { FEATURE_LIST, normalizeStoredFeatures, type FeatureKey } from "./features";
+import {
+  FEATURE_LIST,
+  getChildFeatures,
+  normalizeStoredFeatures,
+  type FeatureKey,
+} from "./features";
 import {
   saveStoredFeatures,
   SESSION_FEATURES_KEY,
@@ -179,6 +184,32 @@ function normalizeFeatures(raw: unknown): Record<FeatureKey, boolean> {
   return normalizeStoredFeatures(raw);
 }
 
+/** Plan entitlements + migrate legacy presets that hid Accounting on Growth. */
+function resolveUserFeatures(
+  plan: DevUser["plan"],
+  raw: unknown
+): Record<FeatureKey, boolean> {
+  const planFeats = getPlanFeatures(plan);
+  let feats = raw ? normalizeFeatures(raw) : { ...planFeats };
+
+  if (plan === "pro" || plan === "enterprise") {
+    feats = { ...feats, accounting: true };
+    for (const child of getChildFeatures("accounting")) {
+      feats[child.key] = true;
+    }
+  }
+
+  for (const f of FEATURE_LIST) {
+    if (!planFeats[f.key]) feats[f.key] = false;
+  }
+
+  return feats;
+}
+
+function featuresChanged(a: Record<FeatureKey, boolean>, b: Record<FeatureKey, boolean>): boolean {
+  return FEATURE_LIST.some((f) => a[f.key] !== b[f.key]);
+}
+
 function normalizeAddress(raw: unknown): CompanyAddress | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const a = raw as CompanyAddress;
@@ -246,7 +277,7 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
     authProvider,
     plan,
     status: normalizeStatus(u.status, authProvider),
-    features: u.features ? normalizeFeatures(u.features) : getPlanFeatures(plan),
+    features: resolveUserFeatures(plan, u.features),
     createdAt: u.createdAt ?? "—",
     approvedAt: u.approvedAt,
     expiredAt: u.expiredAt,
@@ -272,7 +303,20 @@ export function loadDevUsers(): DevUser[] {
     const users = dedupeUsersByEmail(
       parsed.map((u) => migrateUser(u as DevUser))
     );
-    return withAutoCustomerIds(users, true);
+    const needsSave = parsed.some((row) => {
+      const before = row.features ? normalizeFeatures(row.features) : null;
+      const after = migrateUser(row as DevUser).features;
+      return !before || featuresChanged(before, after);
+    });
+    const withIds = withAutoCustomerIds(users, needsSave);
+    if (needsSave) {
+      const sessionId = localStorage.getItem(SESSION_USER_KEY);
+      const sessionUser = sessionId
+        ? withIds.find((u) => u.id === sessionId)
+        : undefined;
+      if (sessionUser) applyUserToSession(sessionUser);
+    }
+    return withIds;
   } catch {
     return DEFAULT_USERS;
   }

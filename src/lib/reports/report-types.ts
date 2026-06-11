@@ -37,12 +37,9 @@ export type DateRange = "all" | "today" | "week" | "month";
 export const REPORT_GROUPS: ReportGroup[] = [
   {
     id: "profit-sales",
-    label: "Profit & Sales",
-    description: "Revenue trends, order drill-down, and payment collection",
-    tabs: [
-      { id: "sales", label: "Sales" },
-      { id: "payment", label: "Payment" },
-    ],
+    label: "Profit & Sales (Delivery Orders)",
+    description: "Sales summary and profit chart",
+    tabs: [{ id: "sales", label: "Sales" }],
   },
   {
     id: "order-report",

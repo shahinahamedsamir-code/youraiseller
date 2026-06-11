@@ -25,6 +25,8 @@ export type AccountingAccount = {
   note?: string;
   /** Auto-matched when approving advance or delivery payments */
   paymentMethodKey?: PaymentMethodKey;
+  /** Default "Received In" on payment approval modals */
+  defaultPaymentReceive?: boolean;
   createdAt: string;
 };
 
@@ -191,6 +193,8 @@ export type AccountingIncome = {
   date: string;
   time?: string;
   amount: number;
+  /** Collection discount (cash not received; reduces customer due). */
+  discount?: number;
   source: IncomeSource;
   accountId: string;
   title: string;
@@ -235,6 +239,9 @@ export type AccountingInvoice = {
   advanceIncomeId?: string;
   deliveryIncomeId?: string;
   incomeId?: string;
+  /** Approved courier/delivery charge deducted from this invoice */
+  deliveryChargeAmount?: number;
+  deliveryChargeExpenseId?: string;
   createdAt: string;
 };
 
@@ -253,6 +260,15 @@ export function invoiceDueBalance(invoice: AccountingInvoice): number {
     return Math.max(0, invoice.dueAmount);
   }
   return Math.max(0, invoice.amount - invoice.paidAmount);
+}
+
+export function invoiceDeliveryChargeDeducted(invoice: AccountingInvoice): number {
+  return Math.max(0, invoice.deliveryChargeAmount ?? 0);
+}
+
+/** Collected cash minus approved delivery/courier charge. */
+export function invoiceNetCollected(invoice: AccountingInvoice): number {
+  return Math.max(0, invoice.paidAmount - invoiceDeliveryChargeDeducted(invoice));
 }
 
 export type ExpenseCategory =
@@ -361,7 +377,7 @@ export type AccountingData = {
   accountingSchemaVersion?: number;
 };
 
-const ACCOUNTING_SCHEMA_VERSION = 5;
+const ACCOUNTING_SCHEMA_VERSION = 6;
 
 export const CHART_GROUP_LABELS: Record<ChartAccountGroup, string> = {
   expense: "Expense",
@@ -649,8 +665,11 @@ function backfillTxnNumbers(raw: AccountingData): { data: AccountingData; change
 
 function normalizeExpense(expense: AccountingExpense, index: number): AccountingExpense {
   const year = new Date().getFullYear();
+  // Keep every expense as positive outflow; negative rows invert balances.
+  const amount = Math.abs(Number(expense.amount) || 0);
   return {
     ...expense,
+    amount,
     refNumber: expense.refNumber ?? `DV-${year}-${String(677 + index).padStart(8, "0")}`,
     time: expense.time ?? "09:44 PM",
     status: expense.status ?? "approved",
@@ -2103,6 +2122,30 @@ export function updateAccount(
   saveData(data);
 }
 
+export function getDefaultPaymentReceiveAccountId(): string | undefined {
+  return loadAccountingData().accounts.find((a) => a.active && a.defaultPaymentReceive)?.id;
+}
+
+/** Toggle default received-in account (only one active at a time). */
+export function setDefaultPaymentReceiveAccount(accountId: string): void {
+  const data = loadAccountingData();
+  const target = data.accounts.find((a) => a.id === accountId);
+  if (!target) return;
+  const makeDefault = !target.defaultPaymentReceive;
+  let changed = false;
+  for (const account of data.accounts) {
+    const next = makeDefault && account.id === accountId;
+    if (Boolean(account.defaultPaymentReceive) !== next) {
+      account.defaultPaymentReceive = next || undefined;
+      changed = true;
+    } else if (!makeDefault && account.defaultPaymentReceive) {
+      account.defaultPaymentReceive = undefined;
+      changed = true;
+    }
+  }
+  if (changed) saveData(data);
+}
+
 export function deleteAccount(id: string): AccountDeleteResult {
   const check = canDeleteAccount(id);
   if (!check.ok) return check;
@@ -2762,6 +2805,24 @@ export function addExpense(
   data.expenses.push(entry);
   saveData(data);
   return entry;
+}
+
+export function updateExpense(
+  id: string,
+  patch: Partial<
+    Pick<
+      AccountingExpense,
+      "status" | "accountId" | "amount" | "note" | "title" | "expenseTo" | "date"
+    >
+  >
+): AccountingExpense | undefined {
+  const data = loadAccountingData();
+  const idx = data.expenses.findIndex((e) => e.id === id);
+  if (idx < 0) return undefined;
+  const next = normalizeExpense({ ...data.expenses[idx], ...patch }, idx);
+  data.expenses[idx] = next;
+  saveData(data);
+  return next;
 }
 
 export function deleteExpense(id: string) {

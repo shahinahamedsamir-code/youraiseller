@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, Circle, X } from "lucide-react";
 import clsx from "clsx";
+import { updateInvoiceDeliveryCharge } from "@/lib/order-delivery-expense";
 import {
-  defaultAccountIdForPaymentItem,
   advanceAmountPending,
   orderAmountDue,
   ORDER_PAYMENT_METHOD_LABELS,
@@ -14,42 +14,72 @@ import {
 } from "@/lib/order-payment";
 import { formatAdvancePaymentSummary } from "@/lib/orders-store";
 import { useAccountingData } from "./useAccountingData";
-import { inputCls, labelCls, selectCls } from "./accounting-ui";
-import { formatBdt } from "@/lib/accounting-store";
+import { inputCls, labelCls } from "./accounting-ui";
+import {
+  formatBdt,
+  getDefaultPaymentReceiveAccountId,
+  setDefaultPaymentReceiveAccount,
+  type AccountType,
+} from "@/lib/accounting-store";
 
 type Props = {
   item: PaymentApprovalItem | null;
   open: boolean;
   onClose: () => void;
-  onSaved: (result?: { invoiceId: string }) => void;
+  onSaved: (result?: { invoiceId?: string }) => void;
 };
 
 function calcReceived(due: number, discount: number): number {
   return Math.max(0, due - Math.max(0, discount));
 }
 
+function accountTypeSuffix(type: AccountType): string {
+  if (type === "cash") return "Cash";
+  if (type === "bank") return "Bank";
+  return "Wallet";
+}
+
 export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props) {
-  const { data } = useAccountingData();
+  const { data, refresh } = useAccountingData();
   const accounts = useMemo(() => data.accounts.filter((a) => a.active), [data.accounts]);
 
   const [accountId, setAccountId] = useState("");
   const [discount, setDiscount] = useState("0");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [deliveryCharge, setDeliveryCharge] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const order = item?.order;
   const isAdvance = item?.type === "advance";
+  const isReturnExpense = item?.type === "return_delivery_expense";
+  const isDelivery = item?.type === "delivery";
 
   useEffect(() => {
     if (!open || !item || !order) return;
-    const due = isAdvance ? advanceAmountPending(order) : orderAmountDue(order);
-    setAccountId(defaultAccountIdForPaymentItem(item) ?? accounts[0]?.id ?? "");
+    const due = isAdvance
+      ? advanceAmountPending(order)
+      : isReturnExpense
+        ? order.shippingCharge
+        : orderAmountDue(order);
+    const defaultAccountId = getDefaultPaymentReceiveAccountId();
+    setAccountId(
+      defaultAccountId && accounts.some((a) => a.id === defaultAccountId)
+        ? defaultAccountId
+        : ""
+    );
     setDiscount("0");
     setAmount(String(due));
+    setDeliveryCharge(String(order.shippingCharge ?? 0));
     const advanceNote = formatAdvancePaymentSummary(order.advancePayment);
-    setNote(isAdvance && advanceNote ? advanceNote : "");
+    setNote(
+      isAdvance && advanceNote
+        ? advanceNote
+        : isReturnExpense
+          ? "Returned order delivery charge expense"
+          : ""
+    );
     setError("");
     setSaving(false);
     document.body.style.overflow = "hidden";
@@ -61,14 +91,33 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
       document.body.style.overflow = "";
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, item, order, isAdvance, onClose, accounts]);
+  }, [open, item, order, isAdvance, isReturnExpense, onClose, accounts]);
 
   if (!open || !item || !order) return null;
 
-  const due = isAdvance ? advanceAmountPending(order) : orderAmountDue(order);
+  const due = isAdvance
+    ? advanceAmountPending(order)
+    : isReturnExpense
+      ? order.shippingCharge
+      : orderAmountDue(order);
   const discountNum = Math.max(0, Number(discount) || 0);
   const amountNum = Number(amount) || 0;
-  const receivedAfterDiscount = calcReceived(due, discountNum);
+  const deliveryNum = Math.max(0, Number(deliveryCharge) || 0);
+  const advancePaid = order.advancePaymentCollectedAmount ?? order.advance ?? 0;
+  const grossCollected = advancePaid + amountNum;
+  const netInAccount = Math.max(0, grossCollected - deliveryNum);
+  const selectedAccountName = accounts.find((a) => a.id === accountId)?.name;
+
+  const handleToggleDefault = (id: string) => {
+    const wasDefault = accounts.find((a) => a.id === id)?.defaultPaymentReceive;
+    setDefaultPaymentReceiveAccount(id);
+    refresh();
+    if (!wasDefault) {
+      setAccountId(id);
+    } else if (accountId === id) {
+      setAccountId("");
+    }
+  };
 
   const handleDiscountChange = (value: string) => {
     setDiscount(value);
@@ -79,19 +128,36 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!accountId.trim()) {
+      setError("Select Payment is required.");
+      return;
+    }
+    if (isDelivery && deliveryNum > grossCollected + 0.001) {
+      setError("Delivery charge cannot exceed total collected (advance + received).");
+      return;
+    }
     setSaving(true);
     const result = recordPaymentApproval(item, {
       accountId,
       amount: amountNum,
-      discount: isAdvance ? 0 : discountNum,
+      discount: isAdvance || isReturnExpense ? 0 : discountNum,
       note,
     });
-    setSaving(false);
     if (!result.ok) {
+      setSaving(false);
       setError(result.message);
       return;
     }
-    onSaved({ invoiceId: result.invoiceId });
+    if (isDelivery && result.invoiceId) {
+      const dcResult = updateInvoiceDeliveryCharge(result.invoiceId, deliveryNum);
+      if (!dcResult.ok) {
+        setSaving(false);
+        setError(dcResult.message);
+        return;
+      }
+    }
+    setSaving(false);
+    onSaved({ invoiceId: result.invoiceId || undefined });
     onClose();
   };
 
@@ -111,9 +177,9 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
         className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-base font-bold text-slate-900">
               Approve {PAYMENT_TYPE_LABELS[item.type]}
             </h2>
             <p className="text-xs text-slate-500">
@@ -129,8 +195,8 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 p-5">
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-sm">
+        <form onSubmit={handleSubmit} className="space-y-3 p-4">
+          <div className="rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm">
             {isAdvance ? (
               <>
                 <div className="flex justify-between gap-2">
@@ -147,6 +213,24 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
                   </p>
                 )}
               </>
+            ) : isReturnExpense ? (
+              <>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Order status</span>
+                  <span className="font-bold text-rose-700">Returned</span>
+                </div>
+                <div className="mt-1 flex justify-between gap-2">
+                  <span className="text-slate-500">Order total</span>
+                  <span className="font-semibold text-slate-700">{formatBdt(order.total)}</span>
+                </div>
+                <div className="mt-2 flex justify-between gap-2 border-t border-slate-200/80 pt-2">
+                  <span className="font-semibold text-slate-700">Delivery charge to expense</span>
+                  <span className="font-extrabold text-rose-700">{formatBdt(due)}</span>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Approve করলে এটা Expense-এ save হবে।
+                </p>
+              </>
             ) : (
               <>
                 <div className="flex justify-between gap-2">
@@ -161,21 +245,26 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
                     </span>
                   </div>
                 )}
-                <div className="mt-2 flex justify-between gap-2 border-t border-slate-200/80 pt-2">
+                <div className="mt-1.5 flex justify-between gap-2 border-t border-slate-200/80 pt-1.5">
                   <span className="font-semibold text-slate-700">Due on delivery</span>
                   <span className="font-extrabold text-slate-900">{formatBdt(due)}</span>
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
-                  Order payment: {ORDER_PAYMENT_METHOD_LABELS[order.paymentMethod]}
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {ORDER_PAYMENT_METHOD_LABELS[order.paymentMethod]}
                 </p>
               </>
             )}
           </div>
 
-          <div className={clsx("grid gap-4", !isAdvance && "sm:grid-cols-2")}>
-            {!isAdvance && (
+          <div
+            className={clsx(
+              "grid gap-3",
+              !isAdvance && !isReturnExpense && (isDelivery ? "sm:grid-cols-3" : "sm:grid-cols-2")
+            )}
+          >
+            {!isAdvance && !isReturnExpense && (
               <div>
-                <label className={labelCls()}>Discount (৳) — optional</label>
+                <label className={labelCls()}>Discount (৳)</label>
                 <input
                   className={inputCls()}
                   type="number"
@@ -188,8 +277,8 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
                 />
               </div>
             )}
-            <div className={isAdvance ? "" : ""}>
-              <label className={labelCls()}>Received Amount (৳)</label>
+            <div>
+              <label className={labelCls()}>Received (৳)</label>
               <input
                 className={inputCls()}
                 type="number"
@@ -201,31 +290,104 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
                 required
               />
             </div>
+            {isDelivery && (
+              <div>
+                <label className={labelCls()}>Delivery (৳)</label>
+                <input
+                  className={inputCls()}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  max={grossCollected}
+                  value={deliveryCharge}
+                  onChange={(e) => setDeliveryCharge(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
-          {!isAdvance && discountNum > 0 && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-              Due {formatBdt(due)} − Discount {formatBdt(discountNum)} = Receive{" "}
-              <span className="font-bold">{formatBdt(receivedAfterDiscount)}</span>
+          {isDelivery && (
+            <p className="text-sm">
+              <span className="text-emerald-700">
+                Receive in {selectedAccountName ?? "account"}:{" "}
+                <span className="font-bold">{formatBdt(amountNum)}</span>
+              </span>
+              {discountNum > 0 && (
+                <span className="text-amber-700">
+                  {" "}
+                  · Discount −{formatBdt(discountNum)} · Due cleared {formatBdt(amountNum + discountNum)}
+                </span>
+              )}
+              {deliveryNum > 0 && (
+                <span className="text-xs text-slate-500">
+                  {" "}
+                  · Net {formatBdt(netInAccount)} ({formatBdt(grossCollected)} − {formatBdt(deliveryNum)})
+                </span>
+              )}
             </p>
           )}
 
           <div>
-            <label className={labelCls()}>Payment Method / Received In</label>
-            <select
-              className={selectCls()}
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              required
-            >
-              {accounts.length === 0 && <option value="">No accounts — add in Chart Of Account</option>}
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                  {a.type === "cash" ? " (Cash)" : a.type === "bank" ? " (Bank)" : " (Wallet)"}
-                </option>
-              ))}
-            </select>
+            <label className={labelCls()}>
+              Payment Method / Received In <span className="text-rose-600">*</span>
+            </label>
+            <p className="mb-2 text-xs text-slate-500">
+              {accountId
+                ? accounts.find((a) => a.id === accountId)?.name ?? "Selected"
+                : "Select Payment — pick account below"}
+            </p>
+            {accounts.length === 0 ? (
+              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                No accounts — add in Chart Of Account
+              </p>
+            ) : (
+              <div className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-1.5">
+                {accounts.map((a) => {
+                  const selected = accountId === a.id;
+                  return (
+                    <div
+                      key={a.id}
+                      className={clsx(
+                        "flex items-center gap-2 rounded-lg border px-2.5 py-2 transition",
+                        selected
+                          ? "border-indigo-300 bg-indigo-50"
+                          : "border-slate-100 bg-white hover:bg-slate-50"
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setAccountId(a.id)}
+                        className="min-w-0 flex-1 text-left text-sm"
+                      >
+                        <span className="font-semibold text-slate-800">{a.name}</span>
+                        <span className="ml-1.5 text-xs text-slate-500">
+                          ({accountTypeSuffix(a.type)})
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDefault(a.id)}
+                        title={
+                          a.defaultPaymentReceive
+                            ? "Default — click to remove"
+                            : "Set as default (auto-select next time)"
+                        }
+                        className="shrink-0 rounded-md p-1 hover:bg-white"
+                      >
+                        {a.defaultPaymentReceive ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-slate-300" />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <p className="mt-1 text-[10px] text-slate-400">
+              ✓ = default auto-select
+            </p>
           </div>
 
           <div>
@@ -252,7 +414,7 @@ export function RecordOrderPaymentModal({ item, open, onClose, onSaved }: Props)
             </button>
             <button
               type="submit"
-              disabled={saving || accounts.length === 0}
+              disabled={saving || accounts.length === 0 || !accountId.trim()}
               className={clsx(
                 "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white",
                 "bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"

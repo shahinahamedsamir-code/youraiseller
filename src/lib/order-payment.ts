@@ -1,9 +1,13 @@
 import {
+  addExpense,
   addIncome,
   getAccountById,
   getAccountIdForPaymentMethod,
   getInvoiceById,
+  getInvoiceByOrderId,
   loadAccountingData,
+  updateInvoice,
+  type AccountType,
   type PaymentMethodKey,
 } from "./accounting-store";
 import { finalizeInvoiceOnDelivery, generateInvoiceOnAdvance } from "./order-invoice";
@@ -26,7 +30,7 @@ export const ORDER_PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   prepaid: "Prepaid / Online",
 };
 
-export type PaymentApprovalType = "advance" | "delivery";
+export type PaymentApprovalType = "advance" | "delivery" | "return_delivery_expense";
 
 export type PaymentApprovalItem = {
   order: Order;
@@ -37,6 +41,7 @@ export type PaymentApprovalItem = {
 export const PAYMENT_TYPE_LABELS: Record<PaymentApprovalType, string> = {
   advance: "Advance",
   delivery: "Delivery Balance",
+  return_delivery_expense: "Return Delivery Charge",
 };
 
 export function paymentItemKey(item: PaymentApprovalItem): string {
@@ -75,13 +80,73 @@ export function isDeliveryPaymentPending(order: Order): boolean {
   return orderAmountDue(order) > 0;
 }
 
+export function isReturnDeliveryExpensePending(order: Order): boolean {
+  if (!order || order.status !== "returned") return false;
+  if ((order.shippingCharge ?? 0) <= 0) return false;
+  if (
+    order.returnDeliveryExpenseStatus === "recorded" ||
+    order.returnDeliveryExpenseStatus === "declined" ||
+    order.returnDeliveryExpenseId
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function declineReturnDeliveryCharge(
+  orderId: string
+): { ok: true } | { ok: false; message: string } {
+  const order = getOrder(orderId);
+  if (!order) return { ok: false, message: "Order not found" };
+  if (order.status !== "returned") return { ok: false, message: "Order is not returned" };
+  if ((order.shippingCharge ?? 0) <= 0) return { ok: false, message: "No delivery charge" };
+  if (order.returnDeliveryExpenseStatus === "recorded" || order.returnDeliveryExpenseId) {
+    return { ok: false, message: "Delivery charge already recorded" };
+  }
+  if (order.returnDeliveryExpenseStatus === "declined") {
+    return { ok: false, message: "Delivery charge already declined" };
+  }
+
+  updateOrder(orderId, { returnDeliveryExpenseStatus: "declined" });
+  return { ok: true };
+}
+
 function incomeRef(orderId: string, type: PaymentApprovalType): string {
   return `${orderId}#${type}`;
 }
 
 /** Default accounting account linked to order payment method. */
 export function defaultAccountIdForOrder(order: Order): string | undefined {
-  return getAccountIdForPaymentMethod(order.paymentMethod as PaymentMethodKey);
+  const key = order.paymentMethod as PaymentMethodKey;
+  const linked = getAccountIdForPaymentMethod(key);
+  if (linked) return linked;
+
+  const active = loadAccountingData().accounts.filter((a) => a.active);
+  const typeByMethod: Partial<Record<PaymentMethod, AccountType>> = {
+    cod: "cash",
+    bkash: "mobile_wallet",
+    nagad: "mobile_wallet",
+    prepaid: "bank",
+  };
+  const preferredType = typeByMethod[order.paymentMethod];
+  if (preferredType) {
+    const byType = active.find((a) => a.type === preferredType);
+    if (byType) return byType.id;
+  }
+  return active[0]?.id;
+}
+
+/** Pick default received-in account for a payment approval modal. */
+export function resolvePaymentAccountId(
+  item: PaymentApprovalItem,
+  activeAccountIds: string[]
+): string {
+  if (activeAccountIds.length === 0) return "";
+
+  const preferred = defaultAccountIdForPaymentItem(item);
+  if (preferred && activeAccountIds.includes(preferred)) return preferred;
+
+  return activeAccountIds[0] ?? "";
 }
 
 export function defaultAccountIdForAdvance(order: Order): string | undefined {
@@ -91,12 +156,20 @@ export function defaultAccountIdForAdvance(order: Order): string | undefined {
 }
 
 export function defaultAccountIdForPaymentItem(item: PaymentApprovalItem): string | undefined {
+  if (item.type === "return_delivery_expense") {
+    return defaultAccountIdForOrder(item.order);
+  }
   return item.type === "advance"
     ? defaultAccountIdForAdvance(item.order)
     : defaultAccountIdForOrder(item.order);
 }
 
 export function paymentMethodLabelForItem(item: PaymentApprovalItem): string {
+  if (item.type === "return_delivery_expense") {
+    const key = item.order.paymentMethod as PaymentMethodKey;
+    const accountName = getAccountById(getAccountIdForPaymentMethod(key) ?? "")?.name;
+    return accountName ? `Expense from ${accountName}` : "Expense account";
+  }
   if (item.type === "advance") {
     const method = item.order.advancePayment?.method;
     if (!method) return "Advance";
@@ -129,6 +202,9 @@ export function loadOrdersPendingPayment(search?: string): PaymentApprovalItem[]
     if (isDeliveryPaymentPending(order)) {
       items.push({ order, type: "delivery", amount: orderAmountDue(order) });
     }
+    if (isReturnDeliveryExpensePending(order)) {
+      items.push({ order, type: "return_delivery_expense", amount: order.shippingCharge });
+    }
   }
   return items.sort((a, b) => b.order.updatedAt.localeCompare(a.order.updatedAt));
 }
@@ -155,21 +231,35 @@ export function loadOrdersRecordedPayment(search?: string): PaymentApprovalItem[
         amount: order.paymentCollectedAmount ?? orderAmountDue(order),
       });
     }
+    if (order.returnDeliveryExpenseStatus === "recorded" || order.returnDeliveryExpenseId) {
+      items.push({
+        order,
+        type: "return_delivery_expense",
+        amount: order.returnDeliveryExpenseAmount ?? order.shippingCharge,
+      });
+    }
   }
   return items.sort((a, b) => {
     const dateA =
       a.type === "advance"
         ? a.order.advancePaymentCollectedAt ?? a.order.updatedAt
-        : a.order.paymentCollectedAt ?? a.order.updatedAt;
+        : a.type === "return_delivery_expense"
+          ? a.order.returnDeliveryExpenseAt ?? a.order.updatedAt
+          : a.order.paymentCollectedAt ?? a.order.updatedAt;
     const dateB =
       b.type === "advance"
         ? b.order.advancePaymentCollectedAt ?? b.order.updatedAt
-        : b.order.paymentCollectedAt ?? b.order.updatedAt;
+        : b.type === "return_delivery_expense"
+          ? b.order.returnDeliveryExpenseAt ?? b.order.updatedAt
+          : b.order.paymentCollectedAt ?? b.order.updatedAt;
     return dateB.localeCompare(dateA);
   });
 }
 
 export function recordedAccountLabel(item: PaymentApprovalItem): string {
+  if (item.type === "return_delivery_expense") {
+    return item.order.returnDeliveryExpenseAccountLabel ?? "—";
+  }
   if (item.type === "advance") {
     return item.order.advanceCollectedPaymentMethodLabel ?? "—";
   }
@@ -177,10 +267,87 @@ export function recordedAccountLabel(item: PaymentApprovalItem): string {
 }
 
 export function recordedDateLabel(item: PaymentApprovalItem): string {
+  if (item.type === "return_delivery_expense") {
+    return item.order.returnDeliveryExpenseAt ?? "—";
+  }
   if (item.type === "advance") {
     return item.order.advancePaymentCollectedAt ?? "—";
   }
   return item.order.paymentCollectedAt ?? "—";
+}
+
+export function recordReturnDeliveryExpense(
+  orderId: string,
+  input: { accountId: string; amount: number; note?: string }
+): { ok: true; expenseId: string; invoiceId: string } | { ok: false; message: string } {
+  const order = getOrder(orderId);
+  if (!order) return { ok: false, message: "Order not found" };
+  if (order.status !== "returned") {
+    return { ok: false, message: "Order must be returned" };
+  }
+  const pending = order.shippingCharge ?? 0;
+  if (pending <= 0) {
+    return { ok: false, message: "No delivery charge to record" };
+  }
+  if (order.returnDeliveryExpenseStatus === "recorded" || order.returnDeliveryExpenseId) {
+    return { ok: false, message: "Return delivery expense already recorded" };
+  }
+
+  const account = getAccountById(input.accountId);
+  if (!account) return { ok: false, message: "Account not found" };
+  const amount = Number(input.amount);
+  if (!amount || amount <= 0) return { ok: false, message: "Enter a valid amount" };
+  if (amount > pending + 0.001) {
+    return { ok: false, message: "Amount cannot exceed delivery charge" };
+  }
+
+  const data = loadAccountingData();
+  const ref = `${orderId}#return_delivery_expense`;
+  if (data.expenses.some((e) => e.reference === ref)) {
+    return { ok: false, message: "Return delivery expense already exists for this order" };
+  }
+
+  const today = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const expense = addExpense({
+    date: today,
+    amount,
+    category: "courier",
+    accountId: input.accountId,
+    expenseTo: "Delivery Charge",
+    title: `Returned Order Delivery Charge — ${order.invoiceNumber ?? order.id}`,
+    reference: ref,
+    note: input.note?.trim() || "Courier charge for returned order",
+  });
+
+  updateOrder(orderId, {
+    returnDeliveryExpenseStatus: "recorded",
+    returnDeliveryExpenseAt: today,
+    returnDeliveryExpenseAmount: amount,
+    returnDeliveryExpenseAccountId: input.accountId,
+    returnDeliveryExpenseAccountLabel: account.name,
+    returnDeliveryExpenseId: expense.id,
+  });
+
+  appendOrderActivity(orderId, {
+    type: "payment",
+    title: "Return delivery expense approved",
+    detail: `${account.name} · ৳${amount.toLocaleString("en-BD")} · Delivery charge booked as expense`,
+  });
+
+  const invoice =
+    getInvoiceById(order.accountingInvoiceId ?? "") ?? getInvoiceByOrderId(orderId);
+  if (invoice) {
+    updateInvoice(invoice.id, {
+      deliveryChargeAmount: amount,
+      deliveryChargeExpenseId: expense.id,
+    });
+  }
+  return { ok: true, expenseId: expense.id, invoiceId: invoice?.id ?? "" };
 }
 
 export function recordAdvancePayment(
@@ -312,6 +479,7 @@ export function recordOrderPayment(
   const income = addIncome({
     date: today,
     amount,
+    discount: discount > 0 ? discount : undefined,
     source: "order",
     accountId: input.accountId,
     title: `Order Payment — ${order.invoiceNumber ?? order.id}`,
@@ -392,6 +560,9 @@ export function recordPaymentApproval(
   item: PaymentApprovalItem,
   input: { accountId: string; amount: number; discount?: number; note?: string }
 ) {
+  if (item.type === "return_delivery_expense") {
+    return recordReturnDeliveryExpense(item.order.id, input);
+  }
   if (item.type === "advance") {
     return recordAdvancePayment(item.order.id, input);
   }

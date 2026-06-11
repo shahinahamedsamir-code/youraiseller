@@ -1,6 +1,8 @@
 import {
   addInvoice,
+  getInvoiceById,
   getInvoiceByOrderId,
+  invoiceDeliveryChargeDeducted,
   loadAccountingData,
   updateInvoice,
   type AccountingInvoice,
@@ -8,6 +10,10 @@ import {
 } from "./accounting-store";
 import { loadBusinessSettings, saveBusinessSettings } from "./business-settings-store";
 import { renderInvoiceDoc } from "./invoice-templates";
+import {
+  ensureDraftDeliveryChargeForOrder,
+  syncInvoiceDeliveryChargeDeductions,
+} from "./order-delivery-expense";
 import { orderAmountDue } from "./order-payment";
 import { getOrder, updateOrder, type Order } from "./orders-store";
 
@@ -36,13 +42,24 @@ export function orderForInvoiceDisplay(order: Order): Order {
   const deliveryCollected = order.paymentCollectedAmount ?? 0;
   const paymentDiscount = order.paymentCollectionDiscount ?? 0;
   const totalPaid = advanceCollected + deliveryCollected;
+  const invoice =
+    getInvoiceByOrderId(order.id) ??
+    (order.accountingInvoiceId ? getInvoiceById(order.accountingInvoiceId) : undefined);
+  const deliveryDeduct = invoice ? invoiceDeliveryChargeDeducted(invoice) : 0;
+  const grossCollected = Math.min(order.total, totalPaid);
+  const netCollected = Math.max(0, grossCollected - deliveryDeduct);
 
   return {
     ...order,
     id: order.invoiceNumber?.trim() || order.id,
     discount: (order.discount ?? 0) + paymentDiscount,
-    advance: Math.min(order.total, totalPaid),
+    advance: netCollected,
   };
+}
+
+function finalizeInvoiceDeliveryCharge(order: Order, invoice: AccountingInvoice): void {
+  ensureDraftDeliveryChargeForOrder({ ...order, accountingInvoiceId: invoice.id });
+  syncInvoiceDeliveryChargeDeductions();
 }
 
 /** @deprecated use orderForInvoiceDisplay */
@@ -81,7 +98,7 @@ export function generateInvoiceOnAdvance(
 
   if (existing) {
     const payments = [...(existing.payments ?? []).filter((p) => p.type !== "advance"), advanceEntry];
-    return updateInvoice(existing.id, {
+    const invoice = updateInvoice(existing.id, {
       paidAmount: input.paidAmount,
       advanceAmount: input.paidAmount,
       dueAmount,
@@ -92,6 +109,8 @@ export function generateInvoiceOnAdvance(
       paymentAccountName: input.paymentAccountName,
       date: input.paymentDate,
     })!;
+    finalizeInvoiceDeliveryCharge(order, invoice);
+    return invoice;
   }
 
   const invoiceNumber = order.invoiceNumber?.trim() || allocateInvoiceNumber();
@@ -115,6 +134,7 @@ export function generateInvoiceOnAdvance(
   });
 
   updateOrder(order.id, { accountingInvoiceId: invoice.id });
+  finalizeInvoiceDeliveryCharge({ ...order, accountingInvoiceId: invoice.id }, invoice);
   return invoice;
 }
 
@@ -168,6 +188,7 @@ export function finalizeInvoiceOnDelivery(
       date: input.paymentDate,
     })!;
     updateOrder(order.id, { accountingInvoiceId: invoice.id });
+    finalizeInvoiceDeliveryCharge({ ...order, accountingInvoiceId: invoice.id }, invoice);
     return invoice;
   }
 
@@ -205,6 +226,7 @@ export function finalizeInvoiceOnDelivery(
     incomeId: input.incomeId,
   });
   updateOrder(order.id, { accountingInvoiceId: invoice.id });
+  finalizeInvoiceDeliveryCharge({ ...order, accountingInvoiceId: invoice.id }, invoice);
   return invoice;
 }
 

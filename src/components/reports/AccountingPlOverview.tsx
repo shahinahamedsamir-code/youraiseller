@@ -12,9 +12,13 @@ type PlData = {
   grossMargin: number;
   income: number;
   expense: number;
+  operatingExpense: number;
   netProfit: number;
   margin: number;
   orderCount: number;
+  incomeRows: { label: string; amount: number }[];
+  cogsRows: { label: string; amount: number }[];
+  operatingRows: { label: string; amount: number }[];
 };
 
 type CashFlow = {
@@ -242,48 +246,59 @@ export function AccountingPlOverview({
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <h4 className="mb-1 font-bold text-slate-800">How your profit is calculated</h4>
-          <p className="mb-4 text-sm text-slate-500">
-            Step by step — from sales to final profit
-          </p>
+          <h4 className="mb-1 font-bold text-slate-800">Profit & Loss Statement</h4>
+          <p className="mb-4 text-sm text-slate-500">Accounting-based statement by selected period</p>
           <div className="space-y-2">
+            <PlStep label="Income" hint="From accounting income entries" amount={pl.income} />
+            {pl.incomeRows.slice(0, 8).map((row) => (
+              <PlStep
+                key={`inc-${row.label}`}
+                label={`• ${row.label}`}
+                amount={row.amount}
+                tone="text-slate-700"
+              />
+            ))}
             <PlStep
-              label="Order Sales (Revenue)"
-              hint={`${pl.orderCount} orders in selected period`}
-              amount={pl.revenue}
-              tone="text-slate-900"
-            />
-            <PlStep
-              label="Product Cost (COGS)"
-              hint="What you paid for the products sold"
+              label="Cost of Goods Sold"
+              hint="COGS tagged expenses"
               amount={pl.cogs}
               tone="text-amber-700"
               icon="minus"
             />
+            {pl.cogsRows.slice(0, 8).map((row) => (
+              <PlStep
+                key={`cogs-${row.label}`}
+                label={`• ${row.label}`}
+                amount={row.amount}
+                tone="text-amber-700"
+              />
+            ))}
             <PlStep
               label="Gross Profit"
-              hint="Sales minus product cost"
+              hint="Income minus COGS"
               amount={pl.grossProfit}
               tone={pl.grossProfit >= 0 ? "text-emerald-700" : "text-rose-700"}
               icon="equal"
               bold
             />
             <PlStep
-              label="Total Expense"
-              hint="Rent, salary, ads, courier & other costs"
-              amount={pl.expense}
+              label="Operating Expenses"
+              hint="Salary, rent, utility, ads, courier, etc."
+              amount={pl.operatingExpense}
               tone="text-rose-700"
               icon="minus"
             />
-            <PlStep
-              label="Total Income"
-              hint="Money received in accounts (all sources)"
-              amount={pl.income}
-              tone="text-emerald-700"
-            />
+            {pl.operatingRows.slice(0, 10).map((row) => (
+              <PlStep
+                key={`op-${row.label}`}
+                label={`• ${row.label}`}
+                amount={row.amount}
+                tone="text-rose-700"
+              />
+            ))}
             <PlStep
               label="Net Profit"
-              hint="Income minus total expense"
+              hint="Gross Profit minus Operating Expenses"
               amount={pl.netProfit}
               tone={pl.netProfit >= 0 ? "text-indigo-700" : "text-rose-700"}
               icon="equal"
@@ -298,10 +313,10 @@ export function AccountingPlOverview({
             <dl className="space-y-3 text-sm">
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
                 <dt className="text-slate-600">You sold (orders)</dt>
-                <dd className="font-bold text-slate-900">{formatBdt(pl.revenue)}</dd>
+                <dd className="font-bold text-slate-900">{formatBdt(pl.income)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <dt className="text-slate-600">Product cost</dt>
+                <dt className="text-slate-600">Cost of goods sold</dt>
                 <dd className="font-bold text-amber-700">− {formatBdt(pl.cogs)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -309,12 +324,8 @@ export function AccountingPlOverview({
                 <dd className="font-bold text-emerald-700">{formatBdt(pl.grossProfit)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <dt className="text-slate-600">Total expense</dt>
-                <dd className="font-bold text-rose-700">− {formatBdt(pl.expense)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <dt className="text-slate-600">Total income</dt>
-                <dd className="font-bold text-emerald-700">{formatBdt(pl.income)}</dd>
+                <dt className="text-slate-600">Operating expense</dt>
+                <dd className="font-bold text-rose-700">− {formatBdt(pl.operatingExpense)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3 rounded-xl bg-indigo-50 px-3 py-3">
                 <dt className="font-bold text-indigo-900">Net profit</dt>

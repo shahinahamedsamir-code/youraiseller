@@ -7,6 +7,7 @@ import {
   formatBdt,
   getInvoiceById,
   invoiceDueBalance,
+  getDefaultPaymentReceiveAccountId,
   type AccountingInvoice,
 } from "@/lib/accounting-store";
 import { getOrder } from "@/lib/orders-store";
@@ -41,7 +42,12 @@ export function PayInvoiceDueModal({ invoice, open, onClose, onSaved }: Props) {
 
   useEffect(() => {
     if (!open || !invoice) return;
-    setAccountId(accounts[0]?.id ?? "");
+    const defaultAccountId = getDefaultPaymentReceiveAccountId();
+    setAccountId(
+      defaultAccountId && accounts.some((a) => a.id === defaultAccountId)
+        ? defaultAccountId
+        : ""
+    );
     setDiscount("0");
     setAmount(String(due));
     setNote("");
@@ -74,6 +80,10 @@ export function PayInvoiceDueModal({ invoice, open, onClose, onSaved }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!accountId.trim()) {
+      setError("Select Payment is required.");
+      return;
+    }
     setSaving(true);
     const result = recordInvoiceDuePayment(invoice.id, {
       accountId,
@@ -196,14 +206,19 @@ export function PayInvoiceDueModal({ invoice, open, onClose, onSaved }: Props) {
           )}
 
           <div>
-            <label className={labelCls()}>Payment Method / Received In</label>
+            <label className={labelCls()}>
+              Payment Method / Received In <span className="text-rose-600">*</span>
+            </label>
             <select
               className={selectCls()}
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               required
+              aria-required="true"
             >
-              {accounts.length === 0 && <option value="">No accounts — add in Chart Of Account</option>}
+              <option value="" disabled>
+                {accounts.length === 0 ? "No accounts — add in Chart Of Account" : "Select Payment"}
+              </option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -237,7 +252,7 @@ export function PayInvoiceDueModal({ invoice, open, onClose, onSaved }: Props) {
             </button>
             <button
               type="submit"
-              disabled={saving || accounts.length === 0}
+              disabled={saving || accounts.length === 0 || !accountId.trim()}
               className={clsx(
                 "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white",
                 "bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"

@@ -55,6 +55,7 @@ import {
   buildDeadStockReport,
   buildInventoryValuation,
 } from "@/lib/reports/inventory-depth-analytics";
+import { buildItemProfitReport } from "@/lib/reports/item-profit-analytics";
 import {
   getAbcAnalysis,
   getInventoryHealthStats,
@@ -227,11 +228,20 @@ export function useReportsData() {
         allOrdersIncludingWeb,
         accountingData.expenses,
         accountingData.income,
+        accountingInvoiceFiltered.length,
         range,
         from,
         to
       ),
-    [allOrdersIncludingWeb, accountingData.expenses, accountingData.income, range, from, to]
+    [
+      allOrdersIncludingWeb,
+      accountingData.expenses,
+      accountingData.income,
+      accountingInvoiceFiltered.length,
+      range,
+      from,
+      to,
+    ]
   );
 
   const deliveredCount = useMemo(
@@ -666,6 +676,12 @@ export function useReportsData() {
     const categories = buildCategoryBreakdown();
     const brands = buildBrandBreakdown();
     const deadStock = buildDeadStockReport(15);
+    const itemProfit = buildItemProfitReport(
+      allOrdersIncludingWeb,
+      range,
+      from,
+      to
+    );
 
     return {
       health,
@@ -684,8 +700,9 @@ export function useReportsData() {
       categories,
       brands,
       deadStock,
+      itemProfit,
     };
-  }, [range, from, to]);
+  }, [allOrdersIncludingWeb, range, from, to]);
 
   const accountingDepthReport = useMemo(() => {
     const accountBalances = buildAccountBalanceRows();
@@ -709,25 +726,69 @@ export function useReportsData() {
   }, [accountingInvoiceFiltered, accRange, accFrom, accTo]);
 
   const accountingPl = useMemo(() => {
-    const income = accountingIncomeFiltered
-      .filter((row) => isOperatingAccountingRef(row.reference))
-      .reduce((sum, row) => sum + row.amount, 0);
-    const expense = accountingExpenseFiltered
-      .filter((row) => isOperatingAccountingRef(row.reference))
-      .reduce((sum, row) => sum + row.amount, 0);
-    const netProfit = income - expense;
-    const gross = buildPeriodGrossProfit(
-      allOrdersIncludingWeb,
-      accRange,
-      accFrom,
-      accTo
+    const operatingIncome = accountingIncomeFiltered.filter((row) =>
+      isOperatingAccountingRef(row.reference)
     );
+    const operatingExpense = accountingExpenseFiltered.filter((row) =>
+      isOperatingAccountingRef(row.reference)
+    );
+
+    const groupAmounts = <T extends { amount: number }>(
+      rows: T[],
+      getLabel: (row: T) => string
+    ) => {
+      const map = new Map<string, number>();
+      for (const row of rows) {
+        const label = getLabel(row).trim() || "Untitled";
+        map.set(label, (map.get(label) ?? 0) + row.amount);
+      }
+      return [...map.entries()]
+        .map(([label, amount]) => ({ label, amount }))
+        .sort((a, b) => b.amount - a.amount);
+    };
+
+    const cogsMatcher = /(cost\s*of\s*goods\s*sold|cogs|inventory\s*cost)/i;
+    const cogsExpenseRows = operatingExpense.filter((row) =>
+      cogsMatcher.test(`${row.title} ${row.expenseTo ?? ""} ${row.reference ?? ""}`)
+    );
+    const opExpenseRows = operatingExpense.filter(
+      (row) =>
+        !cogsMatcher.test(`${row.title} ${row.expenseTo ?? ""} ${row.reference ?? ""}`)
+    );
+
+    const incomeRows = groupAmounts(operatingIncome, (row) => row.title);
+    const cogsRows = groupAmounts(cogsExpenseRows, (row) => row.title || row.expenseTo || "COGS");
+    const operatingRows = groupAmounts(
+      opExpenseRows,
+      (row) => row.title || row.expenseTo || EXPENSE_CATEGORY_LABELS[row.category] || "Expense"
+    );
+
+    const income = incomeRows.reduce((sum, row) => sum + row.amount, 0);
+    const cogsFromAccounting = cogsRows.reduce((sum, row) => sum + row.amount, 0);
+    const operatingExpenseTotal = operatingRows.reduce((sum, row) => sum + row.amount, 0);
+
+    const grossProfitFromAccounting = income - cogsFromAccounting;
+    const netProfit = grossProfitFromAccounting - operatingExpenseTotal;
+
+    const grossFromOrders = buildPeriodGrossProfit(allOrdersIncludingWeb, accRange, accFrom, accTo);
+    const cogs = cogsFromAccounting > 0 ? cogsFromAccounting : grossFromOrders.cogs;
+    const grossProfit = income - cogs;
+    const expense = cogsFromAccounting > 0 ? operatingExpenseTotal : operatingExpenseTotal + cogs;
+
     return {
       income,
       expense,
       netProfit,
       margin: income > 0 ? (netProfit / income) * 100 : 0,
-      ...gross,
+      revenue: income,
+      cogs,
+      grossProfit,
+      grossMargin: income > 0 ? (grossProfit / income) * 100 : 0,
+      orderCount: grossFromOrders.orderCount,
+      incomeRows,
+      cogsRows,
+      operatingRows,
+      operatingExpense: operatingExpenseTotal,
     };
   }, [
     accountingIncomeFiltered,
@@ -1498,7 +1559,18 @@ export function useReportsData() {
 
   const accountingExpenseByCategory = useMemo(() => {
     const base = new Map<string, number>();
-    for (const e of accountingExpenseFiltered) {
+    for (const e of accountingExpenseFiltered.filter((row) => row.category !== "courier")) {
+      const key = EXPENSE_CATEGORY_LABELS[e.category] ?? e.category;
+      base.set(key, (base.get(key) ?? 0) + e.amount);
+    }
+    return [...base.entries()]
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [accountingExpenseFiltered]);
+
+  const operatingExpenseByCategory = useMemo(() => {
+    const base = new Map<string, number>();
+    for (const e of accountingExpenseFiltered.filter((row) => row.category !== "courier")) {
       const key = EXPENSE_CATEGORY_LABELS[e.category] ?? e.category;
       base.set(key, (base.get(key) ?? 0) + e.amount);
     }
@@ -1662,6 +1734,7 @@ export function useReportsData() {
     setLedgerModalOpen(true);
   };
 
+
   return {
     accFrom,
     accRange,
@@ -1710,6 +1783,7 @@ export function useReportsData() {
     marketingReport,
     openAccountingLedgerModal,
     operationsReport,
+    operatingExpenseByCategory,
     approvedOrderReport,
     paymentAgingRows,
     paymentSummary,

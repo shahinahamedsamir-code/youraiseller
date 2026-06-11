@@ -4,27 +4,31 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import { CheckCircle2, CreditCard, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { formatBdt, getInvoiceById, type AccountingInvoice } from "@/lib/accounting-store";
+import { formatBdt } from "@/lib/accounting-store";
 import {
   loadOrdersPendingPayment,
   loadOrdersRecordedPayment,
   paymentItemKey,
   paymentMethodLabelForItem,
-  PAYMENT_TYPE_LABELS,
   recordedAccountLabel,
   recordedDateLabel,
   type PaymentApprovalItem,
 } from "@/lib/order-payment";
 import { RecordOrderPaymentModal } from "./RecordOrderPaymentModal";
 import { BulkApprovePaymentModal } from "./BulkApprovePaymentModal";
-import { SmartInvoiceModal } from "./SmartInvoiceModal";
 import { OrderProductsList } from "@/components/orders/OrderProductsList";
 
 type Tab = "pending" | "recorded";
 
+const PAYMENT_TYPE_SHORT: Record<PaymentApprovalItem["type"], string> = {
+  advance: "Advance",
+  delivery: "Delivery",
+  return_delivery_expense: "Return",
+};
+
 const TH =
-  "whitespace-nowrap px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white";
-const TD = "px-4 py-3.5 text-sm text-slate-700 align-top";
+  "whitespace-nowrap px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-white";
+const TD = "px-3 py-2 text-sm text-slate-700 align-middle";
 const TD_NOWRAP = clsx(TD, "whitespace-nowrap");
 
 export function PaymentListPanel() {
@@ -35,11 +39,18 @@ export function PaymentListPanel() {
   const [approveItem, setApproveItem] = useState<PaymentApprovalItem | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [viewInvoice, setViewInvoice] = useState<AccountingInvoice | null>(null);
 
   const refresh = useCallback(() => {
-    setPending(loadOrdersPendingPayment(search));
-    setRecorded(loadOrdersRecordedPayment(search));
+    setPending(
+      loadOrdersPendingPayment(search).filter(
+        (item) => item.type !== "return_delivery_expense"
+      )
+    );
+    setRecorded(
+      loadOrdersRecordedPayment(search).filter(
+        (item) => item.type !== "return_delivery_expense"
+      )
+    );
   }, [search]);
 
   useEffect(() => {
@@ -89,70 +100,68 @@ export function PaymentListPanel() {
     [recorded]
   );
 
+  const summaryText =
+    tab === "pending" ? (
+      <>
+        <span className="font-bold text-amber-700">{pending.length}</span> pending
+        <span className="mx-1 text-slate-300">·</span>
+        <span className="font-bold text-slate-800">{formatBdt(pendingTotal)}</span>
+      </>
+    ) : (
+      <>
+        <span className="font-bold text-emerald-700">{recorded.length}</span> recorded
+        <span className="mx-1 text-slate-300">·</span>
+        <span className="font-bold text-slate-800">{formatBdt(recordedTotal)}</span>
+      </>
+    );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <PageHeader title="Payment" />
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            setTab("pending");
-            clearSelection();
-          }}
-          className={clsx(
-            "rounded-xl px-4 py-2 text-sm font-bold transition",
-            tab === "pending"
-              ? "bg-amber-500 text-white shadow-md"
-              : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-          )}
-        >
-          Approve Pending
-          {pending.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-white/25 px-1.5 py-0.5 text-xs">
-              {pending.length}
-            </span>
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setTab("recorded");
-            clearSelection();
-          }}
-          className={clsx(
-            "rounded-xl px-4 py-2 text-sm font-bold transition",
-            tab === "recorded"
-              ? "bg-emerald-600 text-white shadow-md"
-              : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-          )}
-        >
-          Recorded
-        </button>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-4 py-3">
-          <p className="text-sm text-slate-500">
-            {tab === "pending" ? (
-              <>
-                <span className="font-bold text-amber-700">{pending.length}</span> awaiting approval
-                <span className="mx-1.5 text-slate-300">·</span>
-                <span className="font-bold text-slate-800">{formatBdt(pendingTotal)}</span> total
-              </>
-            ) : (
-              <>
-                <span className="font-bold text-emerald-700">{recorded.length}</span> recorded
-                <span className="mx-1.5 text-slate-300">·</span>
-                <span className="font-bold text-slate-800">{formatBdt(recordedTotal)}</span> total
-              </>
+      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => {
+              setTab("pending");
+              clearSelection();
+            }}
+            className={clsx(
+              "rounded-lg px-3 py-1.5 text-xs font-bold transition",
+              tab === "pending"
+                ? "bg-amber-500 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             )}
-          </p>
-          <div className="relative ml-auto w-full min-w-[180px] sm:w-56">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          >
+            Approve Pending
+            {pending.length > 0 && (
+              <span className="ml-1 rounded-full bg-white/25 px-1 py-0.5 text-[10px]">
+                {pending.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTab("recorded");
+              clearSelection();
+            }}
+            className={clsx(
+              "rounded-lg px-3 py-1.5 text-xs font-bold transition",
+              tab === "recorded"
+                ? "bg-emerald-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Recorded
+          </button>
+          <p className="text-xs text-slate-500">{summaryText}</p>
+          <div className="relative ml-auto w-full min-w-[160px] sm:w-52">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
-              className="h-9 w-full rounded-lg border border-slate-200 py-0 pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              placeholder="Search order, customer, phone..."
+              className="h-8 w-full rounded-lg border border-slate-200 py-0 pl-8 pr-2.5 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              placeholder="Search order, customer..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -202,17 +211,18 @@ export function PaymentListPanel() {
                     />
                   </th>
                 )}
-                <th className={clsx(TH, "w-[100px]")}>Type</th>
-                <th className={clsx(TH, "w-[115px]")}>Order</th>
-                <th className={clsx(TH, "w-[130px]")}>Customer</th>
+                <th className={clsx(TH, "w-[175px]")}>Type / Order</th>
+                <th className={clsx(TH, "w-[125px]")}>Customer</th>
                 <th className={clsx(TH, "w-[240px]")}>Products</th>
                 <th className={clsx(TH, "w-[150px]")}>Payment Info</th>
                 <th className={clsx(TH, "w-[90px]")}>Amount</th>
                 {tab === "recorded" && (
                   <th className={clsx(TH, "w-[120px]")}>Received In</th>
                 )}
-                <th className={clsx(TH, "w-[130px]")}>Status</th>
-                <th className={clsx(TH, "w-[100px] text-center")}>Action</th>
+                <th className={clsx(TH, "w-[110px]")}>Status</th>
+                {tab === "pending" && (
+                  <th className={clsx(TH, "w-[90px] text-center")}>Action</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -240,25 +250,26 @@ export function PaymentListPanel() {
                         />
                       </td>
                     )}
-                    <td className={TD_NOWRAP}>
-                      <span
-                        className={clsx(
-                          "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
-                          item.type === "advance"
-                            ? "bg-violet-100 text-violet-700"
-                            : "bg-sky-100 text-sky-700"
-                        )}
-                      >
-                        {PAYMENT_TYPE_LABELS[item.type]}
-                      </span>
+                    <td className={clsx(TD, "text-xs leading-tight")}>
+                      <div className="flex min-w-0 items-center gap-1">
+                        <span
+                          className={clsx(
+                            "inline-flex shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold",
+                            item.type === "advance"
+                              ? "bg-violet-100 text-violet-700"
+                              : "bg-sky-100 text-sky-700"
+                          )}
+                        >
+                          {PAYMENT_TYPE_SHORT[item.type]}
+                        </span>
+                        <span className="truncate font-bold text-[#2563eb]">
+                          {o.invoiceNumber ?? o.id}
+                        </span>
+                      </div>
                     </td>
-                    <td className={TD_NOWRAP}>
-                      <p className="font-bold text-[#2563eb]">{o.invoiceNumber ?? o.id}</p>
-                      <p className="text-xs text-slate-500">{o.updatedAt}</p>
-                    </td>
-                    <td className={TD}>
-                      <p className="break-words font-semibold text-slate-800">{o.customerName}</p>
-                      <p className="text-xs text-slate-500">{o.phone}</p>
+                    <td className={clsx(TD, "text-xs leading-tight")}>
+                      <p className="truncate font-semibold text-slate-800">{o.customerName}</p>
+                      <p className="truncate text-[11px] text-slate-500">{o.phone}</p>
                     </td>
                     <td className={TD}>
                       <div className="min-w-0 break-words whitespace-normal">
@@ -291,37 +302,38 @@ export function PaymentListPanel() {
                         </p>
                       </td>
                     )}
-                    <td className={TD_NOWRAP}>
+                    <td className={clsx(TD, "text-xs")}>
                       {tab === "pending" ? (
-                        <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
-                          Approve Pending
+                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                          Pending
                         </span>
                       ) : (
-                        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
-                          Recorded
-                        </span>
+                        <div className="leading-tight">
+                          <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                            Recorded
+                          </span>
+                          <p className="mt-0.5 text-[11px] text-slate-500">{recordedDateLabel(item)}</p>
+                        </div>
                       )}
                     </td>
-                    <td className={clsx(TD_NOWRAP, "text-center")}>
-                      {tab === "pending" ? (
+                    {tab === "pending" && (
+                      <td className={clsx(TD_NOWRAP, "text-center")}>
                         <button
                           type="button"
                           onClick={() => setApproveItem(item)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#2563eb] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1d4ed8]"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#2563eb] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#1d4ed8]"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <CheckCircle2 className="h-3 w-3" />
                           Approve
                         </button>
-                      ) : (
-                        <span className="text-xs text-slate-400">{recordedDateLabel(item)}</span>
-                      )}
-                    </td>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={tab === "recorded" ? 9 : 10} className="px-4 py-16 text-center">
+                  <td colSpan={tab === "recorded" ? 7 : 8} className="px-4 py-16 text-center">
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-slate-500">
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                         <CreditCard className="h-6 w-6" />
@@ -349,19 +361,9 @@ export function PaymentListPanel() {
         item={approveItem}
         open={Boolean(approveItem)}
         onClose={() => setApproveItem(null)}
-        onSaved={(result) => {
+        onSaved={() => {
           refresh();
-          if (result?.invoiceId) {
-            const inv = getInvoiceById(result.invoiceId);
-            if (inv) setViewInvoice(inv);
-          }
         }}
-      />
-
-      <SmartInvoiceModal
-        invoice={viewInvoice}
-        open={Boolean(viewInvoice)}
-        onClose={() => setViewInvoice(null)}
       />
 
       <BulkApprovePaymentModal

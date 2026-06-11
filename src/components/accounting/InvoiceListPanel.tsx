@@ -8,10 +8,14 @@ import {
   formatBdt,
   getInvoiceById,
   INVOICE_STATUS_LABELS,
+  invoiceDeliveryChargeDeducted,
   invoiceDueBalance,
+  invoiceNetCollected,
   type AccountingInvoice,
 } from "@/lib/accounting-store";
+import { getOrderPaymentAccountForDeliveryCharge } from "@/lib/order-delivery-expense";
 import { canPayInvoiceDue } from "@/lib/order-payment";
+import { getOrder } from "@/lib/orders-store";
 import { openSmartInvoicePrint } from "@/lib/order-invoice";
 import { useAccountingData } from "./useAccountingData";
 import { SmartInvoiceModal } from "./SmartInvoiceModal";
@@ -70,7 +74,7 @@ export function InvoiceListPanel() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [allInvoices, search, statusFilter]);
 
-  const totalCollected = filtered.reduce((s, inv) => s + inv.paidAmount, 0);
+  const totalCollected = filtered.reduce((s, inv) => s + invoiceNetCollected(inv), 0);
   const totalDue = filtered.reduce((s, inv) => s + invoiceDueBalance(inv), 0);
 
   return (
@@ -156,6 +160,9 @@ export function InvoiceListPanel() {
                   Collected
                 </th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white">
+                  Delivery
+                </th>
+                <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white">
                   Due
                 </th>
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white">
@@ -170,6 +177,9 @@ export function InvoiceListPanel() {
               {filtered.map((inv, idx) => {
                 const due = invoiceDueBalance(inv);
                 const canPay = canPayInvoiceDue(inv.id);
+                const delivery = invoiceDeliveryChargeDeducted(inv);
+                const order = getOrder(inv.orderId);
+                const paymentAccount = getOrderPaymentAccountForDeliveryCharge(inv.orderId);
                 return (
                   <tr
                     key={inv.id}
@@ -188,11 +198,34 @@ export function InvoiceListPanel() {
                       {formatBdt(inv.amount)}
                     </td>
                     <td className="px-4 py-3.5 text-sm">
-                      <p className="font-bold text-emerald-700">{formatBdt(inv.paidAmount)}</p>
+                      <p className="font-bold text-emerald-700">{formatBdt(invoiceNetCollected(inv))}</p>
+                      <p className="text-xs text-slate-500">
+                        Gross {formatBdt(inv.paidAmount)}
+                      </p>
                       {(inv.advanceAmount ?? 0) > 0 && (
                         <p className="text-xs text-violet-600">
                           Adv {formatBdt(inv.advanceAmount!)}
                         </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm">
+                      {delivery > 0 ? (
+                        <>
+                          <p className="font-bold text-orange-700">{formatBdt(delivery)}</p>
+                          {paymentAccount && (
+                            <p className="text-xs text-slate-500">− {paymentAccount.accountName}</p>
+                          )}
+                        </>
+                      ) : (order?.shippingCharge ?? 0) > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewInvoice(inv)}
+                          className="text-xs font-bold text-orange-600 hover:underline"
+                        >
+                          Set {formatBdt(order!.shippingCharge!)}
+                        </button>
+                      ) : (
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3.5 text-sm font-bold">
@@ -251,7 +284,7 @@ export function InvoiceListPanel() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-slate-500">
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                         <FileText className="h-6 w-6" />

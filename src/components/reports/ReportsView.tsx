@@ -71,9 +71,8 @@ export function ReportsView(props: ReportsViewProps) {
     marketingReport,
     openAccountingLedgerModal,
     operationsReport,
+    operatingExpenseByCategory,
     approvedOrderReport,
-    paymentAgingRows,
-    paymentSummary,
     periodCompare,
     profitSalesReport,
     preorderReport,
@@ -106,45 +105,45 @@ export function ReportsView(props: ReportsViewProps) {
 
   const activeGroup = reportGroupForTab(tab);
   const subTabs = activeGroup.tabs;
-  const [salesView, setSalesView] = useState<"summary" | "details" | "chart">("summary");
+  const [salesView, setSalesView] = useState<"summary" | "details" | "chart" | "balance">("summary");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <PageHeader
         title={activeGroup.label}
         description={activeGroup.description}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={exportCurrent}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium shadow-sm"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700"
             >
-              <Download className="h-4 w-4" /> Export CSV
+              <Download className="h-3.5 w-3.5" /> CSV
             </button>
             <button
               type="button"
               onClick={exportCurrentPdf}
-              className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm"
+              className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700"
             >
-              <Download className="h-4 w-4" /> Export PDF
+              <Download className="h-3.5 w-3.5" /> PDF
             </button>
           </div>
         }
       />
 
-      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
         {subTabs.length > 1 && (
-          <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-slate-100 pb-2">
             {subTabs.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => selectTab(item.id)}
                 className={clsx(
-                  "rounded-xl px-4 py-2 text-sm font-bold transition",
+                  "rounded-lg px-3 py-1.5 text-xs font-bold transition",
                   tab === item.id
-                    ? "bg-teal-600 text-white shadow"
+                    ? "bg-teal-600 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 )}
               >
@@ -155,80 +154,71 @@ export function ReportsView(props: ReportsViewProps) {
         )}
 
         {tab !== "accounting" && (
-          <>
-            <div
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <label className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Range</span>
+              <select
+                value={range}
+                onChange={(e) => setRange(e.target.value as DateRange)}
+                className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+              >
+                <option value="all">All time</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 days</option>
+                <option value="month">This month</option>
+              </select>
+            </label>
+            {showOrderStatusFilter && (
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs font-medium text-slate-500">Status</span>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as "all" | OrderStatus)}
+                  className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+                >
+                  <option value="all">All status</option>
+                  {ORDER_LIST_TABS.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-500">From</span>
+              <input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+              />
+            </label>
+            <label className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-500">To</span>
+              <input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+              />
+            </label>
+            <label
               className={clsx(
-                "grid gap-3",
-                showOrderStatusFilter ? "md:grid-cols-4" : "md:grid-cols-3"
+                "ml-auto inline-flex items-center gap-1.5 text-xs font-medium",
+                canCompare ? "text-slate-600" : "cursor-not-allowed text-slate-400"
               )}
             >
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Range</p>
-                <select
-                  value={range}
-                  onChange={(e) => setRange(e.target.value as DateRange)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                >
-                  <option value="all">All time</option>
-                  <option value="today">Today</option>
-                  <option value="week">Last 7 days</option>
-                  <option value="month">This month</option>
-                </select>
-              </div>
-              {showOrderStatusFilter && (
-                <div>
-                  <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Status</p>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as "all" | OrderStatus)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  >
-                    <option value="all">All status</option>
-                    {ORDER_LIST_TABS.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase text-slate-500">From</p>
-                <input
-                  type="date"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase text-slate-500">To</p>
-                <input
-                  type="date"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-end">
-              <label
-                className={clsx(
-                  "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold",
-                  canCompare ? "text-slate-700" : "cursor-not-allowed text-slate-400"
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={compareMode}
-                  onChange={(e) => setCompareMode(e.target.checked)}
-                  disabled={!canCompare}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                Compare with previous period
-              </label>
-            </div>
-          </>
+              <input
+                type="checkbox"
+                checked={compareMode}
+                onChange={(e) => setCompareMode(e.target.checked)}
+                disabled={!canCompare}
+                className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              Compare previous
+            </label>
+          </div>
         )}
       </div>
 
@@ -258,7 +248,7 @@ export function ReportsView(props: ReportsViewProps) {
         </div>
       )}
 
-      {showOrderSummaryCards && (
+      {showOrderSummaryCards && tab !== "sales" && tab !== "payment" && (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="glass-card rounded-2xl p-4">
           <p className="text-sm text-slate-500">Orders</p>
@@ -329,7 +319,10 @@ export function ReportsView(props: ReportsViewProps) {
             report={profitSalesReport}
             view={salesView}
             onViewChange={setSalesView}
-            orderDelta={periodCompare?.orders ?? null}
+            operatingExpenseByCategory={operatingExpenseByCategory}
+            accountBalances={accountingDepthReport.accountBalances}
+            activeAccountTotal={accountingDepthReport.activeAccountTotal}
+            cashBalance={accountingSummary.cashBalance}
           />
 
           {salesView === "details" && (
@@ -804,62 +797,73 @@ export function ReportsView(props: ReportsViewProps) {
       {tab === "payment" && (
         <div className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-sm text-slate-500">Advance Collected</p>
-                <p className="text-2xl font-bold text-indigo-700">{formatBdt(paymentSummary.advance)}</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-sm text-slate-500">Delivery Collected</p>
-                <p className="text-2xl font-bold text-emerald-700">{formatBdt(paymentSummary.delivery)}</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-sm text-slate-500">Outstanding Due</p>
-                <p className="text-2xl font-bold text-rose-700">{formatBdt(paymentSummary.due)}</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h3 className="mb-3 font-bold text-slate-800">Payment Breakdown</h3>
-              <ChartClientOnly height={300}>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        {
-                          name: "Payment",
-                          advance: paymentSummary.advance,
-                          delivery: paymentSummary.delivery,
-                          due: paymentSummary.due,
-                        },
-                      ]}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactBdt(asNumber(v))} />
-                      <Tooltip formatter={(value) => `${formatBdt(asNumber(value))} (${formatCompactBdt(asNumber(value))})`} />
-                      <Bar dataKey="advance" name="Advance" fill="#4f46e5" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="delivery" name="Delivery" fill="#10b981" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="due" name="Due" fill="#ef4444" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm text-slate-500">Cash In (Accounting)</p>
+                  <p className="text-2xl font-bold text-emerald-700">
+                    {formatBdt(accountingCashFlow.inflow)}
+                  </p>
                 </div>
-              </ChartClientOnly>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm text-slate-500">Cash Out (Accounting)</p>
+                  <p className="text-2xl font-bold text-rose-700">
+                    {formatBdt(accountingCashFlow.outflow)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm text-slate-500">Net Cash</p>
+                  <p
+                    className={clsx(
+                      "text-2xl font-bold",
+                      accountingCashFlow.netCash >= 0 ? "text-indigo-700" : "text-rose-700"
+                    )}
+                  >
+                    {formatBdt(accountingCashFlow.netCash)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <h3 className="mb-3 font-bold text-slate-800">Accounting Payment Flow</h3>
+                <ChartClientOnly height={300}>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          {
+                            name: "Accounting",
+                            inflow: accountingCashFlow.inflow,
+                            outflow: accountingCashFlow.outflow,
+                            transfer: accountingCashFlow.transferVolume,
+                          },
+                        ]}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactBdt(asNumber(v))} />
+                        <Tooltip formatter={(value) => `${formatBdt(asNumber(value))} (${formatCompactBdt(asNumber(value))})`} />
+                        <Bar dataKey="inflow" name="Cash In" fill="#10b981" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="outflow" name="Cash Out" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="transfer" name="Transfers" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </ChartClientOnly>
+              </div>
             </div>
-          </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h3 className="mb-3 font-bold text-slate-800">Payment Share</h3>
+              <h3 className="mb-3 font-bold text-slate-800">Payment Share (Accounting)</h3>
               <ChartClientOnly height={380}>
                 <div className="h-[380px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={[
-                          { name: "Advance", value: paymentSummary.advance },
-                          { name: "Delivery", value: paymentSummary.delivery },
-                          { name: "Due", value: paymentSummary.due },
+                          { name: "Cash In", value: accountingCashFlow.inflow },
+                          { name: "Cash Out", value: accountingCashFlow.outflow },
+                          { name: "Transfers", value: accountingCashFlow.transferVolume },
                         ]}
                         dataKey="value"
                         nameKey="name"
@@ -872,80 +876,72 @@ export function ReportsView(props: ReportsViewProps) {
                           return `${name} ${percent.toFixed(0)}%`;
                         }}
                       >
-                        <Cell fill="#4f46e5" />
                         <Cell fill="#10b981" />
                         <Cell fill="#ef4444" />
+                        <Cell fill="#4f46e5" />
                       </Pie>
                       <Tooltip
-                        formatter={(value) => `${formatBdt(asNumber(value))} (${formatCompactBdt(asNumber(value))})`}
+                        formatter={(value) =>
+                          `${formatBdt(asNumber(value))} (${formatCompactBdt(asNumber(value))})`
+                        }
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               </ChartClientOnly>
-              {compareMode && periodCompare && (
-                <p className="mt-2 text-xs text-slate-500">
-                  Previous period: {periodCompare.previous.orders} orders · Gross{" "}
-                  {formatCompactBdt(periodCompare.previous.grossSales)}
-                </p>
-              )}
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h3 className="mb-3 font-bold text-slate-800">Payment Aging</h3>
-              <ChartClientOnly height={300}>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={paymentAgingRows.buckets}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactBdt(asNumber(v))} />
-                      <Tooltip formatter={(value) => formatBdt(asNumber(value))} />
-                      <Bar dataKey="amount" name="Due" fill="#ef4444" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartClientOnly>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <h3 className="mb-3 font-bold text-slate-800">Due Recovery List</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px] text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
-                      <th className="px-2 py-2">Order</th>
-                      <th className="px-2 py-2">Customer</th>
-                      <th className="px-2 py-2">Age</th>
-                      <th className="px-2 py-2">Status</th>
-                      <th className="px-2 py-2">Due</th>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <h3 className="mb-3 font-bold text-slate-800">Recent Accounting Payments</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
+                    <th className="px-2 py-2">Date</th>
+                    <th className="px-2 py-2">Type</th>
+                    <th className="px-2 py-2">Label</th>
+                    <th className="px-2 py-2">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accountingRecentRows.map((row) => (
+                    <tr key={row.id} className="border-b border-slate-100">
+                      <td className="px-2 py-2">{row.date}</td>
+                      <td className="px-2 py-2">
+                        <span
+                          className={clsx(
+                            "rounded px-2 py-0.5 text-xs font-bold",
+                            row.type === "income"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : row.type === "expense"
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-indigo-100 text-indigo-700"
+                          )}
+                        >
+                          {row.type}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 text-slate-700">{row.label}</td>
+                      <td
+                        className={clsx(
+                          "px-2 py-2 font-bold",
+                          row.amount >= 0 ? "text-emerald-700" : "text-rose-700"
+                        )}
+                      >
+                        {row.amount >= 0 ? "+" : "-"}{formatBdt(Math.abs(row.amount))}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {paymentAgingRows.recovery.map((row) => (
-                      <tr key={row.orderId} className="border-b border-slate-100">
-                        <td className="px-2 py-2 font-semibold text-slate-800">{row.orderId}</td>
-                        <td className="px-2 py-2">
-                          {row.customer}
-                          <div className="text-xs text-slate-500">{row.phone}</div>
-                        </td>
-                        <td className="px-2 py-2">{row.ageDays}d</td>
-                        <td className="px-2 py-2">{row.status}</td>
-                        <td className="px-2 py-2 font-bold text-rose-700">{formatBdt(row.due)}</td>
-                      </tr>
-                    ))}
-                    {paymentAgingRows.recovery.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-2 py-6 text-center text-slate-500">
-                          No due recovery items in selected filter.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                  {accountingRecentRows.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-2 py-6 text-center text-slate-500">
+                        No accounting payment entries in selected accounting date range.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1663,6 +1659,189 @@ export function ReportsView(props: ReportsViewProps) {
                 {inventoryReport.valuation.deadStockProducts} products ·{" "}
                 {inventoryReport.valuation.deadStockUnits} units
               </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-slate-800">Item-wise Profit</h3>
+                <p className="text-xs text-slate-500">
+                  From delivered & partial orders in selected range · returns deducted
+                </p>
+              </div>
+              {inventoryReport.itemProfit.summary.bestItem && (
+                <p className="text-xs text-slate-500">
+                  Top earner:{" "}
+                  <span className="font-semibold text-emerald-700">
+                    {inventoryReport.itemProfit.summary.bestItem.name}
+                  </span>{" "}
+                  ({formatBdt(inventoryReport.itemProfit.summary.bestItem.profit)})
+                </p>
+              )}
+            </div>
+
+            <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Gross Profit</p>
+                <p
+                  className={clsx(
+                    "text-xl font-bold",
+                    inventoryReport.itemProfit.summary.grossProfit >= 0
+                      ? "text-emerald-700"
+                      : "text-rose-700"
+                  )}
+                >
+                  {formatBdt(inventoryReport.itemProfit.summary.grossProfit)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Item Revenue</p>
+                <p className="text-xl font-bold text-indigo-700">
+                  {formatBdt(inventoryReport.itemProfit.summary.totalRevenue)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Avg Margin</p>
+                <p className="text-xl font-bold text-amber-700">
+                  {inventoryReport.itemProfit.summary.avgMargin.toFixed(1)}%
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Units Sold</p>
+                <p className="text-xl font-bold text-slate-800">
+                  {inventoryReport.itemProfit.summary.itemsSold}
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {inventoryReport.itemProfit.summary.uniqueProducts} products
+                  {inventoryReport.itemProfit.summary.lossMakingCount > 0 &&
+                    ` · ${inventoryReport.itemProfit.summary.lossMakingCount} loss`}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
+                      <th className="px-2 py-2">Product</th>
+                      <th className="px-2 py-2">Qty</th>
+                      <th className="px-2 py-2">Revenue</th>
+                      <th className="px-2 py-2">COGS</th>
+                      <th className="px-2 py-2">Profit</th>
+                      <th className="px-2 py-2">Margin</th>
+                      <th className="px-2 py-2">Orders</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventoryReport.itemProfit.rows.slice(0, 20).map((row) => (
+                      <tr key={row.productId} className="border-b border-slate-100">
+                        <td className="px-2 py-2">
+                          <div className="font-semibold text-slate-800">{row.name}</div>
+                          <div className="text-xs text-slate-500">
+                            {row.code} · {row.category}
+                          </div>
+                        </td>
+                        <td className="px-2 py-2">
+                          {row.qtySold}
+                          {row.qtyReturned > 0 && (
+                            <span className="ml-1 text-xs text-rose-600">
+                              (-{row.qtyReturned})
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-2 py-2">{formatBdt(row.revenue)}</td>
+                        <td className="px-2 py-2 text-slate-600">{formatBdt(row.cogs)}</td>
+                        <td
+                          className={clsx(
+                            "px-2 py-2 font-bold",
+                            row.grossProfit >= 0 ? "text-emerald-700" : "text-rose-700"
+                          )}
+                        >
+                          {formatBdt(row.grossProfit)}
+                        </td>
+                        <td className="px-2 py-2">{row.marginPct.toFixed(1)}%</td>
+                        <td className="px-2 py-2">{row.orderCount}</td>
+                      </tr>
+                    ))}
+                    {inventoryReport.itemProfit.rows.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-2 py-6 text-center text-slate-500">
+                          No delivered sales in this period yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div>
+                <h4 className="mb-2 text-sm font-bold text-slate-700">Top by Gross Profit</h4>
+                {inventoryReport.itemProfit.topByProfit.length === 0 ? (
+                  <p className="text-sm text-slate-500">No profit data for this range.</p>
+                ) : (
+                  <ChartClientOnly height={280}>
+                    <div className="h-[280px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={inventoryReport.itemProfit.topByProfit}
+                          layout="vertical"
+                          margin={{ left: 8, right: 12 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis
+                            type="number"
+                            tick={{ fontSize: 10 }}
+                            tickFormatter={(v) => formatCompactBdt(asNumber(v))}
+                          />
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            width={96}
+                            tick={{ fontSize: 10 }}
+                          />
+                          <Tooltip formatter={(value) => formatBdt(asNumber(value))} />
+                          <Bar
+                            dataKey="profit"
+                            name="Gross Profit"
+                            fill="#10b981"
+                            radius={[0, 6, 6, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </ChartClientOnly>
+                )}
+
+                {inventoryReport.itemProfit.byCategory.length > 0 && (
+                  <div className="mt-4 overflow-x-auto">
+                    <h4 className="mb-2 text-sm font-bold text-slate-700">Profit by Category</h4>
+                    <table className="w-full min-w-[320px] text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase text-slate-500">
+                          <th className="px-2 py-2">Category</th>
+                          <th className="px-2 py-2">Qty</th>
+                          <th className="px-2 py-2">Profit</th>
+                          <th className="px-2 py-2">Margin</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inventoryReport.itemProfit.byCategory.slice(0, 8).map((row) => (
+                          <tr key={row.id} className="border-b border-slate-100">
+                            <td className="px-2 py-2 font-semibold text-slate-800">{row.name}</td>
+                            <td className="px-2 py-2">{row.qtySold}</td>
+                            <td className="px-2 py-2 font-bold text-emerald-700">
+                              {formatBdt(row.grossProfit)}
+                            </td>
+                            <td className="px-2 py-2">{row.marginPct.toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

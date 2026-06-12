@@ -151,3 +151,43 @@ export function getAppSignupUrl(requestHost?: string): string {
   if (!isSplitDomainMode()) return "/signup";
   return `${getAppBaseUrl()}/signup`;
 }
+
+function isInternalRequestHost(host: string): boolean {
+  const h = stripHost(host);
+  return (
+    !h ||
+    h === "0.0.0.0" ||
+    h === "127.0.0.1" ||
+    h === "localhost" ||
+    h.endsWith(".localhost")
+  );
+}
+
+/** Public site origin for emails/links — avoids internal 0.0.0.0:3000 on Hostinger. */
+export function getPublicRequestOrigin(req: Request): string {
+  const forwardedHost = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const forwardedProto = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  if (forwardedHost && !isInternalRequestHost(forwardedHost)) {
+    const proto = forwardedProto || (process.env.NODE_ENV === "production" ? "https" : "http");
+    return `${proto}://${forwardedHost}`;
+  }
+
+  const hostHeader = req.headers.get("host")?.split(",")[0]?.trim();
+  if (hostHeader && !isInternalRequestHost(hostHeader)) {
+    const proto =
+      forwardedProto ||
+      (process.env.NODE_ENV === "production" ? "https" : "http");
+    return `${proto}://${hostHeader}`;
+  }
+
+  try {
+    const originHost = new URL(req.url).hostname;
+    if (!isInternalRequestHost(originHost)) {
+      return new URL(req.url).origin;
+    }
+  } catch {
+    /* fall through */
+  }
+
+  return getAppBaseUrl();
+}

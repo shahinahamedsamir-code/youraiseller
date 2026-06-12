@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
+import { getPublicRequestOrigin } from "@/lib/app-hosts";
 import { createPasswordResetRequest } from "@/lib/password-reset-server";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const email = typeof body?.email === "string" ? body.email : "";
-    const origin = new URL(req.url).origin;
+    const origin = getPublicRequestOrigin(req);
     const result = await createPasswordResetRequest(email, origin);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });

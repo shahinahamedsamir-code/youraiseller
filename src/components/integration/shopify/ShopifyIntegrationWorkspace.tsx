@@ -21,11 +21,8 @@ import { syncProductsFromShopify } from "@/lib/shopify-product-sync";
 import { syncOrdersFromShopify } from "@/lib/shopify-order-sync";
 
 type ShopifyTab = "setup" | "webhooks" | "product-sync" | "order-sync" | "stock-sync";
-type AuthMethod = "dev_dashboard" | "manual_token";
-
 type ShopifyState = {
   shopDomain: string;
-  authMethod: AuthMethod;
   accessToken: string;
   clientId: string;
   clientSecret: string;
@@ -51,7 +48,6 @@ function isShopifyMyshopifyDomain(raw: string): boolean {
 
 const defaultState: ShopifyState = {
   shopDomain: "",
-  authMethod: "dev_dashboard",
   accessToken: "",
   clientId: "",
   clientSecret: "",
@@ -111,17 +107,8 @@ export function ShopifyIntegrationWorkspace() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<ShopifyState> & {
-        authMethod?: string;
-      };
-      const savedMethod = String(parsed.authMethod ?? "");
-      const authMethod =
-        savedMethod === "manual_token" || savedMethod === "access_token"
-          ? "manual_token"
-          : savedMethod === "dev_dashboard" || savedMethod === "client_credentials"
-            ? "dev_dashboard"
-            : defaultState.authMethod;
-      setState((prev) => ({ ...prev, ...parsed, authMethod }));
+      const parsed = JSON.parse(raw) as Partial<ShopifyState>;
+      setState((prev) => ({ ...prev, ...parsed }));
     } catch {
       // Ignore malformed persisted data and keep defaults
     } finally {
@@ -154,7 +141,6 @@ export function ShopifyIntegrationWorkspace() {
         ...prev,
         shopDomain: oauthShop,
         accessToken: oauthToken,
-        authMethod: "dev_dashboard",
       }));
       const scopeOk = /read_products/.test(oauthScope);
       setConnectionVerified(scopeOk);
@@ -196,9 +182,7 @@ export function ShopifyIntegrationWorkspace() {
   }, [state.accessToken, state.shopDomain]);
 
   const connectionHealthy = connectionVerified && hasBasicSetup;
-  const hasDevCredentials =
-    state.authMethod === "dev_dashboard" &&
-    Boolean(state.clientId.trim() && state.clientSecret.trim());
+  const hasDevCredentials = Boolean(state.clientId.trim() && state.clientSecret.trim());
 
   useEffect(() => {
     setConnectionVerified(false);
@@ -924,98 +908,53 @@ function SetupTab({
             myshopify.com address, not localhost or a full website URL
           </p>
 
-          <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-              Connection method
-            </p>
-            <div className="space-y-2 text-sm">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  checked={state.authMethod === "dev_dashboard"}
-                  onChange={() =>
-                    setState((prev) => ({ ...prev, authMethod: "dev_dashboard" }))
-                  }
-                  className="h-4 w-4 accent-teal-600"
-                />
-                Dev Dashboard (recommended)
-              </label>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  checked={state.authMethod === "manual_token"}
-                  onChange={() =>
-                    setState((prev) => ({ ...prev, authMethod: "manual_token" }))
-                  }
-                  className="h-4 w-4 accent-teal-600"
-                />
-                Manual token (advanced)
-              </label>
-            </div>
-          </div>
-
-          {state.authMethod === "dev_dashboard" ? (
-            <>
-              <LabeledInput
-                label="Client ID"
-                icon={KeyRound}
-                value={state.clientId}
-                placeholder="Copy from Dev Dashboard → Settings"
-                onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
-              />
-              <LabeledInput
-                label="Client Secret"
-                icon={KeyRound}
-                type="password"
-                value={state.clientSecret}
-                placeholder="Copy from Dev Dashboard → Settings"
-                onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
-              />
-              {state.accessToken.trim() ? (
-                <div>
-                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Access token
-                  </p>
-                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                    <p className="text-sm font-semibold text-emerald-800">
-                      Token received — click Connect again to refresh
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-                  Access token is filled automatically when you click <strong>Connect</strong>.
+          <LabeledInput
+            label="Client ID"
+            icon={KeyRound}
+            value={state.clientId}
+            placeholder="Copy from Dev Dashboard → Settings"
+            onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
+          />
+          <LabeledInput
+            label="Client Secret"
+            icon={KeyRound}
+            type="password"
+            value={state.clientSecret}
+            placeholder="Copy from Dev Dashboard → Settings"
+            onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
+          />
+          {state.accessToken.trim() ? (
+            <div>
+              <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
+                Access token
+              </p>
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                <p className="text-sm font-semibold text-emerald-800">
+                  Token received — click Connect again to refresh
                 </p>
-              )}
-            </>
+              </div>
+            </div>
           ) : (
-            <LabeledInput
-              label="Access token"
-              icon={KeyRound}
-              value={state.accessToken}
-              type="password"
-              placeholder="Paste your token here if you already have one"
-              onChange={(value) => setState((prev) => ({ ...prev, accessToken: value }))}
-            />
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+              Access token is filled automatically when you click <strong>Connect</strong>.
+            </p>
           )}
 
           <div className="flex flex-wrap items-center gap-2">
-            {state.authMethod === "dev_dashboard" && (
-              <button
-                type="button"
-                onClick={getAccessToken}
-                disabled={fetchingToken}
-                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
-              >
-                {fetchingToken ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <KeyRound className="h-4 w-4" />
-                )}
-                {fetchingToken ? "Connecting..." : "Connect"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={getAccessToken}
+              disabled={fetchingToken}
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
+            >
+              {fetchingToken ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="h-4 w-4" />
+              )}
+              {fetchingToken ? "Connecting..." : "Connect"}
+            </button>
             <button
               type="button"
               onClick={saveSetup}
@@ -1043,21 +982,19 @@ function SetupTab({
               {testing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
               {testing ? "Testing..." : "Test connection"}
             </button>
-            {state.authMethod === "dev_dashboard" && (
-              <button
-                type="button"
-                onClick={connectViaApp}
-                disabled={startingOAuth}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-60"
-              >
-                {startingOAuth ? (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <ExternalLink className="h-3.5 w-3.5" />
-                )}
-                {startingOAuth ? "Opening Shopify..." : "Install via OAuth"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={connectViaApp}
+              disabled={startingOAuth}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-60"
+            >
+              {startingOAuth ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ExternalLink className="h-3.5 w-3.5" />
+              )}
+              {startingOAuth ? "Opening Shopify..." : "Install via OAuth"}
+            </button>
           </div>
         </div>
       </section>

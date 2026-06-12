@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
+import { isDevAdminAuthenticated } from "@/lib/dev-admin-auth-server";
+import { sellerCanAccessScope } from "@/lib/seller-auth-server";
 import { sellerDataFile, sellerScopeDir } from "@/lib/seller-data-path";
 import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
 import { normalizeSmsAccount } from "@/lib/sms-types";
@@ -30,6 +32,11 @@ function fileFor(scope: string, kind: string): string {
   return sellerDataFile(scope, `${kind}.json`);
 }
 
+async function authorizeScope(scope: string): Promise<boolean> {
+  if (isDevAdminAuthenticated()) return true;
+  return sellerCanAccessScope(scope);
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -37,6 +44,10 @@ export async function GET(req: Request) {
     const kind = sanitize(searchParams.get("kind") ?? "");
     if (!scope || !kind || !ALLOWED_KINDS.has(kind)) {
       return NextResponse.json({ error: "Invalid scope or kind" }, { status: 400 });
+    }
+
+    if (!(await authorizeScope(scope))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (kind === "sms") {
@@ -63,6 +74,11 @@ export async function POST(req: Request) {
     if (!scope || !kind || !ALLOWED_KINDS.has(kind)) {
       return NextResponse.json({ error: "Invalid scope or kind" }, { status: 400 });
     }
+
+    if (!(await authorizeScope(scope))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     if (body?.data === undefined) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
     }

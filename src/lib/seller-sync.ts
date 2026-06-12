@@ -46,6 +46,7 @@ export async function pushSellerData(kind: SellerKind, data: unknown): Promise<v
     await fetch("/api/seller-data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify({ scope, kind, data }),
     });
   } catch {
@@ -60,7 +61,7 @@ export async function pullSellerData(kind: SellerKind): Promise<unknown | null> 
   try {
     const res = await fetch(
       `/api/seller-data?scope=${encodeURIComponent(scope)}&kind=${kind}`,
-      { cache: "no-store" }
+      { cache: "no-store", credentials: "same-origin" }
     );
     if (!res.ok) return null;
     const json = await res.json();

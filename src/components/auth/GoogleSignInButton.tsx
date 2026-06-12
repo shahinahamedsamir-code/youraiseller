@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
-import { loginWithGoogleProfile, syncDevUsersFromServer } from "@/lib/dev-users";
+import { applyServerAuthUser, syncDevUsersFromServer } from "@/lib/dev-users";
 import { Loader2, ShieldCheck } from "lucide-react";
 import clsx from "clsx";
 
@@ -55,25 +55,29 @@ function GoogleSignInButtonInner({
       return;
     }
 
-    // Pull the latest users (incl. invited team members) so login on any
-    // device resolves them instead of creating a new signup request.
-    await syncDevUsersFromServer(true);
-
-    const result = loginWithGoogleProfile(
-      {
+    const accountRes = await fetch("/api/auth/google-account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
         email: data.email,
         name: data.name,
         googleId: data.sub,
-      },
-      { mode: variant }
-    );
-
-    if (!result.ok) {
-      setError(result.error);
+        mode: variant,
+      }),
+    });
+    const account = await accountRes.json();
+    if (!accountRes.ok) {
+      setError(account.error ?? "Google sign-in failed.");
       return;
     }
 
-    if (result.redirect === "dashboard") {
+    if (account.user?.id) {
+      applyServerAuthUser(account.user);
+    }
+    await syncDevUsersFromServer(true);
+
+    if (account.redirect === "dashboard") {
       router.push("/dashboard");
     } else {
       router.push("/renew");
@@ -132,12 +136,13 @@ function GoogleSignInButtonInner({
           {variant === "signup" ? (
             <>
               Your store account is created on first sign-in. An admin reviews
-              new sellers before dashboard access is enabled.
+              new sellers before dashboard access is enabled. You can also register
+              with email below.
             </>
           ) : (
             <>
-              Secure sign-in with Google. New sellers wait for admin approval;
-              active accounts go straight to the dashboard.
+              Secure sign-in with Google. Active accounts go straight to the
+              dashboard. Or use email &amp; password below.
             </>
           )}
         </p>

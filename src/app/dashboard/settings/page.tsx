@@ -203,7 +203,13 @@ const GROUPS: SettingGroup[] = [
 const QUICK = [
   { key: "notifications", title: "Notifications", desc: "Email & in-app alerts", icon: Bell },
   { key: "appearance", title: "Appearance", desc: "Theme & branding", icon: Palette },
-  { key: "security", title: "Security", desc: "Password, 2FA, API keys", icon: ShieldCheck },
+  {
+    key: "security",
+    title: "Security",
+    desc: "Password & sign-in",
+    icon: ShieldCheck,
+    href: "/dashboard/settings/security",
+  },
 ];
 
 export default function SettingsPage() {
@@ -363,6 +369,9 @@ export default function SettingsPage() {
               <button
                 key={q2.key}
                 type="button"
+                onClick={() => {
+                  if ("href" in q2 && q2.href) router.push(q2.href);
+                }}
                 className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition hover:bg-violet-50/50"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">

@@ -15,19 +15,23 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "framer-motion": "^12.39.0",
     "google-auth-library": "^10.6.2",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.16.0",
     "next": "14.2.35",
+    "nodemailer": "^8.0.11",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.8.1",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.5.0",

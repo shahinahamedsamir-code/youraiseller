@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
   MessageSquare,
@@ -9,6 +10,7 @@ import {
   Truck,
 } from "lucide-react";
 import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
+import { EmailPasswordAuthForm } from "@/components/auth/EmailPasswordAuthForm";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthSessionRedirect } from "@/components/auth/AuthSessionRedirect";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -38,6 +40,9 @@ export function AuthPageShell({
   heroSubtitle,
   footerLink,
 }: Props) {
+  const params = useSearchParams();
+  const passwordReset = mode === "login" && params.get("reset") === "1";
+
   return (
     <GoogleAuthProvider>
       <AuthSessionRedirect />
@@ -133,11 +138,17 @@ export function AuthPageShell({
                   ) : (
                     <p className="mt-2 text-sm leading-relaxed text-slate-500">
                       {mode === "signup"
-                        ? "Use your Google account to register as a new seller."
-                        : "Use your Google account to open your dashboard."}
+                        ? "Sign up with Google or email & password. Admin approves new sellers."
+                        : "Sign in with Google or your email & password."}
                     </p>
                   )}
                 </div>
+
+                {passwordReset ? (
+                  <p className="mb-4 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
+                    Password updated. Sign in with your new password.
+                  </p>
+                ) : null}
 
                 <GoogleSignInButton
                   label={
@@ -147,6 +158,16 @@ export function AuthPageShell({
                   }
                   variant={mode}
                 />
+
+                <div className="my-6 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    or
+                  </span>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <EmailPasswordAuthForm mode={mode} />
               </div>
 
               {footerLink && (
@@ -162,7 +183,7 @@ export function AuthPageShell({
               )}
 
               <p className="mt-4 text-center text-[11px] text-slate-400">
-                English · Google sign-in only · No password required
+                English · Google or email &amp; password · Admin approval for new sellers
               </p>
             </div>
           </div>

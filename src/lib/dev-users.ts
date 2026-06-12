@@ -452,6 +452,7 @@ async function pushUsersToServer(users: DevUser[]): Promise<void> {
   const res = await fetch("/api/dev-users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
     body: JSON.stringify(users),
   });
   if (!res.ok) {
@@ -607,6 +608,7 @@ export function registerUser(data: {
     email,
     company: data.company.trim(),
     passwordHash: hashPasswordDemo(data.password),
+    authProvider: "password",
     plan: "basic",
     status: "pending",
     features: getPlanFeatures("basic"),
@@ -951,6 +953,12 @@ export function authenticateUser(
 ): { ok: true; user: DevUser } | { ok: false; error: string } {
   const user = findUserByEmail(email);
   if (!user) return { ok: false, error: "No account found with this email." };
+  if (!user.passwordHash) {
+    return {
+      ok: false,
+      error: "This account uses Google sign-in. Continue with Google instead.",
+    };
+  }
   if (!verifyPasswordDemo(user.passwordHash, password)) {
     return { ok: false, error: "Incorrect password." };
   }
@@ -969,11 +977,130 @@ export function authenticateUser(
   return { ok: true, user };
 }
 
+/** Email + password sign-in — mirrors Google flow (pending → renew, active → dashboard). */
+export function loginWithPasswordCredentials(
+  email: string,
+  password: string,
+  options?: {
+    mode?: "login" | "signup";
+    name?: string;
+    company?: string;
+  }
+):
+  | { ok: true; user: DevUser; redirect: "dashboard" | "renew" }
+  | { ok: false; error: string } {
+  const mode = options?.mode ?? "login";
+  const normalizedEmail = email.toLowerCase().trim();
+
+  if (mode === "signup") {
+    const name = options?.name?.trim() ?? "";
+    const company = options?.company?.trim() || name;
+    if (!name) return { ok: false, error: "Name is required." };
+    if (!normalizedEmail) return { ok: false, error: "Email is required." };
+    if (password.length < 6) {
+      return { ok: false, error: "Password must be at least 6 characters." };
+    }
+
+    const existing = findUserByEmail(normalizedEmail);
+    if (existing && existing.status !== "pending") {
+      return {
+        ok: false,
+        error:
+          "This email is already registered. Sign in instead, or use Google if that is how you joined.",
+      };
+    }
+
+    const result = registerUser({
+      name,
+      email: normalizedEmail,
+      company,
+      password,
+    });
+    if (!result.ok) return result;
+    applyUserToSession(result.user);
+    return { ok: true, user: result.user, redirect: "renew" };
+  }
+
+  const user = findUserByEmail(normalizedEmail);
+  if (!user) {
+    return { ok: false, error: "No account found with this email." };
+  }
+  if (!user.passwordHash) {
+    return {
+      ok: false,
+      error: "This account uses Google sign-in. Continue with Google instead.",
+    };
+  }
+  if (!verifyPasswordDemo(user.passwordHash, password)) {
+    return { ok: false, error: "Incorrect email or password." };
+  }
+  if (user.status === "rejected") {
+    return { ok: false, error: "Your signup was rejected. Contact support." };
+  }
+  if (user.status === "expired") {
+    return { ok: false, error: "Your account has expired. Contact support to renew." };
+  }
+
+  applyUserToSession(user);
+
+  if (user.status === "active") {
+    return { ok: true, user, redirect: "dashboard" };
+  }
+
+  return { ok: true, user, redirect: "renew" };
+}
+
+export function changeAccountPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): { ok: true } | { ok: false; error: string } {
+  const user = loadDevUsers().find((u) => u.id === userId);
+  if (!user) return { ok: false, error: "Not signed in." };
+  if (!user.passwordHash) {
+    return {
+      ok: false,
+      error: "Your account uses Google sign-in. Set a new password below to enable email login.",
+    };
+  }
+  if (!verifyPasswordDemo(user.passwordHash, currentPassword)) {
+    return { ok: false, error: "Current password is incorrect." };
+  }
+  if (newPassword.length < 6) {
+    return { ok: false, error: "Password must be at least 6 characters." };
+  }
+  const updated = updateDevUser(userId, {
+    passwordHash: hashPasswordDemo(newPassword),
+    authProvider: "password",
+  });
+  if (!updated) return { ok: false, error: "Could not update password." };
+  return { ok: true };
+}
+
+export function setAccountPassword(
+  userId: string,
+  newPassword: string
+): { ok: true } | { ok: false; error: string } {
+  if (newPassword.length < 6) {
+    return { ok: false, error: "Password must be at least 6 characters." };
+  }
+  const updated = updateDevUser(userId, {
+    passwordHash: hashPasswordDemo(newPassword),
+    authProvider: "password",
+  });
+  if (!updated) return { ok: false, error: "Could not set password." };
+  return { ok: true };
+}
+
 /** Google signups & email signups waiting for review — not manual Software Users. */
 export function isSignupRequestUser(u: DevUser): boolean {
   // Invited team members are pre-approved sub-accounts, never signup requests.
   if (u.parentAccountId) return false;
-  return u.authProvider === "google" || u.status === "pending";
+  return (
+    u.authProvider === "google" ||
+    u.authProvider === "password" ||
+    u.status === "pending"
+  );
 }
 
 export function getPendingUsers(): DevUser[] {
@@ -1062,6 +1189,20 @@ export function getSessionUser(): DevUser | undefined {
   return user;
 }
 
+async function ensureSellerSessionCookie(user: DevUser): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ userId: user.id, email: user.email }),
+    });
+  } catch {
+    /* offline */
+  }
+}
+
 /** Pull latest user from server file and refresh the signed-in session. */
 export async function refreshCurrentSessionUser(): Promise<DevUser | undefined> {
   await syncDevUsersFromServer(true);
@@ -1073,7 +1214,23 @@ export async function refreshCurrentSessionUser(): Promise<DevUser | undefined> 
     return undefined;
   }
   applyUserToSession(user);
+  await ensureSellerSessionCookie(user);
   return user;
+}
+
+/** Merge a server-authenticated user into local cache and open the session. */
+export function applyServerAuthUser(partial: Partial<DevUser> & { id: string }) {
+  if (typeof window === "undefined") return;
+  const users = loadDevUsers();
+  const idx = users.findIndex((u) => u.id === partial.id);
+  const merged = migrateUser(
+    (idx >= 0 ? { ...users[idx], ...partial } : partial) as DevUser & { id: string }
+  );
+  if (idx >= 0) users[idx] = merged;
+  else users.unshift(merged);
+  writeLocalUsers(dedupeUsersByEmail(users));
+  applyUserToSession(merged);
+  window.dispatchEvent(new Event("youraiseller-users-updated"));
 }
 
 export function applyUserToSession(user: DevUser) {
@@ -1099,6 +1256,7 @@ export function clearUserSession() {
   localStorage.removeItem(SESSION_FEATURES_KEY);
   sessionStorage.removeItem(SESSION_USER_KEY);
   sessionStorage.removeItem(SESSION_FEATURES_KEY);
+  fetch("/api/auth/seller-logout", { method: "POST" }).catch(() => {});
 }
 
 export { countEnabledFeatures, FEATURE_LIST };

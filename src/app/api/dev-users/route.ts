@@ -1,60 +1,16 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
+import { mergeIncomingUserSecure, redactUserForClient } from "@/lib/dev-users-server";
+import { isDevAdminAuthenticated } from "@/lib/dev-admin-auth-server";
 import { appDataFile, getAppDataDir } from "@/lib/platform-data-path";
+import {
+  getSellerSessionUserId,
+  readDevUsersFile,
+  resolveDataScopeForUser,
+  type StoredUser,
+} from "@/lib/seller-auth-server";
 
 const DATA_FILE = appDataFile("dev-users.json");
-type StoredUser = {
-  email?: string;
-  status?: string;
-  approvedAt?: string;
-  authProvider?: string;
-  googleId?: string;
-  [key: string]: unknown;
-};
-
-function mergeIncomingUser(
-  existing: StoredUser | undefined,
-  incoming: StoredUser
-): StoredUser {
-  if (!existing) {
-    return {
-      ...incoming,
-      status: incoming.status ?? (incoming.googleId ? "pending" : incoming.status),
-      approvedAt:
-        incoming.status === "pending" ? undefined : incoming.approvedAt,
-    };
-  }
-
-  const merged = { ...existing, ...incoming };
-
-  if (existing.status === "pending" && incoming.status !== "pending") {
-    if (
-      incoming.approvedAt &&
-      (incoming.status === "inactive" || incoming.status === "active")
-    ) {
-      return merged;
-    }
-    return {
-      ...merged,
-      status: "pending",
-      approvedAt: undefined,
-      rejectedAt: undefined,
-      cancelNote: undefined,
-    };
-  }
-
-  if (incoming.status === "pending") {
-    return {
-      ...merged,
-      status: "pending",
-      approvedAt: undefined,
-      rejectedAt: undefined,
-      cancelNote: undefined,
-    };
-  }
-
-  return merged;
-}
 
 async function readUsers(): Promise<StoredUser[]> {
   try {
@@ -69,13 +25,24 @@ async function readUsers(): Promise<StoredUser[]> {
 export async function GET() {
   try {
     const users = await readUsers();
-    return NextResponse.json(users);
+    const devAdmin = isDevAdminAuthenticated();
+    if (devAdmin) {
+      return NextResponse.json(users);
+    }
+    return NextResponse.json(users.map(redactUserForClient));
   } catch {
     return NextResponse.json([]);
   }
 }
 
 export async function POST(req: Request) {
+  const devAdmin = isDevAdminAuthenticated();
+  const sellerSessionId = getSellerSessionUserId();
+
+  if (!devAdmin && !sellerSessionId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     if (!Array.isArray(body)) {
@@ -83,6 +50,23 @@ export async function POST(req: Request) {
     }
 
     const existing = await readUsers();
+
+    if (!devAdmin && sellerSessionId) {
+      const allUsers = await readDevUsersFile();
+      const seller = allUsers.find((u) => String(u.id) === sellerSessionId);
+      const ownerScope = seller ? resolveDataScopeForUser(seller, allUsers) : null;
+      for (const row of body as StoredUser[]) {
+        const rowId = String(row.id ?? "");
+        const parentId = String(row.parentAccountId ?? "");
+        const allowed =
+          rowId === sellerSessionId ||
+          (ownerScope && parentId === ownerScope) ||
+          (ownerScope && rowId && allUsers.find((u) => u.id === rowId)?.parentAccountId === ownerScope);
+        if (!allowed) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
+    }
     const byEmail = new Map<string, StoredUser>();
     for (const u of existing) {
       const email = String(u.email ?? "").toLowerCase().trim();
@@ -93,7 +77,7 @@ export async function POST(req: Request) {
       const email = String(row.email ?? "").toLowerCase().trim();
       if (!email) continue;
       const prev = byEmail.get(email);
-      byEmail.set(email, mergeIncomingUser(prev, row));
+      byEmail.set(email, mergeIncomingUserSecure(prev, row));
     }
 
     const merged = Array.from(byEmail.values());

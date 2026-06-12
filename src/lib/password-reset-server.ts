@@ -1,12 +1,13 @@
 import { randomBytes } from "crypto";
 import { promises as fs } from "fs";
 import { hashPassword } from "./auth";
+import { PASSWORD_RESET_TTL_MS } from "./password-reset-constants";
 import { isEmailConfigured, sendPasswordResetEmail } from "./email-server";
 import { appDataFile, getAppDataDir } from "./platform-data-path";
 
 const TOKENS_FILE = appDataFile("password-reset-tokens.json");
 const USERS_FILE = appDataFile("dev-users.json");
-const TOKEN_TTL_MS = 60 * 60 * 1000;
+const TOKEN_TTL_MS = PASSWORD_RESET_TTL_MS;
 
 type ResetTokenRow = {
   token: string;

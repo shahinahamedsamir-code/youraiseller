@@ -21,7 +21,7 @@ import { syncProductsFromShopify } from "@/lib/shopify-product-sync";
 import { syncOrdersFromShopify } from "@/lib/shopify-order-sync";
 
 type ShopifyTab = "setup" | "webhooks" | "product-sync" | "order-sync" | "stock-sync";
-type AuthMethod = "access_token" | "client_credentials";
+type AuthMethod = "dev_dashboard" | "manual_token";
 
 type ShopifyState = {
   shopDomain: string;
@@ -50,7 +50,7 @@ function isShopifyMyshopifyDomain(raw: string): boolean {
 
 const defaultState: ShopifyState = {
   shopDomain: "",
-  authMethod: "access_token",
+  authMethod: "dev_dashboard",
   accessToken: "",
   clientId: "",
   clientSecret: "",
@@ -77,6 +77,7 @@ export function ShopifyIntegrationWorkspace() {
   const [testing, setTesting] = useState(false);
   const [verifyingWebhook, setVerifyingWebhook] = useState(false);
   const [startingOAuth, setStartingOAuth] = useState(false);
+  const [fetchingToken, setFetchingToken] = useState(false);
   const [syncingProducts, setSyncingProducts] = useState(false);
   const [productSyncSummary, setProductSyncSummary] = useState<{
     total: number;
@@ -95,13 +96,23 @@ export function ShopifyIntegrationWorkspace() {
     failed: number;
     message?: string;
   } | null>(null);
+  const [connectionVerified, setConnectionVerified] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<ShopifyState>;
-      setState((prev) => ({ ...prev, ...parsed }));
+      const parsed = JSON.parse(raw) as Partial<ShopifyState> & {
+        authMethod?: string;
+      };
+      const savedMethod = String(parsed.authMethod ?? "");
+      const authMethod =
+        savedMethod === "manual_token" || savedMethod === "access_token"
+          ? "manual_token"
+          : savedMethod === "dev_dashboard" || savedMethod === "client_credentials"
+            ? "dev_dashboard"
+            : defaultState.authMethod;
+      setState((prev) => ({ ...prev, ...parsed, authMethod }));
     } catch {
       // Ignore malformed persisted data and keep defaults
     }
@@ -126,27 +137,58 @@ export function ShopifyIntegrationWorkspace() {
     if (oauthDone !== "1") return;
     const oauthShop = readCookie("shopify_oauth_shop");
     const oauthToken = readCookie("shopify_oauth_token");
+    const oauthScope = readCookie("shopify_oauth_scope");
     if (oauthShop && oauthToken) {
       setState((prev) => ({
         ...prev,
         shopDomain: oauthShop,
         accessToken: oauthToken,
-        authMethod: "access_token",
+        authMethod: "dev_dashboard",
       }));
-      setToast("Shopify app connected. Access token added automatically.");
+      const scopeOk = /read_products/.test(oauthScope);
+      setConnectionVerified(scopeOk);
+      setToast(
+        scopeOk
+          ? "Shopify app installed via OAuth. Access token saved — product sync ready."
+          : "OAuth token saved but read_products scope missing. Dev Dashboard → Versions → add scopes → Release → reinstall."
+      );
     }
     document.cookie = "shopify_oauth_done=; Max-Age=0; path=/";
     document.cookie = "shopify_oauth_shop=; Max-Age=0; path=/";
     document.cookie = "shopify_oauth_token=; Max-Age=0; path=/";
+    document.cookie = "shopify_oauth_scope=; Max-Age=0; path=/";
   }, []);
 
-  const connectionHealthy = useMemo(() => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauth = params.get("oauth");
+    if (!oauth) return;
+    const reason = params.get("reason");
+    if (oauth === "failed") {
+      setToast(
+        reason
+          ? `Shopify OAuth failed (${reason}). Check Dev Dashboard app URL + redirect URL.`
+          : "Shopify OAuth failed. Check Dev Dashboard app settings."
+      );
+    }
+    params.delete("oauth");
+    params.delete("reason");
+    const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+    window.history.replaceState({}, "", next);
+  }, []);
+
+  const hasBasicSetup = useMemo(() => {
     return (
       isShopifyMyshopifyDomain(state.shopDomain) &&
-      state.accessToken.trim().length > 12 &&
-      state.shopDomain.includes(".")
+      state.accessToken.trim().length > 12
     );
   }, [state.accessToken, state.shopDomain]);
+
+  const connectionHealthy = connectionVerified && hasBasicSetup;
+
+  useEffect(() => {
+    setConnectionVerified(false);
+  }, [state.shopDomain, state.accessToken]);
 
   const webhookUrl = useMemo(() => {
     const shop = state.shopDomain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
@@ -173,9 +215,16 @@ export function ShopifyIntegrationWorkspace() {
           accessToken: state.accessToken.trim(),
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; message?: string };
-      setToast(data.message || (data.ok ? "Shopify connection OK." : "Connection failed."));
+      const data = (await res.json()) as {
+        ok?: boolean;
+        message?: string;
+        productsReadable?: boolean;
+      };
+      const verified = Boolean(data.ok && data.productsReadable);
+      setConnectionVerified(verified);
+      setToast(data.message || (verified ? "Shopify connection OK." : "Connection failed."));
     } catch (error) {
+      setConnectionVerified(false);
       setToast(error instanceof Error ? error.message : "Failed to test Shopify connection.");
     } finally {
       setTesting(false);
@@ -199,6 +248,55 @@ export function ShopifyIntegrationWorkspace() {
       setToast(error instanceof Error ? error.message : "Failed to verify webhook endpoint.");
     } finally {
       setVerifyingWebhook(false);
+    }
+  };
+
+  const oauthCallbackUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/api/shopify/oauth/callback`;
+  }, []);
+
+  const getAccessToken = async () => {
+    const payload = {
+      shopDomain: normalizeShopDomainInput(state.shopDomain),
+      clientId: state.clientId.trim(),
+      clientSecret: state.clientSecret.trim(),
+    };
+    if (!payload.shopDomain || !payload.clientId || !payload.clientSecret) {
+      setToast("Shop domain, Client ID, and Client Secret লাগবে।");
+      return;
+    }
+    if (!isShopifyMyshopifyDomain(payload.shopDomain)) {
+      setToast("Shop Domain অবশ্যই `your-store.myshopify.com` format হতে হবে।");
+      return;
+    }
+    setFetchingToken(true);
+    try {
+      const res = await fetch("/api/shopify/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        message?: string;
+        accessToken?: string;
+        missingScopes?: string[];
+      };
+      if (!data.ok || !data.accessToken) {
+        setConnectionVerified(false);
+        setToast(data.message || "Failed to get access token.");
+        return;
+      }
+      setState((prev) => ({ ...prev, accessToken: data.accessToken || "" }));
+      const verified = !data.missingScopes?.length;
+      setConnectionVerified(verified);
+      setToast(data.message || "Access token received.");
+    } catch (error) {
+      setConnectionVerified(false);
+      setToast(error instanceof Error ? error.message : "Failed to get access token.");
+    } finally {
+      setFetchingToken(false);
     }
   };
 
@@ -253,8 +351,8 @@ export function ShopifyIntegrationWorkspace() {
     setProductSyncSummary(null);
     try {
       const result = await syncProductsFromShopify({
-        shopDomain: state.shopDomain,
-        accessToken: state.accessToken,
+        shopDomain: state.shopDomain.trim(),
+        accessToken: state.accessToken.trim(),
         limit: 300,
       });
       const summary = `Sync done — Created ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
@@ -368,7 +466,7 @@ export function ShopifyIntegrationWorkspace() {
             )}
           >
             {connectionHealthy ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-            {connectionHealthy ? "Connected" : "Needs setup"}
+            {connectionHealthy ? "Connected" : hasBasicSetup ? "Test connection" : "Needs setup"}
           </span>
         </div>
       </div>
@@ -411,8 +509,12 @@ export function ShopifyIntegrationWorkspace() {
               testing={testing}
               testConnection={testConnection}
               startingOAuth={startingOAuth}
+              fetchingToken={fetchingToken}
+              getAccessToken={getAccessToken}
               connectViaApp={connectViaApp}
               connectionHealthy={connectionHealthy}
+              hasBasicSetup={hasBasicSetup}
+              oauthCallbackUrl={oauthCallbackUrl}
             />
           )}
           {activeTab === "webhooks" && (
@@ -455,8 +557,12 @@ function SetupTab({
   testing,
   testConnection,
   startingOAuth,
+  fetchingToken,
+  getAccessToken,
   connectViaApp,
   connectionHealthy,
+  hasBasicSetup,
+  oauthCallbackUrl,
 }: {
   state: ShopifyState;
   setState: React.Dispatch<React.SetStateAction<ShopifyState>>;
@@ -465,25 +571,69 @@ function SetupTab({
   testing: boolean;
   testConnection: () => Promise<void>;
   startingOAuth: boolean;
+  fetchingToken: boolean;
+  getAccessToken: () => Promise<void>;
   connectViaApp: () => Promise<void>;
   connectionHealthy: boolean;
+  hasBasicSetup: boolean;
+  oauthCallbackUrl: string;
 }) {
+  const appHomeUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/dashboard/integration/shopify`
+      : "https://app.youraiseller.app/dashboard/integration/shopify";
+
   return (
     <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
         <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-teal-700">
-          Setup Instructions
+          Dev Dashboard Setup (2025+)
         </h3>
         <div className="space-y-4 text-sm text-slate-700">
+          <p className="text-xs text-slate-600">
+            Shopify আর পুরনো Admin → Develop apps (custom app) support করে না। নতুন app{" "}
+            <a
+              href="https://dev.shopify.com/dashboard"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-teal-700 underline"
+            >
+              Dev Dashboard
+            </a>{" "}
+            থেকে তৈরি করতে হবে।
+          </p>
           <ol className="list-inside list-decimal space-y-1.5">
-            <li>Go to your Shopify admin panel.</li>
-            <li>Open Settings → Apps and sales channels → Develop apps.</li>
-            <li>Create an app and configure Admin API access.</li>
-            <li>Enable required scopes: products, orders, inventory, locations.</li>
-            <li>Install app and copy the Admin API access token.</li>
+            <li>
+              <a
+                href="https://dev.shopify.com/dashboard"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-teal-700 underline"
+              >
+                dev.shopify.com/dashboard
+              </a>{" "}
+              → Apps → Create app → Start from Dev Dashboard
+            </li>
+            <li>
+              Versions tab → App URL: <span className="font-mono text-xs">{appHomeUrl}</span>
+            </li>
+            <li>
+              Redirect URL: <span className="font-mono text-xs">{oauthCallbackUrl || `${appHomeUrl.replace(/\/dashboard.*/, "")}/api/shopify/oauth/callback`}</span>
+            </li>
+            <li>
+              Scopes enable করুন: <code className="text-xs">read_products</code>,{" "}
+              <code className="text-xs">read_inventory</code>,{" "}
+              <code className="text-xs">read_orders</code>,{" "}
+              <code className="text-xs">read_locations</code> → Release
+            </li>
+            <li>Home → Install app → আপনার store (turupoint) select করুন</li>
+            <li>Settings থেকে Client ID + Client Secret copy করে ডান panel-এ দিন</li>
+            <li>
+              <strong>Get Access Token</strong> চাপুন (recommended) অথবা OAuth install ব্যবহার করুন
+            </li>
           </ol>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
-            New connection হলে Shopify Admin API latest stable version use করবেন।
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            Dev Dashboard token ~24 ঘণ্টা valid। Sync fail হলে আবার Get Access Token চাপুন।
           </div>
         </div>
       </section>
@@ -494,7 +644,9 @@ function SetupTab({
         {!connectionHealthy && (
           <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-900">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            Shopify connection needs attention. Use valid `*.myshopify.com` shop domain and token.
+            {hasBasicSetup
+              ? "Token saved but not verified. Test Connection চাপুন। Scope fail হলে Dev Dashboard → Versions → scopes add → Release → store-এ reinstall → Get Access Token।"
+              : "Dev Dashboard app তৈরি করুন, store-এ install করুন, তারপর Client ID + Secret দিয়ে Get Access Token করুন।"}
           </div>
         )}
 
@@ -518,44 +670,35 @@ function SetupTab({
               <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
-                  checked={state.authMethod === "access_token"}
+                  checked={state.authMethod === "dev_dashboard"}
                   onChange={() =>
-                    setState((prev) => ({ ...prev, authMethod: "access_token" }))
+                    setState((prev) => ({ ...prev, authMethod: "dev_dashboard" }))
                   }
                   className="h-4 w-4 accent-teal-600"
                 />
-                Access Token (Existing setup)
+                Dev Dashboard App (recommended)
               </label>
               <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
-                  checked={state.authMethod === "client_credentials"}
+                  checked={state.authMethod === "manual_token"}
                   onChange={() =>
-                    setState((prev) => ({ ...prev, authMethod: "client_credentials" }))
+                    setState((prev) => ({ ...prev, authMethod: "manual_token" }))
                   }
                   className="h-4 w-4 accent-teal-600"
                 />
-                Client Credentials (New setup)
+                Manual access token (legacy / advanced)
               </label>
             </div>
           </div>
 
-          {state.authMethod === "access_token" ? (
-            <LabeledInput
-              label="Access Token"
-              icon={KeyRound}
-              value={state.accessToken}
-              type="password"
-              placeholder="shpat_************************"
-              onChange={(value) => setState((prev) => ({ ...prev, accessToken: value }))}
-            />
-          ) : (
+          {state.authMethod === "dev_dashboard" ? (
             <>
               <LabeledInput
                 label="Client ID"
                 icon={KeyRound}
                 value={state.clientId}
-                placeholder="Your Client ID"
+                placeholder="From Dev Dashboard → Settings"
                 onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
               />
               <LabeledInput
@@ -563,13 +706,30 @@ function SetupTab({
                 icon={KeyRound}
                 type="password"
                 value={state.clientSecret}
-                placeholder="Your Client Secret"
+                placeholder="From Dev Dashboard → Settings"
                 onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
               />
+              <LabeledInput
+                label="Access Token (auto-filled)"
+                icon={KeyRound}
+                value={state.accessToken}
+                type="password"
+                placeholder="Get Access Token চাপলে এখানে আসবে"
+                onChange={(value) => setState((prev) => ({ ...prev, accessToken: value }))}
+              />
               <p className="text-xs text-slate-500">
-                OAuth app flow use করলে Shopify access token auto-generate হয়ে field-এ fill হবে।
+                Client credentials grant ব্যবহার করে token নেয় (~24h)। OAuth install বিকল্প হিসেবে নিচে আছে।
               </p>
             </>
+          ) : (
+            <LabeledInput
+              label="Access Token"
+              icon={KeyRound}
+              value={state.accessToken}
+              type="password"
+              placeholder="Paste token if you already have one"
+              onChange={(value) => setState((prev) => ({ ...prev, accessToken: value }))}
+            />
           )}
 
           <div className="flex flex-wrap items-center gap-2">
@@ -583,12 +743,12 @@ function SetupTab({
               {saving ? "Saving..." : "Save"}
             </button>
             <a
-              href="https://help.shopify.com/en/manual/apps/app-types/custom-apps"
+              href="https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             >
-              Shopify Docs
+              Dev Dashboard Docs
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
             <button
@@ -600,20 +760,35 @@ function SetupTab({
               {testing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
               {testing ? "Testing..." : "Test Connection"}
             </button>
-            {state.authMethod === "client_credentials" && (
-              <button
-                type="button"
-                onClick={connectViaApp}
-                disabled={startingOAuth}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
-              >
-                {startingOAuth ? (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <ExternalLink className="h-3.5 w-3.5" />
-                )}
-                {startingOAuth ? "Opening Shopify..." : "Connect App (OAuth)"}
-              </button>
+            {state.authMethod === "dev_dashboard" && (
+              <>
+                <button
+                  type="button"
+                  onClick={getAccessToken}
+                  disabled={fetchingToken}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-60"
+                >
+                  {fetchingToken ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <KeyRound className="h-3.5 w-3.5" />
+                  )}
+                  {fetchingToken ? "Getting token..." : "Get Access Token"}
+                </button>
+                <button
+                  type="button"
+                  onClick={connectViaApp}
+                  disabled={startingOAuth}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {startingOAuth ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  )}
+                  {startingOAuth ? "Opening Shopify..." : "Install via OAuth"}
+                </button>
+              </>
             )}
           </div>
         </div>

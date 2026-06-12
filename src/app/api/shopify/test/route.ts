@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
+import { normalizeShopDomain, SHOPIFY_API_VERSION, verifyShopifyProductAccess } from "@/lib/shopify-api";
 
 type ShopifyTestBody = {
   shopDomain?: string;
   accessToken?: string;
 };
-
-function normalizeShopDomain(input: string): string {
-  const trimmed = input.trim().toLowerCase();
-  if (!trimmed) return "";
-  const noProtocol = trimmed.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-  return noProtocol;
-}
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +19,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const res = await fetch(`https://${shopDomain}/admin/api/2025-01/shop.json`, {
+    const res = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/shop.json`, {
       method: "GET",
       headers: {
         "X-Shopify-Access-Token": accessToken,
@@ -38,11 +32,13 @@ export async function POST(req: Request) {
       if (res.status === 401 || res.status === 403) {
         return NextResponse.json({
           ok: false,
+          productsReadable: false,
           message: "Invalid Shopify access token or missing scope permissions.",
         });
       }
       return NextResponse.json({
         ok: false,
+        productsReadable: false,
         message: `Shopify API request failed (${res.status}).`,
       });
     }
@@ -52,15 +48,26 @@ export async function POST(req: Request) {
     };
 
     const name = json.shop?.name?.trim() || json.shop?.myshopify_domain || shopDomain;
+    const productCheck = await verifyShopifyProductAccess({ shopDomain, accessToken });
+
+    if (!productCheck.ok) {
+      return NextResponse.json({
+        ok: false,
+        productsReadable: false,
+        shopName: name,
+        message: `Shop "${name}" reachable, but product sync will fail: ${productCheck.message}`,
+      });
+    }
 
     return NextResponse.json({
       ok: true,
-      message: `Connected successfully to ${name}.`,
+      productsReadable: true,
+      shopName: name,
+      message: `Connected to ${name}. Product read scope OK — sync ready.`,
       shop: json.shop ?? null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Shopify connection test failed.";
-    return NextResponse.json({ ok: false, message }, { status: 500 });
+    return NextResponse.json({ ok: false, productsReadable: false, message }, { status: 500 });
   }
 }
-

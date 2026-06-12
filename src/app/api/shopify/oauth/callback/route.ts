@@ -144,6 +144,13 @@ export async function GET(req: Request) {
       path: "/",
       maxAge: 60,
     });
+    done.cookies.set("shopify_oauth_scope", String(tokenJson.scope ?? ""), {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: publicOrigin.startsWith("https://"),
+      path: "/",
+      maxAge: 60,
+    });
     clearCookies(done);
     return done;
   } catch {

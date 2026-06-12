@@ -9,7 +9,7 @@ import {
   SESSION_FEATURES_KEY,
 } from "./feature-storage";
 import { getPlanFeatures, countEnabledFeatures } from "./plan-presets";
-import { hashPasswordDemo, verifyPasswordDemo } from "./auth";
+import { hashPasswordDemo, validatePasswordStrength, verifyPasswordDemo } from "./auth";
 import { ensureSellerStoresForUser } from "./seller-store-init";
 import {
   planPeriodFromNow,
@@ -1066,9 +1066,8 @@ export function changeAccountPassword(
   if (!verifyPasswordDemo(user.passwordHash, currentPassword)) {
     return { ok: false, error: "Current password is incorrect." };
   }
-  if (newPassword.length < 6) {
-    return { ok: false, error: "Password must be at least 6 characters." };
-  }
+  const pwError = validatePasswordStrength(newPassword);
+  if (pwError) return { ok: false, error: pwError };
   const updated = updateDevUser(userId, {
     passwordHash: hashPasswordDemo(newPassword),
     authProvider: "password",
@@ -1081,9 +1080,8 @@ export function setAccountPassword(
   userId: string,
   newPassword: string
 ): { ok: true } | { ok: false; error: string } {
-  if (newPassword.length < 6) {
-    return { ok: false, error: "Password must be at least 6 characters." };
-  }
+  const pwError = validatePasswordStrength(newPassword);
+  if (pwError) return { ok: false, error: pwError };
   const updated = updateDevUser(userId, {
     passwordHash: hashPasswordDemo(newPassword),
     authProvider: "password",

@@ -68,6 +68,12 @@ export function ForgotPasswordForm() {
       {message ? (
         <div className="space-y-2 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
           <p>{message}</p>
+          <Link
+            href={`/reset-password?email=${encodeURIComponent(email.trim())}&code=1`}
+            className="inline-flex text-xs font-bold text-violet-700 underline"
+          >
+            Enter the 6-digit code instead
+          </Link>
           {resetUrl ? (
             <>
               <p className="text-xs text-emerald-800/90">

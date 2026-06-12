@@ -4,17 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Loader2, Lock } from "lucide-react";
+import { KeyRound, Loader2, Lock, Mail } from "lucide-react";
 
 const inputCls =
   "w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/15";
 
 type Props = {
   token: string;
+  email?: string;
 };
 
-export function ResetPasswordForm({ token }: Props) {
+export function ResetPasswordForm({ token, email = "" }: Props) {
   const router = useRouter();
+  const [accountEmail, setAccountEmail] = useState(email);
+  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,13 +57,25 @@ export function ResetPasswordForm({ token }: Props) {
       setError("Passwords do not match.");
       return;
     }
+    if (!token && !accountEmail.trim()) {
+      setError("Account email is required.");
+      return;
+    }
+    if (!token && !/^\d{6}$/.test(otp.trim())) {
+      setError("Enter the 6-digit reset code from your email.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify(
+          token
+            ? { token, password }
+            : { email: accountEmail, otp: otp.trim(), password }
+        ),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Reset failed");
@@ -72,23 +87,11 @@ export function ResetPasswordForm({ token }: Props) {
     }
   };
 
-  if (!token) {
-    return (
-      <p className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
-        Invalid reset link.{" "}
-        <Link href="/forgot-password" className="font-semibold underline">
-          Request a new one
-        </Link>
-        .
-      </p>
-    );
-  }
-
-  if (checking) {
+  if (token && checking) {
     return <p className="text-sm text-slate-500">Checking reset link…</p>;
   }
 
-  if (linkError) {
+  if (token && linkError) {
     return (
       <div className="space-y-3">
         <p className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
@@ -106,6 +109,51 @@ export function ResetPasswordForm({ token }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!token ? (
+        <>
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <Mail className="h-3.5 w-3.5" />
+              Account email
+            </span>
+            <input
+              type="email"
+              value={accountEmail}
+              onChange={(e) => {
+                setAccountEmail(e.target.value);
+                setError("");
+              }}
+              className={inputCls}
+              placeholder="you@store.com"
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <KeyRound className="h-3.5 w-3.5" />
+              6-digit reset code
+            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="\d{6}"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => {
+                setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                setError("");
+              }}
+              className={inputCls}
+              placeholder="123456"
+              autoComplete="one-time-code"
+              required
+            />
+          </label>
+        </>
+      ) : null}
+
       <label className="block">
         <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
           <Lock className="h-3.5 w-3.5" />
@@ -119,9 +167,9 @@ export function ResetPasswordForm({ token }: Props) {
             setError("");
           }}
           className={inputCls}
-          placeholder="At least 6 characters"
+          placeholder="At least 8 characters, letters + numbers"
           autoComplete="new-password"
-          minLength={6}
+          minLength={8}
           required
         />
       </label>
@@ -140,7 +188,7 @@ export function ResetPasswordForm({ token }: Props) {
           className={inputCls}
           placeholder="Repeat password"
           autoComplete="new-password"
-          minLength={6}
+          minLength={8}
           required
         />
       </label>

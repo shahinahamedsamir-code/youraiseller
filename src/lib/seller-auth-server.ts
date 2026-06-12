@@ -11,38 +11,83 @@ export type StoredUser = {
   parentAccountEmail?: string;
   company?: string;
   status?: string;
+  /** ms epoch — sessions issued before this are rejected (set on password change). */
+  sessionsValidFrom?: number | string;
   [key: string]: unknown;
 };
 
 const USERS_FILE = appDataFile("dev-users.json");
 
+const INSECURE_DEFAULT_SECRET = "youraiseller-dev-insecure-change-me";
+
+/** Session lifetime in seconds (cookie + cryptographic token expiry). */
+export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+
 function authSecret(): string {
-  return process.env.AUTH_SECRET?.trim() || "youraiseller-dev-insecure-change-me";
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (process.env.NODE_ENV === "production") {
+    if (!secret || secret === INSECURE_DEFAULT_SECRET) {
+      // Fail closed: without a real secret, anyone could forge sessions.
+      throw new Error(
+        "AUTH_SECRET is not configured. Set a strong AUTH_SECRET in production."
+      );
+    }
+    return secret;
+  }
+  return secret || INSECURE_DEFAULT_SECRET;
+}
+
+function signPayload(payload: string): string {
+  return createHmac("sha256", authSecret()).update(payload).digest("hex").slice(0, 32);
 }
 
 export function signSellerSession(userId: string): string {
-  const sig = createHmac("sha256", authSecret())
-    .update(userId)
-    .digest("hex")
-    .slice(0, 32);
-  return `${userId}.${sig}`;
+  const issuedAt = Date.now();
+  const payload = `${userId}.${issuedAt}`;
+  return `${payload}.${signPayload(payload)}`;
 }
 
-export function verifySellerSessionToken(value: string | undefined): string | null {
+type ParsedSession = { userId: string; issuedAt: number };
+
+/** Verify signature + expiry; returns the session payload or null. */
+export function parseSellerSession(value: string | undefined): ParsedSession | null {
   if (!value) return null;
-  const dot = value.lastIndexOf(".");
-  if (dot <= 0) return null;
-  const userId = value.slice(0, dot);
-  if (!userId) return null;
-  const expected = signSellerSession(userId);
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
+  const [userId, issuedAtRaw, sig] = parts;
+  if (!userId || !issuedAtRaw || !sig) return null;
+
+  const payload = `${userId}.${issuedAtRaw}`;
+  const expected = signPayload(payload);
   try {
-    const a = Buffer.from(value);
+    const a = Buffer.from(sig);
     const b = Buffer.from(expected);
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   } catch {
     return null;
   }
-  return userId;
+
+  const issuedAt = Number(issuedAtRaw);
+  if (!Number.isFinite(issuedAt)) return null;
+  if (Date.now() - issuedAt > SESSION_MAX_AGE_MS) return null;
+
+  return { userId, issuedAt };
+}
+
+export function verifySellerSessionToken(value: string | undefined): string | null {
+  return parseSellerSession(value)?.userId ?? null;
+}
+
+/** Timestamp (ms) before which any session for this user is invalid. */
+function sessionsValidFromMs(user: StoredUser): number {
+  const raw = user.sessionsValidFrom;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  if (typeof raw === "string") {
+    const parsed = Date.parse(raw);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return 0;
 }
 
 export function getSellerSessionUserId(): string | null {
@@ -95,23 +140,26 @@ export function resolveDataScopeForUser(
 }
 
 export async function sellerCanAccessScope(scope: string): Promise<boolean> {
-  const sessionUserId = getSellerSessionUserId();
-  if (!sessionUserId) return false;
-  const users = await readDevUsersFile();
-  const user = users.find((u) => String(u.id) === sessionUserId);
+  const user = await getSellerSessionUser();
   if (!user) return false;
+  const users = await readDevUsersFile();
   const dataScope = resolveDataScopeForUser(user, users);
   return dataScope === scope;
 }
 
 export async function getSellerSessionUser(): Promise<StoredUser | null> {
-  const sessionUserId = getSellerSessionUserId();
-  if (!sessionUserId) return null;
+  const cookie = cookies().get(SELLER_AUTH_COOKIE);
+  const session = parseSellerSession(cookie?.value);
+  if (!session) return null;
   const users = await readDevUsersFile();
-  return users.find((u) => String(u.id) === sessionUserId) ?? null;
+  const user = users.find((u) => String(u.id) === session.userId);
+  if (!user) return null;
+  // Reject sessions issued before the user's password was last changed.
+  if (session.issuedAt < sessionsValidFromMs(user)) return null;
+  return user;
 }
 
-export function sellerSessionCookieOptions(maxAge = 30 * 24 * 60 * 60) {
+export function sellerSessionCookieOptions(maxAge = SESSION_MAX_AGE_SECONDS) {
   return {
     httpOnly: true,
     path: "/",

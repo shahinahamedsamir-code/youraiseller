@@ -12,7 +12,7 @@ type Props = {
 };
 
 const inputCls =
-  "w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/15";
+  "w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm sm:py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/15";
 
 export function EmailPasswordAuthForm({ mode }: Props) {
   const router = useRouter();
@@ -144,9 +144,11 @@ export function EmailPasswordAuthForm({ mode }: Props) {
             setError("");
           }}
           className={inputCls}
-          placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+          placeholder={
+            mode === "signup" ? "At least 8 characters, letters + numbers" : "Your password"
+          }
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          minLength={mode === "signup" ? 6 : undefined}
+          minLength={mode === "signup" ? 8 : undefined}
           required
         />
       </label>
@@ -161,7 +163,7 @@ export function EmailPasswordAuthForm({ mode }: Props) {
         type="submit"
         disabled={loading}
         className={clsx(
-          "flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-bold text-white shadow-sm transition",
+          "flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold sm:py-4 text-white shadow-sm transition",
           "bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500",
           "disabled:cursor-not-allowed disabled:opacity-70"

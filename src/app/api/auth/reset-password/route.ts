@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   checkPasswordResetToken,
+  resetPasswordWithOtp,
   resetPasswordWithToken,
 } from "@/lib/password-reset-server";
 
@@ -30,8 +31,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const token = typeof body?.token === "string" ? body.token : "";
+    const email = typeof body?.email === "string" ? body.email : "";
+    const otp = typeof body?.otp === "string" ? body.otp : "";
     const password = typeof body?.password === "string" ? body.password : "";
-    const result = await resetPasswordWithToken(token, password);
+    const result = token
+      ? await resetPasswordWithToken(token, password)
+      : await resetPasswordWithOtp(email, otp, password);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

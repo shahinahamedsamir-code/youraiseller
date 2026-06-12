@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, validatePasswordStrength } from "@/lib/auth";
 import { getPlanFeatures } from "@/lib/plan-presets";
 import { redactUserForClient } from "@/lib/dev-users-server";
 import { SELLER_AUTH_COOKIE } from "@/lib/seller-auth-cookie";
@@ -45,11 +45,9 @@ export async function POST(req: Request) {
     if (!email) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
     }
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters." },
-        { status: 400 }
-      );
+    const pwError = validatePasswordStrength(password);
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 });
     }
 
     const users = await readDevUsersFile();

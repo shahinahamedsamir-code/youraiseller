@@ -8,6 +8,23 @@ import {
   writeDevUsersFile,
 } from "@/lib/seller-auth-server";
 import { redactUserForClient } from "@/lib/dev-users-server";
+import {
+  clearRateLimit,
+  getClientIp,
+  isRateLimited,
+  RATE_WINDOWS,
+  recordHit,
+  retryAfterMs,
+} from "@/lib/rate-limit";
+
+export const dynamic = "force-dynamic";
+
+const MAX_PER_EMAIL = 5;
+const MAX_PER_IP = 15;
+const WINDOW = RATE_WINDOWS.fifteenMin;
+
+// Same response for every credential failure so attackers can't enumerate accounts.
+const GENERIC_CREDENTIAL_ERROR = "Incorrect email or password.";
 
 export async function POST(req: Request) {
   try {
@@ -19,27 +36,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and password required." }, { status: 400 });
     }
 
+    const ip = getClientIp(req);
+    const ipKey = `login:ip:${ip}`;
+    const emailKey = `login:email:${email}`;
+
+    if (
+      isRateLimited(ipKey, MAX_PER_IP, WINDOW) ||
+      isRateLimited(emailKey, MAX_PER_EMAIL, WINDOW)
+    ) {
+      const waitMs = Math.max(
+        retryAfterMs(ipKey, MAX_PER_IP, WINDOW),
+        retryAfterMs(emailKey, MAX_PER_EMAIL, WINDOW)
+      );
+      const seconds = Math.ceil(waitMs / 1000);
+      return NextResponse.json(
+        { error: `Too many attempts. Try again in ${Math.ceil(seconds / 60)} minute(s).` },
+        { status: 429, headers: { "Retry-After": String(seconds) } }
+      );
+    }
+
+    const failCredential = () => {
+      recordHit(ipKey, WINDOW);
+      recordHit(emailKey, WINDOW);
+      return NextResponse.json({ error: GENERIC_CREDENTIAL_ERROR }, { status: 401 });
+    };
+
     const users = await readDevUsersFile();
     const idx = users.findIndex(
       (u) => String(u.email ?? "").toLowerCase().trim() === email
     );
     if (idx < 0) {
-      return NextResponse.json({ error: "No account found with this email." }, { status: 401 });
+      return failCredential();
     }
 
     const user = users[idx];
     const storedHash = String(user.passwordHash ?? "");
 
     if (!storedHash) {
-      return NextResponse.json(
-        { error: "This account uses Google sign-in. Continue with Google instead." },
-        { status: 401 }
-      );
+      return failCredential();
     }
 
     if (!verifyPassword(storedHash, password)) {
-      return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
+      return failCredential();
     }
+
+    // Correct credentials — clear the throttle for this email.
+    clearRateLimit(emailKey);
 
     if (user.status === "rejected") {
       return NextResponse.json({ error: "Your signup was rejected. Contact support." }, { status: 403 });

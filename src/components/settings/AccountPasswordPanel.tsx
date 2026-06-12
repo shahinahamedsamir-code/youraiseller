@@ -128,7 +128,7 @@ export function AccountPasswordPanel() {
               }}
               className={inputCls}
               autoComplete="new-password"
-              minLength={6}
+              minLength={8}
               required
             />
           </label>
@@ -146,7 +146,7 @@ export function AccountPasswordPanel() {
               }}
               className={inputCls}
               autoComplete="new-password"
-              minLength={6}
+              minLength={8}
               required
             />
           </label>

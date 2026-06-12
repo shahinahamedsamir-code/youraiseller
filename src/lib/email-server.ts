@@ -45,7 +45,7 @@ function appOriginFromResetUrl(resetUrl: string): string {
   }
 }
 
-function buildPasswordResetHtml(brand: string, resetUrl: string): string {
+function buildPasswordResetHtml(brand: string, resetUrl: string, resetOtp: string): string {
   const safeUrl = resetUrl.replace(/"/g, "&quot;");
   const origin = appOriginFromResetUrl(resetUrl);
   const logoUrl = `${origin}/brand/logo.png`;
@@ -63,7 +63,7 @@ function buildPasswordResetHtml(brand: string, resetUrl: string): string {
 </head>
 <body style="margin:0;padding:0;background-color:#f5f4f8;font-family:Segoe UI,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
-    Reset your ${brand} password — button expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.
+    Reset your ${brand} password — code ${resetOtp}, expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.
   </div>
 
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#f5f4f8" style="background-color:#f5f4f8;padding:36px 16px 40px;">
@@ -133,7 +133,8 @@ function buildPasswordResetHtml(brand: string, resetUrl: string): string {
 
                     <p style="margin:26px 0 0;font-size:15px;line-height:1.7;color:#3f3a4c;">
                       We received a request to reset the password for your account.
-                      Tap the button below to choose a new password and sign back in.
+                      Tap the button below to choose a new password, or enter the 6-digit
+                      code on the reset page.
                     </p>
 
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:22px;">
@@ -141,7 +142,23 @@ function buildPasswordResetHtml(brand: string, resetUrl: string): string {
                         <td bgcolor="#fff7ed" style="background-color:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:14px;padding:14px 16px;">
                           <p style="margin:0;font-size:13px;line-height:1.55;color:#9a3412;">
                             <strong style="color:#c2410c;">&#9201; Expires in ${PASSWORD_RESET_TTL_MINUTES} minutes</strong><br />
-                            For your security, this button works only once.
+                            For your security, this button/code works only once.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:22px;">
+                      <tr>
+                        <td align="center" bgcolor="#f5f3ff" style="background-color:#f5f3ff;border:1px solid #ddd6fe;border-radius:18px;padding:20px 18px;">
+                          <p style="margin:0 0 10px;font-size:11px;line-height:1;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#6d28d9;">
+                            Your reset code
+                          </p>
+                          <p style="margin:0;font-size:34px;line-height:1;font-weight:800;letter-spacing:0.22em;color:#0c0a14;">
+                            ${resetOtp}
+                          </p>
+                          <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b6578;">
+                            Use this code if the button opens on another device.
                           </p>
                         </td>
                       </tr>
@@ -196,7 +213,8 @@ function buildPasswordResetHtml(brand: string, resetUrl: string): string {
 
 export async function sendPasswordResetEmail(
   to: string,
-  resetUrl: string
+  resetUrl: string,
+  resetOtp: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isEmailConfigured()) {
     return { ok: false, error: "SMTP is not configured." };
@@ -214,12 +232,14 @@ export async function sendPasswordResetEmail(
         `${brand} — Password reset`,
         ``,
         `You requested a password reset for your seller account.`,
-        `Open this email in your mail app and tap the "Reset password" button within ${PASSWORD_RESET_TTL_MINUTES} minutes.`,
+        `Reset code: ${resetOtp}`,
         ``,
-        `The button expires in ${PASSWORD_RESET_TTL_MINUTES} minutes and works only once.`,
+        `Open this email in your mail app and tap the "Reset password" button, or enter the code on the reset page within ${PASSWORD_RESET_TTL_MINUTES} minutes.`,
+        ``,
+        `The button/code expires in ${PASSWORD_RESET_TTL_MINUTES} minutes and works only once.`,
         `If you did not request this, ignore this email.`,
       ].join("\n"),
-      html: buildPasswordResetHtml(brand, resetUrl),
+      html: buildPasswordResetHtml(brand, resetUrl, resetOtp),
     });
     return { ok: true };
   } catch (e) {

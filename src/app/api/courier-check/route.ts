@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { normalizePhoneForApi, parseHoorinResponses } from "@/lib/hoorin-courier";
 
 const HOORIN_BASE = "https://dash.hoorin.com/api/courier";

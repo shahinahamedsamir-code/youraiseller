@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { loadAutoCallAccount } from "@/lib/auto-call-account-server";
 import { prepareAutoCallPostPayload } from "@/lib/auto-call-post-payload";
 import { syncPendingAutoCallLogs } from "@/lib/auto-call-poll-server";

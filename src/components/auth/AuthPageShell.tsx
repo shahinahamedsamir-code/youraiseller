@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
@@ -32,6 +33,16 @@ type Props = {
   footerLink?: { href: string; label: string; text: string };
 };
 
+function LoginResetBanner() {
+  const params = useSearchParams();
+  if (params.get("reset") !== "1") return null;
+  return (
+    <p className="mb-4 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
+      Password updated. Sign in with your new password.
+    </p>
+  );
+}
+
 export function AuthPageShell({
   mode,
   title,
@@ -40,9 +51,6 @@ export function AuthPageShell({
   heroSubtitle,
   footerLink,
 }: Props) {
-  const params = useSearchParams();
-  const passwordReset = mode === "login" && params.get("reset") === "1";
-
   return (
     <GoogleAuthProvider>
       <AuthSessionRedirect />
@@ -144,10 +152,10 @@ export function AuthPageShell({
                   )}
                 </div>
 
-                {passwordReset ? (
-                  <p className="mb-4 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
-                    Password updated. Sign in with your new password.
-                  </p>
+                {mode === "login" ? (
+                  <Suspense fallback={null}>
+                    <LoginResetBanner />
+                  </Suspense>
                 ) : null}
 
                 <GoogleSignInButton

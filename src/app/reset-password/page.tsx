@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthCardShell } from "@/components/auth/AuthCardShell";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const params = useSearchParams();
   const token = params.get("token") ?? "";
 
@@ -16,5 +17,23 @@ export default function ResetPasswordPage() {
     >
       <ResetPasswordForm token={token} />
     </AuthCardShell>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthCardShell
+          title="Choose new password"
+          subtitle="Loading reset form…"
+          footer={{ text: "Back to", href: "/login", label: "Sign in" }}
+        >
+          <p className="text-sm text-slate-500">Please wait…</p>
+        </AuthCardShell>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

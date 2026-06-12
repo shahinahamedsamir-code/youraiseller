@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { loadSmsAccount } from "@/lib/sms-account-server";
 import { loadSmsPlatformControl } from "@/lib/sms-platform-control";
 import {

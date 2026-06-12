@@ -55,7 +55,7 @@ export async function POST(req: Request) {
         ok: false,
         productsReadable: false,
         shopName: name,
-        message: `Shop "${name}" reachable, but product sync will fail: ${productCheck.message}`,
+        message: `Found store "${name}", but product sync will fail: ${productCheck.message}`,
       });
     }
 
@@ -63,11 +63,11 @@ export async function POST(req: Request) {
       ok: true,
       productsReadable: true,
       shopName: name,
-      message: `Connected to ${name}. Product read scope OK — sync ready.`,
+      message: `Connected to ${name}. You can sync products now.`,
       shop: json.shop ?? null,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Shopify connection test failed.";
+    const message = error instanceof Error ? error.message : "Connection test failed.";
     return NextResponse.json({ ok: false, productsReadable: false, message }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -38,6 +38,7 @@ type ShopifyState = {
 };
 
 const STORAGE_KEY = "yai-shopify-integration-v1";
+const EXAMPLE_SHOP_DOMAIN = "your-store.myshopify.com";
 
 function normalizeShopDomainInput(raw: string): string {
   return raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -63,7 +64,7 @@ const defaultState: ShopifyState = {
 };
 
 const tabs: { id: ShopifyTab; label: string }[] = [
-  { id: "setup", label: "Integration Setup" },
+  { id: "setup", label: "Setup" },
   { id: "webhooks", label: "Webhooks" },
   { id: "product-sync", label: "Product Sync" },
   { id: "order-sync", label: "Order Sync" },
@@ -97,6 +98,14 @@ export function ShopifyIntegrationWorkspace() {
     message?: string;
   } | null>(null);
   const [connectionVerified, setConnectionVerified] = useState(false);
+  const [connectionMeta, setConnectionMeta] = useState<{
+    scope?: string;
+    shopName?: string;
+    missingScopes?: string[];
+    lastMessage?: string;
+  }>({});
+  const [storageReady, setStorageReady] = useState(false);
+  const autoVerifyDone = useRef(false);
 
   useEffect(() => {
     try {
@@ -115,6 +124,8 @@ export function ShopifyIntegrationWorkspace() {
       setState((prev) => ({ ...prev, ...parsed, authMethod }));
     } catch {
       // Ignore malformed persisted data and keep defaults
+    } finally {
+      setStorageReady(true);
     }
   }, []);
 
@@ -149,8 +160,8 @@ export function ShopifyIntegrationWorkspace() {
       setConnectionVerified(scopeOk);
       setToast(
         scopeOk
-          ? "Shopify app installed via OAuth. Access token saved — product sync ready."
-          : "OAuth token saved but read_products scope missing. Dev Dashboard → Versions → add scopes → Release → reinstall."
+          ? "Shopify connected. You can sync products now."
+          : "Token saved but product permission is missing. Add scopes in Dev Dashboard and reinstall the app."
       );
     }
     document.cookie = "shopify_oauth_done=; Max-Age=0; path=/";
@@ -167,8 +178,8 @@ export function ShopifyIntegrationWorkspace() {
     if (oauth === "failed") {
       setToast(
         reason
-          ? `Shopify OAuth failed (${reason}). Check Dev Dashboard app URL + redirect URL.`
-          : "Shopify OAuth failed. Check Dev Dashboard app settings."
+          ? `Shopify connection failed (${reason}). Check App URL and Redirect URL in Dev Dashboard.`
+          : "Shopify connection failed. Check your Dev Dashboard app settings."
       );
     }
     params.delete("oauth");
@@ -185,47 +196,87 @@ export function ShopifyIntegrationWorkspace() {
   }, [state.accessToken, state.shopDomain]);
 
   const connectionHealthy = connectionVerified && hasBasicSetup;
+  const hasDevCredentials =
+    state.authMethod === "dev_dashboard" &&
+    Boolean(state.clientId.trim() && state.clientSecret.trim());
 
   useEffect(() => {
     setConnectionVerified(false);
-  }, [state.shopDomain, state.accessToken]);
+    setConnectionMeta({});
+  }, [state.shopDomain, state.clientId, state.clientSecret]);
 
   const webhookUrl = useMemo(() => {
     const shop = state.shopDomain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
     const safe = shop || "your-store.myshopify.com";
-    return `https://api.youraiseller.app/webhooks/shopify/${encodeURIComponent(safe)}`;
+    const base =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://app.youraiseller.com";
+    return `${base}/api/webhooks/shopify/${encodeURIComponent(safe)}`;
   }, [state.shopDomain]);
+
+  const verifyConnection = async (
+    shopDomain: string,
+    accessToken: string,
+    options?: { silent?: boolean }
+  ) => {
+    const res = await fetch("/api/shopify/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shopDomain, accessToken }),
+    });
+    const data = (await res.json()) as {
+      ok?: boolean;
+      message?: string;
+      productsReadable?: boolean;
+      shopName?: string;
+    };
+    const verified = Boolean(data.ok && data.productsReadable);
+    setConnectionVerified(verified);
+    setConnectionMeta((prev) => ({
+      ...prev,
+      shopName: data.shopName,
+      lastMessage: data.message,
+      missingScopes: verified ? [] : prev.missingScopes,
+    }));
+    if (!options?.silent) {
+      setToast(data.message || (verified ? "Shopify connection successful!" : "Connection failed."));
+    }
+    return verified;
+  };
+
+  useEffect(() => {
+    if (!storageReady || autoVerifyDone.current) return;
+    const shop = normalizeShopDomainInput(state.shopDomain);
+    const token = state.accessToken.trim();
+    if (!isShopifyMyshopifyDomain(shop) || token.length <= 12) return;
+    autoVerifyDone.current = true;
+    void verifyConnection(shop, token, { silent: true });
+  }, [storageReady, state.shopDomain, state.accessToken]);
 
   const saveSetup = () => {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      setToast("Shopify settings saved.");
+      setToast("Settings saved.");
     }, 500);
   };
 
   const testConnection = async () => {
+    if (!isShopifyMyshopifyDomain(state.shopDomain)) {
+      setToast(`Enter a valid shop domain, e.g. ${EXAMPLE_SHOP_DOMAIN}`);
+      return;
+    }
+    if (!state.accessToken.trim()) {
+      setToast("No access token. Click Connect first.");
+      return;
+    }
     setTesting(true);
     try {
-      const res = await fetch("/api/shopify/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shopDomain: state.shopDomain.trim(),
-          accessToken: state.accessToken.trim(),
-        }),
-      });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        message?: string;
-        productsReadable?: boolean;
-      };
-      const verified = Boolean(data.ok && data.productsReadable);
-      setConnectionVerified(verified);
-      setToast(data.message || (verified ? "Shopify connection OK." : "Connection failed."));
+      await verifyConnection(state.shopDomain.trim(), state.accessToken.trim());
     } catch (error) {
       setConnectionVerified(false);
-      setToast(error instanceof Error ? error.message : "Failed to test Shopify connection.");
+      setToast(error instanceof Error ? error.message : "Could not test the connection.");
     } finally {
       setTesting(false);
     }
@@ -234,7 +285,7 @@ export function ShopifyIntegrationWorkspace() {
   const verifyWebhookEndpoint = async () => {
     const shop = state.shopDomain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
     if (!shop) {
-      setToast("Please enter shop domain first.");
+      setToast("Enter your shop domain first.");
       return;
     }
     setVerifyingWebhook(true);
@@ -243,9 +294,9 @@ export function ShopifyIntegrationWorkspace() {
         method: "GET",
       });
       const data = (await res.json()) as { ok?: boolean; message?: string };
-      setToast(data.message || (data.ok ? "Webhook endpoint reachable." : "Webhook verify failed."));
+      setToast(data.message || (data.ok ? "Webhook endpoint is reachable." : "Webhook verification failed."));
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Failed to verify webhook endpoint.");
+      setToast(error instanceof Error ? error.message : "Could not verify the webhook.");
     } finally {
       setVerifyingWebhook(false);
     }
@@ -263,11 +314,11 @@ export function ShopifyIntegrationWorkspace() {
       clientSecret: state.clientSecret.trim(),
     };
     if (!payload.shopDomain || !payload.clientId || !payload.clientSecret) {
-      setToast("Shop domain, Client ID, and Client Secret লাগবে।");
+      setToast("Shop domain, Client ID, and Client Secret are required.");
       return;
     }
     if (!isShopifyMyshopifyDomain(payload.shopDomain)) {
-      setToast("Shop Domain অবশ্যই `your-store.myshopify.com` format হতে হবে।");
+      setToast("Use shop domain format: your-store.myshopify.com");
       return;
     }
     setFetchingToken(true);
@@ -282,19 +333,30 @@ export function ShopifyIntegrationWorkspace() {
         message?: string;
         accessToken?: string;
         missingScopes?: string[];
+        productsReadable?: boolean;
+        scope?: string;
       };
       if (!data.ok || !data.accessToken) {
         setConnectionVerified(false);
-        setToast(data.message || "Failed to get access token.");
+        setToast(data.message || "Could not get access token.");
         return;
       }
-      setState((prev) => ({ ...prev, accessToken: data.accessToken || "" }));
-      const verified = !data.missingScopes?.length;
+      const nextToken = data.accessToken || "";
+      setState((prev) => ({ ...prev, accessToken: nextToken }));
+      setConnectionMeta({
+        scope: data.scope,
+        missingScopes: data.missingScopes,
+        lastMessage: data.message,
+      });
+      const verified = Boolean(data.productsReadable);
       setConnectionVerified(verified);
       setToast(data.message || "Access token received.");
+      if (verified && nextToken) {
+        await verifyConnection(payload.shopDomain, nextToken, { silent: true });
+      }
     } catch (error) {
       setConnectionVerified(false);
-      setToast(error instanceof Error ? error.message : "Failed to get access token.");
+      setToast(error instanceof Error ? error.message : "Could not get access token.");
     } finally {
       setFetchingToken(false);
     }
@@ -307,11 +369,11 @@ export function ShopifyIntegrationWorkspace() {
       clientSecret: state.clientSecret.trim(),
     };
     if (!payload.shopDomain || !payload.clientId || !payload.clientSecret) {
-      setToast("Shop domain, Client ID, and Client Secret লাগবে App connect এর জন্য।");
+      setToast("Shop domain, Client ID, and Client Secret are required for OAuth.");
       return;
     }
     if (!isShopifyMyshopifyDomain(payload.shopDomain)) {
-      setToast("Shop Domain অবশ্যই `your-store.myshopify.com` format হতে হবে।");
+      setToast("Shop domain must be like: your-store.myshopify.com");
       return;
     }
     setStartingOAuth(true);
@@ -327,12 +389,12 @@ export function ShopifyIntegrationWorkspace() {
         authorizeUrl?: string;
       };
       if (!data.ok || !data.authorizeUrl) {
-        setToast(data.message || "Failed to start Shopify app OAuth.");
+        setToast(data.message || "Could not start Shopify OAuth.");
         return;
       }
       window.location.href = data.authorizeUrl;
     } catch (error) {
-      setToast(error instanceof Error ? error.message : "Failed to start app OAuth.");
+      setToast(error instanceof Error ? error.message : "Could not start Shopify OAuth.");
     } finally {
       setStartingOAuth(false);
     }
@@ -340,11 +402,11 @@ export function ShopifyIntegrationWorkspace() {
 
   const syncProducts = async () => {
     if (!isShopifyMyshopifyDomain(state.shopDomain)) {
-      setToast("Valid shop domain দিন: your-store.myshopify.com");
+      setToast(`Enter a valid shop domain, e.g. ${EXAMPLE_SHOP_DOMAIN}`);
       return;
     }
     if (!state.accessToken.trim()) {
-      setToast("Access token missing. আগে app connect complete করুন।");
+      setToast("No access token. Connect your store in the Setup tab first.");
       return;
     }
     setSyncingProducts(true);
@@ -355,7 +417,7 @@ export function ShopifyIntegrationWorkspace() {
         accessToken: state.accessToken.trim(),
         limit: 300,
       });
-      const summary = `Sync done — Created ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
+      const summary = `Sync complete — New ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
       setProductSyncSummary({
         total: result.total,
         created: result.created,
@@ -389,11 +451,11 @@ export function ShopifyIntegrationWorkspace() {
 
   const syncOrders = async () => {
     if (!isShopifyMyshopifyDomain(state.shopDomain)) {
-      setToast("Valid shop domain দিন: your-store.myshopify.com");
+      setToast(`Enter a valid shop domain, e.g. ${EXAMPLE_SHOP_DOMAIN}`);
       return;
     }
     if (!state.accessToken.trim()) {
-      setToast("Access token missing. আগে app connect complete করুন।");
+      setToast("No access token. Connect your store in the Setup tab first.");
       return;
     }
     setSyncingOrders(true);
@@ -404,7 +466,7 @@ export function ShopifyIntegrationWorkspace() {
         accessToken: state.accessToken,
         limit: 50,
       });
-      const summary = `Order sync done — Created ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
+      const summary = `Order sync complete — New ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
       setOrderSyncSummary({
         total: result.total,
         created: result.created,
@@ -454,8 +516,7 @@ export function ShopifyIntegrationWorkspace() {
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900">Shopify Integration</h1>
               <p className="mt-1 text-sm text-slate-500">
-                Connect Shopify and manage webhooks, product import, order sync, and stock
-                sync from one place.
+                Connect your Shopify store and manage products, orders, stock, and webhooks in one place.
               </p>
             </div>
           </div>
@@ -466,7 +527,15 @@ export function ShopifyIntegrationWorkspace() {
             )}
           >
             {connectionHealthy ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-            {connectionHealthy ? "Connected" : hasBasicSetup ? "Test connection" : "Needs setup"}
+            {connectionHealthy
+              ? "Connected"
+              : connectionMeta.missingScopes?.length
+                ? "Missing permissions"
+                : hasBasicSetup
+                  ? "Verify connection"
+                  : hasDevCredentials
+                    ? "Get token"
+                    : "Needs setup"}
           </span>
         </div>
       </div>
@@ -514,7 +583,11 @@ export function ShopifyIntegrationWorkspace() {
               connectViaApp={connectViaApp}
               connectionHealthy={connectionHealthy}
               hasBasicSetup={hasBasicSetup}
+              hasDevCredentials={hasDevCredentials}
+              connectionMeta={connectionMeta}
               oauthCallbackUrl={oauthCallbackUrl}
+              copy={copy}
+              copied={copied}
             />
           )}
           {activeTab === "webhooks" && (
@@ -562,7 +635,11 @@ function SetupTab({
   connectViaApp,
   connectionHealthy,
   hasBasicSetup,
+  hasDevCredentials,
+  connectionMeta,
   oauthCallbackUrl,
+  copy,
+  copied,
 }: {
   state: ShopifyState;
   setState: React.Dispatch<React.SetStateAction<ShopifyState>>;
@@ -576,95 +653,280 @@ function SetupTab({
   connectViaApp: () => Promise<void>;
   connectionHealthy: boolean;
   hasBasicSetup: boolean;
+  hasDevCredentials: boolean;
+  connectionMeta: {
+    scope?: string;
+    shopName?: string;
+    missingScopes?: string[];
+    lastMessage?: string;
+  };
   oauthCallbackUrl: string;
+  copy: (key: string, text: string) => Promise<void>;
+  copied: string | null;
 }) {
   const appHomeUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/dashboard/integration/shopify`
-      : "https://app.youraiseller.app/dashboard/integration/shopify";
+      : "https://app.youraiseller.com/dashboard/integration/shopify";
+  const redirectUrl =
+    oauthCallbackUrl || `${appHomeUrl.replace(/\/dashboard.*/, "")}/api/shopify/oauth/callback`;
+  const requiredScopesCsv =
+    "read_products,read_inventory,read_orders,read_locations";
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-        <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-teal-700">
-          Dev Dashboard Setup (2025+)
-        </h3>
-        <div className="space-y-4 text-sm text-slate-700">
-          <p className="text-xs text-slate-600">
-            Shopify আর পুরনো Admin → Develop apps (custom app) support করে না। নতুন app{" "}
-            <a
-              href="https://dev.shopify.com/dashboard"
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-teal-700 underline"
-            >
-              Dev Dashboard
-            </a>{" "}
-            থেকে তৈরি করতে হবে।
-          </p>
-          <ol className="list-inside list-decimal space-y-1.5">
-            <li>
-              <a
-                href="https://dev.shopify.com/dashboard"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-teal-700 underline"
-              >
-                dev.shopify.com/dashboard
-              </a>{" "}
-              → Apps → Create app → Start from Dev Dashboard
-            </li>
-            <li>
-              Versions tab → App URL: <span className="font-mono text-xs">{appHomeUrl}</span>
-            </li>
-            <li>
-              Redirect URL: <span className="font-mono text-xs">{oauthCallbackUrl || `${appHomeUrl.replace(/\/dashboard.*/, "")}/api/shopify/oauth/callback`}</span>
-            </li>
-            <li>
-              Scopes enable করুন: <code className="text-xs">read_products</code>,{" "}
-              <code className="text-xs">read_inventory</code>,{" "}
-              <code className="text-xs">read_orders</code>,{" "}
-              <code className="text-xs">read_locations</code> → Release
-            </li>
-            <li>Home → Install app → আপনার store (turupoint) select করুন</li>
-            <li>Settings থেকে Client ID + Client Secret copy করে ডান panel-এ দিন</li>
-            <li>
-              <strong>Get Access Token</strong> চাপুন (recommended) অথবা OAuth install ব্যবহার করুন
-            </li>
-          </ol>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-            Dev Dashboard token ~24 ঘণ্টা valid। Sync fail হলে আবার Get Access Token চাপুন।
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-teal-700">
+            How to connect
+          </h3>
+          <a
+            href="https://dev.shopify.com/dashboard"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-50"
+          >
+            Open Dev Dashboard
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+
+        <p className="mb-4 text-xs leading-relaxed text-slate-600">
+          Each step matches a screen in Shopify Dev Dashboard (see screenshots). Steps 1–5 are
+          one-time. Steps 6–7 connect your store here.
+        </p>
+
+        <div className="space-y-3">
+          <SetupGuideStep
+            step={1}
+            title="Apps → Create app"
+            body={
+              <div className="space-y-2">
+                <GuidePath items={["dev.shopify.com/dashboard", "Apps", "Create app"]} />
+                <p>
+                  Open <strong>Apps</strong> in the left sidebar. Click the white{" "}
+                  <strong>Create app</strong> button (top right). You may already have apps like{" "}
+                  <strong>Youraiseller</strong> — create a new one or use an existing app.
+                </p>
+              </div>
+            }
+          />
+
+          <SetupGuideStep
+            step={2}
+            title='Pick "Start from Dev Dashboard"'
+            body={
+              <div className="space-y-2">
+                <p>On the <strong>Create an app</strong> page you see two panels:</p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <span className="text-rose-600">Skip</span> left — &quot;Start with Shopify
+                    CLI&quot; (terminal)
+                  </li>
+                  <li>
+                    <span className="text-emerald-700">Use</span> right —{" "}
+                    <strong>Start from Dev Dashboard</strong>
+                  </li>
+                </ul>
+                <p>
+                  Enter <strong>App name</strong> (e.g. <strong>Youraiseller</strong>) and create
+                  the app.
+                </p>
+              </div>
+            }
+          />
+
+          <SetupGuideStep
+            step={3}
+            title="Versions → Create version → URLs"
+            body={
+              <div className="space-y-3">
+                <GuidePath items={["Youraiseller", "Versions", "Create version"]} />
+                <p>In the <strong>URLs</strong> section on the Create version page:</p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <strong>App URL</strong> — paste from below
+                  </li>
+                  <li>
+                    <strong>Uncheck</strong> &quot;Embed app in Shopify admin&quot;
+                  </li>
+                  <li>
+                    <strong>Webhooks API version</strong> — use latest (e.g. 2026-04)
+                  </li>
+                </ul>
+                <p className="text-[11px] text-slate-500">
+                  Ignore the blue &quot;Start using Shopify CLI&quot; banner — not needed here.
+                </p>
+                <div className="rounded-lg border border-slate-200 bg-white p-2.5">
+                  <CopyRow
+                    label="App URL"
+                    value={appHomeUrl}
+                    copyKey="app-url"
+                    copy={copy}
+                    copied={copied}
+                  />
+                </div>
+              </div>
+            }
+          />
+
+          <SetupGuideStep
+            step={4}
+            title="Access → Scopes & Redirect URLs → Release"
+            body={
+              <div className="space-y-3">
+                <p>Scroll down to the <strong>Access</strong> section on the same page:</p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Scopes</strong> — paste comma-separated list below (or click{" "}
+                    <strong>Select scopes</strong>)
+                  </li>
+                  <li>
+                    <strong>Redirect URLs</strong> — paste redirect URL below
+                  </li>
+                  <li>
+                    Leave <strong>Use legacy install flow</strong> unchecked
+                  </li>
+                </ul>
+                <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2.5">
+                  <CopyRow
+                    label="Scopes field"
+                    value={requiredScopesCsv}
+                    copyKey="scopes-csv"
+                    copy={copy}
+                    copied={copied}
+                  />
+                  <CopyRow
+                    label="Redirect URLs field"
+                    value={redirectUrl}
+                    copyKey="redirect-url"
+                    copy={copy}
+                    copied={copied}
+                  />
+                </div>
+                <p>
+                  Click <strong>Release</strong> (top or bottom right). Scopes only apply after
+                  Release.
+                </p>
+              </div>
+            }
+          />
+
+          <SetupGuideStep
+            step={5}
+            title="Install app on store"
+            body={
+              <div className="space-y-2">
+                <GuidePath items={["Youraiseller", "Home", "Install app", "Select store"]} />
+                <p>
+                  Install on your store (e.g. <strong>{EXAMPLE_SHOP_DOMAIN}</strong>). If scopes
+                  changed later, uninstall first then reinstall.
+                </p>
+              </div>
+            }
+          />
+
+          <SetupGuideStep
+            step={6}
+            title="Settings → Client ID & Secret"
+            body={
+              <div className="space-y-2">
+                <GuidePath items={["Youraiseller", "Settings", "Credentials"]} />
+                <ul className="list-inside list-disc space-y-1">
+                  <li>
+                    <strong>Client ID</strong> — click copy icon
+                  </li>
+                  <li>
+                    <strong>Secret</strong> — click eye icon, then copy
+                  </li>
+                </ul>
+                <p>Paste both into the form on the right side of this page.</p>
+              </div>
+            }
+          />
+
+          <SetupGuideStep
+            step={7}
+            title="Connect on this page"
+            isLast
+            body={
+              <>
+                Right panel: enter <strong>Shop domain</strong> (e.g. {EXAMPLE_SHOP_DOMAIN}),
+                click <strong>Connect</strong>.
+                Badge should show <strong>Connected</strong>. Then go to{" "}
+                <strong>Product Sync</strong> → <strong>Sync products now</strong>.
+              </>
+            }
+          />
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
+            <strong>After connecting:</strong> open the <strong>Product Sync</strong> tab and click{" "}
+            <strong>Sync products now</strong>.
+          </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+            <strong>Note:</strong> Access tokens expire after ~24 hours. If sync fails, click{" "}
+            <strong>Connect</strong> again on the right.
           </div>
         </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 p-5">
-        <h3 className="mb-3 text-base font-bold text-slate-900">Integration Details</h3>
+        <h3 className="mb-3 text-base font-bold text-slate-900">Store details</h3>
 
-        {!connectionHealthy && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-900">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            {hasBasicSetup
-              ? "Token saved but not verified. Test Connection চাপুন। Scope fail হলে Dev Dashboard → Versions → scopes add → Release → store-এ reinstall → Get Access Token।"
-              : "Dev Dashboard app তৈরি করুন, store-এ install করুন, তারপর Client ID + Secret দিয়ে Get Access Token করুন।"}
+        {connectionHealthy && (
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-bold">
+                Connected{connectionMeta.shopName ? ` — ${connectionMeta.shopName}` : ""}
+              </p>
+              <p className="mt-1 opacity-90">You can sync products and orders now.</p>
+            </div>
           </div>
         )}
 
+        {!connectionHealthy && connectionMeta.missingScopes?.length ? (
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-bold">Some permissions are still missing</p>
+              <p className="mt-1 leading-relaxed">
+                Dev Dashboard → Versions → add permissions → Release → uninstall and reinstall on
+                your store → click Connect
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {!connectionHealthy && !connectionMeta.missingScopes?.length ? (
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-900">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            {hasBasicSetup
+              ? "Token saved but not verified. Click Test Connection or Connect again."
+              : hasDevCredentials
+                ? "Client ID and Secret look good. Click Connect now."
+                : "Create an app in Dev Dashboard, install it on your store, then add Client ID and Secret."}
+          </div>
+        ) : null}
+
         <div className="space-y-4">
           <LabeledInput
-            label="Shop Domain"
+            label="Shop domain"
             icon={Link2}
             value={state.shopDomain}
-            placeholder="your-store.myshopify.com"
+            placeholder={EXAMPLE_SHOP_DOMAIN}
             onChange={(value) => setState((prev) => ({ ...prev, shopDomain: value }))}
           />
           <p className="text-xs text-slate-500">
-            Example: <span className="font-semibold">turupoint.myshopify.com</span> (localhost/domain URL নয়)
+            Example: <span className="font-semibold">{EXAMPLE_SHOP_DOMAIN}</span> — use only the
+            myshopify.com address, not localhost or a full website URL
           </p>
 
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-              Authentication Method
+              Connection method
             </p>
             <div className="space-y-2 text-sm">
               <label className="flex cursor-pointer items-center gap-2">
@@ -676,7 +938,7 @@ function SetupTab({
                   }
                   className="h-4 w-4 accent-teal-600"
                 />
-                Dev Dashboard App (recommended)
+                Dev Dashboard (recommended)
               </label>
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -687,7 +949,7 @@ function SetupTab({
                   }
                   className="h-4 w-4 accent-teal-600"
                 />
-                Manual access token (legacy / advanced)
+                Manual token (advanced)
               </label>
             </div>
           </div>
@@ -698,7 +960,7 @@ function SetupTab({
                 label="Client ID"
                 icon={KeyRound}
                 value={state.clientId}
-                placeholder="From Dev Dashboard → Settings"
+                placeholder="Copy from Dev Dashboard → Settings"
                 onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
               />
               <LabeledInput
@@ -706,38 +968,59 @@ function SetupTab({
                 icon={KeyRound}
                 type="password"
                 value={state.clientSecret}
-                placeholder="From Dev Dashboard → Settings"
+                placeholder="Copy from Dev Dashboard → Settings"
                 onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
               />
-              <LabeledInput
-                label="Access Token (auto-filled)"
-                icon={KeyRound}
-                value={state.accessToken}
-                type="password"
-                placeholder="Get Access Token চাপলে এখানে আসবে"
-                onChange={(value) => setState((prev) => ({ ...prev, accessToken: value }))}
-              />
-              <p className="text-xs text-slate-500">
-                Client credentials grant ব্যবহার করে token নেয় (~24h)। OAuth install বিকল্প হিসেবে নিচে আছে।
-              </p>
+              {state.accessToken.trim() ? (
+                <div>
+                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Access token
+                  </p>
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                    <p className="text-sm font-semibold text-emerald-800">
+                      Token received — click Connect again to refresh
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+                  Access token is filled automatically when you click <strong>Connect</strong>.
+                </p>
+              )}
             </>
           ) : (
             <LabeledInput
-              label="Access Token"
+              label="Access token"
               icon={KeyRound}
               value={state.accessToken}
               type="password"
-              placeholder="Paste token if you already have one"
+              placeholder="Paste your token here if you already have one"
               onChange={(value) => setState((prev) => ({ ...prev, accessToken: value }))}
             />
           )}
 
           <div className="flex flex-wrap items-center gap-2">
+            {state.authMethod === "dev_dashboard" && (
+              <button
+                type="button"
+                onClick={getAccessToken}
+                disabled={fetchingToken}
+                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
+              >
+                {fetchingToken ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="h-4 w-4" />
+                )}
+                {fetchingToken ? "Connecting..." : "Connect"}
+              </button>
+            )}
             <button
               type="button"
               onClick={saveSetup}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             >
               {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {saving ? "Saving..." : "Save"}
@@ -748,7 +1031,7 @@ function SetupTab({
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             >
-              Dev Dashboard Docs
+              Help docs
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
             <button
@@ -758,37 +1041,22 @@ function SetupTab({
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             >
               {testing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
-              {testing ? "Testing..." : "Test Connection"}
+              {testing ? "Testing..." : "Test connection"}
             </button>
             {state.authMethod === "dev_dashboard" && (
-              <>
-                <button
-                  type="button"
-                  onClick={getAccessToken}
-                  disabled={fetchingToken}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white hover:bg-teal-700 disabled:opacity-60"
-                >
-                  {fetchingToken ? (
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <KeyRound className="h-3.5 w-3.5" />
-                  )}
-                  {fetchingToken ? "Getting token..." : "Get Access Token"}
-                </button>
-                <button
-                  type="button"
-                  onClick={connectViaApp}
-                  disabled={startingOAuth}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {startingOAuth ? (
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  )}
-                  {startingOAuth ? "Opening Shopify..." : "Install via OAuth"}
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={connectViaApp}
+                disabled={startingOAuth}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-60"
+              >
+                {startingOAuth ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ExternalLink className="h-3.5 w-3.5" />
+                )}
+                {startingOAuth ? "Opening Shopify..." : "Install via OAuth"}
+              </button>
             )}
           </div>
         </div>
@@ -818,23 +1086,23 @@ function WebhooksTab({
     <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
         <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-teal-700">
-          Setup Instructions
+          Webhook setup
         </h3>
-        <ol className="list-inside list-decimal space-y-1.5 text-sm text-slate-700">
-          <li>Go to Shopify Settings → Notifications → Webhooks.</li>
-          <li>Click Add Webhook.</li>
-          <li>Select event: Orders create/update/cancelled.</li>
-          <li>Paste URL from right panel and save.</li>
-          <li>Run a test order to verify auto-create in dashboard.</li>
+        <ol className="list-inside list-decimal space-y-2 text-sm leading-relaxed text-slate-700">
+          <li>Go to Shopify Admin → Settings → Notifications → Webhooks</li>
+          <li>Click Add webhook</li>
+          <li>Select events: order created, updated, or cancelled</li>
+          <li>Copy the URL from the right panel, paste it, and save</li>
+          <li>Place a test order to confirm it appears in your dashboard</li>
         </ol>
       </section>
 
       <section className="space-y-4 rounded-2xl border border-slate-200 p-5">
-        <h3 className="text-base font-bold text-slate-900">Webhook Details</h3>
+        <h3 className="text-base font-bold text-slate-900">Webhook settings</h3>
 
         <ToggleItem
-          label="Webhook Signature Check"
-          hint="Recommended for secure verification. Enable after confirming shared secret."
+          label="Signature verification"
+          hint="Recommended for security. Enable after you confirm the shared secret."
           on={state.webhookSignatureCheck}
           onToggle={() =>
             setState((prev) => ({
@@ -845,8 +1113,8 @@ function WebhooksTab({
         />
 
         <ToggleItem
-          label="Shopify Incomplete Order Sync"
-          hint="Imports Shopify incomplete orders from recent window and checks every 15 minutes."
+          label="Incomplete order sync"
+          hint="Imports incomplete Shopify orders and checks every 15 minutes."
           on={state.incompleteOrderSyncEnabled}
           onToggle={() =>
             setState((prev) => ({
@@ -857,7 +1125,7 @@ function WebhooksTab({
         />
 
         <CopyField
-          label="Fallback / Debug Direct URL"
+          label="Webhook URL (copy this)"
           value={webhookUrl}
           copied={copied === "webhook"}
           onCopy={() => copy("webhook", webhookUrl)}
@@ -869,7 +1137,7 @@ function WebhooksTab({
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
         >
           {verifyingWebhook ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Webhook className="h-3.5 w-3.5" />}
-          {verifyingWebhook ? "Verifying..." : "Verify Webhook Endpoint"}
+          {verifyingWebhook ? "Verifying..." : "Verify webhook"}
         </button>
       </section>
     </div>
@@ -897,19 +1165,18 @@ function ProductSyncTab({
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Possible API Version Issue — product count fetch mismatch হলে Shopify Admin API
-            version update করুন।
+            Product count mismatch? Update the API version in Dev Dashboard and try syncing again.
           </p>
         </div>
       </div>
 
       <section className="rounded-2xl border border-slate-200 p-5">
-        <h3 className="mb-2 text-base font-bold text-slate-900">Product Synchronization</h3>
-        <ul className="list-inside list-disc space-y-1.5 text-sm text-slate-700">
-          <li>Bulk full-catalog sync background job হিসেবে run হয়।</li>
-          <li>Variants data map করে local product update/create হয়।</li>
-          <li>Existing products update হবে; নতুন product limit rule respect করবে।</li>
-          <li>Variant image না থাকলে parent image fallback হিসেবে use হবে।</li>
+        <h3 className="mb-2 text-base font-bold text-slate-900">Import products</h3>
+        <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-slate-700">
+          <li>Imports your full Shopify catalog into this system.</li>
+          <li>Existing products are updated; new products are created.</li>
+          <li>Variants are synced with price, stock, and images.</li>
+          <li>If a variant has no image, the main product image is used.</li>
         </ul>
         <div className="mt-5 flex justify-end">
           <button
@@ -919,13 +1186,13 @@ function ProductSyncTab({
             className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
           >
             {syncingProducts ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-            {syncingProducts ? "Syncing..." : "Sync Products Now"}
+            {syncingProducts ? "Syncing..." : "Sync products now"}
           </button>
         </div>
         {summary && (
           <div className="mt-4 space-y-3">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <SyncStat label="Total এসেছে" value={summary.total} tone="slate" />
+              <SyncStat label="Total" value={summary.total} tone="slate" />
               <SyncStat label="New" value={summary.created} tone="emerald" />
               <SyncStat label="Updated" value={summary.updated} tone="sky" />
               <SyncStat label="Failed" value={summary.failed} tone="rose" />
@@ -982,15 +1249,15 @@ function OrderSyncTab({
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 p-5">
-      <h3 className="mb-2 text-base font-bold text-slate-900">Order Synchronization</h3>
+      <h3 className="mb-2 text-base font-bold text-slate-900">Import orders</h3>
       <p className="mb-4 text-sm text-slate-500">
-        Sync your recent Shopify orders to local system.
+        Pull your recent Shopify orders into this dashboard.
       </p>
-      <ul className="list-inside list-disc space-y-1.5 text-sm text-slate-700">
-        <li>Latest recent orders import হবে (e.g. last 20 orders).</li>
-        <li>Orders local system-এ auto create হবে।</li>
-        <li>Synced order Shopify-তে tag করে duplicate import avoid করা হবে।</li>
-        <li>Customer, items, shipping details include থাকবে।</li>
+      <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-slate-700">
+        <li>Imports your most recent orders (up to 50).</li>
+        <li>Orders are created automatically in your dashboard.</li>
+        <li>Duplicates are avoided using tags on the Shopify side.</li>
+        <li>Includes customer, line items, and shipping details.</li>
       </ul>
       <div className="mt-5 flex justify-end">
         <button
@@ -1000,13 +1267,13 @@ function OrderSyncTab({
           className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
         >
           {syncingOrders ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-          {syncingOrders ? "Syncing..." : "Sync Recent Orders"}
+          {syncingOrders ? "Syncing..." : "Sync recent orders"}
         </button>
       </div>
       {summary && (
         <div className="mt-4 space-y-3">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <SyncStat label="Total এসেছে" value={summary.total} tone="slate" />
+            <SyncStat label="Total" value={summary.total} tone="slate" />
             <SyncStat label="New" value={summary.created} tone="emerald" />
             <SyncStat label="Updated" value={summary.updated} tone="sky" />
             <SyncStat label="Failed" value={summary.failed} tone="rose" />
@@ -1036,9 +1303,9 @@ function StockSyncTab({
           <div className="flex items-center gap-2">
             <Truck className="h-5 w-5 text-teal-600" />
             <div>
-              <h3 className="text-base font-bold text-slate-900">Shopify Stock Sync</h3>
+              <h3 className="text-base font-bold text-slate-900">Stock sync</h3>
               <p className="text-xs text-slate-500">
-                Automatic stock synchronization between inventory and Shopify.
+                Keeps inventory and Shopify stock levels in sync automatically.
               </p>
             </div>
           </div>
@@ -1052,44 +1319,118 @@ function StockSyncTab({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Real-time Sync" value={state.stockSyncEnabled ? "Enabled" : "Disabled"} />
+          <StatCard label="Real-time sync" value={state.stockSyncEnabled ? "Enabled" : "Disabled"} />
           <StatCard
-            label="Order Stock Behavior"
-            value={state.stockBehavior === "deduct_on_order" ? "Deduct on Order" : "Reserve on Checkout"}
+            label="Order stock behavior"
+            value={state.stockBehavior === "deduct_on_order" ? "Deduct on order" : "Reserve on checkout"}
           />
-          <StatCard label="Default Location" value={state.defaultLocation} />
+          <StatCard label="Default location" value={state.defaultLocation} />
           <StatCard
-            label="Shopify Tracking"
-            value={state.shopifyTracking === "active_managed" ? "Active (Managed)" : "Active (Unmanaged)"}
+            label="Shopify tracking"
+            value={state.shopifyTracking === "active_managed" ? "Active (managed)" : "Active (unmanaged)"}
           />
         </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 p-5">
         <h4 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-slate-600">
-          Sync Queue
+          Sync queue
         </h4>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <QueueCard title="Pending" value="0" tone="amber" />
           <QueueCard title="Processing" value="0" tone="sky" />
-          <QueueCard title="Failed" value="50" tone="rose" />
+          <QueueCard title="Failed" value="0" tone="rose" />
           <QueueCard title="Completed" value="0" tone="emerald" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700">
-            Sync All Products
+            Sync all products
           </button>
           <button className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700">
-            Cancel Sync
+            Cancel sync
           </button>
           <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Disable Shopify Tracking
+            Disable tracking
           </button>
           <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            View History
+            View history
           </button>
         </div>
       </section>
+    </div>
+  );
+}
+
+function GuidePath({ items }: { items: string[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1 rounded-lg border border-teal-100 bg-teal-50/80 px-2.5 py-1.5 text-[11px] font-medium text-teal-900">
+      {items.map((item, index) => (
+        <span key={item} className="inline-flex items-center gap-1">
+          {index > 0 && <span className="text-teal-400">→</span>}
+          <span>{item}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function SetupGuideStep({
+  step,
+  title,
+  body,
+  isLast = false,
+}: {
+  step: number;
+  title: string;
+  body: React.ReactNode;
+  isLast?: boolean;
+}) {
+  return (
+    <div className="relative flex gap-3">
+      {!isLast && (
+        <span
+          className="absolute left-[15px] top-9 bottom-0 w-px bg-slate-200"
+          aria-hidden
+        />
+      )}
+      <div className="relative z-[1] flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-extrabold text-white shadow-sm">
+        {step}
+      </div>
+      <div className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-relaxed text-slate-700">
+        <p className="mb-1.5 font-bold text-slate-900">{title}</p>
+        <div className="text-xs leading-relaxed text-slate-600">{body}</div>
+      </div>
+    </div>
+  );
+}
+
+function CopyRow({
+  label,
+  value,
+  copyKey,
+  copy,
+  copied,
+}: {
+  label: string;
+  value: string;
+  copyKey: string;
+  copy: (key: string, text: string) => Promise<void>;
+  copied: string | null;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0">
+        <p className="font-bold text-slate-600">{label}</p>
+        <p className="mt-0.5 break-all font-mono text-[11px] text-slate-800">{value}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => copy(copyKey, value)}
+        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+      >
+        {copied === copyKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        {copied === copyKey ? "Copied" : "Copy"}
+      </button>
     </div>
   );
 }

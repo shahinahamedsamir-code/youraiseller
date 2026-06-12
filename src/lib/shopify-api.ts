@@ -366,19 +366,19 @@ export async function verifyShopifyProductAccess(params: {
   );
 
   if (res.ok) {
-    return { ok: true, message: "Product read scope verified." };
+    return { ok: true, message: "Product read permission verified." };
   }
 
   if (res.status === 401 || res.status === 403) {
     return {
       ok: false,
       message:
-        "Shop connected but read_products scope missing. Dev Dashboard (dev.shopify.com) → your app → Versions → enable read_products (+ read_inventory, read_orders) → Release → reinstall app on store → get a new token.",
+        "Store is connected but product read permission is missing. Dev Dashboard → Versions → enable product/order/inventory permissions → Release → reinstall the app.",
     };
   }
 
   return {
     ok: false,
-    message: `Product scope check failed (${res.status}).`,
+    message: `Product permission check failed (${res.status}).`,
   };
 }

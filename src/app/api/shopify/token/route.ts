@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { normalizeShopDomain, SHOPIFY_API_VERSION } from "@/lib/shopify-api";
+import {
+  normalizeShopDomain,
+  SHOPIFY_API_VERSION,
+  verifyShopifyProductAccess,
+} from "@/lib/shopify-api";
 
 type TokenBody = {
   shopDomain?: string;
@@ -71,6 +75,22 @@ export async function POST(req: Request) {
 
     const scope = String(tokenJson.scope ?? "").trim();
     const gaps = missingScopes(scope);
+    const productCheck = await verifyShopifyProductAccess({ shopDomain, accessToken });
+    const scopesOk = gaps.length === 0;
+    const apiOk = productCheck.ok;
+
+    let message: string;
+    if (scopesOk && apiOk) {
+      message =
+        "Connected successfully. You can sync products. (Token lasts ~24 hours — click Connect again when it expires.)";
+    } else if (!scopesOk && !apiOk) {
+      message =
+        "Token received but some permissions are missing. Dev Dashboard → Versions → add permissions → Release → reinstall on your store → click Connect.";
+    } else if (!scopesOk && apiOk) {
+      message = "Connected successfully. Token will last about 24 hours.";
+    } else {
+      message = `Token received but product API check failed: ${productCheck.message}`;
+    }
 
     return NextResponse.json({
       ok: true,
@@ -78,14 +98,12 @@ export async function POST(req: Request) {
       scope,
       expiresIn: tokenJson.expires_in ?? 86399,
       apiVersion: SHOPIFY_API_VERSION,
-      missingScopes: gaps,
-      message:
-        gaps.length === 0
-          ? "Access token received. Product sync scopes OK (token expires in ~24h — refresh when needed)."
-          : `Token received but missing scopes: ${gaps.join(", ")}. Dev Dashboard → App → Versions → add scopes → Release → reinstall app on store.`,
+      missingScopes: apiOk ? [] : gaps.length ? gaps : ["read_products"],
+      productsReadable: apiOk,
+      message,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to get Shopify access token.";
+    const message = error instanceof Error ? error.message : "Could not get access token.";
     return NextResponse.json({ ok: false, message }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { Loader2, Lock } from "lucide-react";
@@ -17,7 +18,35 @@ export function ResetPasswordForm({ token }: Props) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(Boolean(token));
   const [error, setError] = useState("");
+  const [linkError, setLinkError] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      setChecking(true);
+      try {
+        const res = await fetch(
+          `/api/auth/reset-password?token=${encodeURIComponent(token)}`
+        );
+        const data = await res.json();
+        if (!res.ok && !cancelled) {
+          setLinkError(data.error ?? "This reset link is no longer valid.");
+        }
+      } catch {
+        if (!cancelled) {
+          setLinkError("Could not verify this reset link. Try again or request a new one.");
+        }
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +75,32 @@ export function ResetPasswordForm({ token }: Props) {
   if (!token) {
     return (
       <p className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
-        Invalid reset link. Request a new one from the forgot password page.
+        Invalid reset link.{" "}
+        <Link href="/forgot-password" className="font-semibold underline">
+          Request a new one
+        </Link>
+        .
       </p>
+    );
+  }
+
+  if (checking) {
+    return <p className="text-sm text-slate-500">Checking reset link…</p>;
+  }
+
+  if (linkError) {
+    return (
+      <div className="space-y-3">
+        <p className="rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+          {linkError}
+        </p>
+        <Link
+          href="/forgot-password"
+          className="inline-flex text-sm font-semibold text-violet-600 hover:text-violet-700 hover:underline"
+        >
+          Request a new reset link
+        </Link>
+      </div>
     );
   }
 

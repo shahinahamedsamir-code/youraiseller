@@ -65,6 +65,37 @@ function canResetPassword(user: StoredUser): boolean {
   return user.authProvider === "password";
 }
 
+export type PasswordResetTokenStatus =
+  | { ok: true; email: string; expiresAt: string }
+  | { ok: false; error: string; expired?: boolean };
+
+export async function checkPasswordResetToken(
+  token: string
+): Promise<PasswordResetTokenStatus> {
+  const trimmed = token.trim();
+  if (!trimmed) {
+    return { ok: false, error: "Reset link is invalid." };
+  }
+
+  const tokens = await readTokens();
+  const row = tokens.find((t) => t.token === trimmed);
+  if (!row) {
+    return { ok: false, error: "This reset link is invalid or already used." };
+  }
+  if (row.used) {
+    return { ok: false, error: "This reset link has already been used. Request a new one." };
+  }
+  if (new Date(row.expiresAt).getTime() < Date.now()) {
+    return {
+      ok: false,
+      error: "This reset link has expired. Request a new one.",
+      expired: true,
+    };
+  }
+
+  return { ok: true, email: row.email, expiresAt: row.expiresAt };
+}
+
 export async function createPasswordResetRequest(
   email: string,
   origin: string
@@ -90,9 +121,11 @@ export async function createPasswordResetRequest(
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
 
-  const tokens = (await readTokens()).filter(
-    (row) => row.used || new Date(row.expiresAt).getTime() > Date.now()
-  );
+  const now = Date.now();
+  const tokens = (await readTokens()).filter((row) => {
+    if (normalizeEmail(row.email) === normalized) return false;
+    return row.used || new Date(row.expiresAt).getTime() > now;
+  });
   tokens.push({ token, email: normalized, expiresAt, used: false });
   await writeTokens(tokens);
 
@@ -133,12 +166,12 @@ export async function resetPasswordWithToken(
     return { ok: false, error: "Password must be at least 6 characters." };
   }
 
+  const status = await checkPasswordResetToken(trimmed);
+  if (!status.ok) return { ok: false, error: status.error };
+
   const tokens = await readTokens();
-  const row = tokens.find((t) => t.token === trimmed && !t.used);
+  const row = tokens.find((t) => t.token === trimmed);
   if (!row) return { ok: false, error: "This reset link is invalid or already used." };
-  if (new Date(row.expiresAt).getTime() < Date.now()) {
-    return { ok: false, error: "This reset link has expired. Request a new one." };
-  }
 
   const users = await readUsers();
   const idx = users.findIndex(

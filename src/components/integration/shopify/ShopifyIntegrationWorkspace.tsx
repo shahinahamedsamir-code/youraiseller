@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { syncProductsFromShopify } from "@/lib/shopify-product-sync";
+import { syncOrdersFromShopify } from "@/lib/shopify-order-sync";
 
 type ShopifyTab = "setup" | "webhooks" | "product-sync" | "order-sync" | "stock-sync";
 type AuthMethod = "access_token" | "client_credentials";
@@ -77,9 +78,23 @@ export function ShopifyIntegrationWorkspace() {
   const [verifyingWebhook, setVerifyingWebhook] = useState(false);
   const [startingOAuth, setStartingOAuth] = useState(false);
   const [syncingProducts, setSyncingProducts] = useState(false);
-  const [productSyncSummary, setProductSyncSummary] = useState<string>("");
+  const [productSyncSummary, setProductSyncSummary] = useState<{
+    total: number;
+    created: number;
+    updated: number;
+    failed: number;
+    message?: string;
+  } | null>(null);
   const [state, setState] = useState<ShopifyState>(defaultState);
   const [toast, setToast] = useState<string>("");
+  const [syncingOrders, setSyncingOrders] = useState(false);
+  const [orderSyncSummary, setOrderSyncSummary] = useState<{
+    total: number;
+    created: number;
+    updated: number;
+    failed: number;
+    message?: string;
+  } | null>(null);
 
   useEffect(() => {
     try {
@@ -235,7 +250,7 @@ export function ShopifyIntegrationWorkspace() {
       return;
     }
     setSyncingProducts(true);
-    setProductSyncSummary("");
+    setProductSyncSummary(null);
     try {
       const result = await syncProductsFromShopify({
         shopDomain: state.shopDomain,
@@ -243,17 +258,83 @@ export function ShopifyIntegrationWorkspace() {
         limit: 300,
       });
       const summary = `Sync done — Created ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
-      setProductSyncSummary(summary);
+      setProductSyncSummary({
+        total: result.total,
+        created: result.created,
+        updated: result.updated,
+        failed: result.failed,
+      });
       setToast(summary);
       if (result.errors.length > 0) {
-        setProductSyncSummary(`${summary} | ${result.errors[0]}`);
+        setProductSyncSummary({
+          total: result.total,
+          created: result.created,
+          updated: result.updated,
+          failed: result.failed,
+          message: result.errors[0],
+        });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Product sync failed.";
       setToast(message);
-      setProductSyncSummary(message);
+      setProductSyncSummary({
+        total: 0,
+        created: 0,
+        updated: 0,
+        failed: 0,
+        message,
+      });
     } finally {
       setSyncingProducts(false);
+    }
+  };
+
+  const syncOrders = async () => {
+    if (!isShopifyMyshopifyDomain(state.shopDomain)) {
+      setToast("Valid shop domain দিন: your-store.myshopify.com");
+      return;
+    }
+    if (!state.accessToken.trim()) {
+      setToast("Access token missing. আগে app connect complete করুন।");
+      return;
+    }
+    setSyncingOrders(true);
+    setOrderSyncSummary(null);
+    try {
+      const result = await syncOrdersFromShopify({
+        shopDomain: state.shopDomain,
+        accessToken: state.accessToken,
+        limit: 50,
+      });
+      const summary = `Order sync done — Created ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
+      setOrderSyncSummary({
+        total: result.total,
+        created: result.created,
+        updated: result.updated,
+        failed: result.failed,
+      });
+      setToast(summary);
+      if (result.errors.length > 0) {
+        setOrderSyncSummary({
+          total: result.total,
+          created: result.created,
+          updated: result.updated,
+          failed: result.failed,
+          message: result.errors[0],
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Order sync failed.";
+      setToast(message);
+      setOrderSyncSummary({
+        total: 0,
+        created: 0,
+        updated: 0,
+        failed: 0,
+        message,
+      });
+    } finally {
+      setSyncingOrders(false);
     }
   };
 
@@ -352,7 +433,13 @@ export function ShopifyIntegrationWorkspace() {
               summary={productSyncSummary}
             />
           )}
-          {activeTab === "order-sync" && <OrderSyncTab />}
+          {activeTab === "order-sync" && (
+            <OrderSyncTab
+              syncingOrders={syncingOrders}
+              onSyncOrders={syncOrders}
+              summary={orderSyncSummary}
+            />
+          )}
           {activeTab === "stock-sync" && <StockSyncTab state={state} setState={setState} />}
         </div>
       </div>
@@ -621,7 +708,13 @@ function ProductSyncTab({
 }: {
   syncingProducts: boolean;
   onSyncProducts: () => Promise<void>;
-  summary: string;
+  summary: {
+    total: number;
+    created: number;
+    updated: number;
+    failed: number;
+    message?: string;
+  } | null;
 }) {
   return (
     <div className="space-y-4">
@@ -655,8 +748,18 @@ function ProductSyncTab({
           </button>
         </div>
         {summary && (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700">
-            {summary}
+          <div className="mt-4 space-y-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <SyncStat label="Total এসেছে" value={summary.total} tone="slate" />
+              <SyncStat label="New" value={summary.created} tone="emerald" />
+              <SyncStat label="Updated" value={summary.updated} tone="sky" />
+              <SyncStat label="Failed" value={summary.failed} tone="rose" />
+            </div>
+            {summary.message && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+                {summary.message}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -664,7 +767,44 @@ function ProductSyncTab({
   );
 }
 
-function OrderSyncTab() {
+function SyncStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "slate" | "emerald" | "sky" | "rose";
+}) {
+  const toneClass: Record<typeof tone, string> = {
+    slate: "border-slate-200 bg-slate-50 text-slate-900",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    sky: "border-sky-200 bg-sky-50 text-sky-900",
+    rose: "border-rose-200 bg-rose-50 text-rose-900",
+  };
+  return (
+    <div className={clsx("rounded-xl border px-3 py-2", toneClass[tone])}>
+      <p className="text-[11px] font-bold uppercase tracking-wide">{label}</p>
+      <p className="mt-1 text-xl font-extrabold">{value}</p>
+    </div>
+  );
+}
+
+function OrderSyncTab({
+  syncingOrders,
+  onSyncOrders,
+  summary,
+}: {
+  syncingOrders: boolean;
+  onSyncOrders: () => Promise<void>;
+  summary: {
+    total: number;
+    created: number;
+    updated: number;
+    failed: number;
+    message?: string;
+  } | null;
+}) {
   return (
     <section className="rounded-2xl border border-slate-200 p-5">
       <h3 className="mb-2 text-base font-bold text-slate-900">Order Synchronization</h3>
@@ -680,11 +820,29 @@ function OrderSyncTab() {
       <div className="mt-5 flex justify-end">
         <button
           type="button"
-          className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700"
+          onClick={onSyncOrders}
+          disabled={syncingOrders}
+          className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
         >
-          Sync Recent Orders
+          {syncingOrders ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+          {syncingOrders ? "Syncing..." : "Sync Recent Orders"}
         </button>
       </div>
+      {summary && (
+        <div className="mt-4 space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <SyncStat label="Total এসেছে" value={summary.total} tone="slate" />
+            <SyncStat label="New" value={summary.created} tone="emerald" />
+            <SyncStat label="Updated" value={summary.updated} tone="sky" />
+            <SyncStat label="Failed" value={summary.failed} tone="rose" />
+          </div>
+          {summary.message && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+              {summary.message}
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

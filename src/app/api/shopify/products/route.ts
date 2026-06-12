@@ -131,9 +131,17 @@ export async function POST(req: Request) {
 
       const json = (await res.json()) as ShopifyGraphQlResponse;
       if (json.errors?.length) {
+        const firstError = json.errors[0]?.message || "Shopify GraphQL products query failed.";
+        if (/access denied/i.test(firstError) || /not authorized/i.test(firstError)) {
+          return NextResponse.json({
+            ok: false,
+            message:
+              "Shopify token scope missing for products. Enable read_products (and write_products if needed), then reconnect app/token.",
+          });
+        }
         return NextResponse.json({
           ok: false,
-          message: json.errors[0]?.message || "Shopify GraphQL products query failed.",
+          message: firstError,
         });
       }
 

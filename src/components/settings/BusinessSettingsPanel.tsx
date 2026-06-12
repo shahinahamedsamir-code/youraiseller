@@ -57,10 +57,27 @@ function Section({
   );
 }
 
+function normalizeLogoUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("data:image/")) return trimmed;
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(withProtocol);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function BusinessSettingsPanel() {
   const [s, setS] = useState<BusinessSettings | null>(null);
   const [toast, setToast] = useState("");
+  const [showLogoUrlInput, setShowLogoUrlInput] = useState(false);
+  const [logoUrlDraft, setLogoUrlDraft] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoUrlInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setS(loadBusinessSettings());
@@ -99,8 +116,21 @@ export function BusinessSettingsPanel() {
   };
 
   const onUseUrl = () => {
-    const url = window.prompt("Paste the logo image URL:");
-    if (url && url.trim()) set("logoUrl", url.trim());
+    setLogoUrlDraft(s.logoUrl || "");
+    setShowLogoUrlInput(true);
+    requestAnimationFrame(() => logoUrlInputRef.current?.focus());
+  };
+
+  const applyLogoUrl = () => {
+    const normalized = normalizeLogoUrl(logoUrlDraft);
+    if (!normalized) {
+      setToast("Enter a valid image URL (https://…).");
+      return;
+    }
+    set("logoUrl", normalized);
+    setShowLogoUrlInput(false);
+    setLogoUrlDraft("");
+    setToast("Logo URL applied. Click Save Changes to keep it.");
   };
 
   const save = () => {
@@ -212,6 +242,46 @@ export function BusinessSettingsPanel() {
               onChange={(e) => onLogoFile(e.target.files?.[0])}
             />
           </div>
+          {showLogoUrlInput && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50/50 p-3">
+              <input
+                ref={logoUrlInputRef}
+                type="url"
+                value={logoUrlDraft}
+                onChange={(e) => setLogoUrlDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyLogoUrl();
+                  }
+                  if (e.key === "Escape") {
+                    setShowLogoUrlInput(false);
+                    setLogoUrlDraft("");
+                  }
+                }}
+                placeholder="https://example.com/logo.png"
+                className="min-w-[220px] flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+              />
+              <button
+                type="button"
+                onClick={applyLogoUrl}
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+              >
+                <Check className="h-4 w-4" />
+                Apply
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoUrlInput(false);
+                  setLogoUrlDraft("");
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           <p className="mt-1 text-xs text-slate-400">PNG/JPG, under 1 MB. Shown on invoices & stickers.</p>
         </div>
       </Section>

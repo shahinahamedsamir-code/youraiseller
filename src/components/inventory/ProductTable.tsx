@@ -29,6 +29,10 @@ import {
   BarChart3,
   History,
   X,
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -76,6 +80,8 @@ export function ProductTable() {
   } | null>(null);
   const [historyFor, setHistoryFor] = useState<Product | null>(null);
   const [reportFor, setReportFor] = useState<Product | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const refresh = () => {
     const list = loadProducts();
@@ -121,6 +127,15 @@ export function ProductTable() {
     });
     return list;
   }, [products, search, filter, sortKey, sortAsc]);
+
+  // Reset to page 1 whenever the filtered list changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter, sortKey, sortAsc]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const allSelected =
     filtered.length > 0 && filtered.every((p) => selected.has(p.id));
@@ -377,7 +392,7 @@ export function ProductTable() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((p) => {
+            {paged.map((p) => {
               const tone = stockTone(p);
               return (
                 <tr
@@ -570,6 +585,71 @@ export function ProductTable() {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination footer */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white px-4 py-2.5 text-sm text-slate-600">
+        <span className="text-xs text-slate-500">
+          {selected.size} of {filtered.length} rows selected
+        </span>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-xs">
+            Rows per page
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-300"
+            >
+              {[10, 25, 50, 100].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+          <span className="text-xs font-semibold text-indigo-700">
+            Page {safePage} of {totalPages}
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => setPage(1)}
+              disabled={safePage === 1}
+              className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+              title="First page"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+              title="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+              title="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(totalPages)}
+              disabled={safePage === totalPages}
+              className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+              title="Last page"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {filtered.length === 0 && (

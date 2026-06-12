@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 import clsx from "clsx";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StockMovementForm } from "@/components/inventory/StockMovementForm";
@@ -122,6 +123,13 @@ function MovementTable({
   rows: StockMovement[];
   type: "decrease" | "increase" | "transfer";
 }) {
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+
+  useEffect(() => { setPage(1); }, [type]);
+
+  const paged = paginateSlice(rows, page, rowsPerPage);
+
   return (
     <div className="yai-panel overflow-hidden">
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
@@ -140,7 +148,7 @@ function MovementTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {paged.map((r) => (
               <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/60">
                 <td className="px-4 py-3 text-slate-500">{r.createdAt}</td>
                 <td className="px-4 py-3 font-semibold text-slate-800">{r.productName}</td>
@@ -169,10 +177,18 @@ function MovementTable({
           </tbody>
         </table>
       </div>
-      {rows.length === 0 && (
+      {rows.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-slate-500">
           No records yet for this section.
         </p>
+      ) : (
+        <TablePagination
+          totalRows={rows.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+        />
       )}
     </div>
   );

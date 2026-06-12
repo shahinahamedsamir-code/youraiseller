@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Loader2, Lock, Mail, Store, User } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, Store, User } from "lucide-react";
 import { applyServerAuthUser, syncDevUsersFromServer } from "@/lib/dev-users";
 
 type Props = {
@@ -20,6 +20,7 @@ export function EmailPasswordAuthForm({ mode }: Props) {
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -136,21 +137,31 @@ export function EmailPasswordAuthForm({ mode }: Props) {
             </Link>
           ) : null}
         </span>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            setError("");
-          }}
-          className={inputCls}
-          placeholder={
-            mode === "signup" ? "At least 8 characters, letters + numbers" : "Your password"
-          }
-          autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          minLength={mode === "signup" ? 8 : undefined}
-          required
-        />
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError("");
+            }}
+            className={clsx(inputCls, "pr-12")}
+            placeholder={
+              mode === "signup" ? "At least 8 characters, letters + numbers" : "Your password"
+            }
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            minLength={mode === "signup" ? 8 : undefined}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-violet-600"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </label>
 
       {error ? (

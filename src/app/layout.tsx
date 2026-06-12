@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { BRAND_LOGO, BRAND_NAME } from "@/lib/brand";
+import { ThemeProvider } from "@/context/ThemeContext";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -31,6 +32,12 @@ export default function RootLayout({
             __html: `(function(){var h=location.hostname;var m=h==="youraiseller.com"||h==="www.youraiseller.com";document.documentElement.setAttribute("data-marketing-home",m?"1":"0");})();`,
           }}
         />
+        {/* Prevent flash of wrong theme (FOUT) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem("yai-theme-v2")==="dark")document.documentElement.classList.add("dark");}catch(e){}})();`,
+          }}
+        />
         <link
           rel="preload"
           href={BRAND_LOGO}
@@ -40,7 +47,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${outfit.variable} font-sans antialiased`}>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

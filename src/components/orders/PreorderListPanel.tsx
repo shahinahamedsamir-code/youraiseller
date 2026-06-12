@@ -36,6 +36,7 @@ import {
   X,
 } from "lucide-react";
 import clsx from "clsx";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
 function whatsAppHref(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -59,6 +60,8 @@ export function PreorderListPanel() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [notifyPreviewOpen, setNotifyPreviewOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
@@ -145,6 +148,10 @@ export function PreorderListPanel() {
     }
     return Array.from(map.values()).sort((a, b) => b.qty - a.qty);
   }, [allPreorders]);
+
+  useEffect(() => { setPage(1); }, [notifyTab, reasonFilter, business, productCode]);
+
+  const pagedFiltered = paginateSlice(filtered, page, rowsPerPage);
 
   const pendingNotifications = useMemo(
     () => filtered.filter((o) => !isPreorderNotified(o)),
@@ -387,7 +394,7 @@ export function PreorderListPanel() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((order) => {
+                pagedFiltered.map((order) => {
                   const reason = getPreorderReason(order);
                   const notified = isPreorderNotified(order);
                   return (
@@ -518,6 +525,14 @@ export function PreorderListPanel() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          totalRows={filtered.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+          variant="teal"
+        />
       </div>
 
       {editOrderId && (

@@ -186,30 +186,30 @@ export function ManualWebOrderForm() {
       />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:28px_28px]" />
 
-      <div className="relative mx-auto max-w-6xl px-1 pb-10 pt-2 sm:px-2">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="relative mx-auto max-w-6xl px-3 pb-10 pt-2 sm:px-4 lg:px-2">
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-3 sm:mb-8 sm:gap-4">
           <div>
-            <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-amber-300">
+            <p className="mb-1.5 inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-amber-300">
               <ShoppingBag className="h-3.5 w-3.5" />
               Web intake
             </p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
               Manual Web Order
             </h1>
           </div>
           <button
             type="button"
             onClick={() => router.push(WEB_LIST)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur hover:bg-white sm:px-4 sm:py-2.5"
           >
             View Web List
             <ArrowRight className="h-4 w-4" />
           </button>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <div className="space-y-5">
-            <section className="rounded-3xl border border-slate-200/80 bg-slate-900 p-5 text-white shadow-xl sm:p-6">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_340px]">
+          <div className="space-y-4 sm:space-y-5">
+            <section className="rounded-2xl border border-slate-200/80 bg-slate-900 p-4 text-white shadow-xl sm:rounded-3xl sm:p-6">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Step 1 — Customer
               </p>
@@ -284,7 +284,7 @@ export function ManualWebOrderForm() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-white/60 bg-white/70 p-5 shadow-lg backdrop-blur-md sm:p-6">
+            <section className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-lg backdrop-blur-md sm:rounded-3xl sm:p-6">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Step 2 — Products
               </p>
@@ -297,7 +297,7 @@ export function ManualWebOrderForm() {
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
                 />
               </div>
-              <div className="mt-4 grid max-h-[220px] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
+              <div className="mt-3 grid max-h-[200px] grid-cols-2 gap-2 overflow-y-auto sm:max-h-[220px] sm:grid-cols-3">
                 {filteredProducts.map((p) => (
                   <button
                     key={p.id}
@@ -384,11 +384,11 @@ export function ManualWebOrderForm() {
           </div>
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-3xl border-2 border-slate-900 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="rounded-2xl border-2 border-slate-900 bg-white p-4 shadow-2xl sm:rounded-3xl sm:p-6">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Order summary
               </p>
-              <p className="mt-4 text-4xl font-black tabular-nums text-slate-900">
+              <p className="mt-3 text-3xl font-black tabular-nums text-slate-900 sm:mt-4 sm:text-4xl">
                 ৳{total.toLocaleString("en-BD")}
               </p>
               <dl className="mt-4 space-y-2 text-sm text-slate-600">

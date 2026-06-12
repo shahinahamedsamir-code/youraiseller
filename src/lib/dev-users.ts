@@ -455,6 +455,10 @@ async function pushUsersToServer(users: DevUser[]): Promise<void> {
     credentials: "same-origin",
     body: JSON.stringify(users),
   });
+  if (res.status === 401 || res.status === 403) {
+    // Session expired or not authorised — skip silently, local data still saved.
+    return;
+  }
   if (!res.ok) {
     throw new Error("server_save_failed");
   }

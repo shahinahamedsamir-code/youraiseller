@@ -1,0 +1,119 @@
+import { createHmac, timingSafeEqual } from "crypto";
+import { NextResponse } from "next/server";
+
+type ShopifyWebhookQueueItem = {
+  id: string;
+  receivedAt: string;
+  topic: string;
+  shop: string;
+  payload: unknown;
+};
+
+function normalizeShop(input: string): string {
+  return input.trim().toLowerCase();
+}
+
+function queueKey(shop: string): string {
+  return `youraiseller-shopify-webhook-queue-${shop}`;
+}
+
+function getSignatureSecret(shop: string): string | null {
+  void shop;
+  const envSecret =
+    process.env.SHOPIFY_WEBHOOK_SECRET ||
+    process.env.NEXT_PUBLIC_SHOPIFY_WEBHOOK_SECRET ||
+    "";
+  if (envSecret.trim()) return envSecret.trim();
+  return null;
+}
+
+function signatureCheckEnabled(shop: string): boolean {
+  void shop;
+  const envFlag = process.env.SHOPIFY_WEBHOOK_SIGNATURE_CHECK;
+  if (envFlag === "0" || envFlag === "false") return false;
+  if (envFlag === "1" || envFlag === "true") return true;
+  return true;
+}
+
+function safeEqual(a: string, b: string): boolean {
+  const aa = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (aa.length !== bb.length) return false;
+  return timingSafeEqual(aa, bb);
+}
+
+export async function POST(
+  req: Request,
+  ctx: { params: Promise<{ shop: string }> }
+) {
+  try {
+    const { shop: rawShop } = await ctx.params;
+    const shop = normalizeShop(String(rawShop ?? ""));
+    if (!shop) {
+      return NextResponse.json({ ok: false, message: "Missing shop parameter." }, { status: 400 });
+    }
+
+    const rawBody = await req.text();
+    const topic = req.headers.get("x-shopify-topic")?.trim() || "unknown";
+    const hmacHeader = req.headers.get("x-shopify-hmac-sha256")?.trim() || "";
+
+    if (signatureCheckEnabled(shop)) {
+      const secret = getSignatureSecret(shop);
+      if (!secret) {
+        return NextResponse.json(
+          { ok: false, message: "Webhook secret not configured on server." },
+          { status: 500 }
+        );
+      }
+      const digest = createHmac("sha256", secret).update(rawBody, "utf8").digest("base64");
+      if (!hmacHeader || !safeEqual(digest, hmacHeader)) {
+        return NextResponse.json(
+          { ok: false, message: "Invalid Shopify webhook signature." },
+          { status: 401 }
+        );
+      }
+    }
+
+    let payload: unknown = {};
+    try {
+      payload = rawBody ? (JSON.parse(rawBody) as unknown) : {};
+    } catch {
+      payload = {};
+    }
+
+    const item: ShopifyWebhookQueueItem = {
+      id: `shp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      receivedAt: new Date().toISOString(),
+      topic,
+      shop,
+      payload,
+    };
+
+    return NextResponse.json({
+      ok: true,
+      message: "Shopify webhook received.",
+      received: item,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Shopify webhook failed.";
+    return NextResponse.json({ ok: false, message }, { status: 500 });
+  }
+}
+
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<{ shop: string }> }
+) {
+  const { shop: rawShop } = await ctx.params;
+  const shop = normalizeShop(String(rawShop ?? ""));
+  if (!shop) {
+    return NextResponse.json({ ok: false, message: "Missing shop parameter." }, { status: 400 });
+  }
+  return NextResponse.json({
+    ok: true,
+    message: "Shopify webhook endpoint is reachable.",
+    shop,
+    queueHint: queueKey(shop),
+  });
+}
+

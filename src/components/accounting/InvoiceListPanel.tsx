@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import { Eye, FileText, Printer, Search, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -20,6 +20,7 @@ import { openSmartInvoicePrint } from "@/lib/order-invoice";
 import { useAccountingData } from "./useAccountingData";
 import { SmartInvoiceModal } from "./SmartInvoiceModal";
 import { PayInvoiceDueModal } from "./PayInvoiceDueModal";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
 type StatusFilter = "all" | "paid" | "partial" | "due";
 
@@ -36,6 +37,8 @@ export function InvoiceListPanel() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [viewInvoice, setViewInvoice] = useState<AccountingInvoice | null>(null);
   const [payDueInvoice, setPayDueInvoice] = useState<AccountingInvoice | null>(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const refresh = useCallback(() => {
     if (viewInvoice) {
@@ -74,6 +77,9 @@ export function InvoiceListPanel() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [allInvoices, search, statusFilter]);
 
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
+
+  const pagedInvoices = paginateSlice(filtered, page, rowsPerPage);
   const totalCollected = filtered.reduce((s, inv) => s + invoiceNetCollected(inv), 0);
   const totalDue = filtered.reduce((s, inv) => s + invoiceDueBalance(inv), 0);
 
@@ -174,7 +180,7 @@ export function InvoiceListPanel() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inv, idx) => {
+              {pagedInvoices.map((inv, idx) => {
                 const due = invoiceDueBalance(inv);
                 const canPay = canPayInvoiceDue(inv.id);
                 const delivery = invoiceDeliveryChargeDeducted(inv);
@@ -306,6 +312,13 @@ export function InvoiceListPanel() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          totalRows={filtered.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+        />
       </div>
 
       <SmartInvoiceModal

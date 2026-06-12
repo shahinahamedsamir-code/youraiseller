@@ -15,7 +15,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="dashboard-canvas min-h-screen overflow-x-hidden">
+    <div className="dashboard-canvas min-h-screen overflow-x-hidden transition-colors duration-300">
       <Suspense fallback={null}>
         <Sidebar mobileOpen={sidebarOpen} />
       </Suspense>

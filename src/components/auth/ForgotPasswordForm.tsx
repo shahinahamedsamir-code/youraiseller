@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import clsx from "clsx";
 import { Loader2, Mail } from "lucide-react";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 const inputCls =
   "w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-500/15";
@@ -13,14 +13,15 @@ export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [resetUrl, setResetUrl] = useState("");
+  const [resetOtp, setResetOtp] = useState("");
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setMessage("");
-    setResetUrl("");
+    setResetOtp("");
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
@@ -30,13 +31,51 @@ export function ForgotPasswordForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       setMessage(data.message ?? "Check your email for reset instructions.");
-      if (!data.emailSent && data.resetUrl) setResetUrl(data.resetUrl);
+      setSubmittedEmail(email.trim());
+      if (!data.emailSent && data.resetOtp) setResetOtp(data.resetOtp);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
       setLoading(false);
     }
   };
+
+  if (message) {
+    return (
+      <div className="space-y-5">
+        <div className="space-y-2 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
+          <p>{message}</p>
+          <p className="text-xs text-emerald-800/90">
+            Enter the OTP below. New password fields will appear after the code is verified.
+          </p>
+          {resetOtp ? (
+            <>
+              <p className="text-xs text-emerald-800/90">
+                SMTP not set in .env.local — use this dev reset code:
+              </p>
+              <p className="text-lg font-extrabold tracking-[0.25em] text-violet-700">
+                {resetOtp}
+              </p>
+            </>
+          ) : null}
+        </div>
+
+        <ResetPasswordForm email={submittedEmail} hideEmailInput />
+
+        <button
+          type="button"
+          onClick={() => {
+            setMessage("");
+            setResetOtp("");
+            setError("");
+          }}
+          className="text-sm font-semibold text-violet-600 hover:text-violet-700 hover:underline"
+        >
+          Use a different email
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,31 +104,6 @@ export function ForgotPasswordForm() {
         </p>
       ) : null}
 
-      {message ? (
-        <div className="space-y-2 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
-          <p>{message}</p>
-          <Link
-            href={`/reset-password?email=${encodeURIComponent(email.trim())}&code=1`}
-            className="inline-flex text-xs font-bold text-violet-700 underline"
-          >
-            Enter the 6-digit code instead
-          </Link>
-          {resetUrl ? (
-            <>
-              <p className="text-xs text-emerald-800/90">
-                SMTP not set in .env.local — use this reset link for now:
-              </p>
-              <Link
-                href={resetUrl}
-                className="block break-all text-xs font-bold text-violet-700 underline"
-              >
-                {resetUrl}
-              </Link>
-            </>
-          ) : null}
-        </div>
-      ) : null}
-
       <button
         type="submit"
         disabled={loading}
@@ -105,7 +119,7 @@ export function ForgotPasswordForm() {
             Sending…
           </>
         ) : (
-          "Send reset link"
+          "Send reset code"
         )}
       </button>
     </form>

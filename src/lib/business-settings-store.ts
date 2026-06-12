@@ -1,4 +1,4 @@
-import { getSessionUser } from "./dev-users";
+import { getSessionUser, getSessionUserId, updateDevUser } from "./dev-users";
 import { sellerStorageKey } from "./seller-storage";
 import { pushSellerData } from "./seller-sync";
 
@@ -151,6 +151,14 @@ export function saveBusinessSettings(settings: BusinessSettings): BusinessSettin
   const normalized = normalize(settings);
   localStorage.setItem(key, JSON.stringify(normalized));
   pushSellerData("business", normalized);
+
+  // Keep account company in sync so header/profile reflect business name changes.
+  const userId = getSessionUserId();
+  const trimmedName = normalized.name.trim();
+  if (userId && trimmedName) {
+    updateDevUser(userId, { company: trimmedName });
+  }
+
   window.dispatchEvent(new Event(BUSINESS_SETTINGS_UPDATED));
   window.dispatchEvent(new Event("youraiseller-data-updated"));
   return normalized;

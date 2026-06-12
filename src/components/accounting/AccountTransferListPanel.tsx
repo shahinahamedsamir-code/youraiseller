@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import { ArrowRightLeft, Ban, Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -17,6 +17,7 @@ import {
 import { useAccountingData } from "./useAccountingData";
 import { AccountTransferModal } from "./AccountTransferModal";
 import { CancelTransferModal } from "./CancelTransferModal";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
 export function AccountTransferListPanel() {
   const { data, refresh } = useAccountingData();
@@ -25,6 +26,8 @@ export function AccountTransferListPanel() {
   const [cancelTarget, setCancelTarget] = useState<AccountingTransfer | null>(null);
   const [cancelError, setCancelError] = useState("");
   const [cancelSaving, setCancelSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const transfers = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -41,6 +44,9 @@ export function AccountTransferListPanel() {
     });
   }, [data, search]);
 
+  useEffect(() => { setPage(1); }, [search]);
+
+  const pagedTransfers = paginateSlice(transfers, page, rowsPerPage);
   const activeTransfers = transfers.filter(isActiveTransfer);
   const totalMoved = activeTransfers.reduce((s, t) => s + t.amount, 0);
   const cancelledCount = transfers.length - activeTransfers.length;
@@ -134,7 +140,7 @@ export function AccountTransferListPanel() {
               </tr>
             </thead>
             <tbody>
-              {transfers.map((t, idx) => {
+              {pagedTransfers.map((t, idx) => {
                 const status = transferStatus(t);
                 const cancelled = status === "cancelled";
 
@@ -225,6 +231,13 @@ export function AccountTransferListPanel() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          totalRows={transfers.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+        />
       </div>
 
       <AccountTransferModal

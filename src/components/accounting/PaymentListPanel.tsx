@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import clsx from "clsx";
 import { CheckCircle2, CreditCard, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -17,6 +17,7 @@ import {
 import { RecordOrderPaymentModal } from "./RecordOrderPaymentModal";
 import { BulkApprovePaymentModal } from "./BulkApprovePaymentModal";
 import { OrderProductsList } from "@/components/orders/OrderProductsList";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
 type Tab = "pending" | "recorded";
 
@@ -39,6 +40,8 @@ export function PaymentListPanel() {
   const [approveItem, setApproveItem] = useState<PaymentApprovalItem | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const refresh = useCallback(() => {
     setPending(
@@ -60,6 +63,7 @@ export function PaymentListPanel() {
   }, [refresh]);
 
   const rows = tab === "pending" ? pending : recorded;
+  const pagedRows = paginateSlice(rows, page, rowsPerPage);
 
   const allPendingSelected =
     pending.length > 0 && pending.every((item) => selected.has(paymentItemKey(item)));
@@ -125,6 +129,7 @@ export function PaymentListPanel() {
             type="button"
             onClick={() => {
               setTab("pending");
+              setPage(1);
               clearSelection();
             }}
             className={clsx(
@@ -145,6 +150,7 @@ export function PaymentListPanel() {
             type="button"
             onClick={() => {
               setTab("recorded");
+              setPage(1);
               clearSelection();
             }}
             className={clsx(
@@ -226,7 +232,7 @@ export function PaymentListPanel() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((item, idx) => {
+              {pagedRows.map((item, idx) => {
                 const o = item.order;
                 const key = paymentItemKey(item);
                 const isChecked = selected.has(key);
@@ -355,6 +361,14 @@ export function PaymentListPanel() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          totalRows={rows.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          selectedCount={tab === "pending" ? selected.size : 0}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+        />
       </div>
 
       <RecordOrderPaymentModal

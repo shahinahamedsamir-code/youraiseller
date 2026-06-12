@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       ok: true,
       message: result.message,
       emailSent: result.emailSent ?? false,
-      resetUrl: result.emailSent ? undefined : result.resetUrl,
+      resetOtp: result.emailSent ? undefined : result.resetOtp,
     });
   } catch (e) {
     console.error("[auth/forgot-password]", e);

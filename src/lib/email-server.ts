@@ -33,22 +33,17 @@ function createTransport() {
   });
 }
 
-function appOriginFromResetUrl(resetUrl: string): string {
-  try {
-    return new URL(resetUrl).origin;
-  } catch {
-    return (
-      process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ||
-      process.env.APP_URL?.trim().replace(/\/$/, "") ||
-      "https://app.youraiseller.com"
-    );
-  }
+function appOrigin(origin: string): string {
+  return (
+    origin.trim().replace(/\/$/, "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ||
+    process.env.APP_URL?.trim().replace(/\/$/, "") ||
+    "https://app.youraiseller.com"
+  );
 }
 
-function buildPasswordResetHtml(brand: string, resetUrl: string, resetOtp: string): string {
-  const safeUrl = resetUrl.replace(/"/g, "&quot;");
-  const origin = appOriginFromResetUrl(resetUrl);
-  const logoUrl = `${origin}/brand/logo.png`;
+function buildPasswordResetHtml(brand: string, origin: string, resetOtp: string): string {
+  const logoUrl = `${appOrigin(origin)}/brand/logo.png`;
   const year = new Date().getFullYear();
 
   return `
@@ -133,8 +128,8 @@ function buildPasswordResetHtml(brand: string, resetUrl: string, resetOtp: strin
 
                     <p style="margin:26px 0 0;font-size:15px;line-height:1.7;color:#3f3a4c;">
                       We received a request to reset the password for your account.
-                      Tap the button below to choose a new password, or enter the 6-digit
-                      code on the reset page.
+                      Use the 6-digit code below on the password reset page. After
+                      verification, you will be able to choose a new password.
                     </p>
 
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:22px;">
@@ -142,7 +137,7 @@ function buildPasswordResetHtml(brand: string, resetUrl: string, resetOtp: strin
                         <td bgcolor="#fff7ed" style="background-color:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:14px;padding:14px 16px;">
                           <p style="margin:0;font-size:13px;line-height:1.55;color:#9a3412;">
                             <strong style="color:#c2410c;">&#9201; Expires in ${PASSWORD_RESET_TTL_MINUTES} minutes</strong><br />
-                            For your security, this button/code works only once.
+                            For your security, this code works only once.
                           </p>
                         </td>
                       </tr>
@@ -158,18 +153,8 @@ function buildPasswordResetHtml(brand: string, resetUrl: string, resetOtp: strin
                             ${resetOtp}
                           </p>
                           <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b6578;">
-                            Use this code if the button opens on another device.
+                            Enter this code first, then set your new password.
                           </p>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:30px auto 0;">
-                      <tr>
-                        <td align="center" bgcolor="#6d28d9" style="background-color:#6d28d9;border-radius:16px;">
-                          <a href="${safeUrl}" style="display:inline-block;padding:16px 34px;font-size:15px;line-height:1;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.01em;">
-                            Reset password &rarr;
-                          </a>
                         </td>
                       </tr>
                     </table>
@@ -213,7 +198,7 @@ function buildPasswordResetHtml(brand: string, resetUrl: string, resetOtp: strin
 
 export async function sendPasswordResetEmail(
   to: string,
-  resetUrl: string,
+  origin: string,
   resetOtp: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isEmailConfigured()) {
@@ -234,12 +219,12 @@ export async function sendPasswordResetEmail(
         `You requested a password reset for your seller account.`,
         `Reset code: ${resetOtp}`,
         ``,
-        `Open this email in your mail app and tap the "Reset password" button, or enter the code on the reset page within ${PASSWORD_RESET_TTL_MINUTES} minutes.`,
+        `Enter this code on the password reset page within ${PASSWORD_RESET_TTL_MINUTES} minutes. After verification, choose your new password.`,
         ``,
-        `The button/code expires in ${PASSWORD_RESET_TTL_MINUTES} minutes and works only once.`,
+        `The code expires in ${PASSWORD_RESET_TTL_MINUTES} minutes and works only once.`,
         `If you did not request this, ignore this email.`,
       ].join("\n"),
-      html: buildPasswordResetHtml(brand, resetUrl, resetOtp),
+      html: buildPasswordResetHtml(brand, origin, resetOtp),
     });
     return { ok: true };
   } catch (e) {

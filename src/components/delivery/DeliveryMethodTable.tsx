@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 import {
   loadDeliveryMethods,
   updateDeliveryMethod,
@@ -20,6 +21,8 @@ export function DeliveryMethodTable() {
     "all"
   );
   const [typeFilter, setTypeFilter] = useState<"all" | DeliveryMethodType>("all");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const refresh = () => setMethods(loadDeliveryMethods());
 
@@ -37,6 +40,8 @@ export function DeliveryMethodTable() {
       return true;
     });
   }, [methods, search, statusFilter, typeFilter]);
+
+  const pagedMethods = paginateSlice(filtered, page, rowsPerPage);
 
   const toggleActive = (m: DeliveryMethod) => {
     updateDeliveryMethod(m.id, { active: !m.active });
@@ -104,7 +109,7 @@ export function DeliveryMethodTable() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((m) => (
+            {pagedMethods.map((m) => (
               <tr
                 key={m.id}
                 className="border-b border-slate-50 hover:bg-indigo-50/30"
@@ -178,6 +183,13 @@ export function DeliveryMethodTable() {
           </tbody>
         </table>
       </div>
+      <TablePagination
+        totalRows={filtered.length}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        onPageChange={setPage}
+        onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+      />
 
       {filtered.length === 0 && (
         <p className="p-10 text-center text-sm text-slate-500">

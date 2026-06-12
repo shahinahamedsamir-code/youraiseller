@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Trash2, ArrowDownLeft } from "lucide-react";
 import {
   INCOME_SOURCE_LABELS,
@@ -13,6 +13,7 @@ import {
 } from "@/lib/accounting-store";
 import { useAccountingData } from "./useAccountingData";
 import { inputCls, labelCls, selectCls } from "./accounting-ui";
+import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
 const SOURCES = Object.keys(INCOME_SOURCE_LABELS) as IncomeSource[];
 
@@ -20,6 +21,8 @@ export function IncomeListPanel() {
   const { data, refresh } = useAccountingData();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   const incomeAccounts = useMemo(
     () => (data.chartAccounts ?? []).filter((c) => c.group === "income" && c.active),
@@ -51,6 +54,9 @@ export function IncomeListPanel() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [data.income, search]);
 
+  useEffect(() => { setPage(1); }, [search]);
+
+  const pagedIncome = paginateSlice(filtered, page, rowsPerPage);
   const total = filtered.reduce((s, i) => s + i.amount, 0);
 
   const resolvedTitle =
@@ -196,7 +202,7 @@ export function IncomeListPanel() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((i) => (
+              {pagedIncome.map((i) => (
                 <tr key={i.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                   <td className="px-4 py-3 text-slate-600">{i.date}</td>
                   <td className="px-4 py-3">
@@ -236,6 +242,13 @@ export function IncomeListPanel() {
             </tbody>
           </table>
         </div>
+        <TablePagination
+          totalRows={filtered.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => { setRowsPerPage(n); setPage(1); }}
+        />
       </div>
     </div>
   );

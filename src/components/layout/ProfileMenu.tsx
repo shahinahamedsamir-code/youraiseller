@@ -41,13 +41,16 @@ export function ProfileMenu() {
 
   const [enabledCount, setEnabledCount] = useState(0);
   const [logoUrl, setLogoUrl] = useState("");
+  const [businessName, setBusinessName] = useState("");
 
   useEffect(() => {
     const sync = () => {
       const u = getSessionUser();
+      const biz = loadBusinessSettings();
       setUser(u ?? null);
       setEnabledCount(u ? countEffectiveFeatures(u.features) : 0);
-      setLogoUrl(loadBusinessSettings().logoUrl || "");
+      setLogoUrl(biz.logoUrl || "");
+      setBusinessName(biz.name?.trim() || u?.company || "");
     };
     sync();
     window.addEventListener(GLOBAL_FEATURES_UPDATED, sync);
@@ -58,7 +61,7 @@ export function ProfileMenu() {
       window.removeEventListener("youraiseller-users-updated", sync);
       window.removeEventListener(BUSINESS_SETTINGS_UPDATED, sync);
     };
-  }, [open]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -90,11 +93,24 @@ export function ProfileMenu() {
       >
         {user && (
           <span className="hidden max-w-[120px] truncate text-sm font-semibold text-slate-700 md:inline">
-            {user.company}
+            {businessName}
           </span>
         )}
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-teal-500 text-white shadow-md">
-          <User className="h-4 w-4" />
+        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-teal-500 text-white shadow-md ring-1 ring-white/70">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={businessName ? `${businessName} logo` : "Profile logo"}
+              className="h-full w-full object-cover"
+            />
+          ) : user?.name ? (
+            <span className="text-sm font-extrabold uppercase">
+              {user.name.charAt(0)}
+            </span>
+          ) : (
+            <User className="h-4 w-4" />
+          )}
         </div>
         <ChevronDown
           className={clsx(
@@ -119,7 +135,7 @@ export function ProfileMenu() {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{user?.name ?? "Guest User"}</p>
                 <p className="truncate text-xs text-white/80">
-                  {user?.company ?? "Not logged in"}
+                  {businessName || "Not logged in"}
                 </p>
               </div>
             </div>
@@ -128,7 +144,7 @@ export function ProfileMenu() {
           {user ? (
             <div className="space-y-1 p-3">
               <ProfileRow icon={User} label="Name" value={user.name} />
-              <ProfileRow icon={Building2} label="Company" value={user.company} />
+              <ProfileRow icon={Building2} label="Company" value={businessName} />
               <ProfileRow icon={Mail} label="Email" value={user.email} />
               <ProfileRow
                 icon={Shield}

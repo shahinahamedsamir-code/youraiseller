@@ -113,7 +113,7 @@ export async function createPasswordResetRequest(
   email: string,
   origin: string
 ): Promise<
-  | { ok: true; resetUrl?: string; message: string; emailSent?: boolean }
+  | { ok: true; resetOtp?: string; message: string; emailSent?: boolean }
   | { ok: false; error: string }
 > {
   const normalized = normalizeEmail(email);
@@ -125,7 +125,7 @@ export async function createPasswordResetRequest(
   const user = users.find((u) => normalizeEmail(String(u.email ?? "")) === normalized);
 
   const genericMessage =
-    "If this email has a password account, check your inbox for a reset link and 6-digit code.";
+    "If this email has a password account, check your inbox for a 6-digit reset code.";
 
   if (!user || !canResetPassword(user)) {
     return { ok: true, message: genericMessage };
@@ -152,15 +152,12 @@ export async function createPasswordResetRequest(
   });
   await writeTokens(tokens);
 
-  const base = origin.replace(/\/$/, "");
-  const resetUrl = `${base}/reset-password?token=${token}`;
-
   if (isEmailConfigured()) {
-    const sent = await sendPasswordResetEmail(normalized, resetUrl, otp);
+    const sent = await sendPasswordResetEmail(normalized, origin, otp);
     if (sent.ok) {
       return {
         ok: true,
-        message: `Reset email sent to ${normalized}. Check your inbox and spam folder.`,
+        message: `Reset code sent to ${normalized}. Check your inbox and spam folder.`,
         emailSent: true,
       };
     }
@@ -173,8 +170,8 @@ export async function createPasswordResetRequest(
   return {
     ok: true,
     message:
-      "SMTP email is not configured. Use the reset link below (dev mode). Add SMTP_* to .env.local to send by email.",
-    resetUrl,
+      "SMTP email is not configured. Use this reset code below (dev mode). Add SMTP_* to .env.local to send by email.",
+    resetOtp: otp,
     emailSent: false,
   };
 }

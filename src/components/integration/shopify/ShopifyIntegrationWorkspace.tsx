@@ -17,6 +17,7 @@ import {
   Webhook,
 } from "lucide-react";
 import clsx from "clsx";
+import { syncProductsFromShopify } from "@/lib/shopify-product-sync";
 
 type ShopifyTab = "setup" | "webhooks" | "product-sync" | "order-sync" | "stock-sync";
 type AuthMethod = "access_token" | "client_credentials";
@@ -75,6 +76,8 @@ export function ShopifyIntegrationWorkspace() {
   const [testing, setTesting] = useState(false);
   const [verifyingWebhook, setVerifyingWebhook] = useState(false);
   const [startingOAuth, setStartingOAuth] = useState(false);
+  const [syncingProducts, setSyncingProducts] = useState(false);
+  const [productSyncSummary, setProductSyncSummary] = useState<string>("");
   const [state, setState] = useState<ShopifyState>(defaultState);
   const [toast, setToast] = useState<string>("");
 
@@ -222,6 +225,38 @@ export function ShopifyIntegrationWorkspace() {
     }
   };
 
+  const syncProducts = async () => {
+    if (!isShopifyMyshopifyDomain(state.shopDomain)) {
+      setToast("Valid shop domain দিন: your-store.myshopify.com");
+      return;
+    }
+    if (!state.accessToken.trim()) {
+      setToast("Access token missing. আগে app connect complete করুন।");
+      return;
+    }
+    setSyncingProducts(true);
+    setProductSyncSummary("");
+    try {
+      const result = await syncProductsFromShopify({
+        shopDomain: state.shopDomain,
+        accessToken: state.accessToken,
+        limit: 300,
+      });
+      const summary = `Sync done — Created ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
+      setProductSyncSummary(summary);
+      setToast(summary);
+      if (result.errors.length > 0) {
+        setProductSyncSummary(`${summary} | ${result.errors[0]}`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Product sync failed.";
+      setToast(message);
+      setProductSyncSummary(message);
+    } finally {
+      setSyncingProducts(false);
+    }
+  };
+
   const copy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(key);
@@ -310,7 +345,13 @@ export function ShopifyIntegrationWorkspace() {
               verifyWebhookEndpoint={verifyWebhookEndpoint}
             />
           )}
-          {activeTab === "product-sync" && <ProductSyncTab />}
+          {activeTab === "product-sync" && (
+            <ProductSyncTab
+              syncingProducts={syncingProducts}
+              onSyncProducts={syncProducts}
+              summary={productSyncSummary}
+            />
+          )}
           {activeTab === "order-sync" && <OrderSyncTab />}
           {activeTab === "stock-sync" && <StockSyncTab state={state} setState={setState} />}
         </div>
@@ -573,7 +614,15 @@ function WebhooksTab({
   );
 }
 
-function ProductSyncTab() {
+function ProductSyncTab({
+  syncingProducts,
+  onSyncProducts,
+  summary,
+}: {
+  syncingProducts: boolean;
+  onSyncProducts: () => Promise<void>;
+  summary: string;
+}) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -597,11 +646,19 @@ function ProductSyncTab() {
         <div className="mt-5 flex justify-end">
           <button
             type="button"
-            className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700"
+            onClick={onSyncProducts}
+            disabled={syncingProducts}
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
           >
-            Sync Products Now
+            {syncingProducts ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+            {syncingProducts ? "Syncing..." : "Sync Products Now"}
           </button>
         </div>
+        {summary && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700">
+            {summary}
+          </div>
+        )}
       </section>
     </div>
   );

@@ -2,6 +2,8 @@ import {
   upsertWooCommerceOrder,
   loadOrders,
   repairWebOrdersInQueue,
+  runWithBulkOrderSync,
+  runWithBulkOrderSyncAsync,
 } from "./orders-store";
 import type { Order, OrderLine, PaymentMethod, WebDisplayStatus } from "./orders-store";
 import { loadWooCommerceSettings, appendWooLog } from "./woocommerce-integration-store";
@@ -440,41 +442,43 @@ export async function syncNewOrdersFromWooCommerce(_options?: {
   let page = 1;
   let totalPages = 1;
 
-  while (page <= totalPages && page <= maxPages) {
-    const { rows, totalPages: tp } = await fetchWooOrdersPage(creds, page, {
-      allStatuses: true,
-      perPage: initialImport ? 50 : INCREMENTAL_PER_PAGE,
-      after: initialImport ? initialImportAfterIso(importHours) : undefined,
-      modified_after: initialImport ? undefined : incrementalModifiedAfter(),
-    });
-    totalPages = tp;
+  await runWithBulkOrderSyncAsync(async () => {
+    while (page <= totalPages && page <= maxPages) {
+      const { rows, totalPages: tp } = await fetchWooOrdersPage(creds, page, {
+        allStatuses: true,
+        perPage: initialImport ? 50 : INCREMENTAL_PER_PAGE,
+        after: initialImport ? initialImportAfterIso(importHours) : undefined,
+        modified_after: initialImport ? undefined : incrementalModifiedAfter(),
+      });
+      totalPages = tp;
 
-    for (const row of rows) {
-      if (!row.line_items?.length) {
-        result.skipped++;
-        if (result.errors.length < 8) {
-          result.errors.push(`Order #${row.number}: no line items`);
+      for (const row of rows) {
+        if (!row.line_items?.length) {
+          result.skipped++;
+          if (result.errors.length < 8) {
+            result.errors.push(`Order #${row.number}: no line items`);
+          }
+          continue;
         }
-        continue;
-      }
-      try {
-        const enriched = await enrichWooOrderRow(creds, row);
-        const { created } = upsertWooCommerceOrder(mapWooOrder(enriched));
-        if (created) result.imported++;
-        else result.updated++;
-      } catch (e) {
-        result.failed++;
-        if (result.errors.length < 8) {
-          result.errors.push(
-            e instanceof Error
-              ? `#${row.number}: ${e.message}`
-              : `Order #${row.number} failed`
-          );
+        try {
+          const enriched = await enrichWooOrderRow(creds, row);
+          const { created } = upsertWooCommerceOrder(mapWooOrder(enriched));
+          if (created) result.imported++;
+          else result.updated++;
+        } catch (e) {
+          result.failed++;
+          if (result.errors.length < 8) {
+            result.errors.push(
+              e instanceof Error
+                ? `#${row.number}: ${e.message}`
+                : `Order #${row.number} failed`
+            );
+          }
         }
       }
+      page++;
     }
-    page++;
-  }
+  });
 
   const repaired = repairWebOrdersInQueue();
 

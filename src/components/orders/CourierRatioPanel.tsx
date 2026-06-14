@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { CourierCheckResult, CourierStat } from "@/lib/hoorin-courier";
 import { normalizePhoneForApi } from "@/lib/hoorin-courier";
+import { fetchCourierCheck } from "@/lib/courier-check-client";
 import type { Order } from "@/lib/orders-store";
 import { CustomerOrderHistoryModal } from "@/components/orders/CustomerOrderHistoryModal";
 
@@ -621,20 +622,13 @@ export function CourierRatioPanel({ phone, localOrders, onFillInfo, embedded }: 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/courier-check?phone=${encodeURIComponent(targetPhone)}`,
-        { cache: "no-store" }
-      );
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json?.error ?? "Could not load courier stats");
+      const result = await fetchCourierCheck(targetPhone);
+      if (!result) {
+        setError("Could not load courier stats");
         setData(null);
         return;
       }
-      setData({
-        overall: json.overall,
-        couriers: json.couriers ?? [],
-      });
+      setData(result);
     } catch {
       setError("Network error — could not check courier ratio");
       setData(null);

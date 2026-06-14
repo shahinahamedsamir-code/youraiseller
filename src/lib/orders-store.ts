@@ -700,9 +700,39 @@ function saveRaw(data: OrdersData) {
   const key = storageKey();
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(data));
+  invalidateOrdersByPhoneCache();
   syncCustomersFromOrderList(data.orders);
   pushSellerData("orders", data);
-  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  if (bulkOrderSyncDepth === 0) {
+    window.dispatchEvent(new Event("youraiseller-data-updated"));
+  }
+}
+
+let bulkOrderSyncDepth = 0;
+
+/** Batch many web-store upserts into one UI refresh. */
+export function runWithBulkOrderSync<T>(fn: () => T): T {
+  bulkOrderSyncDepth += 1;
+  try {
+    return fn();
+  } finally {
+    bulkOrderSyncDepth = Math.max(0, bulkOrderSyncDepth - 1);
+    if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
+      window.dispatchEvent(new Event("youraiseller-data-updated"));
+    }
+  }
+}
+
+export async function runWithBulkOrderSyncAsync<T>(fn: () => Promise<T>): Promise<T> {
+  bulkOrderSyncDepth += 1;
+  try {
+    return await fn();
+  } finally {
+    bulkOrderSyncDepth = Math.max(0, bulkOrderSyncDepth - 1);
+    if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
+      window.dispatchEvent(new Event("youraiseller-data-updated"));
+    }
+  }
 }
 
 export function loadOrders(filter?: {
@@ -762,9 +792,31 @@ export function getOrder(id: string): Order | undefined {
   return loadRaw().orders.find((o) => o.id === id);
 }
 
+let ordersByPhoneCache: Map<string, Order[]> | null = null;
+
+function invalidateOrdersByPhoneCache() {
+  ordersByPhoneCache = null;
+}
+
+function buildOrdersByPhoneCache(orders: Order[]): Map<string, Order[]> {
+  const map = new Map<string, Order[]>();
+  for (const order of orders) {
+    const key = order.phone.replace(/\D/g, "").slice(-11);
+    if (key.length !== 11) continue;
+    const bucket = map.get(key);
+    if (bucket) bucket.push(order);
+    else map.set(key, [order]);
+  }
+  return map;
+}
+
 export function findOrdersByPhone(phone: string): Order[] {
   const n = phone.replace(/\D/g, "").slice(-11);
-  return loadOrders().filter((o) => o.phone.replace(/\D/g, "").slice(-11) === n);
+  if (n.length !== 11) return [];
+  if (!ordersByPhoneCache) {
+    ordersByPhoneCache = buildOrdersByPhoneCache(loadRaw().orders);
+  }
+  return ordersByPhoneCache.get(n) ?? [];
 }
 
 function nextOrderId(): string {

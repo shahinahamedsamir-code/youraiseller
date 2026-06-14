@@ -175,9 +175,16 @@ export function WebOrderTable() {
   }, [refresh]);
 
   useEffect(() => {
-    const onData = () => refresh();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onData = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => refresh(), 250);
+    };
     window.addEventListener("youraiseller-data-updated", onData);
-    return () => window.removeEventListener("youraiseller-data-updated", onData);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener("youraiseller-data-updated", onData);
+    };
   }, [refresh]);
 
   useEffect(() => {
@@ -194,7 +201,11 @@ export function WebOrderTable() {
     const onAutoCall = () => refreshCallLogs();
     window.addEventListener("youraiseller-autocall-updated", onAutoCall);
 
-    const onData = () => syncCallLogs();
+    let dataTimer: ReturnType<typeof setTimeout> | undefined;
+    const onData = () => {
+      if (dataTimer) window.clearTimeout(dataTimer);
+      dataTimer = window.setTimeout(() => void syncCallLogs(), 1500);
+    };
     window.addEventListener("youraiseller-data-updated", onData);
 
     let interval = window.setInterval(syncCallLogs, 5000);
@@ -209,6 +220,7 @@ export function WebOrderTable() {
     return () => {
       window.removeEventListener("youraiseller-autocall-updated", onAutoCall);
       window.removeEventListener("youraiseller-data-updated", onData);
+      if (dataTimer) window.clearTimeout(dataTimer);
       window.clearInterval(interval);
       window.clearInterval(retuneInterval);
     };

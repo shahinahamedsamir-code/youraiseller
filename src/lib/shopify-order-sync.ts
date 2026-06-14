@@ -1,4 +1,4 @@
-import { upsertWooCommerceOrder, type OrderLine } from "./orders-store";
+import { upsertWooCommerceOrder, runWithBulkOrderSync, type OrderLine } from "./orders-store";
 
 type ShopifySyncMeta = {
   firstSyncCompleted: boolean;
@@ -238,49 +238,50 @@ function importShopifyRows(orders: ShopifyOrderRow[], checkoutMessage?: string):
     errors: checkoutMessage ? [checkoutMessage] : [],
   };
 
-  for (const order of orders) {
-    try {
-      const customerName = `${order.customer?.first_name ?? ""} ${order.customer?.last_name ?? ""}`.trim() || "Shopify Customer";
-      const { address, district, phone } = buildAddress(order);
-      const shippingCharge = parseAmount(order.total_shipping_price_set?.shop_money?.amount);
-      const discount = parseAmount(order.total_discounts);
-      const mapped = upsertWooCommerceOrder({
-        customerName,
-        phone,
-        email: order.customer?.email?.trim() || undefined,
-        address,
-        district,
-        paymentMethod: mapPaymentMethod(order.financial_status || ""),
-        courier: "Manual Delivery",
-        items: mapShopifyLines(order),
-        shippingCharge,
-        discount,
-        note: order.note?.trim() || undefined,
-        source: "web",
-        status: mapStatus(order),
-        wooOrderId: isIncompleteShopifyOrder(order) ? -Math.abs(order.id) : order.id,
-        wooNumber: order.name || String(order.order_number),
-        createdAt: order.created_at ? new Date(order.created_at).toLocaleString("en-GB") : undefined,
-        webStatus: isIncompleteShopifyOrder(order) ? "incomplete" : "processing",
-        tags: isIncompleteShopifyOrder(order)
-          ? ["Shopify", "Incomplete order"]
-          : ["Shopify"],
-      });
-      if (mapped.created) result.created++;
-      else result.updated++;
-    } catch (error) {
-      result.failed++;
-      if (result.errors.length < 12) {
-        result.errors.push(
-          `#${order.name || order.order_number}: ${
-            error instanceof Error ? error.message : "Order sync error"
-          }`
-        );
+  return runWithBulkOrderSync(() => {
+    for (const order of orders) {
+      try {
+        const customerName = `${order.customer?.first_name ?? ""} ${order.customer?.last_name ?? ""}`.trim() || "Shopify Customer";
+        const { address, district, phone } = buildAddress(order);
+        const shippingCharge = parseAmount(order.total_shipping_price_set?.shop_money?.amount);
+        const discount = parseAmount(order.total_discounts);
+        const mapped = upsertWooCommerceOrder({
+          customerName,
+          phone,
+          email: order.customer?.email?.trim() || undefined,
+          address,
+          district,
+          paymentMethod: mapPaymentMethod(order.financial_status || ""),
+          courier: "Manual Delivery",
+          items: mapShopifyLines(order),
+          shippingCharge,
+          discount,
+          note: order.note?.trim() || undefined,
+          source: "web",
+          status: mapStatus(order),
+          wooOrderId: isIncompleteShopifyOrder(order) ? -Math.abs(order.id) : order.id,
+          wooNumber: order.name || String(order.order_number),
+          createdAt: order.created_at ? new Date(order.created_at).toLocaleString("en-GB") : undefined,
+          webStatus: isIncompleteShopifyOrder(order) ? "incomplete" : "processing",
+          tags: isIncompleteShopifyOrder(order)
+            ? ["Shopify", "Incomplete order"]
+            : ["Shopify"],
+        });
+        if (mapped.created) result.created++;
+        else result.updated++;
+      } catch (error) {
+        result.failed++;
+        if (result.errors.length < 12) {
+          result.errors.push(
+            `#${order.name || order.order_number}: ${
+              error instanceof Error ? error.message : "Order sync error"
+            }`
+          );
+        }
       }
     }
-  }
-
-  return result;
+    return result;
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

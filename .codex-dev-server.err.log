@@ -1927,3 +1927,69 @@ Import trace for requested module:
 ./src/app/features/[slug]/page.tsx
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/lib/woocommerce-order-sync.ts
+Error: 
+  [31mx[0m await isn't allowed in non-async function
+     ,-[[36;1;4mI:\youraiseller\src\lib\woocommerce-order-sync.ts[0m:443:1]
+ [2m443[0m | 
+ [2m444[0m |   runWithBulkOrderSync(() => {
+ [2m445[0m |     while (page <= totalPages && page <= maxPages) {
+ [2m446[0m |       const { rows, totalPages: tp } = await fetchWooOrdersPage(creds, page, {
+     : [31;1m                                             ^^^^^^^^^^^^^^^^^^[0m
+ [2m447[0m |         allStatuses: true,
+ [2m448[0m |         perPage: initialImport ? 50 : INCREMENTAL_PER_PAGE,
+ [2m449[0m |         after: initialImport ? initialImportAfterIso(importHours) : undefined,
+     `----
+
+  [31mx[0m await isn't allowed in non-async function
+     ,-[[36;1;4mI:\youraiseller\src\lib\woocommerce-order-sync.ts[0m:460:1]
+ [2m460[0m |           continue;
+ [2m461[0m |         }
+ [2m462[0m |         try {
+ [2m463[0m |           const enriched = await enrichWooOrderRow(creds, row);
+     : [31;1m                                 ^^^^^^^^^^^^^^^^^[0m
+ [2m464[0m |           const { created } = upsertWooCommerceOrder(mapWooOrder(enriched));
+ [2m465[0m |           if (created) result.imported++;
+ [2m466[0m |           else result.updated++;
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/woocommerce-order-sync.ts
+./src/components/web-orders/WooAutoSyncRunner.tsx
+./src/components/layout/DashboardShell.tsx
+ ⨯ ./src/lib/woocommerce-order-sync.ts
+Error: 
+  [31mx[0m await isn't allowed in non-async function
+     ,-[[36;1;4mI:\youraiseller\src\lib\woocommerce-order-sync.ts[0m:443:1]
+ [2m443[0m | 
+ [2m444[0m |   runWithBulkOrderSync(() => {
+ [2m445[0m |     while (page <= totalPages && page <= maxPages) {
+ [2m446[0m |       const { rows, totalPages: tp } = await fetchWooOrdersPage(creds, page, {
+     : [31;1m                                             ^^^^^^^^^^^^^^^^^^[0m
+ [2m447[0m |         allStatuses: true,
+ [2m448[0m |         perPage: initialImport ? 50 : INCREMENTAL_PER_PAGE,
+ [2m449[0m |         after: initialImport ? initialImportAfterIso(importHours) : undefined,
+     `----
+
+  [31mx[0m await isn't allowed in non-async function
+     ,-[[36;1;4mI:\youraiseller\src\lib\woocommerce-order-sync.ts[0m:460:1]
+ [2m460[0m |           continue;
+ [2m461[0m |         }
+ [2m462[0m |         try {
+ [2m463[0m |           const enriched = await enrichWooOrderRow(creds, row);
+     : [31;1m                                 ^^^^^^^^^^^^^^^^^[0m
+ [2m464[0m |           const { created } = upsertWooCommerceOrder(mapWooOrder(enriched));
+ [2m465[0m |           if (created) result.imported++;
+ [2m466[0m |           else result.updated++;
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/woocommerce-order-sync.ts
+./src/components/web-orders/WooAutoSyncRunner.tsx
+./src/components/layout/DashboardShell.tsx

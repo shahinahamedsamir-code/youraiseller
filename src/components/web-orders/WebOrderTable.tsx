@@ -175,7 +175,7 @@ export function WebOrderTable() {
   }, [refresh]);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let timer: number | undefined;
     const onData = () => {
       if (timer) window.clearTimeout(timer);
       timer = window.setTimeout(() => refresh(), 250);
@@ -201,7 +201,7 @@ export function WebOrderTable() {
     const onAutoCall = () => refreshCallLogs();
     window.addEventListener("youraiseller-autocall-updated", onAutoCall);
 
-    let dataTimer: ReturnType<typeof setTimeout> | undefined;
+    let dataTimer: number | undefined;
     const onData = () => {
       if (dataTimer) window.clearTimeout(dataTimer);
       dataTimer = window.setTimeout(() => void syncCallLogs(), 1500);

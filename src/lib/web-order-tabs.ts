@@ -56,13 +56,14 @@ export function matchesWebOrderTab(o: Order, tab: WebOrderTabKey): boolean {
     case "processing":
       return (
         PROCESSING_STATUSES.includes(ws) &&
+        ws !== "incomplete" &&
         !isWebOrderIncomplete(o) &&
         ws !== "on_hold" &&
         ws !== "good_no_response" &&
         ws !== "no_response"
       );
     case "incomplete":
-      return isWebOrderIncomplete(o) && ws !== "cancelled" && ws !== "complete";
+      return (ws === "incomplete" || isWebOrderIncomplete(o)) && ws !== "cancelled" && ws !== "complete";
     case "good_no_response":
       return ws === "good_no_response";
     case "no_response":

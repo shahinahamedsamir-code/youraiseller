@@ -1,0 +1,1929 @@
+ ⨯ ./src/components/layout/TopBar.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\layout\TopBar.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/layout/TopBar.tsx
+./src/components/layout/DashboardShell.tsx
+ ⨯ ./src/components/layout/TopBar.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\layout\TopBar.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/layout/TopBar.tsx
+./src/components/layout/DashboardShell.tsx
+ ⨯ ./src/components/layout/TopBar.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\layout\TopBar.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/layout/TopBar.tsx
+./src/components/layout/DashboardShell.tsx
+ ⨯ ./src/components/layout/TopBar.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\layout\TopBar.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/layout/TopBar.tsx
+./src/components/layout/DashboardShell.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx
+
+Caused by:
+    stream did not contain valid UTF-8
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4mI:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx[0m:746:1]
+ [2m746[0m |   const requiredScopesCsv = 'read_products,read_inventory,read_orders,read_locations';
+ [2m747[0m | 
+ [2m748[0m |   return (
+ [2m749[0m |     <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
+     : [31;1m     ^^^[0m
+ [2m750[0m |       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+ [2m751[0m |         <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+ [2m752[0m |           <div className="flex flex-wrap items-center justify-between gap-3">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4mI:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx[0m:746:1]
+ [2m746[0m |   const requiredScopesCsv = 'read_products,read_inventory,read_orders,read_locations';
+ [2m747[0m | 
+ [2m748[0m |   return (
+ [2m749[0m |     <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
+     : [31;1m     ^^^[0m
+ [2m750[0m |       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+ [2m751[0m |         <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+ [2m752[0m |           <div className="flex flex-wrap items-center justify-between gap-3">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4mI:\youraiseller\src\components\integration\shopify\ShopifyIntegrationWorkspace.tsx[0m:746:1]
+ [2m746[0m |   const requiredScopesCsv = 'read_products,read_inventory,read_orders,read_locations';
+ [2m747[0m | 
+ [2m748[0m |   return (
+ [2m749[0m |     <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
+     : [31;1m     ^^^[0m
+ [2m750[0m |       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+ [2m751[0m |         <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+ [2m752[0m |           <div className="flex flex-wrap items-center justify-between gap-3">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/integration/shopify/ShopifyIntegrationWorkspace.tsx
+./src/app/dashboard/integration/shopify/page.tsx
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `FEATURE_LIST` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:10:1]
+ [2m10[0m |   AlertCircle,
+ [2m11[0m |   Sparkles,
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import { FEATURE_LIST } from "@/lib/features";
+    : [31;1m         ^^^^^^|^^^^^[0m
+    :                [31;1m`-- [31;1mprevious definition of `FEATURE_LIST` here[0m[0m
+ [2m14[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m15[0m | import {
+ [2m16[0m |   fetchPlanConfigFromServer,
+ [2m17[0m |   loadPlanConfigLocal,
+ [2m18[0m |   savePlanConfigToServer,
+ [2m19[0m |   countPlanEnabledFeatures,
+ [2m20[0m |   PLAN_CONFIG_UPDATED,
+ [2m21[0m | } from "@/lib/plan-config-client";
+ [2m22[0m | import {
+ [2m23[0m |   FEATURE_LIST,
+    : [33;1m  ^^^^^^|^^^^^[0m
+    :         [33;1m`-- [33;1m`FEATURE_LIST` redefined here[0m[0m
+ [2m24[0m |   applyParentCascade,
+ [2m25[0m |   getChildFeatures,
+ [2m26[0m |   type FeatureKey,
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `FEATURE_LIST` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:10:1]
+ [2m10[0m |   AlertCircle,
+ [2m11[0m |   Sparkles,
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import { FEATURE_LIST } from "@/lib/features";
+    : [31;1m         ^^^^^^|^^^^^[0m
+    :                [31;1m`-- [31;1mprevious definition of `FEATURE_LIST` here[0m[0m
+ [2m14[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m15[0m | import {
+ [2m16[0m |   fetchPlanConfigFromServer,
+ [2m17[0m |   loadPlanConfigLocal,
+ [2m18[0m |   savePlanConfigToServer,
+ [2m19[0m |   countPlanEnabledFeatures,
+ [2m20[0m |   PLAN_CONFIG_UPDATED,
+ [2m21[0m | } from "@/lib/plan-config-client";
+ [2m22[0m | import {
+ [2m23[0m |   FEATURE_LIST,
+    : [33;1m  ^^^^^^|^^^^^[0m
+    :         [33;1m`-- [33;1m`FEATURE_LIST` redefined here[0m[0m
+ [2m24[0m |   applyParentCascade,
+ [2m25[0m |   getChildFeatures,
+ [2m26[0m |   type FeatureKey,
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ ./src/lib/plan-config-client.ts
+Attempted import error: 'planMarketingFeaturesFromConfig' is not exported from './plan-config-utils' (imported as 'planMarketingFeaturesFromConfig').
+
+Import trace for requested module:
+./src/lib/plan-config-client.ts
+./src/app/dev-admin/(panel)/users/page.tsx
+
+./src/lib/plan-config-client.ts
+Attempted import error: 'planMarketingFeaturesFromConfig' is not exported from './plan-config-utils' (imported as 'planMarketingFeaturesFromConfig').
+
+Import trace for requested module:
+./src/lib/plan-config-client.ts
+./src/app/dev-admin/(panel)/users/page.tsx
+
+./src/lib/plan-config-server.ts
+export 'planMarketingFeaturesFromConfig' (reexported as 'planMarketingFeaturesFromConfig') was not found in './plan-config-utils' (possible exports: DEFAULT_PLAN_CONFIG, DEFAULT_PLAN_DEFINITIONS, PLAN_PRESETS, countEnabledFeatures, getPlanDefinition, normalizePlanConfig, planFeaturesFromConfig)
+
+Import trace for requested module:
+./src/lib/plan-config-server.ts
+./src/app/marketing/packages/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/app/dev-admin/(panel)/plans/page.tsx
+Error: 
+  [31mx[0m the name `fetchPlanConfigFromServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:12:1]
+ [2m12[0m | } from "lucide-react";
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `fetchPlanConfigFromServer` here[0m[0m
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m         ^^^^^^^^^^^^|^^^^^^^^^^^^[0m
+    :                      [33;1m`-- [33;1m`fetchPlanConfigFromServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `loadPlanConfigLocal` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:13:1]
+ [2m13[0m | import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `loadPlanConfigLocal` here[0m[0m
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                    ^^^^^^^^^|^^^^^^^^^[0m
+    :                                              [33;1m`-- [33;1m`loadPlanConfigLocal` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `savePlanConfigToServer` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:14:1]
+ [2m14[0m | import {
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+    : [31;1m  ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `savePlanConfigToServer` here[0m[0m
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                         ^^^^^^^^^^^|^^^^^^^^^^[0m
+    :                                                                     [33;1m`-- [33;1m`savePlanConfigToServer` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `countPlanEnabledFeatures` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:15:1]
+ [2m15[0m |   fetchPlanConfigFromServer,
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+    : [31;1m  ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `countPlanEnabledFeatures` here[0m[0m
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                 ^^^^^^^^^^^^|^^^^^^^^^^^[0m
+    :                                                                                              [33;1m`-- [33;1m`countPlanEnabledFeatures` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+  [31mx[0m the name `PLAN_CONFIG_UPDATED` is defined multiple times
+    ,-[[36;1;4mI:\youraiseller\src\app\dev-admin\(panel)\plans\page.tsx[0m:16:1]
+ [2m16[0m |   loadPlanConfigLocal,
+ [2m17[0m |   savePlanConfigToServer,
+ [2m18[0m |   countPlanEnabledFeatures,
+ [2m19[0m |   PLAN_CONFIG_UPDATED,
+    : [31;1m  ^^^^^^^^^|^^^^^^^^^[0m
+    :            [31;1m`-- [31;1mprevious definition of `PLAN_CONFIG_UPDATED` here[0m[0m
+ [2m20[0m |   FEATURE_LIST,
+ [2m21[0m |   applyParentCascade,
+ [2m22[0m |   getChildFeatures,
+ [2m23[0m |   type FeatureKey,
+ [2m24[0m | } from "@/lib/features";
+ [2m25[0m | import { fetchPlanConfigFromServer, loadPlanConfigLocal, savePlanConfigToServer, countPlanEnabledFeatures, PLAN_CONFIG_UPDATED } from "@/lib/plan-config-client";
+    : [33;1m                                                                                                           ^^^^^^^^^|^^^^^^^^^[0m
+    :                                                                                                                     [33;1m`-- [33;1m`PLAN_CONFIG_UPDATED` redefined here[0m[0m
+ [2m26[0m | import { UserFeatureEditor } from "@/components/dev-admin/UserFeatureEditor";
+ [2m27[0m | 
+ [2m27[0m | const inputClass =
+    `----
+
+Import trace for requested module:
+./src/app/dev-admin/(panel)/plans/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/lib/marketing-packages-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-packages-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-packages-content.ts
+./src/app/marketing/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingCompareTable.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingCompareTable.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingCompareTable.tsx
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/marketing/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload when youraiseller\\node_modules\\lucide-react\\dist\\esm\\Icon.mjs","ids":["default"]}, youraiseller\\node_modules\\next\\dist\\client\\image-component.js","ids":[]}, youraiseller\\node_modules\\next\\dist\\client\\link.js","ids":["*"]}, youraiseller\\src\\components\\marketing\\MarketingSiteFooter.tsx","ids":["MarketingSiteFooter"]}, youraiseller\\src\\components\\marketing\\MarketingSiteHeaderNav.tsx","ids":["MarketingSiteHeaderNav","MarketingSiteHeaderMobileNav"]}, youraiseller\\src\\components\\marketing\\MarketingThemeProvider.tsx","ids":["MarketingThemeProvider"]} changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/components/marketing/MarketingSiteHeaderNav.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingSiteHeaderNav.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingSiteHeaderNav.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/components/marketing/WebOrdersFlowShowcase.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\WebOrdersFlowShowcase.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/WebOrdersFlowShowcase.tsx
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ src\components\marketing\MarketingLanguageProvider.tsx (82:11) @ useMarketingLanguage
+ ⨯ Error: useMarketingLanguage must be used within MarketingLanguageProvider
+    at useMarketingLanguage (./src/components/marketing/MarketingLanguageProvider.tsx:85:15)
+    at MarketingFeatureDetailPage (./src/components/marketing/MarketingFeatureDetailPage.tsx:60:127)
+digest: "1973908451"
+[0m [90m 80 |[39m   [36mconst[39m ctx [33m=[39m useContext([33mMarketingLanguageContext[39m)[33m;[39m[0m
+[0m [90m 81 |[39m   [36mif[39m ([33m![39mctx) {[0m
+[0m[31m[1m>[22m[39m[90m 82 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m"useMarketingLanguage must be used within MarketingLanguageProvider"[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 83 |[39m   }[0m
+[0m [90m 84 |[39m   [36mreturn[39m ctx[33m;[39m[0m
+[0m [90m 85 |[39m }[0m
+ ⨯ src\components\marketing\MarketingLanguageProvider.tsx (82:11) @ useMarketingLanguage
+ ⨯ Error: useMarketingLanguage must be used within MarketingLanguageProvider
+    at useMarketingLanguage (./src/components/marketing/MarketingLanguageProvider.tsx:85:15)
+    at MarketingFeatureDetailPage (./src/components/marketing/MarketingFeatureDetailPage.tsx:60:127)
+digest: "1973908451"
+[0m [90m 80 |[39m   [36mconst[39m ctx [33m=[39m useContext([33mMarketingLanguageContext[39m)[33m;[39m[0m
+[0m [90m 81 |[39m   [36mif[39m ([33m![39mctx) {[0m
+[0m[31m[1m>[22m[39m[90m 82 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m"useMarketingLanguage must be used within MarketingLanguageProvider"[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 83 |[39m   }[0m
+[0m [90m 84 |[39m   [36mreturn[39m ctx[33m;[39m[0m
+[0m [90m 85 |[39m }[0m
+ ⨯ src\components\marketing\MarketingLanguageProvider.tsx (82:11) @ useMarketingLanguage
+ ⨯ Error: useMarketingLanguage must be used within MarketingLanguageProvider
+    at useMarketingLanguage (./src/components/marketing/MarketingLanguageProvider.tsx:85:15)
+    at MarketingFeatureDetailPage (./src/components/marketing/MarketingFeatureDetailPage.tsx:60:127)
+digest: "1973908451"
+[0m [90m 80 |[39m   [36mconst[39m ctx [33m=[39m useContext([33mMarketingLanguageContext[39m)[33m;[39m[0m
+[0m [90m 81 |[39m   [36mif[39m ([33m![39mctx) {[0m
+[0m[31m[1m>[22m[39m[90m 82 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m"useMarketingLanguage must be used within MarketingLanguageProvider"[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 83 |[39m   }[0m
+[0m [90m 84 |[39m   [36mreturn[39m ctx[33m;[39m[0m
+[0m [90m 85 |[39m }[0m
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/lib/marketing-site-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-site-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-site-content.ts
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/lib/marketing-site-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-site-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-site-content.ts
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/lib/marketing-packages-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-packages-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-packages-content.ts
+./src/app/packages/page.tsx
+ ⨯ ./src/components/marketing/MainMarketingPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MainMarketingPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MainMarketingPage.tsx
+./src/components/marketing/HomePageClientFallback.tsx
+ ⨯ ./src/components/marketing/MainMarketingPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MainMarketingPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MainMarketingPage.tsx
+./src/components/marketing/HomePageClientFallback.tsx
+ ⨯ ./src/components/marketing/MarketingFeaturesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeaturesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeaturesPage.tsx
+./src/app/features/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/components/marketing/MarketingPackagesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingPackagesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingPackagesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingPackagesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingPackagesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingPackagesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/packages/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/components/marketing/MarketingCompareTable.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingCompareTable.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingCompareTable.tsx
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingCompareTable.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingCompareTable.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingCompareTable.tsx
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingPackageCards.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingPackageCards.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingPackageCards.tsx
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/packages/page.tsx
+ ⨯ ./src/lib/marketing-site-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-site-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-site-content.ts
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/lib/marketing-site-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-site-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-site-content.ts
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/lib/marketing-packages-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-packages-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-packages-content.ts
+./src/app/marketing/packages/page.tsx
+ ⨯ ./src/components/marketing/MainMarketingPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MainMarketingPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MainMarketingPage.tsx
+./src/components/marketing/HomePageClientFallback.tsx
+ ⨯ ./src/components/marketing/MainMarketingPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MainMarketingPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MainMarketingPage.tsx
+./src/components/marketing/HomePageClientFallback.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/components/marketing/MarketingFeaturesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeaturesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeaturesPage.tsx
+./src/app/marketing/features/page.tsx
+ ⨯ ./src/components/marketing/MarketingPackagesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingPackagesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/marketing/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/lib/marketing-site-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-site-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-site-content.ts
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/lib/marketing-site-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-site-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-site-content.ts
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⨯ ./src/lib/marketing-packages-content.ts
+Error: Failed to read source code from I:\youraiseller\src\lib\marketing-packages-content.ts
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/lib/marketing-packages-content.ts
+./src/app/marketing/packages/page.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/components/marketing/MarketingPackagesPage.tsx
+Error: Failed to read source code from I:\youraiseller\src\components\marketing\MarketingPackagesPage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./src/components/marketing/MarketingPackagesPage.tsx
+./src/app/marketing/packages/page.tsx
+ ⨯ ./src/components/marketing/WebOrdersFlowShowcase.tsx
+Error: 
+  [31mx[0m Unexpected token `}`. Expected yield, an identifier, [ or {
+     ,-[[36;1;4mI:\youraiseller\src\components\marketing\WebOrdersFlowShowcase.tsx[0m:111:1]
+ [2m111[0m |       },
+ [2m112[0m |     ],
+ [2m113[0m |   },
+ [2m114[0m | };
+     : [31;1m^[0m
+ [2m115[0m | 
+ [2m116[0m | const STATUS_LINES = [
+ [2m117[0m |   "Web order #1042 landed from Shopify",
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/marketing/WebOrdersFlowShowcase.tsx
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: 
+  [31mx[0m Unexpected token `main`. Expected jsx identifier
+     ,-[[36;1;4mI:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx[0m:311:1]
+ [2m311[0m |   }
+ [2m312[0m | 
+ [2m313[0m |   return (
+ [2m314[0m |     <main className="relative z-10">
+     : [31;1m     ^^^^[0m
+ [2m315[0m |       <section className="mkt-border-b border-b pt-8 pb-6 sm:pt-10 sm:pb-8 lg:pt-12 lg:pb-10">
+ [2m316[0m |         <div className={clsx(marketingSectionClass, "max-w-6xl")}>
+ [2m317[0m |           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-400">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: 
+  [31mx[0m Unexpected token `main`. Expected jsx identifier
+    ,-[[36;1;4mI:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx[0m:49:1]
+ [2m49[0m | 
+ [2m50[0m |   if (!page || !group) {
+ [2m51[0m |     return (
+ [2m52[0m |       <main className="relative z-10">
+    : [31;1m       ^^^^[0m
+ [2m53[0m |         <section className="py-16 sm:py-24">
+ [2m54[0m |           <div className={clsx(marketingSectionClass, "max-w-3xl text-center")}>
+ [2m55[0m |             <p className="mkt-text text-sm font-bold uppercase tracking-[0.2em] text-rose-500">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: 
+  [31mx[0m Unexpected token `main`. Expected jsx identifier
+     ,-[[36;1;4mI:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx[0m:311:1]
+ [2m311[0m |   }
+ [2m312[0m | 
+ [2m313[0m |   return (
+ [2m314[0m |     <main className="relative z-10">
+     : [31;1m     ^^^^[0m
+ [2m315[0m |       <section className="mkt-border-b border-b pt-8 pb-6 sm:pt-10 sm:pb-8 lg:pt-12 lg:pb-10">
+ [2m316[0m |         <div className={clsx(marketingSectionClass, "max-w-6xl")}>
+ [2m317[0m |           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-400">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./src/components/marketing/MarketingFeatureDetailPage.tsx
+Error: 
+  [31mx[0m Unexpected token `main`. Expected jsx identifier
+    ,-[[36;1;4mI:\youraiseller\src\components\marketing\MarketingFeatureDetailPage.tsx[0m:49:1]
+ [2m49[0m | 
+ [2m50[0m |   if (!page || !group) {
+ [2m51[0m |     return (
+ [2m52[0m |       <main className="relative z-10">
+    : [31;1m       ^^^^[0m
+ [2m53[0m |         <section className="py-16 sm:py-24">
+ [2m54[0m |           <div className={clsx(marketingSectionClass, "max-w-3xl text-center")}>
+ [2m55[0m |             <p className="mkt-text text-sm font-bold uppercase tracking-[0.2em] text-rose-500">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/marketing/MarketingFeatureDetailPage.tsx
+./src/app/features/[slug]/page.tsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.

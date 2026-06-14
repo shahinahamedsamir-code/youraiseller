@@ -296,8 +296,10 @@ export function WebOrderTable() {
 
   return (
     <div className="space-y-4">
-      <WooOrderSyncBar onSynced={refresh} />
-      <ShopifyOrderSyncBar onSynced={refresh} />
+      <div className="grid gap-3 lg:grid-cols-2">
+        <WooOrderSyncBar onSynced={refresh} compact />
+        <ShopifyOrderSyncBar onSynced={refresh} compact />
+      </div>
 
       {createdFlash && (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">

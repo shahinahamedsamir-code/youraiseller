@@ -10,9 +10,10 @@ import {
 
 type Props = {
   onSynced?: () => void;
+  compact?: boolean;
 };
 
-export function WooOrderSyncBar({ onSynced }: Props) {
+export function WooOrderSyncBar({ onSynced, compact = false }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
@@ -60,8 +61,8 @@ export function WooOrderSyncBar({ onSynced }: Props) {
   const wooReady = isWooCommerceReadyForSync();
 
   return (
-    <div className="mb-4 space-y-2">
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
+    <div className={compact ? "space-y-2" : "mb-4 space-y-2"}>
+    <div className="flex min-h-[3.75rem] flex-wrap items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
       <button
         type="button"
         onClick={() => void runSync()}

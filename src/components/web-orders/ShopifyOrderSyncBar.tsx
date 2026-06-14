@@ -11,12 +11,14 @@ import {
 
 type Props = {
   onSynced?: () => void;
+  compact?: boolean;
 };
 
-export function ShopifyOrderSyncBar({ onSynced }: Props) {
+export function ShopifyOrderSyncBar({ onSynced, compact = false }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [message, setMessage] = useState<string>("");
 
   const refreshMeta = useCallback(() => {
     const meta = getShopifyOrderSyncMeta();
@@ -37,12 +39,19 @@ export function ShopifyOrderSyncBar({ onSynced }: Props) {
     setSyncing(true);
     try {
       const result = await syncOrdersFromShopify(config);
-      void result;
+      setMessage(
+        result.errors[0] ??
+          `Shopify sync: ${result.created} new, ${result.updated} updated, ${result.failed} failed${
+            typeof result.checkoutCount === "number"
+              ? `, ${result.checkoutCount} incomplete checked`
+              : ""
+          }`
+      );
       setLastSync(new Date().toISOString());
       onSynced?.();
       refreshMeta();
-    } catch {
-      /* sync failed */
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Shopify sync failed.");
     } finally {
       setSyncing(false);
     }
@@ -61,8 +70,8 @@ export function ShopifyOrderSyncBar({ onSynced }: Props) {
     : "—";
 
   return (
-    <div className="mb-4 space-y-2">
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-teal-100 bg-teal-50/60 px-4 py-3">
+    <div className={compact ? "space-y-2" : "mb-4 space-y-2"}>
+      <div className="flex min-h-[3.75rem] flex-wrap items-center gap-3 rounded-2xl border border-teal-100 bg-teal-50/60 px-4 py-3">
         <button
           type="button"
           onClick={() => void runSync()}
@@ -82,6 +91,11 @@ export function ShopifyOrderSyncBar({ onSynced }: Props) {
         </span>
         <span className="text-xs text-slate-500">{lastLabel}</span>
       </div>
+      {message ? (
+        <p className="rounded-xl border border-teal-100 bg-white/80 px-3 py-2 text-xs font-medium text-slate-600">
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -399,12 +399,12 @@ function MarketingFeatureDetailContent({
       {isWebOrders ? (
         <section className="py-8 sm:py-10 lg:py-14">
           <div className={marketingSectionClass}>
-            <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <div className="space-y-4">
                 <WebOrdersFlowShowcase appHost="localhost" language="english" />
               </div>
 
-              <div className="mkt-card rounded-[1.75rem] p-4 sm:p-5 lg:sticky lg:top-24">
+              <div className="mkt-card rounded-[1.75rem] p-4 sm:p-5 xl:sticky xl:top-24">
                 <div className="flex h-full flex-col rounded-[1.35rem] border border-white/8 bg-slate-950/30 p-4 sm:p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div>

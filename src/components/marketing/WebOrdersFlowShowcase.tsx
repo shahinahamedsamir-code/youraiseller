@@ -161,7 +161,7 @@ export function WebOrdersFlowShowcase({
             {copy.sourceToApproval}
           </p>
           <div className="mt-4 space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               {ORDER_SOURCES.map((source) => (
                 <div
                   key={source.name}
@@ -192,7 +192,7 @@ export function WebOrdersFlowShowcase({
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {[
                 { label: copy.orderList, tone: "border-sky-400/25 bg-sky-500/10 text-sky-200" },
                 { label: copy.autoSms, tone: "border-teal-400/25 bg-teal-500/10 text-teal-200" },
@@ -211,7 +211,7 @@ export function WebOrdersFlowShowcase({
           <p className="mkt-text-muted mt-3 text-sm leading-relaxed">{copy.summary}</p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {copy.steps.map((step, index) => {
             const Icon = [ShoppingCart, MessageSquareText, PhoneCall, CheckCircle2][index];
             const active = index === activeStep;
@@ -294,7 +294,7 @@ export function WebOrdersFlowShowcase({
           })}
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
           {["Manual Web Order", "Order Block List"].map((label) => (
             <div
               key={label}

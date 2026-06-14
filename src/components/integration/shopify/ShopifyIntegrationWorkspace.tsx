@@ -157,7 +157,7 @@ export function ShopifyIntegrationWorkspace() {
       setToast(
         scopeOk
           ? "Shopify connected. You can sync products now."
-          : "Token saved but product permission is missing. Add scopes in Dev Dashboard and reinstall the app."
+          : "Token saved but product permission is missing. Add scopes in Dev Shopify and reinstall the app."
       );
     }
     document.cookie = "shopify_oauth_done=; Max-Age=0; path=/";
@@ -174,8 +174,8 @@ export function ShopifyIntegrationWorkspace() {
     if (oauth === "failed") {
       setToast(
         reason
-          ? `Shopify connection failed (${reason}). Check App URL and Redirect URL in Dev Dashboard.`
-          : "Shopify connection failed. Check your Dev Dashboard app settings."
+          ? `Shopify connection failed (${reason}). Check App URL and Redirect URL in Dev Shopify.`
+          : "Shopify connection failed. Check your Dev Shopify app settings."
       );
     }
     params.delete("oauth");
@@ -686,7 +686,15 @@ function SetupTab({
       : 'https://app.youraiseller.com/dashboard/integration/shopify';
   const redirectUrl =
     oauthCallbackUrl || `${appHomeUrl.replace(/\/dashboard.*/, '')}/api/shopify/oauth/callback`;
-  const requiredScopesCsv = 'read_products,read_inventory,read_orders,read_locations';
+  const requiredScopesCsv = [
+    'read_products',
+    'read_inventory',
+    'read_orders',
+    'read_locations',
+    state.incompleteOrderSyncEnabled ? 'read_checkouts' : '',
+  ]
+    .filter(Boolean)
+    .join(',');
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
@@ -705,7 +713,7 @@ function SetupTab({
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-xs font-bold text-teal-700 shadow-sm hover:bg-teal-50"
             >
-              Open Dev Dashboard
+              Open Dev Shopify
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -720,8 +728,8 @@ function SetupTab({
         </div>
 
         <div className="space-y-3 p-5">
-          <SetupGuideStep step={1} title="Create app" body={<p>Open Shopify Dev Dashboard and create a new app from Apps.</p>} />
-          <SetupGuideStep step={2} title="Use Dev Dashboard option" body={<p>Select the Dev Dashboard path, then name the app clearly like Youraiseller.</p>} />
+          <SetupGuideStep step={1} title="Create app" body={<p>Open Dev Shopify and create a new app from Apps.</p>} />
+          <SetupGuideStep step={2} title="Use Dev Shopify option" body={<p>Select the Dev Shopify path, then name the app clearly like Youraiseller.</p>} />
           <SetupGuideStep
             step={3}
             title="Paste URLs"
@@ -822,7 +830,7 @@ function SetupTab({
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <p className="font-bold">Some permissions are missing</p>
-                <p className="mt-1 leading-5">Add scopes in Dev Dashboard, release, reinstall, then connect again.</p>
+                <p className="mt-1 leading-5">Add scopes in Dev Shopify, release, reinstall, then connect again.</p>
               </div>
             </div>
           ) : null}
@@ -855,7 +863,7 @@ function SetupTab({
               label="Client ID"
               icon={KeyRound}
               value={state.clientId}
-              placeholder="Copy from Dev Dashboard -> Settings"
+              placeholder="Copy from Dev Shopify -> Settings"
               onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
             />
             <LabeledInput
@@ -863,7 +871,7 @@ function SetupTab({
               icon={KeyRound}
               type="password"
               value={state.clientSecret}
-              placeholder="Copy from Dev Dashboard -> Settings"
+              placeholder="Copy from Dev Shopify -> Settings"
               onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
             />
 
@@ -958,7 +966,7 @@ function WebhooksTab({
         <div className="space-y-3 p-5">
           {[
             'Go to Shopify Admin -> Settings -> Notifications -> Webhooks',
-            'Add order created, updated, and cancelled events',
+            'Add order created, order updated, checkout created, and checkout updated events',
             'Paste the generated endpoint below and save',
             'Place a test order to confirm it reaches Web Order List',
           ].map((item, index) => (
@@ -983,7 +991,7 @@ function WebhooksTab({
                 <Clock3 className="h-4 w-4 text-teal-600" />
                 Incomplete sync
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Keeps incomplete orders on a 15 minute check.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Keeps abandoned checkouts in the Incomplete tab.</p>
             </div>
           </div>
         </div>
@@ -1010,7 +1018,7 @@ function WebhooksTab({
 
           <ToggleItem
             label="Incomplete order sync"
-            hint="Imports incomplete Shopify orders and checks every 15 minutes."
+            hint="Imports incomplete Shopify orders into the Incomplete tab every 15 minutes."
             on={state.incompleteOrderSyncEnabled}
             onToggle={() =>
               setState((prev) => ({
@@ -1019,6 +1027,23 @@ function WebhooksTab({
               }))
             }
           />
+
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-black">Incomplete order permission</p>
+                <p className="mt-1 leading-6 text-amber-900/80">
+                  To import incomplete Shopify orders, enable <span className="font-bold">read_checkouts</span> in Dev Shopify, release the app version, then reinstall or reconnect the store.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <StatusPill label="Scope" value="read_checkouts" />
+              <StatusPill label="After change" value="Release app" />
+              <StatusPill label="Then" value="Reconnect store" />
+            </div>
+          </div>
 
           <CopyField
             label="Webhook URL"
@@ -1087,7 +1112,7 @@ function ProductSyncTab({
             ))}
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Product count mismatch? Update the API version in Dev Dashboard and try syncing again.
+              Product count mismatch? Update the API version in Dev Shopify and try syncing again.
             </div>
           </div>
 

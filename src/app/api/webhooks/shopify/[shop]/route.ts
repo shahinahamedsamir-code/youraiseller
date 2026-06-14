@@ -9,12 +9,38 @@ type ShopifyWebhookQueueItem = {
   payload: unknown;
 };
 
+const globalWebhookQueues = globalThis as typeof globalThis & {
+  __youraisellerShopifyWebhookQueues?: Map<string, ShopifyWebhookQueueItem[]>;
+};
+
+function queueStore(): Map<string, ShopifyWebhookQueueItem[]> {
+  if (!globalWebhookQueues.__youraisellerShopifyWebhookQueues) {
+    globalWebhookQueues.__youraisellerShopifyWebhookQueues = new Map();
+  }
+  return globalWebhookQueues.__youraisellerShopifyWebhookQueues;
+}
+
 function normalizeShop(input: string): string {
   return input.trim().toLowerCase();
 }
 
 function queueKey(shop: string): string {
   return `youraiseller-shopify-webhook-queue-${shop}`;
+}
+
+function enqueueWebhook(item: ShopifyWebhookQueueItem) {
+  const key = queueKey(item.shop);
+  const store = queueStore();
+  const current = store.get(key) ?? [];
+  store.set(key, [...current.slice(-49), item]);
+}
+
+function drainWebhookQueue(shop: string): ShopifyWebhookQueueItem[] {
+  const key = queueKey(shop);
+  const store = queueStore();
+  const items = store.get(key) ?? [];
+  store.set(key, []);
+  return items;
 }
 
 function getSignatureSecret(shop: string): string | null {
@@ -93,6 +119,7 @@ export async function POST(
       shop,
       payload,
     };
+    enqueueWebhook(item);
 
     return NextResponse.json({
       ok: true,
@@ -114,6 +141,16 @@ export async function GET(
   const shop = normalizeShop(String(rawShop ?? ""));
   if (!shop) {
     return NextResponse.json({ ok: false, message: "Missing shop parameter." }, { status: 400 });
+  }
+  if (url.searchParams.get("drain") === "1") {
+    const items = drainWebhookQueue(shop);
+    return NextResponse.json({
+      ok: true,
+      message: "Shopify webhook queue drained.",
+      shop,
+      items,
+      total: items.length,
+    });
   }
   return NextResponse.json({
     ok: true,

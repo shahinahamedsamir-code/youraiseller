@@ -49,6 +49,7 @@ export async function POST(req: Request) {
       "read_inventory",
       "write_inventory",
       "read_locations",
+      "read_checkouts",
     ].join(",");
 
     const current = new URL(req.url);
@@ -90,4 +91,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message }, { status: 500 });
   }
 }
-

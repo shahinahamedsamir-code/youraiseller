@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       }
       return NextResponse.json({
         ok: false,
-        message: `${message} Ensure the app is installed on this store from Dev Dashboard (dev.shopify.com).`,
+        message: `${message} Ensure the app is installed on this store from Dev Shopify (dev.shopify.com).`,
       });
     }
 
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
         "Connected successfully. You can sync products. (Token lasts ~24 hours — click Connect again when it expires.)";
     } else if (!scopesOk && !apiOk) {
       message =
-        "Token received but some permissions are missing. Dev Dashboard → Versions → add permissions → Release → reinstall on your store → click Connect.";
+        "Token received but some permissions are missing. Dev Shopify → Versions → add permissions → Release → reinstall on your store → click Connect.";
     } else if (!scopesOk && apiOk) {
       message = "Connected successfully. Token will last about 24 hours.";
     } else {

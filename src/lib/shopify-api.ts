@@ -373,7 +373,7 @@ export async function verifyShopifyProductAccess(params: {
     return {
       ok: false,
       message:
-        "Store is connected but product read permission is missing. Dev Dashboard → Versions → enable product/order/inventory permissions → Release → reinstall the app.",
+        "Store is connected but product read permission is missing. Dev Shopify → Versions → enable product/order/inventory permissions → Release → reinstall the app.",
     };
   }
 

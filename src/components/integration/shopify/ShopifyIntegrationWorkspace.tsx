@@ -991,7 +991,9 @@ function WebhooksTab({
                 <Clock3 className="h-4 w-4 text-teal-600" />
                 Incomplete sync
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Keeps abandoned checkouts in the Incomplete tab.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Delivers abandoned checkouts to the Incomplete tab in real time via webhooks.
+              </p>
             </div>
           </div>
         </div>
@@ -1018,7 +1020,7 @@ function WebhooksTab({
 
           <ToggleItem
             label="Incomplete order sync"
-            hint="Imports incomplete Shopify orders into the Incomplete tab every 15 minutes."
+            hint="Imports incomplete orders into the Incomplete tab in real time when checkout webhooks arrive."
             on={state.incompleteOrderSyncEnabled}
             onToggle={() =>
               setState((prev) => ({

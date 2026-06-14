@@ -19,8 +19,8 @@ import {
   createActivityEntry,
   logForNewOrder,
   logForAdvancePayment,
-  logForWooImport,
-  logForWooSync,
+  logForWebStoreImport,
+  logForWebStoreSync,
   logForStatusChange,
   buildSyntheticActivityLog,
   normalizeActivityAt,
@@ -50,6 +50,7 @@ import {
   resolveOrderSourceOnWooSync,
   type OrderSource,
 } from "./order-source";
+import { getWebStorePlatform, isShopifyWebOrder } from "./web-order-platform";
 import { sessionCreatorFields } from "./order-creator";
 import type { WooOrderSnapshot } from "./woo-order-snapshot";
 
@@ -1064,7 +1065,12 @@ export function upsertWooCommerceOrder(
       if (prev.tags?.length) merged.tags = prev.tags;
     }
     const next: Order = syncWooStatus
-      ? pushActivity(merged, logForWooSync())
+      ? pushActivity(
+          merged,
+          logForWebStoreSync(
+            getWebStorePlatform(merged) ?? getWebStorePlatform(prev) ?? "woocommerce"
+          )
+        )
       : merged;
     data.orders[idx] = next;
     saveRaw(data);
@@ -1099,7 +1105,7 @@ export function upsertWooCommerceOrder(
     webStatus: input.webStatus ?? "processing",
     tags: input.tags ?? ["WooCommerce"],
     printed: false,
-    handledBy: "WooCommerce",
+    handledBy: isShopifyWebOrder({ tags: input.tags }) ? "Shopify" : "WooCommerce",
     isPreorder: input.isPreorder ?? false,
     ...resolveOrderSourceOnWooSync(
       null,
@@ -1113,7 +1119,13 @@ export function upsertWooCommerceOrder(
     createdAt: input.createdAt ?? nowLabel(),
     updatedAt: nowLabel(),
   },
-    logForWooImport(input.wooNumber)
+    logForWebStoreImport(
+      getWebStorePlatform({
+        tags: input.tags,
+        wooOrderId: input.wooOrderId,
+      }) ?? "woocommerce",
+      input.wooNumber
+    )
   );
 
   data.orders.unshift(order);

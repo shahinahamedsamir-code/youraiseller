@@ -7,12 +7,24 @@ import {
   orderSourceBadgeClass,
   type OrderSource,
 } from "./order-source";
+import {
+  getWebStorePlatform,
+  isShopifyWebOrder,
+  type WebStorePlatform,
+} from "./web-order-platform";
 
 export function getWooCommerceStatus(order: Order): string | undefined {
+  if (isShopifyWebOrder(order)) {
+    if (order.webStatus) return order.webStatus.replace(/_/g, "-");
+    return order.status;
+  }
   const fromSnapshot = order.wooSnapshot?.wcStatus?.trim();
   if (fromSnapshot) return fromSnapshot.replace(/^wc-/, "");
   const tag = order.tags?.find(
-    (t) => t !== "WooCommerce" && !t.startsWith("WooCommerce ")
+    (t) =>
+      t !== "WooCommerce" &&
+      !t.startsWith("WooCommerce ") &&
+      t.toLowerCase() !== "shopify"
   );
   return tag?.toLowerCase().replace(/^wc-/, "");
 }
@@ -49,10 +61,15 @@ export function getOrderSourceDisplay(order: Order): {
 
 export function findOtherWooOrdersByPhone(
   phone: string,
-  excludeOrderId: string
+  excludeOrderId: string,
+  platform?: WebStorePlatform | null
 ): Order[] {
   return findOrdersByPhone(phone)
-    .filter((o) => o.wooOrderId != null && o.id !== excludeOrderId)
+    .filter((o) => {
+      if (o.wooOrderId == null || o.id === excludeOrderId) return false;
+      if (!platform) return true;
+      return getWebStorePlatform(o) === platform;
+    })
     .sort(
       (a, b) =>
         new Date(b.updatedAt || b.createdAt).getTime() -

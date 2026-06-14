@@ -349,7 +349,10 @@ function normalizeWebhookPayload(item: ShopifyWebhookQueueItem): ShopifyOrderRow
   return null;
 }
 
-export async function syncShopifyWebhookQueue(shopDomain: string): Promise<ShopifyOrderSyncResult> {
+export async function syncShopifyWebhookQueue(
+  shopDomain: string,
+  options?: { includeIncomplete?: boolean }
+): Promise<ShopifyOrderSyncResult> {
   const shop = normalizeShopDomain(shopDomain);
   if (!shop) {
     return { created: 0, updated: 0, failed: 0, total: 0, errors: [] };
@@ -368,9 +371,11 @@ export async function syncShopifyWebhookQueue(shopDomain: string): Promise<Shopi
     throw new Error(payload.message || "Could not read Shopify webhook queue.");
   }
 
+  const includeIncomplete = options?.includeIncomplete !== false;
   const rows = (payload.items ?? [])
     .map(normalizeWebhookPayload)
-    .filter((row): row is ShopifyOrderRow => Boolean(row));
+    .filter((row): row is ShopifyOrderRow => Boolean(row))
+    .filter((row) => includeIncomplete || !isIncompleteShopifyOrder(row));
   return importShopifyRows(rows);
 }
 

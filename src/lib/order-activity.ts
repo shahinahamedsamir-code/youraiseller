@@ -37,6 +37,7 @@ export type OrderOriginInfo = {
 };
 
 import { getOrderSourceLabel } from "./order-source";
+import { getWebStorePlatform, getWebStorePlatformLabel } from "./web-order-platform";
 
 const SOURCE_LABELS: Record<Order["source"], string> = {
   manual: "New Order (Panel)",
@@ -52,14 +53,15 @@ export function describeOrderOrigin(order: Order): OrderOriginInfo {
   );
   const sourceNote = `Order source: ${sourceLabel}`;
 
-  if (order.wooOrderId != null) {
+  if (getWebStorePlatform(order)) {
+    const label = getWebStorePlatformLabel(order);
     return {
-      channel: "WooCommerce",
-      summary: "Imported from your WooCommerce website",
+      channel: label,
+      summary: `Imported from your ${label} website`,
       detail: order.wooNumber
         ? `Store order #${order.wooNumber} · ${sourceNote}`
-        : `${sourceNote} · WooCommerce ID ${order.wooOrderId}`,
-      icon: "woo",
+        : `${sourceNote} · ${label} ID ${order.wooOrderId}`,
+      icon: getWebStorePlatform(order) === "shopify" ? "web" : "woo",
     };
   }
   if (order.source === "web") {
@@ -124,10 +126,16 @@ export function buildSyntheticActivityLog(order: Order): OrderActivity[] {
     {
       id: `syn-origin-${order.id}`,
       at: atNext(),
-      type: order.wooOrderId != null ? "woo_import" : "created",
+      type: getWebStorePlatform(order) ? "woo_import" : "created",
       title: origin.summary,
       detail: origin.detail,
-      actor: order.handledBy ?? (order.wooOrderId ? "WooCommerce" : "Staff"),
+      actor:
+        order.handledBy ??
+        (getWebStorePlatform(order)
+          ? `${getWebStorePlatformLabel(order)} Sync`
+          : order.wooOrderId
+            ? "WooCommerce"
+            : "Staff"),
     },
   ];
   if ((order.advance ?? 0) > 0) {
@@ -351,22 +359,35 @@ export function logForNewOrder(order: Order, actor?: string): OrderActivity {
   });
 }
 
-export function logForWooImport(wooNumber?: string): OrderActivity {
+export function logForWebStoreImport(
+  platform: "shopify" | "woocommerce",
+  storeNumber?: string
+): OrderActivity {
+  const label = platform === "shopify" ? "Shopify" : "WooCommerce";
   return createActivityEntry({
     type: "woo_import",
-    title: "Imported from WooCommerce",
-    detail: wooNumber ? `Website order #${wooNumber}` : "Auto sync from web store",
-    actor: "WooCommerce Sync",
+    title: `Imported from ${label}`,
+    detail: storeNumber ? `Website order #${storeNumber}` : `Auto sync from ${label}`,
+    actor: `${label} Sync`,
+  });
+}
+
+export function logForWooImport(wooNumber?: string): OrderActivity {
+  return logForWebStoreImport("woocommerce", wooNumber);
+}
+
+export function logForWebStoreSync(platform: "shopify" | "woocommerce"): OrderActivity {
+  const label = platform === "shopify" ? "Shopify" : "WooCommerce";
+  return createActivityEntry({
+    type: "woo_sync",
+    title: `Updated from ${label}`,
+    detail: "Customer or items refreshed on sync",
+    actor: `${label} Sync`,
   });
 }
 
 export function logForWooSync(): OrderActivity {
-  return createActivityEntry({
-    type: "woo_sync",
-    title: "Updated from WooCommerce",
-    detail: "Customer or items refreshed on sync",
-    actor: "WooCommerce Sync",
-  });
+  return logForWebStoreSync("woocommerce");
 }
 
 export function logForStatusChange(
@@ -388,7 +409,9 @@ function originBlock(order: Order): string[] {
     origin.summary,
   ];
   if (origin.detail) lines.push(origin.detail);
-  if (order.wooNumber) lines.push(`WooCommerce #${order.wooNumber}`);
+  if (order.wooNumber) {
+    lines.push(`${getWebStorePlatformLabel(order)} #${order.wooNumber}`);
+  }
   if (order.source) lines.push(`Channel tag: ${order.source}`);
   return lines;
 }

@@ -40,6 +40,7 @@ import {
   type OrderActivity,
   type OrderActivityType,
 } from "@/lib/order-activity";
+import { getWebStorePlatformLabel } from "@/lib/web-order-platform";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { getDeliveryMethodName } from "@/lib/delivery-methods-store";
 import {
@@ -207,7 +208,9 @@ export function OrderDetailsModal({
           </p>
           <h2 className="mt-1 text-3xl font-extrabold tracking-tight">{order.id}</h2>
           {order.wooNumber && (
-            <p className="text-sm text-white/80">WooCommerce #{order.wooNumber}</p>
+            <p className="text-sm text-white/80">
+              {getWebStorePlatformLabel(order)} #{order.wooNumber}
+            </p>
           )}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span

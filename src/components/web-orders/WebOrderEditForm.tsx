@@ -87,6 +87,10 @@ import {
   type OrderSource,
 } from "@/lib/order-source";
 import { refreshWooOrderFromApi } from "@/lib/woocommerce-order-sync";
+import {
+  getWebStorePlatformLabel,
+  isWooCommerceWebOrder,
+} from "@/lib/web-order-platform";
 import { statusColors } from "@/lib/mock-web-orders";
 
 const REQUIRED_PHONE_DIGITS = 11;
@@ -584,7 +588,9 @@ export function WebOrderEditForm({ orderId }: Props) {
             <p className="text-xs font-bold uppercase text-teal-600">Web order</p>
             <p className="text-lg font-extrabold text-slate-900">{orderId}</p>
             {order.wooNumber && (
-              <p className="text-xs text-teal-600">WooCommerce #{order.wooNumber}</p>
+              <p className="text-xs text-teal-600">
+                {getWebStorePlatformLabel(order)} #{order.wooNumber}
+              </p>
             )}
           </div>
           <span
@@ -1058,7 +1064,7 @@ export function WebOrderEditForm({ orderId }: Props) {
           paymentMethod={paymentMethod}
           orderSource={orderSource}
           customOrderSource={customOrderSource}
-          onRefreshWoo={order.wooOrderId ? refreshFromWoo : undefined}
+          onRefreshWoo={isWooCommerceWebOrder(order) ? refreshFromWoo : undefined}
           wooRefreshing={wooRefreshing}
         />
       </WebOrderSummaryAside>

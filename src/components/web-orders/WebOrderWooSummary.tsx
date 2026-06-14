@@ -29,6 +29,11 @@ import {
   getWooCommerceStatus,
   wcStatusBadgeClass,
 } from "@/lib/web-order-display";
+import {
+  getWebStorePlatform,
+  getWebStorePlatformLabel,
+  isWooCommerceWebOrder,
+} from "@/lib/web-order-platform";
 import { WebOrderSmsActions } from "@/components/web-orders/WebOrderSmsActions";
 
 type Props = {
@@ -96,6 +101,8 @@ export function WebOrderWooSummary({
   onRefreshWoo,
   wooRefreshing,
 }: Props) {
+  const platform = getWebStorePlatform(order);
+  const platformLabel = getWebStorePlatformLabel(order);
   const source = inferOrderSourceFromOrder(order);
   const sourceLabel = getOrderSourceLabel(orderSource || source, customOrderSource);
   const attribution =
@@ -105,8 +112,8 @@ export function WebOrderWooSummary({
       : undefined);
   const wcStatus = getWooCommerceStatus(order);
   const otherWooOrders = useMemo(
-    () => findOtherWooOrdersByPhone(order.phone, order.id).slice(0, 8),
-    [order.phone, order.id]
+    () => findOtherWooOrdersByPhone(order.phone, order.id, platform).slice(0, 8),
+    [order.phone, order.id, platform]
   );
   const gateway =
     wooSnapshot?.paymentMethodTitle ||
@@ -125,7 +132,7 @@ export function WebOrderWooSummary({
             <h3 className="text-sm font-extrabold text-slate-900">Order summary</h3>
           </div>
           <p className="mt-0.5 text-[10px] font-medium text-slate-500">
-            WooCommerce + panel totals
+            {platformLabel} + panel totals
           </p>
         </div>
         <div className="space-y-2.5 p-4">
@@ -140,7 +147,7 @@ export function WebOrderWooSummary({
             <SummaryRow label="Updated" value={order.updatedAt} />
           )}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500">WC status</span>
+            <span className="text-xs font-semibold text-slate-500">Store status</span>
             {wcStatus ? (
               <span
                 className={clsx(
@@ -190,7 +197,7 @@ export function WebOrderWooSummary({
         </div>
       </section>
 
-      {order.wooOrderId ? (
+      {isWooCommerceWebOrder(order) ? (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100">
           <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -256,7 +263,7 @@ export function WebOrderWooSummary({
           />
           {wooSnapshot?.syncedAt ? (
             <SummaryRow
-              label="Woo sync"
+              label={`${platformLabel} sync`}
               value={formatWooDate(wooSnapshot.syncedAt)}
             />
           ) : null}
@@ -306,7 +313,7 @@ export function WebOrderWooSummary({
             <div className="flex items-center gap-2">
               <History className="h-4 w-4 text-amber-700" />
               <h3 className="text-xs font-extrabold uppercase tracking-wide text-amber-900">
-                Same customer · other WC orders ({otherWooOrders.length})
+                Same customer · other {platformLabel} orders ({otherWooOrders.length})
               </h3>
             </div>
           </div>
@@ -345,21 +352,19 @@ export function WebOrderWooSummary({
         </section>
       ) : null}
 
-      {order.wooOrderId ? (
+      {isWooCommerceWebOrder(order) && onRefreshWoo ? (
         <div className="space-y-2">
-          {onRefreshWoo ? (
-            <button
-              type="button"
-              onClick={onRefreshWoo}
-              disabled={wooRefreshing}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-bold text-teal-800 transition hover:bg-teal-100 disabled:opacity-60"
-            >
-              <RefreshCw
-                className={clsx("h-3.5 w-3.5", wooRefreshing && "animate-spin")}
-              />
-              {wooRefreshing ? "Loading…" : "Refresh from WooCommerce"}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={onRefreshWoo}
+            disabled={wooRefreshing}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-bold text-teal-800 transition hover:bg-teal-100 disabled:opacity-60"
+          >
+            <RefreshCw
+              className={clsx("h-3.5 w-3.5", wooRefreshing && "animate-spin")}
+            />
+            {wooRefreshing ? "Loading…" : "Refresh from WooCommerce"}
+          </button>
         </div>
       ) : null}
     </div>

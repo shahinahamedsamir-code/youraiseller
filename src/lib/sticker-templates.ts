@@ -2,7 +2,15 @@ import type { Order } from "./orders-store";
 import type { BusinessSettings } from "./business-settings-store";
 import { getCourierTrackingDisplayId } from "./courier-tracking-url";
 
-export type StickerTemplate = "classic" | "bold" | "barcode" | "compact";
+export type StickerTemplate =
+  | "classic"
+  | "bold"
+  | "barcode"
+  | "compact"
+  | "neo"
+  | "split"
+  | "express"
+  | "mono";
 export type StickerSize = "3x3" | "2x3" | "3x4";
 
 function esc(v: unknown): string {
@@ -75,7 +83,7 @@ function itemRows(order: Order, biz: BusinessSettings, compact: boolean): string
     .map(
       (i) => `<tr>
         <td style="padding:3px 4px;border-bottom:1px solid #eee">${esc(i.productName)}${
-          i.productCode ? `<br><span style="color:#888;font-size:.85em">${esc(i.productCode)}</span>` : ""
+          i.productCode ? `<br><span style="color:#111;font-size:.85em">${esc(i.productCode)}</span>` : ""
         }</td>
         <td style="padding:3px 4px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td>
         ${compact ? "" : `<td style="padding:3px 4px;border-bottom:1px solid #eee;text-align:right">${money(s, i.price)}</td>`}
@@ -98,7 +106,7 @@ function recipient(order: Order): string {
   return `<div style="line-height:1.4">
     <div style="font-weight:700">${esc(order.customerName)}</div>
     <div>${esc(order.phone)}</div>
-    <div style="color:#333">${esc(order.address)}, ${esc(order.district)}</div>
+    <div style="color:#111">${esc(order.address)}, ${esc(order.district)}</div>
   </div>`;
 }
 
@@ -117,7 +125,11 @@ function productTable(order: Order, biz: BusinessSettings, narrow: boolean): str
 function shippingNote(biz: BusinessSettings): string {
   const note = biz.invoiceFooter?.trim();
   if (!note) return "";
-  return `<div style="margin-top:6px;font-size:.82em;color:#333"><b>Shipping Note:</b><br>${esc(note)}</div>`;
+  return `<div style="margin-top:6px;font-size:.82em;color:#111"><b>Shipping Note:</b><br>${esc(note)}</div>`;
+}
+
+function softTag(text: string, bg: string, fg: string): string {
+  return `<span style="display:inline-block;padding:3px 8px;border-radius:999px;background:${bg};color:${fg};font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase">${esc(text)}</span>`;
 }
 
 /* ============================ Classic ============================ */
@@ -127,7 +139,7 @@ function classicBody(order: Order, biz: BusinessSettings, size: StickerSize): st
   const narrow = size === "2x3";
   return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;border:1px solid #111;background:#fff">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:6px">
-      <div>${logoOrName(biz, narrow ? 16 : 24)}<div style="font-size:.85em;color:#555">${esc(biz.mobile)}</div></div>
+      <div>${logoOrName(biz, narrow ? 16 : 24)}<div style="font-size:.85em;color:#111">${esc(biz.mobile)}</div></div>
       <div style="text-align:right;font-size:.85em">
         <div>IV No: <b>${esc(order.id)}</b></div>
         <div>${esc(order.createdAt)}</div>
@@ -165,7 +177,7 @@ function boldBody(order: Order, biz: BusinessSettings, size: StickerSize): strin
     <div style="padding:${d.pad}px;padding-top:8px">
       <div style="display:flex;justify-content:space-between;gap:8px">
         <div style="flex:1">
-          <div style="font-size:.8em;color:#888">SHIP TO</div>
+          <div style="font-size:.8em;color:#111">SHIP TO</div>
           ${recipient(order)}
         </div>
         <div style="text-align:right;font-size:.85em">IV No: <b>${esc(order.id)}</b><br>Parcel ID:<br><b>${esc(parcelId(order))}</b></div>
@@ -188,14 +200,14 @@ function barcodeBody(order: Order, biz: BusinessSettings, size: StickerSize): st
   const s = sym(biz);
   const compact = size === "2x3";
   return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;border:1px solid #111;background:#fff;display:flex;flex-direction:column">
-    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #999;padding-bottom:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #111;padding-bottom:6px">
       <div>${logoOrName(biz, compact ? 14 : 20)}</div>
       <div style="font-size:.85em;text-align:right">IV ${esc(order.id)}<br>${esc(order.createdAt)}</div>
     </div>
     <div style="margin-top:8px">
-      <div style="font-size:.8em;color:#888">NAME / PHONE</div>
+      <div style="font-size:.8em;color:#111">NAME / PHONE</div>
       <div style="font-weight:700">${esc(order.customerName)} · ${esc(order.phone)}</div>
-      <div style="color:#333;margin-top:2px">${esc(order.address)}, ${esc(order.district)}</div>
+      <div style="color:#111;margin-top:2px">${esc(order.address)}, ${esc(order.district)}</div>
     </div>
     <div style="margin-top:6px;font-size:.9em">
       ${order.items
@@ -209,7 +221,7 @@ function barcodeBody(order: Order, biz: BusinessSettings, size: StickerSize): st
     <div style="text-align:center;font-size:.82em;margin-top:3px">Parcel: <b>${esc(parcelId(order))}</b> · ${esc(courierName(order))}</div>
     <div style="flex:1"></div>
     <div style="background:#111;color:#fff;text-align:center;border-radius:6px;padding:${compact ? 6 : 10}px;margin-top:10px">
-      <div style="font-size:.8em;letter-spacing:2px;opacity:.85">COD AMOUNT</div>
+      <div style="font-size:.8em;letter-spacing:2px;color:#fff">COD AMOUNT</div>
       <div style="font-weight:800;font-size:${compact ? 1.4 : 1.9}em">${money(s, dueAmount(order))}</div>
     </div>
   </div>`;
@@ -227,7 +239,7 @@ function compactBody(order: Order, biz: BusinessSettings, size: StickerSize): st
     <div style="border-top:1px solid #111;margin:5px 0"></div>
     <div style="font-weight:700">${esc(order.customerName)}</div>
     <div>${esc(order.phone)}</div>
-    <div style="color:#333;font-size:.95em">${esc(order.address)}, ${esc(order.district)}</div>
+    <div style="color:#111;font-size:.95em">${esc(order.address)}, ${esc(order.district)}</div>
     <div style="margin-top:5px;font-size:.9em">
       ${order.items.map((i) => `${esc(i.productName)} ×${i.qty}`).join(", ")}
     </div>
@@ -240,12 +252,202 @@ function compactBody(order: Order, biz: BusinessSettings, size: StickerSize): st
   </div>`;
 }
 
+/* ============================ Neo ============================ */
+function neoBody(order: Order, biz: BusinessSettings, size: StickerSize): string {
+  const d = dims(size);
+  const s = sym(biz);
+  const compact = size === "2x3";
+  return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;background:#fff;border:2px solid #111;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 10px;border:2px solid #111;border-radius:14px;background:#111;color:#fff">
+      <div>${logoOrName(biz, compact ? 16 : 22)}<div style="margin-top:4px;font-size:.82em;color:#fff">${esc(biz.mobile)}</div></div>
+      <div style="text-align:right">
+        ${softTag("Express", "#fff", "#111")}
+        <div style="margin-top:4px;font-size:.82em;color:#fff">${esc(order.createdAt)}</div>
+        <div style="font-size:.8em;color:#fff">Parcel ${esc(parcelId(order))}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:8px;margin-top:8px">
+      <div style="border:1px solid #111;border-radius:12px;padding:8px;background:#fff">
+        <div style="font-size:.75em;color:#111;letter-spacing:1px;font-weight:800;text-transform:uppercase">Ship To</div>
+        ${recipient(order)}
+      </div>
+      <div style="border:1px solid #111;border-radius:12px;padding:8px;background:#fff">
+        <div style="font-size:.75em;color:#111;letter-spacing:1px;font-weight:800;text-transform:uppercase">Order</div>
+        <div style="font-weight:800;margin-top:6px">IV ${esc(order.id)}</div>
+        <div style="margin-top:3px">Courier: ${esc(courierName(order))}</div>
+        <div style="margin-top:8px">${barcode(parcelId(order), { h: compact ? 28 : 40, w: "100%" })}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;border:1px solid #111;border-radius:12px;background:#fff;padding:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:.75em;color:#111;letter-spacing:1px;font-weight:800;text-transform:uppercase">Items</div>
+        <div style="font-weight:800;color:#111">${money(s, dueAmount(order))}</div>
+      </div>
+      <div style="font-size:.92em;line-height:1.45">
+        ${order.items
+          .map(
+            (i) =>
+              `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px dashed #111">
+                <span style="min-width:0;flex:1">${esc(i.productName)} <span style="color:#111">×${i.qty}</span></span>
+                <span style="font-weight:700">${money(s, i.total)}</span>
+              </div>`
+          )
+          .join("")}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <div style="font-size:.82em;color:#111">${esc(biz.name || "Shop")}</div>
+      <div style="font-weight:800">${money(s, dueAmount(order))}</div>
+    </div>
+    ${shippingNote(biz)}
+  </div>`;
+}
+
+/* ============================ Split ============================ */
+function splitBody(order: Order, biz: BusinessSettings, size: StickerSize): string {
+  const d = dims(size);
+  const s = sym(biz);
+  const compact = size === "2x3";
+  const leftW = compact ? 80 : 104;
+  return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;border:1px solid #111;background:#fff;overflow:hidden">
+    <div style="display:flex;gap:8px">
+      <div style="width:${leftW}px;flex:0 0 ${leftW}px;background:#111;color:#fff;border-radius:12px;padding:10px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:.72em;letter-spacing:1.8px;text-transform:uppercase;color:#fff">Sticker</div>
+          <div style="margin-top:6px;font-weight:800;line-height:1.15">${esc(biz.name || "Shop")}</div>
+        </div>
+        <div>
+          ${softTag("Courier", "#fff", "#111")}
+          <div style="margin-top:8px;font-size:.82em;color:#fff">${esc(courierName(order))}</div>
+          <div style="margin-top:4px;font-size:.78em;color:#fff">${esc(order.createdAt)}</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-size:.75em;color:#111;font-weight:800;letter-spacing:1px;text-transform:uppercase">Destination</div>
+            <div style="margin-top:3px;font-weight:800">${esc(order.customerName)}</div>
+            <div style="font-size:.92em">${esc(order.phone)}</div>
+            <div style="font-size:.92em;color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+          </div>
+          <div style="text-align:right;font-size:.82em">
+            <div style="color:#111;font-weight:800;text-transform:uppercase;letter-spacing:1px">Parcel</div>
+            <div style="font-weight:800">${esc(parcelId(order))}</div>
+          </div>
+        </div>
+        <div style="margin-top:6px">${barcode(parcelId(order), { h: compact ? 28 : 38 })}</div>
+        <div style="margin-top:8px;border-top:1px solid #111;padding-top:8px">
+          ${order.items
+            .map(
+              (i) =>
+                `<div style="display:flex;justify-content:space-between;gap:8px;font-size:.9em">
+                  <span style="min-width:0;flex:1">${esc(i.productName)}</span>
+                  <span style="font-weight:700">${money(s, i.total)}</span>
+                </div>`
+            )
+            .join("")}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:6px 8px;border-radius:10px;background:#fff;border:1px solid #111">
+          <span style="font-weight:800">COD</span>
+          <span style="font-weight:900;font-size:1.15em">${money(s, dueAmount(order))}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================ Express ============================ */
+function expressBody(order: Order, biz: BusinessSettings, size: StickerSize): string {
+  const d = dims(size);
+  const s = sym(biz);
+  const compact = size === "2x3";
+  return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;border:1px solid #111;background:#fff;overflow:hidden">
+    <div style="border-radius:12px;background:#111;color:#fff;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:.72em;letter-spacing:2px;text-transform:uppercase;color:#fff">Express Scan</div>
+        <div style="font-weight:800;margin-top:2px">${esc(courierName(order))}</div>
+      </div>
+      <div style="text-align:right;font-size:.82em">
+        <div>${esc(order.createdAt)}</div>
+        <div>IV ${esc(order.id)}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:.86em">
+      <div style="font-size:.75em;color:#111;font-weight:800;letter-spacing:1px;text-transform:uppercase">Name / Phone</div>
+      <div style="font-weight:800">${esc(order.customerName)} · ${esc(order.phone)}</div>
+      <div style="color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+    </div>
+    <div style="margin-top:8px;padding:8px;border-radius:12px;background:#fff;border:1px solid #111">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:.75em;color:#111;font-weight:800;letter-spacing:1px;text-transform:uppercase">Barcode</div>
+        <div style="font-weight:800">${esc(parcelId(order))}</div>
+      </div>
+      <div style="margin-top:6px">${barcode(parcelId(order), { h: compact ? 34 : 54 })}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px">
+      <div style="border:1px solid #111;border-radius:12px;padding:8px">
+        <div style="font-size:.75em;color:#111;font-weight:800;letter-spacing:1px;text-transform:uppercase">Items</div>
+        <div style="margin-top:4px;font-size:.9em;line-height:1.4">
+          ${order.items.map((i) => `<div>${esc(i.productName)} ×${i.qty}</div>`).join("")}
+        </div>
+      </div>
+      <div style="min-width:92px;border-radius:12px;background:#111;color:#fff;padding:8px;display:flex;flex-direction:column;justify-content:center;text-align:center">
+        <div style="font-size:.72em;letter-spacing:2px;color:#fff">COD</div>
+        <div style="font-weight:900;font-size:${compact ? 1.2 : 1.5}em">${money(s, dueAmount(order))}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;text-align:right;font-size:.8em;color:#111">Parcel ${esc(parcelId(order))}</div>
+  </div>`;
+}
+
+/* ============================ Mono ============================ */
+function monoBody(order: Order, biz: BusinessSettings, size: StickerSize): string {
+  const d = dims(size);
+  const s = sym(biz);
+  const compact = size === "2x3";
+  return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;border:2px solid #111;background:#fff;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-weight:900;font-size:${compact ? 1.1 : 1.25}em;letter-spacing:.2px">${esc(biz.name || "Shop")}</div>
+        <div style="font-size:.82em;color:#111">${esc(biz.mobile)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.72em;letter-spacing:1.8px;color:#111;text-transform:uppercase;font-weight:800">Parcel</div>
+        <div style="font-weight:900">${esc(parcelId(order))}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #111;margin:7px 0"></div>
+    <div style="display:flex;justify-content:space-between;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.75em;color:#111;font-weight:800;letter-spacing:1px;text-transform:uppercase">Recipient</div>
+        <div style="font-weight:800;margin-top:2px">${esc(order.customerName)}</div>
+        <div style="font-size:.9em">${esc(order.phone)}</div>
+        <div style="font-size:.9em;color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+      </div>
+      <div style="width:${compact ? 64 : 78}px;flex:0 0 ${compact ? 64 : 78}px;text-align:right">
+        <div style="font-size:.72em;color:#111;font-weight:800;letter-spacing:1px;text-transform:uppercase">Status</div>
+        <div style="margin-top:3px;font-weight:900">${esc(order.status.toUpperCase())}</div>
+        <div style="margin-top:10px;font-size:.82em">${esc(order.createdAt)}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px">${barcode(parcelId(order), { h: compact ? 28 : 38 })}</div>
+    <div style="margin-top:8px;border-top:1px dashed #111;padding-top:8px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:.82em;color:#111">${esc(order.courier || "Courier")}</div>
+      <div style="font-weight:900;font-size:${compact ? 1.1 : 1.4}em">${money(s, dueAmount(order))}</div>
+    </div>
+  </div>`;
+}
+
 export function renderStickerBody(
   order: Order,
   biz: BusinessSettings,
   template: StickerTemplate,
   size: StickerSize
 ): string {
+  if (template === "neo") return neoBody(order, biz, size);
+  if (template === "split") return splitBody(order, biz, size);
+  if (template === "express") return expressBody(order, biz, size);
+  if (template === "mono") return monoBody(order, biz, size);
   if (template === "bold") return boldBody(order, biz, size);
   if (template === "barcode") return barcodeBody(order, biz, size);
   if (template === "compact") return compactBody(order, biz, size);

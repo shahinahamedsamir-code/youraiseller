@@ -24,12 +24,20 @@ export type BusinessSettings = {
   nextInvoiceNumber: number;
   currency: "BDT" | "USD";
   invoiceFooter: string;
-  invoiceTemplate: "fancy" | "minimal" | "elegant";
+  invoiceTemplate: "fancy" | "minimal" | "elegant" | "studio" | "ledger" | "receipt";
   invoicePaper: "a4" | "pos";
   /** Per delivery-method template override (keyed by delivery method id). */
-  deliveryInvoices: Record<string, "fancy" | "minimal" | "elegant">;
+  deliveryInvoices: Record<string, "fancy" | "minimal" | "elegant" | "studio" | "ledger" | "receipt">;
   /** Shipping label / sticker */
-  stickerTemplate: "classic" | "bold" | "barcode" | "compact";
+  stickerTemplate:
+    | "classic"
+    | "bold"
+    | "barcode"
+    | "compact"
+    | "neo"
+    | "split"
+    | "express"
+    | "mono";
   stickerSize: "3x3" | "2x3" | "3x4";
   /** Order defaults */
   defaultDeliveryCost: number;
@@ -77,7 +85,16 @@ function normalizeDeliveryInvoices(
   const out: BusinessSettings["deliveryInvoices"] = {};
   if (raw && typeof raw === "object") {
     for (const [k, v] of Object.entries(raw)) {
-      if (v === "fancy" || v === "minimal" || v === "elegant") out[k] = v;
+      if (
+        v === "fancy" ||
+        v === "minimal" ||
+        v === "elegant" ||
+        v === "studio" ||
+        v === "ledger" ||
+        v === "receipt"
+      ) {
+        out[k] = v;
+      }
     }
   }
   return out;
@@ -94,10 +111,18 @@ function normalize(raw: Partial<BusinessSettings>): BusinessSettings {
         ? "minimal"
         : raw.invoiceTemplate === "elegant"
           ? "elegant"
-          : "fancy",
+          : raw.invoiceTemplate === "studio"
+            ? "studio"
+            : raw.invoiceTemplate === "ledger"
+              ? "ledger"
+              : raw.invoiceTemplate === "receipt"
+                ? "receipt"
+                : "fancy",
     invoicePaper: raw.invoicePaper === "pos" ? "pos" : "a4",
     deliveryInvoices: normalizeDeliveryInvoices(raw.deliveryInvoices),
-    stickerTemplate: (["classic", "bold", "barcode", "compact"] as const).includes(
+    stickerTemplate: (
+      ["classic", "bold", "barcode", "compact", "neo", "split", "express", "mono"] as const
+    ).includes(
       raw.stickerTemplate as never
     )
       ? (raw.stickerTemplate as BusinessSettings["stickerTemplate"])

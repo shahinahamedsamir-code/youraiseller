@@ -1,19 +1,29 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  ArrowRight,
+  BadgeCheck,
   Check,
   CheckCircle2,
   Copy,
   ExternalLink,
+  Clock3,
   KeyRound,
   Link2,
+  Package,
+  Boxes,
   RefreshCw,
   Save,
   Settings2,
   Store,
+  Sparkles,
+  ListChecks,
+  ShieldCheck,
+  Gauge,
   Truck,
+  Webhook as WebhookIcon,
   Webhook,
 } from "lucide-react";
 import clsx from "clsx";
@@ -196,8 +206,12 @@ export function ShopifyIntegrationWorkspace() {
       typeof window !== "undefined"
         ? window.location.origin
         : "https://app.youraiseller.com";
-    return `${base}/api/webhooks/shopify/${encodeURIComponent(safe)}`;
-  }, [state.shopDomain]);
+    const params = new URLSearchParams();
+    params.set("verify", state.webhookSignatureCheck ? "1" : "0");
+    if (state.incompleteOrderSyncEnabled) params.set("incomplete", "1");
+    const query = params.toString();
+    return `${base}/api/webhooks/shopify/${encodeURIComponent(safe)}${query ? `?${query}` : ""}`;
+  }, [state.incompleteOrderSyncEnabled, state.shopDomain, state.webhookSignatureCheck]);
 
   const verifyConnection = async (
     shopDomain: string,
@@ -401,7 +415,7 @@ export function ShopifyIntegrationWorkspace() {
         accessToken: state.accessToken.trim(),
         limit: 300,
       });
-      const summary = `Sync complete — New ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
+      const summary = `Sync complete â€” New ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
       setProductSyncSummary({
         total: result.total,
         created: result.created,
@@ -450,7 +464,7 @@ export function ShopifyIntegrationWorkspace() {
         accessToken: state.accessToken,
         limit: 50,
       });
-      const summary = `Order sync complete — New ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
+      const summary = `Order sync complete â€” New ${result.created}, Updated ${result.updated}, Failed ${result.failed}, Total ${result.total}`;
       setOrderSyncSummary({
         total: result.total,
         created: result.created,
@@ -491,26 +505,36 @@ export function ShopifyIntegrationWorkspace() {
 
   return (
     <div className="space-y-5">
-      <div className="yai-panel p-5">
+      <section className="yai-panel p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
-              <Store className="h-7 w-7" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-sm">
+              <Store className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Shopify Integration</h1>
-              <p className="mt-1 text-sm text-slate-500">
-                Connect your Shopify store and manage products, orders, stock, and webhooks in one place.
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">
+                Shopify integration
+              </p>
+              <h1 className="mt-1 text-2xl font-black text-slate-900">Setup, sync, and automation</h1>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                Connect Shopify, sync orders, and keep stock updated from one place.
               </p>
             </div>
           </div>
+
           <span
             className={clsx(
               "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold",
-              connectionHealthy ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+              connectionHealthy
+                ? "bg-emerald-100 text-emerald-800"
+                : "bg-amber-100 text-amber-800"
             )}
           >
-            {connectionHealthy ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+            {connectionHealthy ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertTriangle className="h-4 w-4" />
+            )}
             {connectionHealthy
               ? "Connected"
               : connectionMeta.missingScopes?.length
@@ -522,16 +546,16 @@ export function ShopifyIntegrationWorkspace() {
                     : "Needs setup"}
           </span>
         </div>
-      </div>
+      </section>
 
       {toast && (
-        <div className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">
+        <div className="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg">
           {toast}
         </div>
       )}
 
       <div className="yai-panel overflow-hidden">
-        <div className="flex overflow-x-auto border-b border-slate-100 bg-slate-50/80 px-2">
+        <div className="flex overflow-x-auto border-b border-slate-100 bg-white px-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -552,7 +576,7 @@ export function ShopifyIntegrationWorkspace() {
           ))}
         </div>
 
-        <div className="p-5">
+        <div className="bg-slate-50/40 p-5 sm:p-6">
           {activeTab === "setup" && (
             <SetupTab
               state={state}
@@ -599,7 +623,15 @@ export function ShopifyIntegrationWorkspace() {
               summary={orderSyncSummary}
             />
           )}
-          {activeTab === "stock-sync" && <StockSyncTab state={state} setState={setState} />}
+          {activeTab === "stock-sync" && (
+            <StockSyncTab
+              state={state}
+              setState={setState}
+              onSyncProducts={syncProducts}
+              onOpenSetup={() => setActiveTab("setup")}
+              onOpenOrderSync={() => setActiveTab("order-sync")}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -649,359 +681,252 @@ function SetupTab({
   copied: string | null;
 }) {
   const appHomeUrl =
-    typeof window !== "undefined"
+    typeof window !== 'undefined'
       ? `${window.location.origin}/dashboard/integration/shopify`
-      : "https://app.youraiseller.com/dashboard/integration/shopify";
+      : 'https://app.youraiseller.com/dashboard/integration/shopify';
   const redirectUrl =
-    oauthCallbackUrl || `${appHomeUrl.replace(/\/dashboard.*/, "")}/api/shopify/oauth/callback`;
-  const requiredScopesCsv =
-    "read_products,read_inventory,read_orders,read_locations";
+    oauthCallbackUrl || `${appHomeUrl.replace(/\/dashboard.*/, '')}/api/shopify/oauth/callback`;
+  const requiredScopesCsv = 'read_products,read_inventory,read_orders,read_locations';
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-extrabold uppercase tracking-wide text-teal-700">
-            How to connect
-          </h3>
-          <a
-            href="https://dev.shopify.com/dashboard"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-50"
-          >
-            Open Dev Dashboard
-            <ExternalLink className="h-3 w-3" />
-          </a>
+    <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">
+                Connection guide
+              </p>
+              <h3 className="mt-1 text-lg font-black text-slate-900">Setup flow</h3>
+            </div>
+            <a
+              href="https://dev.shopify.com/dashboard"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-xs font-bold text-teal-700 shadow-sm hover:bg-teal-50"
+            >
+              Open Dev Dashboard
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Start with the 3 quick steps below. The rest is only for Shopify setup details.
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <HeaderChip title="Step 1" value="Create app" icon={Store} />
+            <HeaderChip title="Step 2" value="Copy values" icon={Copy} />
+            <HeaderChip title="Step 3" value="Connect store" icon={CheckCircle2} />
+          </div>
         </div>
 
-        <p className="mb-4 text-xs leading-relaxed text-slate-600">
-          Each step matches a screen in Shopify Dev Dashboard (see screenshots). Steps 1–5 are
-          one-time. Steps 6–7 connect your store here.
-        </p>
-
-        <div className="space-y-3">
-          <SetupGuideStep
-            step={1}
-            title="Apps → Create app"
-            body={
-              <div className="space-y-2">
-                <GuidePath items={["dev.shopify.com/dashboard", "Apps", "Create app"]} />
-                <p>
-                  Open <strong>Apps</strong> in the left sidebar. Click the white{" "}
-                  <strong>Create app</strong> button (top right). You may already have apps like{" "}
-                  <strong>Youraiseller</strong> — create a new one or use an existing app.
-                </p>
-              </div>
-            }
-          />
-
-          <SetupGuideStep
-            step={2}
-            title='Pick "Start from Dev Dashboard"'
-            body={
-              <div className="space-y-2">
-                <p>On the <strong>Create an app</strong> page you see two panels:</p>
-                <ul className="list-inside list-disc space-y-1">
-                  <li>
-                    <span className="text-rose-600">Skip</span> left — &quot;Start with Shopify
-                    CLI&quot; (terminal)
-                  </li>
-                  <li>
-                    <span className="text-emerald-700">Use</span> right —{" "}
-                    <strong>Start from Dev Dashboard</strong>
-                  </li>
-                </ul>
-                <p>
-                  Enter <strong>App name</strong> (e.g. <strong>Youraiseller</strong>) and create
-                  the app.
-                </p>
-              </div>
-            }
-          />
-
+        <div className="space-y-3 p-5">
+          <SetupGuideStep step={1} title="Create app" body={<p>Open Shopify Dev Dashboard and create a new app from Apps.</p>} />
+          <SetupGuideStep step={2} title="Use Dev Dashboard option" body={<p>Select the Dev Dashboard path, then name the app clearly like Youraiseller.</p>} />
           <SetupGuideStep
             step={3}
-            title="Versions → Create version → URLs"
+            title="Paste URLs"
             body={
               <div className="space-y-3">
                 <GuidePath items={["Youraiseller", "Versions", "Create version"]} />
-                <p>In the <strong>URLs</strong> section on the Create version page:</p>
                 <ul className="list-inside list-disc space-y-1">
-                  <li>
-                    <strong>App URL</strong> — paste from below
-                  </li>
-                  <li>
-                    <strong>Uncheck</strong> &quot;Embed app in Shopify admin&quot;
-                  </li>
-                  <li>
-                    <strong>Webhooks API version</strong> — use latest (e.g. 2026-04)
-                  </li>
+                  <li>Paste the App URL below</li>
+                  <li>Keep Embed app in Shopify admin off</li>
+                  <li>Use the latest Webhooks API version</li>
                 </ul>
-                <p className="text-[11px] text-slate-500">
-                  Ignore the blue &quot;Start using Shopify CLI&quot; banner — not needed here.
-                </p>
-                <div className="rounded-lg border border-slate-200 bg-white p-2.5">
-                  <CopyRow
-                    label="App URL"
-                    value={appHomeUrl}
-                    copyKey="app-url"
-                    copy={copy}
-                    copied={copied}
-                  />
+                <div className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+                  <CopyRow label="App URL" value={appHomeUrl} copyKey="app-url" copy={copy} copied={copied} />
                 </div>
               </div>
             }
           />
-
           <SetupGuideStep
             step={4}
-            title="Access → Scopes & Redirect URLs → Release"
+            title="Add scopes"
             body={
               <div className="space-y-3">
-                <p>Scroll down to the <strong>Access</strong> section on the same page:</p>
                 <ul className="list-inside list-disc space-y-1">
-                  <li>
-                    <strong>Scopes</strong> — paste comma-separated list below (or click{" "}
-                    <strong>Select scopes</strong>)
-                  </li>
-                  <li>
-                    <strong>Redirect URLs</strong> — paste redirect URL below
-                  </li>
-                  <li>
-                    Leave <strong>Use legacy install flow</strong> unchecked
-                  </li>
+                  <li>Paste the scopes below</li>
+                  <li>Paste the redirect URL below</li>
+                  <li>Leave legacy install flow off</li>
                 </ul>
-                <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2.5">
-                  <CopyRow
-                    label="Scopes field"
-                    value={requiredScopesCsv}
-                    copyKey="scopes-csv"
-                    copy={copy}
-                    copied={copied}
-                  />
-                  <CopyRow
-                    label="Redirect URLs field"
-                    value={redirectUrl}
-                    copyKey="redirect-url"
-                    copy={copy}
-                    copied={copied}
-                  />
+                <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+                  <CopyRow label="Scopes" value={requiredScopesCsv} copyKey="scopes-csv" copy={copy} copied={copied} />
+                  <CopyRow label="Redirect URL" value={redirectUrl} copyKey="redirect-url" copy={copy} copied={copied} />
                 </div>
-                <p>
-                  Click <strong>Release</strong> (top or bottom right). Scopes only apply after
-                  Release.
-                </p>
               </div>
             }
           />
-
           <SetupGuideStep
             step={5}
-            title="Install app on store"
+            title="Install app"
             body={
               <div className="space-y-2">
                 <GuidePath items={["Youraiseller", "Home", "Install app", "Select store"]} />
-                <p>
-                  Install on your store (e.g. <strong>{EXAMPLE_SHOP_DOMAIN}</strong>). If scopes
-                  changed later, uninstall first then reinstall.
-                </p>
+                <p>Install on the store you want to connect. Reinstall if scopes change later.</p>
               </div>
             }
           />
-
-          <SetupGuideStep
-            step={6}
-            title="Settings → Client ID & Secret"
-            body={
-              <div className="space-y-2">
-                <GuidePath items={["Youraiseller", "Settings", "Credentials"]} />
-                <ul className="list-inside list-disc space-y-1">
-                  <li>
-                    <strong>Client ID</strong> — click copy icon
-                  </li>
-                  <li>
-                    <strong>Secret</strong> — click eye icon, then copy
-                  </li>
-                </ul>
-                <p>Paste both into the form on the right side of this page.</p>
-              </div>
-            }
-          />
-
-          <SetupGuideStep
-            step={7}
-            title="Connect on this page"
-            isLast
-            body={
-              <>
-                Right panel: enter <strong>Shop domain</strong> (e.g. {EXAMPLE_SHOP_DOMAIN}),
-                click <strong>Connect</strong>.
-                Badge should show <strong>Connected</strong>. Then go to{" "}
-                <strong>Product Sync</strong> → <strong>Sync products now</strong>.
-              </>
-            }
-          />
-        </div>
-
-        <div className="mt-4 space-y-2">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
-            <strong>After connecting:</strong> open the <strong>Product Sync</strong> tab and click{" "}
-            <strong>Sync products now</strong>.
-          </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
-            <strong>Note:</strong> Access tokens expire after ~24 hours. If sync fails, click{" "}
-            <strong>Connect</strong> again on the right.
-          </div>
+          <SetupGuideStep step={6} title="Copy credentials" body={<p>Copy the Client ID and Secret from Shopify Settings into the right panel.</p>} />
+          <SetupGuideStep step={7} title="Connect here" isLast body={<>Enter the shop domain, then click Connect. After that, go to Product Sync.</>} />
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 p-5">
-        <h3 className="mb-3 text-base font-bold text-slate-900">Store details</h3>
-
-        {connectionHealthy && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              <p className="font-bold">
-                Connected{connectionMeta.shopName ? ` — ${connectionMeta.shopName}` : ""}
-              </p>
-              <p className="mt-1 opacity-90">You can sync products and orders now.</p>
-            </div>
-          </div>
-        )}
-
-        {!connectionHealthy && connectionMeta.missingScopes?.length ? (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              <p className="font-bold">Some permissions are still missing</p>
-              <p className="mt-1 leading-relaxed">
-                Dev Dashboard → Versions → add permissions → Release → uninstall and reinstall on
-                your store → click Connect
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {!connectionHealthy && !connectionMeta.missingScopes?.length ? (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-900">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            {hasBasicSetup
-              ? "Token saved but not verified. Click Test Connection or Connect again."
-              : hasDevCredentials
-                ? "Client ID and Secret look good. Click Connect now."
-                : "Create an app in Dev Dashboard, install it on your store, then add Client ID and Secret."}
-          </div>
-        ) : null}
-
-        <div className="space-y-4">
-          <LabeledInput
-            label="Shop domain"
-            icon={Link2}
-            value={state.shopDomain}
-            placeholder={EXAMPLE_SHOP_DOMAIN}
-            onChange={(value) => setState((prev) => ({ ...prev, shopDomain: value }))}
-          />
-          <p className="text-xs text-slate-500">
-            Example: <span className="font-semibold">{EXAMPLE_SHOP_DOMAIN}</span> — use only the
-            myshopify.com address, not localhost or a full website URL
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">Store details</p>
+          <h3 className="mt-1 text-lg font-black text-slate-900">Connect and verify</h3>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+            You only need the shop domain, Client ID, and Client Secret. Everything else is copied from Shopify.
           </p>
+        </div>
 
-          <LabeledInput
-            label="Client ID"
-            icon={KeyRound}
-            value={state.clientId}
-            placeholder="Copy from Dev Dashboard → Settings"
-            onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
-          />
-          <LabeledInput
-            label="Client Secret"
-            icon={KeyRound}
-            type="password"
-            value={state.clientSecret}
-            placeholder="Copy from Dev Dashboard → Settings"
-            onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
-          />
-          {state.accessToken.trim() ? (
-            <div>
-              <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Access token
-              </p>
-              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                <p className="text-sm font-semibold text-emerald-800">
-                  Token received — click Connect again to refresh
+        <div className="space-y-4 p-5">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <StatusPill label="Need from you" value="3 fields" />
+            <StatusPill
+              label="Best next step"
+              value={connectionHealthy ? "Sync products" : "Connect store"}
+            />
+            <StatusPill label="Help" value="Use copy buttons" />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <StatusPill
+              label="Connection"
+              value={
+                connectionHealthy
+                  ? 'Connected'
+                  : connectionMeta.missingScopes?.length
+                    ? 'Needs permissions'
+                    : hasBasicSetup
+                      ? 'Ready to verify'
+                      : 'Not connected'
+              }
+            />
+            <StatusPill label="Shop" value={state.shopDomain || EXAMPLE_SHOP_DOMAIN} />
+          </div>
+
+          {connectionHealthy && (
+            <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs text-emerald-900">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-bold">
+                  Connected{connectionMeta.shopName ? ` — ${connectionMeta.shopName}` : ''}
                 </p>
+                <p className="mt-1 leading-5 opacity-90">Products and orders can sync now.</p>
               </div>
             </div>
-          ) : (
-            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-              Access token is filled automatically when you click <strong>Connect</strong>.
-            </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={getAccessToken}
-              disabled={fetchingToken}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
-            >
-              {fetchingToken ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="h-4 w-4" />
-              )}
-              {fetchingToken ? "Connecting..." : "Connect"}
-            </button>
-            <button
-              type="button"
-              onClick={saveSetup}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-            >
-              {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? "Saving..." : "Save"}
-            </button>
-            <a
-              href="https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              Help docs
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-            <button
-              type="button"
-              onClick={testConnection}
-              disabled={testing}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-            >
-              {testing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
-              {testing ? "Testing..." : "Test connection"}
-            </button>
-            <button
-              type="button"
-              onClick={connectViaApp}
-              disabled={startingOAuth}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-60"
-            >
-              {startingOAuth ? (
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              ) : (
+          {!connectionHealthy && connectionMeta.missingScopes?.length ? (
+            <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-900">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-bold">Some permissions are missing</p>
+                <p className="mt-1 leading-5">Add scopes in Dev Dashboard, release, reinstall, then connect again.</p>
+              </div>
+            </div>
+          ) : null}
+
+          {!connectionHealthy && !connectionMeta.missingScopes?.length ? (
+            <div className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3 text-xs text-rose-900">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="leading-5">
+                {hasBasicSetup
+                  ? 'Token saved but not verified yet.'
+                  : hasDevCredentials
+                    ? 'Client ID and Secret are ready. Connect now.'
+                    : 'Create the app, install it, then add Client ID and Secret.'}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
+            <LabeledInput
+              label="Shop domain"
+              icon={Link2}
+              value={state.shopDomain}
+              placeholder={EXAMPLE_SHOP_DOMAIN}
+              onChange={(value) => setState((prev) => ({ ...prev, shopDomain: value }))}
+            />
+            <p className="text-xs text-slate-500">
+              Use the myshopify.com address only, not a full website URL.
+            </p>
+            <LabeledInput
+              label="Client ID"
+              icon={KeyRound}
+              value={state.clientId}
+              placeholder="Copy from Dev Dashboard -> Settings"
+              onChange={(value) => setState((prev) => ({ ...prev, clientId: value }))}
+            />
+            <LabeledInput
+              label="Client Secret"
+              icon={KeyRound}
+              type="password"
+              value={state.clientSecret}
+              placeholder="Copy from Dev Dashboard -> Settings"
+              onChange={(value) => setState((prev) => ({ ...prev, clientSecret: value }))}
+            />
+
+            {state.accessToken.trim() ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-emerald-700">
+                  Access token
+                </p>
+                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                  Token received. Click Connect again to refresh.
+                </div>
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-3 py-2.5 text-xs leading-5 text-slate-500">
+                Access token is filled automatically when you click Connect.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={connectViaApp}
+                disabled={startingOAuth}
+                className="inline-flex items-center gap-2 rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-200 hover:bg-teal-700 disabled:opacity-60"
+              >
+                {startingOAuth ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+                {startingOAuth ? 'Opening Shopify...' : 'Connect'}
+              </button>
+              <button
+                type="button"
+                onClick={saveSetup}
+                disabled={saving}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+              >
+                {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={testConnection}
+                disabled={testing}
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+              >
+                {testing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
+                {testing ? 'Testing...' : 'Test connection'}
+              </button>
+              <a
+                href="https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
+              >
+                Help docs
                 <ExternalLink className="h-3.5 w-3.5" />
-              )}
-              {startingOAuth ? "Opening Shopify..." : "Install via OAuth"}
-            </button>
+              </a>
+            </div>
           </div>
         </div>
       </section>
     </div>
   );
 }
-
 function WebhooksTab({
   state,
   setState,
@@ -1020,67 +945,107 @@ function WebhooksTab({
   verifyWebhookEndpoint: () => Promise<void>;
 }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-        <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-teal-700">
-          Webhook setup
-        </h3>
-        <ol className="list-inside list-decimal space-y-2 text-sm leading-relaxed text-slate-700">
-          <li>Go to Shopify Admin → Settings → Notifications → Webhooks</li>
-          <li>Click Add webhook</li>
-          <li>Select events: order created, updated, or cancelled</li>
-          <li>Copy the URL from the right panel, paste it, and save</li>
-          <li>Place a test order to confirm it appears in your dashboard</li>
-        </ol>
+    <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">Webhook setup</p>
+          <h3 className="mt-1 text-lg font-black text-slate-900">Event delivery</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Shopify sends order events here so the dashboard stays live without manual refresh.
+          </p>
+        </div>
+
+        <div className="space-y-3 p-5">
+          {[
+            'Go to Shopify Admin -> Settings -> Notifications -> Webhooks',
+            'Add order created, updated, and cancelled events',
+            'Paste the generated endpoint below and save',
+            'Place a test order to confirm it reaches Web Order List',
+          ].map((item, index) => (
+            <div key={item} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-black text-white">
+                {index + 1}
+              </div>
+              <p className="pt-0.5 text-sm leading-6 text-slate-700">{item}</p>
+            </div>
+          ))}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-teal-100 bg-teal-50/70 p-4">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <ShieldCheck className="h-4 w-4 text-teal-600" />
+                Signature check
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Recommended after you confirm the secret.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Clock3 className="h-4 w-4 text-teal-600" />
+                Incomplete sync
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Keeps incomplete orders on a 15 minute check.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-slate-200 p-5">
-        <h3 className="text-base font-bold text-slate-900">Webhook settings</h3>
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">Webhook settings</p>
+          <h3 className="mt-1 text-lg font-black text-slate-900">Endpoint and switches</h3>
+        </div>
 
-        <ToggleItem
-          label="Signature verification"
-          hint="Recommended for security. Enable after you confirm the shared secret."
-          on={state.webhookSignatureCheck}
-          onToggle={() =>
-            setState((prev) => ({
-              ...prev,
-              webhookSignatureCheck: !prev.webhookSignatureCheck,
-            }))
-          }
-        />
+        <div className="space-y-4 p-5">
+          <ToggleItem
+            label="Signature verification"
+            hint="Enable after you confirm the shared secret."
+            on={state.webhookSignatureCheck}
+            onToggle={() =>
+              setState((prev) => ({
+                ...prev,
+                webhookSignatureCheck: !prev.webhookSignatureCheck,
+              }))
+            }
+          />
 
-        <ToggleItem
-          label="Incomplete order sync"
-          hint="Imports incomplete Shopify orders and checks every 15 minutes."
-          on={state.incompleteOrderSyncEnabled}
-          onToggle={() =>
-            setState((prev) => ({
-              ...prev,
-              incompleteOrderSyncEnabled: !prev.incompleteOrderSyncEnabled,
-            }))
-          }
-        />
+          <ToggleItem
+            label="Incomplete order sync"
+            hint="Imports incomplete Shopify orders and checks every 15 minutes."
+            on={state.incompleteOrderSyncEnabled}
+            onToggle={() =>
+              setState((prev) => ({
+                ...prev,
+                incompleteOrderSyncEnabled: !prev.incompleteOrderSyncEnabled,
+              }))
+            }
+          />
 
-        <CopyField
-          label="Webhook URL (copy this)"
-          value={webhookUrl}
-          copied={copied === "webhook"}
-          onCopy={() => copy("webhook", webhookUrl)}
-        />
-        <button
-          type="button"
-          onClick={verifyWebhookEndpoint}
-          disabled={verifyingWebhook}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-        >
-          {verifyingWebhook ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Webhook className="h-3.5 w-3.5" />}
-          {verifyingWebhook ? "Verifying..." : "Verify webhook"}
-        </button>
+          <CopyField
+            label="Webhook URL"
+            value={webhookUrl}
+            copied={copied === 'webhook'}
+            onCopy={() => copy('webhook', webhookUrl)}
+          />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={verifyWebhookEndpoint}
+              disabled={verifyingWebhook}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-200 hover:bg-teal-700 disabled:opacity-60"
+            >
+              {verifyingWebhook ? <RefreshCw className="h-4 w-4 animate-spin" /> : <WebhookIcon className="h-4 w-4" />}
+              {verifyingWebhook ? 'Verifying...' : 'Verify webhook'}
+            </button>
+            <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
+              {state.webhookSignatureCheck ? 'Signed' : 'Unsigned'} delivery
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );
 }
-
 function ProductSyncTab({
   syncingProducts,
   onSyncProducts,
@@ -1097,55 +1062,73 @@ function ProductSyncTab({
   } | null;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            Product count mismatch? Update the API version in Dev Dashboard and try syncing again.
+    <div className="space-y-5">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">Product sync</p>
+          <h3 className="mt-1 text-lg font-black text-slate-900">Keep catalog in sync</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Pull the full Shopify catalog, update existing items, and keep variants aligned with price, images, and stock.
           </p>
         </div>
-      </div>
 
-      <section className="rounded-2xl border border-slate-200 p-5">
-        <h3 className="mb-2 text-base font-bold text-slate-900">Import products</h3>
-        <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-slate-700">
-          <li>Imports your full Shopify catalog into this system.</li>
-          <li>Existing products are updated; new products are created.</li>
-          <li>Variants are synced with price, stock, and images.</li>
-          <li>If a variant has no image, the main product image is used.</li>
-        </ul>
-        <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={onSyncProducts}
-            disabled={syncingProducts}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
-          >
-            {syncingProducts ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-            {syncingProducts ? "Syncing..." : "Sync products now"}
-          </button>
-        </div>
-        {summary && (
-          <div className="mt-4 space-y-3">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <SyncStat label="Total" value={summary.total} tone="slate" />
-              <SyncStat label="New" value={summary.created} tone="emerald" />
-              <SyncStat label="Updated" value={summary.updated} tone="sky" />
-              <SyncStat label="Failed" value={summary.failed} tone="rose" />
+        <div className="grid gap-0 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-3 p-5">
+            {[
+              'Imports the full Shopify catalog into the system',
+              'Updates existing products and creates new ones',
+              'Variants sync with price, stock, and images',
+              'Main product image is used when a variant has none',
+            ].map((item) => (
+              <div key={item} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-teal-500" />
+                <p className="text-sm leading-6 text-slate-700">{item}</p>
+              </div>
+            ))}
+
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Product count mismatch? Update the API version in Dev Dashboard and try syncing again.
             </div>
-            {summary.message && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-                {summary.message}
+          </div>
+
+          <div className="border-t border-slate-100 bg-slate-50/70 p-5 xl:border-l xl:border-t-0">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500">Sync action</p>
+              <button
+                type="button"
+                onClick={onSyncProducts}
+                disabled={syncingProducts}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-teal-200 hover:bg-teal-700 disabled:opacity-60"
+              >
+                {syncingProducts ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+                {syncingProducts ? 'Syncing products...' : 'Sync products now'}
+              </button>
+              <div className="mt-4 rounded-2xl bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-500">
+                Existing items update in place. New products are created automatically.
+              </div>
+            </div>
+
+            {summary && (
+              <div className="mt-4 space-y-3">
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                  <SyncStat label="Total" value={summary.total} tone="slate" />
+                  <SyncStat label="New" value={summary.created} tone="emerald" />
+                  <SyncStat label="Updated" value={summary.updated} tone="sky" />
+                  <SyncStat label="Failed" value={summary.failed} tone="rose" />
+                </div>
+                {summary.message && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs font-medium leading-5 text-amber-900">
+                    {summary.message}
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
       </section>
     </div>
   );
 }
-
 function SyncStat({
   label,
   value,
@@ -1162,18 +1145,19 @@ function SyncStat({
     rose: "border-rose-200 bg-rose-50 text-rose-900",
   };
   return (
-    <div className={clsx("rounded-xl border px-3 py-2", toneClass[tone])}>
-      <p className="text-[11px] font-bold uppercase tracking-wide">{label}</p>
-      <p className="mt-1 text-xl font-extrabold">{value}</p>
+    <div className={clsx("rounded-2xl border px-3 py-3 shadow-sm", toneClass[tone])}>
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-inherit/70">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-black leading-none">{value}</p>
     </div>
   );
 }
-
 function OrderSyncTab({
   syncingOrders,
   onSyncOrders,
   summary,
-}: {
+  }: {
   syncingOrders: boolean;
   onSyncOrders: () => Promise<void>;
   summary: {
@@ -1185,43 +1169,98 @@ function OrderSyncTab({
   } | null;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 p-5">
-      <h3 className="mb-2 text-base font-bold text-slate-900">Import orders</h3>
-      <p className="mb-4 text-sm text-slate-500">
-        Pull your recent Shopify orders into this dashboard.
-      </p>
-      <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-slate-700">
-        <li>Imports your most recent orders (up to 50).</li>
-        <li>Orders are created automatically in your dashboard.</li>
-        <li>Duplicates are avoided using tags on the Shopify side.</li>
-        <li>Includes customer, line items, and shipping details.</li>
-      </ul>
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={onSyncOrders}
-          disabled={syncingOrders}
-          className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-teal-700 disabled:opacity-60"
-        >
-          {syncingOrders ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-          {syncingOrders ? "Syncing..." : "Sync recent orders"}
-        </button>
-      </div>
-      {summary && (
-        <div className="mt-4 space-y-3">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <SyncStat label="Total" value={summary.total} tone="slate" />
-            <SyncStat label="New" value={summary.created} tone="emerald" />
-            <SyncStat label="Updated" value={summary.updated} tone="sky" />
-            <SyncStat label="Failed" value={summary.failed} tone="rose" />
+    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-white to-teal-50/40 shadow-sm">
+      <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-5 p-5 sm:p-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            Smart Shopify import
           </div>
-          {summary.message && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-              {summary.message}
+
+          <div>
+            <h3 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+              Import recent Shopify orders
+            </h3>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              First sync pulls only the last 12 hours. After that, we keep it incremental so the
+              dashboard stays clean and current.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Clock3 className="h-4 w-4 text-teal-600" />
+                Fresh window
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                New user setup imports only recent orders, not old history.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <BadgeCheck className="h-4 w-4 text-teal-600" />
+                Auto Web Orders
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Shopify orders appear in Web Order List like WooCommerce orders.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-teal-100 bg-teal-50/70 p-4 text-sm text-teal-900">
+            <div className="flex items-start gap-2">
+              <ListChecks className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="leading-6">
+                Orders, customer info, line items, and shipping details are saved automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200/80 bg-slate-50/80 p-5 sm:p-6 lg:border-l lg:border-t-0">
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
+              Sync action
+            </p>
+            <button
+              type="button"
+              onClick={onSyncOrders}
+              disabled={syncingOrders}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-teal-200 transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {syncingOrders ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              {syncingOrders ? "Syncing orders..." : "Sync recent orders"}
+            </button>
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+                First sync window
+                <div className="mt-1 text-sm font-bold text-slate-900">Last 12 hours</div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+                Auto sync behavior
+                <div className="mt-1 text-sm font-bold text-slate-900">Incremental updates</div>
+              </div>
+            </div>
+          </div>
+
+          {summary && (
+            <div className="mt-4 space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <SyncStat label="Total" value={summary.total} tone="slate" />
+                <SyncStat label="New" value={summary.created} tone="emerald" />
+                <SyncStat label="Updated" value={summary.updated} tone="sky" />
+                <SyncStat label="Failed" value={summary.failed} tone="rose" />
+              </div>
+              {summary.message && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs font-medium leading-5 text-amber-900">
+                  {summary.message}
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
     </section>
   );
 }
@@ -1229,81 +1268,166 @@ function OrderSyncTab({
 function StockSyncTab({
   state,
   setState,
+  onSyncProducts,
+  onOpenSetup,
+  onOpenOrderSync,
 }: {
   state: ShopifyState;
   setState: React.Dispatch<React.SetStateAction<ShopifyState>>;
+  onSyncProducts: () => Promise<void>;
+  onOpenSetup: () => void;
+  onOpenOrderSync: () => void;
 }) {
+  const disableTracking = () => {
+    setState((prev) => ({
+      ...prev,
+      stockSyncEnabled: !prev.stockSyncEnabled,
+    }));
+  };
+
   return (
-    <div className="space-y-4">
-      <section className="rounded-2xl border border-slate-200 p-5">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Truck className="h-5 w-5 text-teal-600" />
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Stock sync</h3>
-              <p className="text-xs text-slate-500">
-                Keeps inventory and Shopify stock levels in sync automatically.
+    <div className="space-y-5">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-teal-700">Stock sync</p>
+          <h3 className="mt-1 text-lg font-black text-slate-900">Inventory and tracking control</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Keep Shopify stock aligned with your dashboard while choosing how orders affect availability.
+          </p>
+        </div>
+
+        <div className="space-y-4 p-5">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Real-time sync" value={state.stockSyncEnabled ? 'Enabled' : 'Disabled'} />
+            <StatCard
+              label="Order stock behavior"
+              value={state.stockBehavior === 'deduct_on_order' ? 'Deduct on order' : 'Reserve on checkout'}
+            />
+            <StatCard label="Default location" value={state.defaultLocation} />
+            <StatCard
+              label="Shopify tracking"
+              value={state.shopifyTracking === 'active_managed' ? 'Active (managed)' : 'Active (unmanaged)'}
+            />
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
+              <h4 className="text-sm font-black text-slate-900">Queue health</h4>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <QueueCard title="Pending" value="0" tone="amber" />
+                <QueueCard title="Processing" value="0" tone="sky" />
+                <QueueCard title="Failed" value="0" tone="rose" />
+                <QueueCard title="Completed" value="0" tone="emerald" />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h4 className="text-sm font-black text-slate-900">Controls</h4>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Use these when you want to refresh catalog data or move quickly to setup and order history.
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onSyncProducts}
+                  className="rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-200 hover:bg-teal-700"
+                >
+                  Sync all products
+                </button>
+                <button
+                  type="button"
+                  onClick={disableTracking}
+                  className="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  {state.stockSyncEnabled ? 'Disable tracking' : 'Enable tracking'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenSetup}
+                  className="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenOrderSync}
+                  className="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  View history
+                </button>
+              </div>
             </div>
           </div>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            <Settings2 className="h-4 w-4" />
-            Settings
-          </button>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Real-time sync" value={state.stockSyncEnabled ? "Enabled" : "Disabled"} />
-          <StatCard
-            label="Order stock behavior"
-            value={state.stockBehavior === "deduct_on_order" ? "Deduct on order" : "Reserve on checkout"}
-          />
-          <StatCard label="Default location" value={state.defaultLocation} />
-          <StatCard
-            label="Shopify tracking"
-            value={state.shopifyTracking === "active_managed" ? "Active (managed)" : "Active (unmanaged)"}
-          />
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 p-5">
-        <h4 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-slate-600">
-          Sync queue
-        </h4>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <QueueCard title="Pending" value="0" tone="amber" />
-          <QueueCard title="Processing" value="0" tone="sky" />
-          <QueueCard title="Failed" value="0" tone="rose" />
-          <QueueCard title="Completed" value="0" tone="emerald" />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700">
-            Sync all products
-          </button>
-          <button className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700">
-            Cancel sync
-          </button>
-          <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Disable tracking
-          </button>
-          <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            View history
-          </button>
         </div>
       </section>
     </div>
   );
 }
+function HeaderChip({
+  title,
+  value,
+  icon: Icon,
+}: {
+  title: string;
+  value: string;
+  icon: typeof Link2;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/10 p-3 text-white ring-1 ring-white/10 backdrop-blur">
+      <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-300">
+        <Icon className="h-3.5 w-3.5 text-teal-200" />
+        {title}
+      </div>
+      <p className="mt-2 text-sm font-bold text-white">{value}</p>
+    </div>
+  );
+}
 
+function QuickLink({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "rounded-2xl border px-3 py-2 text-left text-sm font-bold transition",
+        active
+          ? "border-teal-200 bg-teal-50 text-teal-700"
+          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function StatusPill({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-bold text-slate-900">{value}</p>
+    </div>
+  );
+}
 function GuidePath({ items }: { items: string[] }) {
   return (
     <div className="flex flex-wrap items-center gap-1 rounded-lg border border-teal-100 bg-teal-50/80 px-2.5 py-1.5 text-[11px] font-medium text-teal-900">
       {items.map((item, index) => (
         <span key={item} className="inline-flex items-center gap-1">
-          {index > 0 && <span className="text-teal-400">→</span>}
+          {index > 0 && <span className="text-teal-400">â†’</span>}
           <span>{item}</span>
         </span>
       ))}
@@ -1509,4 +1633,11 @@ function QueueCard({
     </div>
   );
 }
+
+
+
+
+
+
+
 

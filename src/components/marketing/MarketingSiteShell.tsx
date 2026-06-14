@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { MarketingSiteFooter } from "@/components/marketing/MarketingSiteFooter";
 import { MarketingSiteHeader } from "@/components/marketing/MarketingSiteHeader";
+import { MarketingLanguageProvider } from "@/components/marketing/MarketingLanguageProvider";
 import { MarketingThemeProvider } from "@/components/marketing/MarketingThemeProvider";
 
 export function MarketingSiteShell({
@@ -9,14 +10,16 @@ export function MarketingSiteShell({
   homeHref,
 }: {
   children: ReactNode;
-  active?: "package";
+  active?: "package" | "features";
   homeHref?: string;
 }) {
   return (
     <MarketingThemeProvider>
-      <MarketingSiteHeader active={active} homeHref={homeHref} />
-      {children}
-      <MarketingSiteFooter />
+      <MarketingLanguageProvider>
+        <MarketingSiteHeader active={active} homeHref={homeHref} />
+        {children}
+        <MarketingSiteFooter />
+      </MarketingLanguageProvider>
     </MarketingThemeProvider>
   );
 }

@@ -27,6 +27,9 @@ const TEMPLATES: {
   { id: "fancy", title: "Aurora", subtitle: "Premium gradient invoice", badge: "Popular" },
   { id: "minimal", title: "Mono", subtitle: "Clean minimalist invoice", badge: "Classic" },
   { id: "elegant", title: "Luxe", subtitle: "Dark & gold premium invoice", badge: "New" },
+  { id: "studio", title: "Studio", subtitle: "Split editorial invoice", badge: "Fresh" },
+  { id: "ledger", title: "Ledger", subtitle: "Structured business invoice", badge: "Pro" },
+  { id: "receipt", title: "Receipt", subtitle: "Compact print-first invoice", badge: "Fast" },
 ];
 
 function PreviewCard({

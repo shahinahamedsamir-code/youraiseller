@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { WooAutoSyncRunner } from "@/components/web-orders/WooAutoSyncRunner";
+import { ShopifyOrderAutoSyncRunner } from "@/components/web-orders/ShopifyOrderAutoSyncRunner";
 import { CourierAutoSyncRunner } from "@/components/orders/CourierAutoSyncRunner";
 import { CourierWebhookPullRunner } from "@/components/orders/CourierWebhookPullRunner";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -41,6 +42,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <WooAutoSyncRunner />
+      <ShopifyOrderAutoSyncRunner />
       <CourierAutoSyncRunner />
       <CourierWebhookPullRunner />
     </div>

@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
-import { Crown, Rocket, Sparkles } from "lucide-react";
+import { Building2, Crown, Rocket, Sparkles } from "lucide-react";
+import type { FeatureKey } from "./features";
 
 export type MarketingPackage = {
   id: string;
@@ -13,15 +14,18 @@ export type MarketingPackage = {
   ring: string;
   glow: string;
   cta: string;
-  highlights: string[];
+  highlights: Array<{
+    label: string;
+    featureKey?: FeatureKey;
+  }>;
 };
 
 export const MARKETING_PACKAGES: MarketingPackage[] = [
   {
     id: "basic",
     name: "Starter",
-    tagline: "New shop — orders, web list & basic inventory",
-    price: "৳1,999",
+    tagline: "New shop - orders, web list & basic inventory",
+    price: "৳999",
     period: "/month",
     icon: Sparkles,
     accent: "from-slate-500 to-slate-700",
@@ -29,20 +33,20 @@ export const MARKETING_PACKAGES: MarketingPackage[] = [
     glow: "shadow-slate-900/40",
     cta: "Start with Starter",
     highlights: [
-      "Dashboard & order management",
-      "Web orders & manual entry",
-      "Product list & stock in/out",
-      "SMS balance & notifications",
-      "Delivery methods & shipping note",
-      "Team users & business settings",
-      "Reports & customer list",
+      { label: "Dashboard", featureKey: "dashboard" },
+      { label: "Web Order List", featureKey: "web_order_list" },
+      { label: "Product List", featureKey: "inv_product_list" },
+      { label: "SMS Integration", featureKey: "sms" },
+      { label: "WooCommerce Integration" },
+      { label: "Delivery Methods", featureKey: "delivery" },
+      { label: "Reports", featureKey: "reports" },
     ],
   },
   {
     id: "pro",
     name: "Growth",
-    tagline: "Scaling brand — WooCommerce, Auto Call & integrations",
-    price: "৳4,999",
+    tagline: "Scaling brand - WooCommerce, Auto Call & integrations",
+    price: "৳1,999",
     period: "/month",
     icon: Rocket,
     popular: true,
@@ -51,20 +55,20 @@ export const MARKETING_PACKAGES: MarketingPackage[] = [
     glow: "shadow-violet-500/30",
     cta: "Choose Growth",
     highlights: [
-      "Everything in Starter",
-      "WooCommerce product & order sync",
-      "Auto Call Center & voice campaigns",
-      "Steadfast & courier integrations",
-      "Smart restock & inventory dashboard",
-      "Shopify integration",
-      "Super edit & preorder workflows",
+      { label: "Everything in Starter" },
+      { label: "WooCommerce Integration", featureKey: "woocommerce" },
+      { label: "Shopify Integration", featureKey: "shopify_integration" },
+      { label: "Auto Call Center", featureKey: "auto_call_center" },
+      { label: "Courier Integration", featureKey: "courier_integration" },
+      { label: "Smart Restock", featureKey: "inv_smart_restock" },
+      { label: "Super Edit", featureKey: "super_edit" },
     ],
   },
   {
     id: "enterprise",
     name: "Business",
-    tagline: "Full power — every module, founder view & automation",
-    price: "৳9,999",
+    tagline: "Full power - every module, founder view & automation",
+    price: "৳4,999",
     period: "/month",
     icon: Crown,
     accent: "from-amber-400 via-orange-500 to-rose-500",
@@ -72,13 +76,33 @@ export const MARKETING_PACKAGES: MarketingPackage[] = [
     glow: "shadow-amber-500/20",
     cta: "Go Business",
     highlights: [
-      "Everything in Growth",
-      "Founder dashboard & profit view",
-      "Meta ads & marketing tools",
-      "HRM, tasks & team workflows",
-      "Accounting module",
-      "Automation rules",
-      "Additional sites & all premium modules",
+      { label: "Everything in Growth" },
+      { label: "Founder Dashboard", featureKey: "founder_dashboard" },
+      { label: "Meta Ads", featureKey: "meta_ads" },
+      { label: "HRM", featureKey: "hrm" },
+      { label: "Accounting", featureKey: "accounting" },
+      { label: "Automation", featureKey: "automation" },
+      { label: "Additional Sites", featureKey: "additional_sites" },
+    ],
+  },
+  {
+    id: "ultimate",
+    name: "Enterprise",
+    tagline: "Custom scale - white label, API access & premium support",
+    price: "Custom",
+    period: "pricing",
+    icon: Building2,
+    accent: "from-emerald-400 via-cyan-500 to-blue-500",
+    ring: "ring-emerald-400/35",
+    glow: "shadow-cyan-500/20",
+    cta: "Talk to sales",
+    highlights: [
+      { label: "Everything in Business" },
+      { label: "White Label" },
+      { label: "Custom API" },
+      { label: "Priority support" },
+      { label: "Multi-brand support", featureKey: "additional_sites" },
+      { label: "Advanced automation", featureKey: "automation" },
     ],
   },
 ];
@@ -86,7 +110,7 @@ export const MARKETING_PACKAGES: MarketingPackage[] = [
 export const MARKETING_PACKAGE_FAQ = [
   {
     q: "Can I change my package later?",
-    a: "Yes. Upgrade or downgrade anytime from your account settings. Your team keeps the same login — only enabled modules change with the plan.",
+    a: "Yes. Upgrade or downgrade anytime from your account settings. Your team keeps the same login - only enabled modules change with the plan.",
   },
   {
     q: "Is Auto Call or SMS included in the price?",

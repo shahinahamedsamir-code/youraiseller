@@ -4,6 +4,8 @@ type ShopifyOrdersBody = {
   shopDomain?: string;
   accessToken?: string;
   limit?: number;
+  after?: string;
+  updatedAtMin?: string;
 };
 
 type OrderRow = {
@@ -65,6 +67,8 @@ export async function POST(req: Request) {
     const body = (await req.json()) as ShopifyOrdersBody;
     const shopDomain = normalizeShopDomain(String(body.shopDomain ?? ""));
     const accessToken = String(body.accessToken ?? "").trim();
+    const after = String(body.after ?? "").trim();
+    const updatedAtMin = String(body.updatedAtMin ?? "").trim();
     const limit =
       typeof body.limit === "number" && Number.isFinite(body.limit)
         ? Math.min(Math.max(1, Math.floor(body.limit)), 250)
@@ -97,8 +101,13 @@ export async function POST(req: Request) {
         "line_items",
         "note",
       ].join(",");
+    const filters = [
+      after ? `created_at_min=${encodeURIComponent(after)}` : "",
+      updatedAtMin ? `updated_at_min=${encodeURIComponent(updatedAtMin)}` : "",
+    ].filter(Boolean);
+    const finalUrl = filters.length ? `${url}&${filters.join("&")}` : url;
 
-    const res = await fetch(url, {
+    const res = await fetch(finalUrl, {
       method: "GET",
       headers: {
         "X-Shopify-Access-Token": accessToken,
@@ -133,4 +142,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message }, { status: 500 });
   }
 }
-

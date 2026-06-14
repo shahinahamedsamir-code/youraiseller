@@ -1,5 +1,14 @@
 import { upsertWooCommerceOrder, type OrderLine } from "./orders-store";
 
+type ShopifySyncMeta = {
+  firstSyncCompleted: boolean;
+  syncedShopDomain: string | null;
+  lastSyncAt: string | null;
+};
+
+const META_KEY = "yai-shopify-order-sync-meta";
+const CONFIG_KEY = "yai-shopify-integration-v1";
+
 type ShopifyOrderRow = {
   id: number;
   order_number: number;
@@ -51,6 +60,82 @@ export type ShopifyOrderSyncResult = {
   total: number;
   errors: string[];
 };
+
+export type ShopifyOrderSyncConfig = {
+  shopDomain: string;
+  accessToken: string;
+};
+
+function loadMeta(): ShopifySyncMeta {
+  if (typeof window === "undefined" || !META_KEY) {
+    return { firstSyncCompleted: false, syncedShopDomain: null, lastSyncAt: null };
+  }
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (!raw) {
+      return { firstSyncCompleted: false, syncedShopDomain: null, lastSyncAt: null };
+    }
+    const parsed = JSON.parse(raw) as Partial<ShopifySyncMeta>;
+    return {
+      firstSyncCompleted: parsed.firstSyncCompleted === true,
+      syncedShopDomain:
+        typeof parsed.syncedShopDomain === "string" ? parsed.syncedShopDomain : null,
+      lastSyncAt: typeof parsed.lastSyncAt === "string" ? parsed.lastSyncAt : null,
+    };
+  } catch {
+    return { firstSyncCompleted: false, syncedShopDomain: null, lastSyncAt: null };
+  }
+}
+
+export function getShopifyOrderSyncMeta(): ShopifySyncMeta {
+  return loadMeta();
+}
+
+function saveMeta(patch: Partial<ShopifySyncMeta>) {
+  if (typeof window === "undefined" || !META_KEY) return;
+  const next = { ...loadMeta(), ...patch };
+  localStorage.setItem(META_KEY, JSON.stringify(next));
+}
+
+export function getShopifyOrderSyncConfig(): ShopifyOrderSyncConfig | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<{
+      shopDomain: string;
+      accessToken: string;
+    }>;
+    const shopDomain = normalizeShopDomain(String(parsed.shopDomain ?? ""));
+    const accessToken = String(parsed.accessToken ?? "").trim();
+    if (!shopDomain || !accessToken) return null;
+    return { shopDomain, accessToken };
+  } catch {
+    return null;
+  }
+}
+
+export function isShopifyOrderSyncReady(): boolean {
+  return Boolean(getShopifyOrderSyncConfig());
+}
+
+function normalizeShopDomain(input: string): string {
+  return input.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+}
+
+function shouldUseInitialWindow(shopDomain: string): boolean {
+  const meta = loadMeta();
+  const normalized = normalizeShopDomain(shopDomain);
+  if (!meta.firstSyncCompleted) return true;
+  if (!meta.syncedShopDomain) return true;
+  return normalizeShopDomain(meta.syncedShopDomain) !== normalized;
+}
+
+function isoHoursAgo(hours: number): string {
+  const d = new Date();
+  d.setHours(d.getHours() - hours);
+  return d.toISOString();
+}
 
 function parseAmount(raw: unknown): number {
   return Number.parseFloat(String(raw ?? "0")) || 0;
@@ -112,13 +197,24 @@ export async function syncOrdersFromShopify(params: {
   accessToken: string;
   limit?: number;
 }): Promise<ShopifyOrderSyncResult> {
+  const shopDomain = normalizeShopDomain(params.shopDomain);
+  const initialWindow = shouldUseInitialWindow(shopDomain);
+  const meta = loadMeta();
+  const after = initialWindow ? isoHoursAgo(12) : undefined;
+  const updatedAfter = initialWindow
+    ? undefined
+    : meta.lastSyncAt
+      ? new Date(new Date(meta.lastSyncAt).getTime() - 2 * 60 * 1000).toISOString()
+      : isoHoursAgo(24);
   const res = await fetch("/api/shopify/orders", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      shopDomain: params.shopDomain,
+      shopDomain,
       accessToken: params.accessToken,
-      limit: params.limit ?? 50,
+      limit: params.limit ?? 250,
+      after,
+      updatedAtMin: updatedAfter,
     }),
   });
 
@@ -179,6 +275,11 @@ export async function syncOrdersFromShopify(params: {
     }
   }
 
+  saveMeta({
+    firstSyncCompleted: true,
+    syncedShopDomain: shopDomain,
+    lastSyncAt: new Date().toISOString(),
+  });
+
   return result;
 }
-

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
 import { quickLinks } from "@/lib/navigation";
 import { BrandMark } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
-import { useMemo } from "react";
 import { HeaderQuickSms } from "./HeaderQuickSms";
 import { ProfileMenu } from "./ProfileMenu";
 import { useTheme } from "@/context/ThemeContext";
@@ -15,13 +16,40 @@ type TopBarProps = {
 };
 
 export function TopBar({ onMenuClick }: TopBarProps) {
+  const router = useRouter();
   const { isEnabled } = useFeatures();
   const { isDark, toggleTheme } = useTheme();
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const links = useMemo(
-    () => quickLinks.filter((l) => isEnabled(l.featureKey)).slice(0, 3),
+    () =>
+      quickLinks
+        .filter((l) => l.featureKey !== "search" && isEnabled(l.featureKey))
+        .slice(0, 3),
     [isEnabled]
   );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      if (!isShortcut) return;
+      const target = e.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+      searchRef.current?.select();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const handleSearch = () => {
+    const q = query.trim();
+    if (!q) return;
+    router.push(`/dashboard/search?q=${encodeURIComponent(q)}`);
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--yai-border)] bg-[var(--yai-bg)] px-5 backdrop-blur-xl">
@@ -43,17 +71,38 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       </Link>
 
       <div className="hidden flex-1 items-center gap-2 md:flex">
-        <div className="flex max-w-md flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 dark:border-white/10 dark:bg-white/5">
-          <Search className="h-4 w-4 text-indigo-400" />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch();
+          }}
+          className="flex max-w-md flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 dark:border-white/10 dark:bg-white/5"
+        >
+          <button
+            type="submit"
+            className="shrink-0 text-indigo-400 transition hover:text-indigo-500"
+            aria-label="Run search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
           <input
+            ref={searchRef}
             type="text"
-            placeholder="Search orders, products, customers…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+            placeholder="Search orders, products, customers..."
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:text-slate-200 dark:placeholder:text-slate-500"
           />
           <kbd className="hidden rounded-lg bg-white px-2 py-0.5 text-[10px] font-bold text-slate-400 ring-1 ring-slate-200 sm:inline">
-            ⌘K
+            Ctrl+K
           </kbd>
-        </div>
+        </form>
       </div>
 
       <div className="hidden items-center gap-1 lg:flex">
@@ -71,7 +120,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       <div className="ml-auto flex items-center gap-2">
         <HeaderQuickSms />
 
-        {/* Dark / Light toggle */}
         <button
           type="button"
           onClick={toggleTheme}

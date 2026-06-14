@@ -8,6 +8,7 @@ import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
 import { pullOrdersFromServer } from "@/lib/seller-sync";
 import { repairWebOrdersInQueue } from "@/lib/orders-store";
 import { WooOrderSyncBar } from "@/components/web-orders/WooOrderSyncBar";
+import { ShopifyOrderSyncBar } from "@/components/web-orders/ShopifyOrderSyncBar";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import { WebOrderCourierRatioCell } from "@/components/web-orders/WebOrderCourierRatioCell";
 import { resolveWebDisplayStatus } from "@/lib/order-edit";
@@ -296,6 +297,7 @@ export function WebOrderTable() {
   return (
     <div className="space-y-4">
       <WooOrderSyncBar onSynced={refresh} />
+      <ShopifyOrderSyncBar onSynced={refresh} />
 
       {createdFlash && (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">

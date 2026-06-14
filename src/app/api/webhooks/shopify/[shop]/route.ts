@@ -47,6 +47,7 @@ export async function POST(
   ctx: { params: Promise<{ shop: string }> }
 ) {
   try {
+    const url = new URL(req.url);
     const { shop: rawShop } = await ctx.params;
     const shop = normalizeShop(String(rawShop ?? ""));
     if (!shop) {
@@ -57,7 +58,11 @@ export async function POST(
     const topic = req.headers.get("x-shopify-topic")?.trim() || "unknown";
     const hmacHeader = req.headers.get("x-shopify-hmac-sha256")?.trim() || "";
 
-    if (signatureCheckEnabled(shop)) {
+    const verifyMode = url.searchParams.get("verify");
+    const verifyRequested =
+      verifyMode === "1" || (verifyMode === null && signatureCheckEnabled(shop));
+
+    if (verifyRequested) {
       const secret = getSignatureSecret(shop);
       if (!secret) {
         return NextResponse.json(
@@ -104,6 +109,7 @@ export async function GET(
   _req: Request,
   ctx: { params: Promise<{ shop: string }> }
 ) {
+  const url = new URL(_req.url);
   const { shop: rawShop } = await ctx.params;
   const shop = normalizeShop(String(rawShop ?? ""));
   if (!shop) {
@@ -113,7 +119,7 @@ export async function GET(
     ok: true,
     message: "Shopify webhook endpoint is reachable.",
     shop,
+    signatureVerification: url.searchParams.get("verify") === "1",
     queueHint: queueKey(shop),
   });
 }
-

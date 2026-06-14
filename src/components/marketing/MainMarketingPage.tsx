@@ -7,6 +7,7 @@ import {
 } from "@/lib/marketing-layout";
 import { MarketingSiteShell } from "@/components/marketing/MarketingSiteShell";
 import { getAppBaseUrl } from "@/lib/app-hosts";
+import { getFeaturesPath } from "@/lib/marketing-nav";
 import {
   MARKETING_FEATURE_GROUPS,
   MARKETING_HERO_STATS,
@@ -15,6 +16,7 @@ import {
 
 export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
   const appHost = getAppBaseUrl().replace(/^https?:\/\//, "");
+  const featuresHref = getFeaturesPath(homeHref);
 
   return (
     <MarketingSiteShell homeHref={homeHref}>
@@ -23,7 +25,7 @@ export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
           <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
             <div className="order-2 lg:order-1">
               <p className="marketing-fade marketing-fade-1 mkt-badge-cyan mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] sm:mb-5 sm:px-4 sm:text-xs sm:tracking-[0.18em]">
-                Made for Bangladesh sellers
+                Built for Bangladesh sellers
               </p>
               <h1 className="marketing-fade marketing-fade-2 mkt-text text-[1.75rem] font-extrabold leading-[1.12] tracking-tight min-[400px]:text-3xl sm:text-4xl sm:leading-[1.08] lg:text-6xl">
                 One dashboard for{" "}
@@ -32,13 +34,13 @@ export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
                 </span>
               </h1>
               <p className="marketing-fade marketing-fade-3 mkt-text-muted mt-4 max-w-xl text-[15px] leading-relaxed sm:mt-6 sm:text-base lg:text-lg">
-                YourAI Seller brings web orders, call-center approvals, inventory, SMS, auto
-                call, WooCommerce sync and Steadfast booking into a single beautiful panel —
-                so your team ships faster with fewer mistakes.
+                YourAI Seller brings web orders, call-center approval, inventory, SMS, auto call,
+                WooCommerce sync and Steadfast booking into a clean panel so your team can ship
+                faster with fewer mistakes.
               </p>
               <div className="marketing-fade marketing-fade-4 mt-6 sm:mt-8">
                 <a
-                  href="#features"
+                  href={featuresHref}
                   className="mkt-btn-ghost inline-flex min-h-11 items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
                 >
                   Explore all features
@@ -75,11 +77,11 @@ export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
               Everything included
             </p>
             <h2 className="mkt-text mx-auto mt-3 max-w-3xl text-center text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
-              Every tool your ecommerce team needs — already built in
+              Every tool your ecommerce team needs is already built in
             </h2>
             <p className="mkt-text-muted mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed sm:mt-4 sm:text-base">
-              No patchwork of spreadsheets, courier panels and plugins. YourAI Seller is a
-              complete operating system for Bangladesh online sellers.
+              No spreadsheets, courier panels or plugin juggling. YourAI Seller is a complete
+              operating system for Bangladesh online sellers.
             </p>
 
             <div className="mt-10 space-y-16 sm:mt-16 sm:space-y-24">
@@ -150,7 +152,7 @@ export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
               How it works
             </p>
             <h2 className="mkt-text mt-3 text-center text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
-              Go live in three steps
+              Go live in 3 steps
             </h2>
             <div className="mt-8 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3">
               {MARKETING_STEPS.map((step) => (
@@ -173,8 +175,8 @@ export function MainMarketingPage({ homeHref = "/" }: { homeHref?: string }) {
                 Ready to run your store smarter?
               </h2>
               <p className="mkt-text-soft mx-auto mt-3 max-w-lg text-sm leading-relaxed sm:mt-4 sm:text-base">
-                Join sellers who verify web orders with auto call, ship with Steadfast, and
-                never lose track of stock again.
+                Join sellers who verify web orders with auto call, ship with Steadfast, and never
+                lose track of stock again.
               </p>
             </div>
           </div>

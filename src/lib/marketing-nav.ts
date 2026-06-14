@@ -10,6 +10,12 @@ export function getPackagesPath(pathname?: string): string {
   return "/packages";
 }
 
+/** Feature pages — `/features` on production, `/marketing/features` locally. */
+export function getFeaturesPath(pathname?: string): string {
+  if (pathname?.startsWith("/marketing")) return "/marketing/features";
+  return "/features";
+}
+
 export function getMarketingSectionHref(
   section: string,
   pathname?: string

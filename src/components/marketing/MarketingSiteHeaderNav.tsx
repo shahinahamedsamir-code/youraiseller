@@ -6,16 +6,15 @@ import { Package } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { MarketingThemeToggle } from "@/components/marketing/MarketingThemeToggle";
 import {
+  getFeaturesPath,
   getMarketingSectionHref,
   getPackagesPath,
 } from "@/lib/marketing-nav";
 
-const NAV_ITEMS = [
-  { id: "features", label: "Features", type: "section" as const },
-  { id: "package", label: "Package", type: "page" as const },
-  { id: "how-it-works", label: "Steps", type: "section" as const, desktopLabel: "How it works" },
-  { id: "integrations", label: "Apps", type: "section" as const, desktopLabel: "Integrations" },
-];
+const SECTION_ITEMS = [
+  { id: "how-it-works", label: "How it works" },
+  { id: "integrations", label: "Integrations" },
+] as const;
 
 function linkClass(isActive: boolean, isPackage = false, mobile = false) {
   return clsx(
@@ -27,10 +26,12 @@ function linkClass(isActive: boolean, isPackage = false, mobile = false) {
   );
 }
 
-export function MarketingSiteHeaderNav({ active }: { active?: "package" }) {
+export function MarketingSiteHeaderNav({ active }: { active?: "package" | "features" }) {
   const pathname = usePathname();
+  const features = getFeaturesPath(pathname);
   const packages = getPackagesPath(pathname);
   const onPackagePage = active === "package" || pathname?.includes("/packages");
+  const onFeaturesPage = active === "features" || pathname?.includes("/features");
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
@@ -38,64 +39,56 @@ export function MarketingSiteHeaderNav({ active }: { active?: "package" }) {
         className="hidden items-center gap-4 text-sm font-semibold md:flex lg:gap-6"
         aria-label="Main navigation"
       >
-        {NAV_ITEMS.map((item) => {
-          if (item.type === "page") {
-            return (
-              <Link key={item.id} href={packages} className={linkClass(onPackagePage, true)}>
-                <Package className="mr-1.5 inline h-4 w-4" />
-                Package
-              </Link>
-            );
-          }
-          return (
-            <a
-              key={item.id}
-              href={getMarketingSectionHref(item.id, pathname)}
-              className={linkClass(false)}
-            >
-              {item.desktopLabel ?? item.label}
-            </a>
-          );
-        })}
+        <Link href={features} className={linkClass(onFeaturesPage)}>
+          Features
+        </Link>
+        <Link href={packages} className={linkClass(onPackagePage, true)}>
+          <Package className="mr-1.5 inline h-4 w-4" />
+          Package
+        </Link>
+        {SECTION_ITEMS.map((item) => (
+          <a
+            key={item.id}
+            href={getMarketingSectionHref(item.id, pathname)}
+            className={linkClass(false)}
+          >
+            {item.label}
+          </a>
+        ))}
       </nav>
       <MarketingThemeToggle className="shrink-0" />
     </div>
   );
 }
 
-export function MarketingSiteHeaderMobileNav({ active }: { active?: "package" }) {
+export function MarketingSiteHeaderMobileNav({ active }: { active?: "package" | "features" }) {
   const pathname = usePathname();
+  const features = getFeaturesPath(pathname);
   const packages = getPackagesPath(pathname);
   const onPackagePage = active === "package" || pathname?.includes("/packages");
+  const onFeaturesPage = active === "features" || pathname?.includes("/features");
 
   return (
     <nav
       className="mkt-border-b grid grid-cols-4 gap-1.5 border-t pb-3 pt-2 md:hidden"
       aria-label="Mobile navigation"
     >
-      {NAV_ITEMS.map((item) => {
-        if (item.type === "page") {
-          return (
-            <Link
-              key={item.id}
-              href={packages}
-              className={linkClass(onPackagePage, true, true)}
-            >
-              <Package className="mb-0.5 inline h-3.5 w-3.5" />
-              <span className="block">{item.label}</span>
-            </Link>
-          );
-        }
-        return (
-          <a
-            key={item.id}
-            href={getMarketingSectionHref(item.id, pathname)}
-            className={linkClass(false, false, true)}
-          >
-            {item.label}
-          </a>
-        );
-      })}
+      <Link href={features} className={linkClass(onFeaturesPage, false, true)}>
+        <span className="block">Features</span>
+      </Link>
+      <Link href={packages} className={linkClass(onPackagePage, true, true)}>
+        <Package className="mb-0.5 inline h-3.5 w-3.5" />
+        <span className="block">Package</span>
+      </Link>
+      {SECTION_ITEMS.map((item) => (
+        <a
+          key={item.id}
+          href={getMarketingSectionHref(item.id, pathname)}
+          className={linkClass(false, false, true)}
+        >
+          {item.label}
+        </a>
+      ))}
     </nav>
   );
 }

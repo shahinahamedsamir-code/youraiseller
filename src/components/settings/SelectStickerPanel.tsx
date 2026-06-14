@@ -25,6 +25,10 @@ const TEMPLATES: {
   { id: "bold", title: "Bold", subtitle: "Dark courier header label", badge: "Premium" },
   { id: "barcode", title: "Scan", subtitle: "Big barcode & COD focus", badge: "Fast" },
   { id: "compact", title: "Compact", subtitle: "Minimal essentials only", badge: "Small" },
+  { id: "neo", title: "Neo", subtitle: "Fresh split-card label", badge: "Creative" },
+  { id: "split", title: "Split", subtitle: "Courier panel + recipient side", badge: "Smart" },
+  { id: "express", title: "Express", subtitle: "Barcode-first fast scan layout", badge: "Swift" },
+  { id: "mono", title: "Mono", subtitle: "Clean black-and-white label", badge: "Clean" },
 ];
 
 const SIZE_W: Record<StickerSize, number> = {

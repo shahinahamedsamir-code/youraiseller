@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   X,
@@ -52,9 +52,11 @@ function useDebounced(value: string, ms = 280): string {
 
 export function OrderSearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? "";
   const [mode, setMode] = useState<SearchFieldMode>("all");
   const [resultTab, setResultTab] = useState<ResultTab>("all");
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(urlQuery);
   const [active, setActive] = useState(false);
   const [tick, setTick] = useState(0);
   const [pending, startTransition] = useTransition();
@@ -67,6 +69,10 @@ export function OrderSearchPage() {
     window.addEventListener("youraiseller-data-updated", onData);
     return () => window.removeEventListener("youraiseller-data-updated", onData);
   }, []);
+
+  useEffect(() => {
+    setInput(urlQuery);
+  }, [urlQuery]);
 
   const partition = useMemo(() => {
     void tick;

@@ -1,13 +1,16 @@
 import type { Order } from "./orders-store";
 import type { BusinessSettings } from "./business-settings-store";
 
-export type InvoiceTemplate = "fancy" | "minimal" | "elegant";
+export type InvoiceTemplate = "fancy" | "minimal" | "elegant" | "studio" | "ledger" | "receipt";
 export type InvoicePaper = "a4" | "pos";
 
 const ACCENTS: Record<InvoiceTemplate, string> = {
   fancy: "#6d28d9",
   minimal: "#111111",
   elegant: "#c9a14a",
+  studio: "#0f172a",
+  ledger: "#0f766e",
+  receipt: "#b45309",
 };
 
 function esc(v: unknown): string {
@@ -311,7 +314,7 @@ function elegantBody(order: Order, biz: BusinessSettings): string {
 /* =========================== POS — 80mm Thermal Receipt =========================== */
 function posBody(order: Order, biz: BusinessSettings, template: InvoiceTemplate): string {
   const sym = currencySymbol(biz);
-  const accent = ACCENTS[template];
+  const accent = "#111";
   const dash = `<div style="border-top:1px dashed #bbb;margin:8px 0"></div>`;
   const rows = order.items
     .map(
@@ -331,8 +334,14 @@ function posBody(order: Order, biz: BusinessSettings, template: InvoiceTemplate)
 
   const totalRow = (label: string, val: string, big = false) =>
     `<div style="display:flex;justify-content:space-between;${
-      big ? `font-weight:800;font-size:15px;color:${accent};margin-top:4px` : "color:#444"
+      big ? `font-weight:800;font-size:15px;color:#111;margin-top:4px` : "color:#111"
     }"><span>${label}</span><span>${val}</span></div>`;
+
+  if (template === "minimal") return posMinimalBody(order, biz, sym, rows, dash);
+  if (template === "elegant") return posElegantBody(order, biz, sym, rows, dash, accent);
+  if (template === "studio") return posStudioBody(order, biz, sym, rows, dash, accent, totalRow);
+  if (template === "ledger") return posLedgerBody(order, biz, sym, rows, dash, accent, totalRow);
+  if (template === "receipt") return posReceiptBody(order, biz, sym, rows, dash, accent, totalRow);
 
   return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#111;width:280px;margin:0 auto;padding:14px 12px;font-size:12px">
     <div style="text-align:center">
@@ -363,6 +372,401 @@ function posBody(order: Order, biz: BusinessSettings, template: InvoiceTemplate)
   </div>`;
 }
 
+/* =========================== Studio â€” Split Editorial =========================== */
+function posMinimalBody(
+  order: Order,
+  biz: BusinessSettings,
+  sym: string,
+  rows: string,
+  dash: string
+): string {
+  const due = Math.max(0, order.total - (order.advance ?? 0));
+  return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#111;width:280px;margin:0 auto;padding:12px 10px;font-size:12px">
+    <div style="text-align:center">
+      <div style="font-size:18px;font-weight:900;letter-spacing:1px">${esc(biz.name || "RECEIPT")}</div>
+      <div style="font-size:11px;color:#111">${esc(fullAddress(biz))}</div>
+    </div>
+    <div style="border-top:1px solid #111;margin:8px 0"></div>
+    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span>${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Date</span><span>${esc(order.createdAt)}</span></div>
+    ${dash}
+    <div style="font-weight:700">${esc(order.customerName)}</div>
+    <div style="color:#111">${esc(order.phone)}</div>
+    <div style="color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+    ${dash}
+    ${rows}
+    ${dash}
+    <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:6px;padding-top:6px"><span>TOTAL</span><span>${money(sym, due)}</span></div>
+    <div style="margin-top:8px;text-align:center">${barcode(order.id)}</div>
+  </div>`;
+}
+
+function posElegantBody(
+  order: Order,
+  biz: BusinessSettings,
+  sym: string,
+  rows: string,
+  dash: string,
+  accent: string
+): string {
+  const due = Math.max(0, order.total - (order.advance ?? 0));
+  return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#fff;width:280px;margin:0 auto;padding:12px 10px;font-size:12px;background:#111;border-radius:12px">
+    <div style="text-align:center">
+      <div style="font-size:18px;font-weight:900;letter-spacing:1px">${esc(biz.name || "RECEIPT")}</div>
+      <div style="font-size:11px;color:#fff">${esc(biz.tagline || biz.invoiceFooter || "")}</div>
+    </div>
+    <div style="border-top:1px solid ${accent};margin:8px 0"></div>
+    <div style="display:flex;justify-content:space-between;color:#fff"><span>Invoice</span><span>${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between;color:#fff"><span>Date</span><span>${esc(order.createdAt)}</span></div>
+    ${dash}
+    <div style="font-weight:800">${esc(order.customerName)}</div>
+    <div style="color:#fff">${esc(order.phone)}</div>
+    <div style="color:#fff">${esc(order.address)}, ${esc(order.district)}</div>
+    ${dash}
+    ${rows}
+    ${dash}
+    <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:900;color:#fff;margin-top:6px;border-top:1px solid #fff;padding-top:6px"><span>TOTAL</span><span>${money(sym, due)}</span></div>
+    <div style="margin-top:8px;text-align:center">${barcode(order.id, false)}</div>
+  </div>`;
+}
+
+function posStudioBody(
+  order: Order,
+  biz: BusinessSettings,
+  sym: string,
+  rows: string,
+  dash: string,
+  accent: string,
+  totalRow: (label: string, val: string, big?: boolean) => string
+): string {
+  return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#111;width:280px;margin:0 auto;padding:12px 10px;font-size:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <div style="font-size:10px;letter-spacing:2px;color:#111;font-weight:800;text-transform:uppercase">Studio</div>
+        <div style="font-size:14px;font-weight:900">${esc(biz.name || "Business")}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:900;letter-spacing:1px">INV</div>
+        <div style="font-size:11px;color:#111">${esc(order.id)}</div>
+      </div>
+    </div>
+    <div style="border-top:2px solid #111;margin:8px 0"></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <div>
+        <div style="font-weight:800">${esc(order.customerName)}</div>
+        <div>${esc(order.phone)}</div>
+        <div style="color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+      </div>
+      <div style="text-align:right">${barcode(order.id)}</div>
+    </div>
+    ${dash}
+    ${rows}
+    ${dash}
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+      <div style="color:#111">${esc(biz.invoiceFooter || "Thank you!")}</div>
+      <div style="min-width:106px;border:1px solid #111;padding:8px 10px;text-align:right">
+        ${totalRow("Sub", money(sym, order.subtotal))}
+        ${totalRow("Del", money(sym, order.shippingCharge))}
+        <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:5px;padding-top:5px"><span>Due</span><span>${money(sym, Math.max(0, order.total - (order.advance ?? 0)))}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function posLedgerBody(
+  order: Order,
+  biz: BusinessSettings,
+  sym: string,
+  rows: string,
+  dash: string,
+  accent: string,
+  totalRow: (label: string, val: string, big?: boolean) => string
+): string {
+  return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#111;width:280px;margin:0 auto;padding:12px 10px;font-size:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:10px;letter-spacing:2px;color:#111;font-weight:800;text-transform:uppercase">Ledger</div>
+        <div style="font-size:14px;font-weight:900">${esc(biz.name || "Business")}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:#111">${esc(order.createdAt)}</div>
+        <div style="font-weight:800">${esc(order.id)}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #111;margin:8px 0"></div>
+      <div style="font-size:12px;line-height:1.5">
+        <div style="font-weight:800">${esc(order.customerName)}</div>
+        <div>${esc(order.phone)}</div>
+        <div style="color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+      </div>
+    <div style="margin-top:8px">${barcode(order.id)}</div>
+    ${dash}
+    ${rows}
+    ${dash}
+    <div style="display:flex;justify-content:space-between;font-size:12px"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:6px;padding-top:6px"><span>Total</span><span>${money(sym, Math.max(0, order.total - (order.advance ?? 0)))}</span></div>
+    <div style="margin-top:8px;text-align:center;color:#111">${esc(biz.invoiceFooter || "Thank you!")}</div>
+  </div>`;
+}
+
+function posReceiptBody(
+  order: Order,
+  biz: BusinessSettings,
+  sym: string,
+  rows: string,
+  dash: string,
+  accent: string,
+  totalRow: (label: string, val: string, big?: boolean) => string
+): string {
+  return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#111;width:280px;margin:0 auto;padding:12px 10px;font-size:12px">
+    <div style="text-align:center">
+      <div style="font-size:18px;font-weight:900;letter-spacing:1px">${esc(biz.name || "RECEIPT")}</div>
+      <div style="font-size:11px;color:#111">${esc(fullAddress(biz))}</div>
+    </div>
+    <div style="border-top:2px solid ${accent};margin:8px 0"></div>
+    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span>${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Date</span><span>${esc(order.createdAt)}</span></div>
+    ${dash}
+    <div style="font-weight:700">${esc(order.customerName)}</div>
+    <div style="color:#111">${esc(order.phone)}</div>
+    <div style="color:#111">${esc(order.address)}, ${esc(order.district)}</div>
+    ${dash}
+    ${rows}
+    ${dash}
+    ${totalRow("TOTAL", money(sym, Math.max(0, order.total - (order.advance ?? 0))), true)}
+    <div style="margin-top:8px;text-align:center">${barcode(order.id)}</div>
+  </div>`;
+}
+
+function studioBody(order: Order, biz: BusinessSettings): string {
+  const sym = currencySymbol(biz);
+  const totalDue = Math.max(0, order.total - (order.advance ?? 0));
+  const rows = order.items
+    .map(
+      (i, idx) => `<tr style="background:${idx % 2 ? "#f8fafc" : "#fff"}">
+        <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb">
+          <div style="font-weight:700;color:#0f172a">${esc(i.productName)}</div>
+          <div style="font-size:11px;color:#6b7280">${esc(i.productCode)}</div>
+        </td>
+        <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;text-align:center;color:#475569">${i.qty}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;text-align:right;color:#475569">${money(sym, i.price)}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:800;color:#0f172a">${money(sym, i.total)}</td>
+      </tr>`
+    )
+    .join("");
+
+  return `<div style="font-family:${FONT};max-width:680px;margin:0 auto;background:#fff;color:#0f172a">
+    <div style="display:grid;grid-template-columns:1.25fr .75fr;min-height:220px">
+      <div style="background:#0f172a;color:#fff;padding:32px 34px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="display:inline-block;padding:4px 10px;border:1px solid rgba(255,255,255,.35);border-radius:999px;font-size:10px;letter-spacing:2px;text-transform:uppercase">Studio Invoice</div>
+          <div style="font-size:28px;font-weight:800;line-height:1.05;margin-top:14px">${esc(biz.name || "Business")}</div>
+          ${biz.tagline ? `<div style="margin-top:8px;color:#cbd5e1;font-size:13px">${esc(biz.tagline)}</div>` : ""}
+        </div>
+        <div style="font-size:13px;color:#cbd5e1;line-height:1.7">
+          ${biz.mobile ? `${esc(biz.mobile)}<br>` : ""}
+          ${esc(fullAddress(biz))}
+        </div>
+      </div>
+      <div style="padding:32px 34px;border-left:1px solid #e5e7eb;background:#f8fafc;display:flex;flex-direction:column;justify-content:space-between">
+        <div style="text-align:right">
+          <div style="font-size:36px;font-weight:900;letter-spacing:2px;color:#0f172a">INVOICE</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(order.id)}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:#64748b;text-transform:uppercase">Billed To</div>
+          <div style="font-size:16px;font-weight:800;margin-top:5px">${esc(order.customerName)}</div>
+          <div style="font-size:13px;color:#475569;margin-top:4px">${esc(order.address)}, ${esc(order.district)}</div>
+          <div style="font-size:13px;color:#475569">${esc(order.phone)}</div>
+          <div style="margin-top:12px">${barcode(order.id)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:0 34px 30px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:22px">
+        <thead><tr style="background:#111827;color:#fff;text-align:left">
+          <th style="padding:12px 14px;font-size:10px;letter-spacing:2px;font-weight:700">ITEM</th>
+          <th style="padding:12px 14px;font-size:10px;letter-spacing:2px;font-weight:700;text-align:center">QTY</th>
+          <th style="padding:12px 14px;font-size:10px;letter-spacing:2px;font-weight:700;text-align:right">PRICE</th>
+          <th style="padding:12px 14px;font-size:10px;letter-spacing:2px;font-weight:700;text-align:right">AMOUNT</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div style="display:flex;justify-content:space-between;gap:24px;margin-top:22px;align-items:flex-end">
+        <div style="max-width:280px;font-size:13px;color:#475569;line-height:1.7">
+          <div style="font-size:10px;letter-spacing:2px;color:#64748b;text-transform:uppercase;font-weight:800">Notes</div>
+          <div style="margin-top:6px">${esc(biz.invoiceFooter || "Thank you for your order!")}</div>
+        </div>
+        <div style="min-width:260px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;color:#64748b"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
+          ${order.discount ? `<div style="display:flex;justify-content:space-between;padding:5px 0;color:#64748b"><span>Discount</span><span>-${money(sym, order.discount)}</span></div>` : ""}
+          <div style="display:flex;justify-content:space-between;padding:5px 0;color:#64748b"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#0f172a;color:#fff;font-weight:800;padding:12px 16px;margin-top:8px;border-radius:14px;font-size:15px">
+            <span>TOTAL DUE</span>
+            <span>${money(sym, totalDue)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================== Ledger â€” Structured Light =========================== */
+function ledgerBody(order: Order, biz: BusinessSettings): string {
+  const sym = currencySymbol(biz);
+  const totalDue = Math.max(0, order.total - (order.advance ?? 0));
+  const rows = order.items
+    .map(
+      (i) => `<tr>
+        <td style="padding:11px 0;border-bottom:1px solid #e5e7eb">
+          <div style="font-weight:700;color:#111827">${esc(i.productName)}</div>
+          <div style="font-size:11px;color:#6b7280">${esc(i.productCode)}</div>
+        </td>
+        <td style="padding:11px 0;border-bottom:1px solid #e5e7eb;text-align:center;color:#4b5563">${i.qty}</td>
+        <td style="padding:11px 0;border-bottom:1px solid #e5e7eb;text-align:right;color:#4b5563">${money(sym, i.price)}</td>
+        <td style="padding:11px 0;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700;color:#111827">${money(sym, i.total)}</td>
+      </tr>`
+    )
+    .join("");
+
+  return `<div style="font-family:${FONT};max-width:680px;margin:0 auto;background:#fff;color:#111827;padding:32px 36px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="display:inline-block;padding:4px 10px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase">Ledger</div>
+        <div style="font-size:30px;font-weight:900;line-height:1.05;margin-top:14px">${esc(biz.name || "Business")}</div>
+        <div style="margin-top:6px;color:#6b7280;font-size:13px">${esc(fullAddress(biz))}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:#6b7280;letter-spacing:2px;text-transform:uppercase">Invoice</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:1px">${esc(order.id)}</div>
+        <div style="margin-top:8px">${barcode(order.id)}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 220px;gap:20px;margin-top:24px">
+      <div style="border:1px solid #e5e7eb;border-radius:18px;padding:18px">
+        <div style="display:flex;justify-content:space-between;gap:16px">
+          <div>
+            <div style="font-size:11px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;font-weight:800">Billed To</div>
+            <div style="font-size:16px;font-weight:800;margin-top:5px">${esc(order.customerName)}</div>
+            <div style="margin-top:4px;color:#4b5563;line-height:1.6">${esc(order.address)}, ${esc(order.district)}</div>
+            <div style="color:#4b5563">${esc(order.phone)}</div>
+          </div>
+          <div style="text-align:right;font-size:13px;color:#4b5563">
+            <div>Date</div>
+            <div style="font-weight:700;color:#111827">${esc(order.createdAt)}</div>
+          </div>
+        </div>
+      </div>
+      <div style="border:1px solid #111827;border-radius:18px;padding:18px;background:#111827;color:#fff;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9ca3af">Summary</div>
+          <div style="margin-top:10px;line-height:1.8;font-size:13px">
+            <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
+            ${order.discount ? `<div style="display:flex;justify-content:space-between"><span>Discount</span><span>-${money(sym, order.discount)}</span></div>` : ""}
+            <div style="display:flex;justify-content:space-between"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,.16);padding-top:12px;margin-top:12px">
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9ca3af">Total Due</div>
+          <div style="font-size:24px;font-weight:900;margin-top:4px">${money(sym, totalDue)}</div>
+        </div>
+      </div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;margin-top:22px;font-size:13px">
+      <thead><tr style="border-bottom:2px solid #111827;text-align:left">
+        <th style="padding:0 0 10px;font-size:10px;letter-spacing:2px;color:#6b7280;font-weight:800">PRODUCT</th>
+        <th style="padding:0 0 10px;font-size:10px;letter-spacing:2px;color:#6b7280;font-weight:800;text-align:center">QTY</th>
+        <th style="padding:0 0 10px;font-size:10px;letter-spacing:2px;color:#6b7280;font-weight:800;text-align:right">PRICE</th>
+        <th style="padding:0 0 10px;font-size:10px;letter-spacing:2px;color:#6b7280;font-weight:800;text-align:right">TOTAL</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:12px;color:#6b7280">
+      <span>${esc(biz.invoiceFooter || "Thank you for your business.")}</span>
+      <span>${esc(biz.mobile)}</span>
+    </div>
+  </div>`;
+}
+
+/* =========================== Receipt â€” Compact Print =========================== */
+function receiptBody(order: Order, biz: BusinessSettings): string {
+  const sym = currencySymbol(biz);
+  const totalDue = Math.max(0, order.total - (order.advance ?? 0));
+  const rows = order.items
+    .map(
+      (i) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed #e5e7eb">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:700;color:#111827">${esc(i.productName)}</div>
+          <div style="font-size:11px;color:#6b7280">${esc(i.productCode)}</div>
+        </div>
+        <div style="width:56px;text-align:center;color:#4b5563">${i.qty}</div>
+        <div style="width:78px;text-align:right;font-weight:700;color:#111827">${money(sym, i.total)}</div>
+      </div>`
+    )
+    .join("");
+
+  return `<div style="font-family:${FONT};max-width:680px;margin:0 auto;background:#fff;color:#111827;padding:30px 32px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:12px;letter-spacing:3px;color:#b45309;text-transform:uppercase;font-weight:800">Receipt</div>
+        <div style="font-size:32px;font-weight:900;line-height:1.05;margin-top:8px">${esc(biz.name || "Business")}</div>
+        <div style="margin-top:6px;color:#6b7280;font-size:13px">${esc(fullAddress(biz))}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;color:#6b7280">Invoice</div>
+        <div style="font-size:26px;font-weight:900">${esc(order.id)}</div>
+        <div style="margin-top:8px">${barcode(order.id)}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;border-top:3px solid #b45309;padding-top:18px;display:flex;justify-content:space-between;gap:18px">
+      <div style="font-size:13px;line-height:1.7">
+        <div style="font-size:10px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;font-weight:800">Customer</div>
+        <div style="font-size:16px;font-weight:800;margin-top:4px">${esc(order.customerName)}</div>
+        <div style="color:#4b5563">${esc(order.address)}, ${esc(order.district)}</div>
+        <div style="color:#4b5563">${esc(order.phone)}</div>
+      </div>
+      <div style="min-width:210px;text-align:right;font-size:13px;line-height:1.7">
+        <div style="font-size:10px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;font-weight:800">Date</div>
+        <div style="font-weight:700;color:#111827">${esc(order.createdAt)}</div>
+        <div style="margin-top:10px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:2px">Due Balance</div>
+        <div style="font-size:28px;font-weight:900;color:#b45309">${money(sym, totalDue)}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;border:1px solid #e5e7eb;border-radius:16px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:2px solid #111827">
+        <div style="font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:800;text-transform:uppercase">Item Summary</div>
+        <div style="font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:800;text-transform:uppercase">Amount</div>
+      </div>
+      <div>${rows}</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;gap:24px;margin-top:18px">
+      <div style="flex:1;color:#6b7280;font-size:12px;line-height:1.6">${esc(biz.invoiceFooter || "Thank you for your order!")}</div>
+      <div style="min-width:230px;border:1px solid #111827;border-radius:14px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
+        ${order.discount ? `<div style="display:flex;justify-content:space-between;padding:4px 0"><span>Discount</span><span>-${money(sym, order.discount)}</span></div>` : ""}
+        <div style="display:flex;justify-content:space-between;padding:4px 0"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid #e5e7eb;font-weight:900">
+          <span>TOTAL</span>
+          <span>${money(sym, totalDue)}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 export function renderInvoiceBody(
   order: Order,
   biz: BusinessSettings,
@@ -372,6 +776,9 @@ export function renderInvoiceBody(
   if (paper === "pos") return posBody(order, biz, template);
   if (template === "minimal") return minimalBody(order, biz);
   if (template === "elegant") return elegantBody(order, biz);
+  if (template === "studio") return studioBody(order, biz);
+  if (template === "ledger") return ledgerBody(order, biz);
+  if (template === "receipt") return receiptBody(order, biz);
   return fancyBody(order, biz);
 }
 

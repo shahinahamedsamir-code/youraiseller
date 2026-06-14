@@ -10,8 +10,8 @@ import {
   AlertCircle,
   Sparkles,
 } from "lucide-react";
-import { FEATURE_LIST } from "@/lib/features";
 import type { PlanConfig, PlanDefinition, PlanId } from "@/lib/plan-config-types";
+import { FEATURE_LIST } from "@/lib/features";
 import {
   fetchPlanConfigFromServer,
   loadPlanConfigLocal,
@@ -81,6 +81,7 @@ export default function DevPlansPage() {
         name: original.name,
         tagline: original.tagline,
         priceLabel: original.priceLabel,
+        active: original.active,
         features: { ...original.features },
       });
     });

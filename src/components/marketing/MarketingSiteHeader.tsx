@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/brand/BrandLogo";
+import { MarketingLanguageToggle } from "@/components/marketing/MarketingLanguageToggle";
 import {
   MarketingSiteHeaderMobileNav,
   MarketingSiteHeaderNav,
@@ -10,7 +11,7 @@ export function MarketingSiteHeader({
   active,
   homeHref = "/",
 }: {
-  active?: "package";
+  active?: "package" | "features";
   homeHref?: string;
 }) {
   return (
@@ -29,6 +30,7 @@ export function MarketingSiteHeader({
             </div>
           </Link>
           <MarketingSiteHeaderNav active={active} />
+          <MarketingLanguageToggle className="shrink-0" />
         </div>
         <MarketingSiteHeaderMobileNav active={active} />
       </div>

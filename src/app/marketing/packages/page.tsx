@@ -1,6 +1,24 @@
 import { MarketingPackagesPage } from "@/components/marketing/MarketingPackagesPage";
+import { MARKETING_PACKAGES } from "@/lib/marketing-packages-content";
+import { loadPlanConfig } from "@/lib/plan-config-server";
+import { planFeaturesFromConfig } from "@/lib/plan-config-utils";
+
+export const dynamic = "force-dynamic";
 
 /** Local preview — localhost:3000/marketing/packages */
-export default function MarketingPackagesPreviewPage() {
-  return <MarketingPackagesPage homeHref="/marketing" />;
+export default async function MarketingPackagesPreviewPage() {
+  const config = await loadPlanConfig();
+  const visiblePackages = MARKETING_PACKAGES.filter(
+    (pkg) => config.plans.find((p) => p.id === pkg.id)?.active !== false
+  );
+  const planFeaturesById = Object.fromEntries(
+    config.plans.map((plan) => [plan.id, planFeaturesFromConfig(config, plan.id)])
+  );
+  return (
+    <MarketingPackagesPage
+      homeHref="/marketing"
+      packages={visiblePackages}
+      planFeaturesById={planFeaturesById}
+    />
+  );
 }

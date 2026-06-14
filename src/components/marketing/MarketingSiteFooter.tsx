@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  getFeaturesPath,
   getMarketingHomePath,
   getMarketingSectionHref,
   getPackagesPath,
@@ -18,6 +19,7 @@ const FOOTER_LINKS = [
 
 export function MarketingSiteFooter() {
   const pathname = usePathname();
+  const features = getFeaturesPath(pathname);
   const packages = getPackagesPath(pathname);
   const home = getMarketingHomePath(pathname);
 
@@ -29,7 +31,15 @@ export function MarketingSiteFooter() {
           aria-label="Footer navigation"
         >
           {FOOTER_LINKS.map((link) =>
-            link.page ? (
+            link.label === "Features" ? (
+              <Link
+                key={link.label}
+                href={features}
+                className="mkt-nav-link min-h-11 rounded-xl px-3 py-2 text-sm font-semibold"
+              >
+                {link.label}
+              </Link>
+            ) : link.page ? (
               <Link
                 key={link.label}
                 href={packages}

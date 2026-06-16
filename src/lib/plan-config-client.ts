@@ -19,15 +19,6 @@ function cacheLocal(config: PlanConfig): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 }
 
-function configTime(config: PlanConfig): number {
-  const t = Date.parse(config.updatedAt);
-  return Number.isNaN(t) ? 0 : t;
-}
-
-function newestPlanConfig(a: PlanConfig, b: PlanConfig): PlanConfig {
-  return configTime(a) >= configTime(b) ? a : b;
-}
-
 /** Persist to localStorage; optionally notify listeners after explicit saves only. */
 export function savePlanConfigLocal(config: PlanConfig, notify = true): void {
   cacheLocal(config);
@@ -53,7 +44,7 @@ export async function fetchPlanConfigFromServer(): Promise<PlanConfig> {
     const res = await fetch("/api/dev-admin/plans", { cache: "no-store" });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.config) return local;
-    const config = newestPlanConfig(local, normalizePlanConfig(json.config));
+    const config = normalizePlanConfig(json.config);
     cacheLocal(config);
     return config;
   } catch {
@@ -67,7 +58,7 @@ export async function fetchPublicPlanConfig(): Promise<PlanConfig> {
     const res = await fetch("/api/plans", { cache: "no-store" });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.config) return local;
-    const config = newestPlanConfig(local, normalizePlanConfig(json.config));
+    const config = normalizePlanConfig(json.config);
     cacheLocal(config);
     return config;
   } catch {

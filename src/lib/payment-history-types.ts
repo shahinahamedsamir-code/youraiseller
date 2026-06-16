@@ -3,7 +3,7 @@ export type PaymentHistoryKind =
   | "sms_recharge"
   | "auto_call_recharge";
 
-export type PaymentHistoryMethod = "bkash" | "admin" | "manual";
+export type PaymentHistoryMethod = "bkash" | "paystation" | "admin" | "manual";
 
 export type PaymentHistoryStatus = "completed" | "failed";
 

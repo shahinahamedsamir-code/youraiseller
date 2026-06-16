@@ -8,7 +8,7 @@ import type { DevUser } from "@/lib/dev-users";
 import { formatSmsBdt } from "@/lib/sms-types";
 import {
   applySubscriptionCoupon,
-  renewSubscriptionViaBkash,
+  startSubscriptionRenewPayment,
   subscriptionRenewQuote,
 } from "@/lib/subscription-renew";
 
@@ -24,7 +24,6 @@ export function PlanRenewPayModal({
   open,
   user,
   onClose,
-  onSuccess,
   onError,
 }: Props) {
   const [mounted, setMounted] = useState(false);
@@ -90,14 +89,13 @@ export function PlanRenewPayModal({
 
   const handlePay = async () => {
     setPaying(true);
-    const res = await renewSubscriptionViaBkash(user.id, months, appliedCoupon);
+    const res = await startSubscriptionRenewPayment(user.id, months, appliedCoupon);
     setPaying(false);
     if (!res.ok) {
       onError(res.error);
       return;
     }
-    onSuccess(res.user, res.message);
-    onClose();
+    window.location.href = res.paymentUrl;
   };
 
   if (!open || !mounted) return null;
@@ -235,8 +233,7 @@ export function PlanRenewPayModal({
           </div>
 
           <p className="text-[11px] text-slate-500">
-            {formatSmsBdt(quote.monthlyTaka)}/month · bKash payment (live gateway coming
-            soon)
+            {formatSmsBdt(quote.monthlyTaka)}/month · PayStation hosted checkout
           </p>
 
           <button
@@ -249,7 +246,7 @@ export function PlanRenewPayModal({
             )}
           >
             {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Pay now with bKash
+            Pay with PayStation
           </button>
         </div>
       </div>

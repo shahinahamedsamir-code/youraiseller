@@ -5,7 +5,7 @@ import type { PaymentHistoryKind } from "@/lib/payment-history-types";
 type Body = {
   kind?: PaymentHistoryKind;
   amountTaka?: number;
-  method?: "bkash" | "admin" | "manual";
+  method?: "bkash" | "paystation" | "admin" | "manual";
   userId?: string;
   userEmail?: string;
   userName?: string;

@@ -1,9 +1,4 @@
-import {
-  activateUser,
-  applyUserToSession,
-  getSessionUser,
-  type DevUser,
-} from "./dev-users";
+import { getSessionUser, type DevUser } from "./dev-users";
 import { loadPlanConfigLocal } from "./plan-config-client";
 import { getPlanDefinition } from "./plan-config-utils";
 import {
@@ -108,15 +103,15 @@ export function applySubscriptionCoupon(
 }
 
 /**
- * Self-renew expired plan — bKash gateway hooks here.
- * Until live gateway: mock success when user confirms Pay with bKash.
+ * Self-renew expired plan through PayStation Hosted Checkout.
+ * The server creates the payment link and verifies the callback before activation.
  */
-export async function renewSubscriptionViaBkash(
+export async function startSubscriptionRenewPayment(
   userId: string,
   months = 1,
   couponCode?: string
 ): Promise<
-  | { ok: true; user: DevUser; totalTaka: number; message: string }
+  | { ok: true; paymentUrl: string; invoiceNumber: string; totalTaka: number }
   | { ok: false; error: string }
 > {
   const sessionUser = getSessionUser();
@@ -148,47 +143,32 @@ export async function renewSubscriptionViaBkash(
     }
   }
 
-  // TODO: bKash Checkout API — create payment session, verify callback.
-  await new Promise((r) => setTimeout(r, 900));
-
   try {
-    await fetch("/api/payments/record", {
+    const res = await fetch("/api/paystation/initiate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        kind: "plan_renewal",
-        amountTaka: quote.totalTaka,
-        method: "bkash",
-        userId: sessionUser.id,
-        userEmail: sessionUser.email,
-        userName: sessionUser.name,
-        company: sessionUser.company,
-        planId: quote.planId,
         months: quote.months,
         couponCode: quote.couponCode,
-        discountTaka: quote.discountTaka,
+        userId: sessionUser.id,
       }),
     });
+    const data = (await res.json()) as {
+      paymentUrl?: string;
+      invoiceNumber?: string;
+      amountTaka?: number;
+      error?: string;
+    };
+    if (!res.ok || !data.paymentUrl || !data.invoiceNumber) {
+      return { ok: false, error: data.error || "Could not start PayStation payment." };
+    }
+    return {
+      ok: true,
+      paymentUrl: data.paymentUrl,
+      invoiceNumber: data.invoiceNumber,
+      totalTaka: Number(data.amountTaka) || quote.totalTaka,
+    };
   } catch {
-    /* history is best-effort */
+    return { ok: false, error: "Could not connect to PayStation. Try again." };
   }
-
-  const activated = activateUser(userId, quote.months);
-  if (!activated) {
-    return { ok: false, error: "Could not renew account." };
-  }
-
-  applyUserToSession(activated);
-
-  const discountNote =
-    quote.discountTaka > 0 && quote.coupon
-      ? ` · ${quote.coupon.code} saved ${quote.discountTaka.toLocaleString("en-BD")} BDT`
-      : "";
-
-  return {
-    ok: true,
-    user: activated,
-    totalTaka: quote.totalTaka,
-    message: `bKash payment successful · ${quote.planName} renewed for ${quote.months} month${quote.months > 1 ? "s" : ""}${discountNote}`,
-  };
 }

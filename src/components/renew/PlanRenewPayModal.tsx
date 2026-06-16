@@ -7,10 +7,15 @@ import { CheckCircle2, CreditCard, Loader2, Tag, X } from "lucide-react";
 import type { DevUser } from "@/lib/dev-users";
 import { formatSmsBdt } from "@/lib/sms-types";
 import {
+  fetchPublicPlanConfig,
+  loadPlanConfigLocal,
+} from "@/lib/plan-config-client";
+import {
   applySubscriptionCoupon,
   startSubscriptionRenewPayment,
   subscriptionRenewQuote,
 } from "@/lib/subscription-renew";
+import type { PlanConfig } from "@/lib/plan-config-types";
 
 type Props = {
   open: boolean;
@@ -33,6 +38,7 @@ export function PlanRenewPayModal({
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
   const [couponError, setCouponError] = useState("");
+  const [planConfig, setPlanConfig] = useState<PlanConfig>(() => loadPlanConfigLocal());
 
   useEffect(() => {
     setMounted(true);
@@ -40,39 +46,44 @@ export function PlanRenewPayModal({
 
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
     setMonths(1);
     setCouponOpen(false);
     setCouponInput("");
     setAppliedCoupon(undefined);
     setCouponError("");
+    fetchPublicPlanConfig().then((config) => {
+      if (!cancelled) setPlanConfig(config);
+    });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !paying) onClose();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
+      cancelled = true;
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
   }, [open, onClose, paying]);
 
   const quote = useMemo(
-    () => subscriptionRenewQuote(user, months, appliedCoupon),
-    [user, months, appliedCoupon]
+    () => subscriptionRenewQuote(user, months, appliedCoupon, planConfig),
+    [user, months, appliedCoupon, planConfig]
   );
 
   useEffect(() => {
     if (!appliedCoupon) return;
-    const result = applySubscriptionCoupon(user, months, appliedCoupon);
+    const result = applySubscriptionCoupon(user, months, appliedCoupon, planConfig);
     if (!result.ok) {
       setAppliedCoupon(undefined);
       setCouponError(result.error);
     }
-  }, [user, months, appliedCoupon]);
+  }, [user, months, appliedCoupon, planConfig]);
 
   const handleApplyCoupon = () => {
     setCouponError("");
-    const result = applySubscriptionCoupon(user, months, couponInput);
+    const result = applySubscriptionCoupon(user, months, couponInput, planConfig);
     if (!result.ok) {
       setCouponError(result.error);
       return;

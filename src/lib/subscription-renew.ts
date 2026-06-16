@@ -1,6 +1,7 @@
 import { getSessionUser, type DevUser } from "./dev-users";
-import { loadPlanConfigLocal } from "./plan-config-client";
+import { fetchPublicPlanConfig, loadPlanConfigLocal } from "./plan-config-client";
 import { getPlanDefinition } from "./plan-config-utils";
+import type { PlanConfig } from "./plan-config-types";
 import {
   findSubscriptionCoupon,
   validateSubscriptionCoupon,
@@ -27,9 +28,9 @@ export type SubscriptionRenewQuote = {
 export function subscriptionRenewQuote(
   user: DevUser,
   months = 1,
-  couponCode?: string
+  couponCode?: string,
+  config: PlanConfig = loadPlanConfigLocal()
 ): SubscriptionRenewQuote {
-  const config = loadPlanConfigLocal();
   const plan = getPlanDefinition(config, user.plan);
   const monthlyTaka = planMonthlyPriceTaka(user.plan, plan.priceLabel);
   const monthCount = Math.max(1, Math.floor(months) || 1);
@@ -68,11 +69,11 @@ export function subscriptionRenewQuote(
 export function applySubscriptionCoupon(
   user: DevUser,
   months: number,
-  couponCode: string
+  couponCode: string,
+  config: PlanConfig = loadPlanConfigLocal()
 ):
   | { ok: true; quote: SubscriptionRenewQuote }
   | { ok: false; error: string } {
-  const config = loadPlanConfigLocal();
   const plan = getPlanDefinition(config, user.plan);
   const monthlyTaka = planMonthlyPriceTaka(user.plan, plan.priceLabel);
   const monthCount = Math.max(1, Math.floor(months) || 1);
@@ -122,7 +123,8 @@ export async function startSubscriptionRenewPayment(
     return { ok: false, error: "Only expired accounts can pay to renew here." };
   }
 
-  const quote = subscriptionRenewQuote(sessionUser, months, couponCode);
+  const config = await fetchPublicPlanConfig();
+  const quote = subscriptionRenewQuote(sessionUser, months, couponCode, config);
   if (quote.totalTaka <= 0) {
     return { ok: false, error: "Could not calculate plan price." };
   }

@@ -54,6 +54,21 @@ export async function fetchPlanConfigFromServer(): Promise<PlanConfig> {
   }
 }
 
+export async function fetchPublicPlanConfig(): Promise<PlanConfig> {
+  try {
+    const res = await fetch("/api/plans", { cache: "no-store" });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.config) {
+      return loadPlanConfigLocal();
+    }
+    const config = normalizePlanConfig(json.config);
+    cacheLocal(config);
+    return config;
+  } catch {
+    return loadPlanConfigLocal();
+  }
+}
+
 export async function savePlanConfigToServer(config: PlanConfig): Promise<{
   ok: boolean;
   error?: string;

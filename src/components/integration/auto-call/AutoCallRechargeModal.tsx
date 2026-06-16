@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Coins, Loader2, X } from "lucide-react";
@@ -10,6 +10,8 @@ import {
   selfRechargeAutoCallViaPayStation,
 } from "@/lib/auto-call-store";
 import type { AutoCallAccount } from "@/lib/auto-call-types";
+
+const DEFAULT_AUTO_CALL_RECHARGE_MINUTES = 100;
 
 type Props = {
   open: boolean;
@@ -28,18 +30,28 @@ export function AutoCallRechargeModal({
   onError,
 }: Props) {
   const [mounted, setMounted] = useState(false);
-  const [callMinutes, setCallMinutes] = useState(10);
+  const [callMinutes, setCallMinutes] = useState(DEFAULT_AUTO_CALL_RECHARGE_MINUTES);
   const [paying, setPaying] = useState(false);
+  const closeRef = useRef(onClose);
+  const payingRef = useRef(paying);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    payingRef.current = paying;
+  }, [paying]);
+
+  useEffect(() => {
     if (!open) return;
-    setCallMinutes(10);
+    setCallMinutes(DEFAULT_AUTO_CALL_RECHARGE_MINUTES);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !paying) onClose();
+      if (e.key === "Escape" && !payingRef.current) closeRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -47,7 +59,7 @@ export function AutoCallRechargeModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, paying]);
+  }, [open]);
 
   const totalTaka = useMemo(() => {
     const minutes = Math.max(1, Math.floor(callMinutes) || 1);

@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Coins, Loader2, X } from "lucide-react";
 import { selfRechargeViaPayStation } from "@/lib/sms-store";
 import { formatSmsBdt, type SmsAccount } from "@/lib/sms-types";
+
+const DEFAULT_SMS_RECHARGE_COUNT = 100;
 
 type Props = {
   open: boolean;
@@ -24,18 +26,28 @@ export function SmsRechargeModal({
   onError,
 }: Props) {
   const [mounted, setMounted] = useState(false);
-  const [smsCount, setSmsCount] = useState(10);
+  const [smsCount, setSmsCount] = useState(DEFAULT_SMS_RECHARGE_COUNT);
   const [paying, setPaying] = useState(false);
+  const closeRef = useRef(onClose);
+  const payingRef = useRef(paying);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    payingRef.current = paying;
+  }, [paying]);
+
+  useEffect(() => {
     if (!open) return;
-    setSmsCount(10);
+    setSmsCount(DEFAULT_SMS_RECHARGE_COUNT);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !paying) onClose();
+      if (e.key === "Escape" && !payingRef.current) closeRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -43,7 +55,7 @@ export function SmsRechargeModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, paying]);
+  }, [open]);
 
   const totalTaka = useMemo(() => {
     const count = Math.max(1, Math.floor(smsCount) || 1);

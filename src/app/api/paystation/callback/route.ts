@@ -4,6 +4,7 @@ import { recordPaymentHistory } from "@/lib/payment-history-server";
 import { applySmsRecharge } from "@/lib/sms-recharge-server";
 import { applyAutoCallRecharge } from "@/lib/auto-call-recharge-server";
 import {
+  appBaseUrl,
   fetchPayStationTransactionStatus,
   getPendingPayStationPayment,
   isPayStationSuccessStatus,
@@ -20,10 +21,11 @@ import { SELLER_AUTH_COOKIE } from "@/lib/seller-auth-cookie";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
+  const redirectOrigin = appBaseUrl(req);
   const invoiceNumber = url.searchParams.get("invoice_number")?.trim() ?? "";
   const callbackStatus = url.searchParams.get("status");
   const callbackTrxId = url.searchParams.get("trx_id")?.trim() ?? "";
-  const redirect = new URL("/renew", url.origin);
+  const redirect = new URL("/renew", redirectOrigin);
 
   if (!invoiceNumber) {
     redirect.searchParams.set("payment", "failed");
@@ -72,7 +74,7 @@ export async function GET(req: Request) {
         discountTaka: pending.discountTaka,
         note: `PayStation ${verifiedStatus || callbackStatus || "failed"} · ${invoiceNumber}`,
       });
-      const failedRedirect = payStationRedirectForPending(url.origin, pending.kind, false);
+      const failedRedirect = payStationRedirectForPending(redirectOrigin, pending.kind, false);
       failedRedirect.searchParams.set("invoice", invoiceNumber);
       return NextResponse.redirect(failedRedirect);
     }
@@ -95,7 +97,7 @@ export async function GET(req: Request) {
       await writeDevUsersFile(users);
     } else if (pending.kind === "sms_recharge") {
       if (!pending.scope || !pending.smsCount) {
-        const failedRedirect = payStationRedirectForPending(url.origin, pending.kind, false);
+        const failedRedirect = payStationRedirectForPending(redirectOrigin, pending.kind, false);
         failedRedirect.searchParams.set("reason", "invalid_sms_recharge");
         return NextResponse.redirect(failedRedirect);
       }
@@ -107,7 +109,7 @@ export async function GET(req: Request) {
       });
     } else if (pending.kind === "auto_call_recharge") {
       if (!pending.scope || !pending.callMinutes) {
-        const failedRedirect = payStationRedirectForPending(url.origin, pending.kind, false);
+        const failedRedirect = payStationRedirectForPending(redirectOrigin, pending.kind, false);
         failedRedirect.searchParams.set("reason", "invalid_auto_call_recharge");
         return NextResponse.redirect(failedRedirect);
       }
@@ -138,7 +140,7 @@ export async function GET(req: Request) {
     });
     await removePendingPayStationPayment(invoiceNumber);
 
-    const successRedirect = payStationRedirectForPending(url.origin, pending.kind, true);
+    const successRedirect = payStationRedirectForPending(redirectOrigin, pending.kind, true);
     successRedirect.searchParams.set("invoice", invoiceNumber);
     const res = NextResponse.redirect(successRedirect);
     if (pending.kind === "plan_renewal" && pending.userId) {

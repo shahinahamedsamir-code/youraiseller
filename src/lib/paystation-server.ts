@@ -71,14 +71,30 @@ export function appBaseUrl(req?: Request): string {
   const configured =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.APP_URL?.trim();
-  if (configured) return configured.replace(/\/+$/, "");
+  if (configured) return normalizeAppBaseUrl(configured);
 
   if (req) {
     const url = new URL(req.url);
-    return `${url.protocol}//${url.host}`;
+    return normalizeAppBaseUrl(`${url.protocol}//${url.host}`);
   }
 
   return "http://localhost:3000";
+}
+
+function normalizeAppBaseUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/+$/, "");
+  try {
+    const url = new URL(trimmed);
+    if (url.hostname === "0.0.0.0") {
+      url.hostname = "localhost";
+      if (process.env.NODE_ENV !== "production") {
+        url.protocol = "http:";
+      }
+    }
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    return trimmed;
+  }
 }
 
 export function createPayStationInvoiceNumber(userId: string): string {

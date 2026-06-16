@@ -15,6 +15,11 @@ import {
   startSubscriptionRenewPayment,
   subscriptionRenewQuote,
 } from "@/lib/subscription-renew";
+import {
+  fetchPublicSubscriptionCoupons,
+  loadSubscriptionCouponsLocal,
+  type SubscriptionCoupon,
+} from "@/lib/subscription-coupons";
 import type { PlanConfig } from "@/lib/plan-config-types";
 
 type Props = {
@@ -39,6 +44,9 @@ export function PlanRenewPayModal({
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>();
   const [couponError, setCouponError] = useState("");
   const [planConfig, setPlanConfig] = useState<PlanConfig>(() => loadPlanConfigLocal());
+  const [coupons, setCoupons] = useState<SubscriptionCoupon[]>(() =>
+    loadSubscriptionCouponsLocal()
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -55,6 +63,9 @@ export function PlanRenewPayModal({
     fetchPublicPlanConfig().then((config) => {
       if (!cancelled) setPlanConfig(config);
     });
+    fetchPublicSubscriptionCoupons().then((next) => {
+      if (!cancelled) setCoupons(next);
+    });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !paying) onClose();
     };
@@ -68,22 +79,22 @@ export function PlanRenewPayModal({
   }, [open, onClose, paying]);
 
   const quote = useMemo(
-    () => subscriptionRenewQuote(user, months, appliedCoupon, planConfig),
-    [user, months, appliedCoupon, planConfig]
+    () => subscriptionRenewQuote(user, months, appliedCoupon, planConfig, coupons),
+    [user, months, appliedCoupon, planConfig, coupons]
   );
 
   useEffect(() => {
     if (!appliedCoupon) return;
-    const result = applySubscriptionCoupon(user, months, appliedCoupon, planConfig);
+    const result = applySubscriptionCoupon(user, months, appliedCoupon, planConfig, coupons);
     if (!result.ok) {
       setAppliedCoupon(undefined);
       setCouponError(result.error);
     }
-  }, [user, months, appliedCoupon, planConfig]);
+  }, [user, months, appliedCoupon, planConfig, coupons]);
 
   const handleApplyCoupon = () => {
     setCouponError("");
-    const result = applySubscriptionCoupon(user, months, couponInput, planConfig);
+    const result = applySubscriptionCoupon(user, months, couponInput, planConfig, coupons);
     if (!result.ok) {
       setCouponError(result.error);
       return;

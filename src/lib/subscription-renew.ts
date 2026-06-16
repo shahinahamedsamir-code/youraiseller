@@ -4,6 +4,7 @@ import { getPlanDefinition } from "./plan-config-utils";
 import type { PlanConfig } from "./plan-config-types";
 import {
   findSubscriptionCoupon,
+  fetchPublicSubscriptionCoupons,
   validateSubscriptionCoupon,
   type SubscriptionCoupon,
 } from "./subscription-coupons";
@@ -29,7 +30,8 @@ export function subscriptionRenewQuote(
   user: DevUser,
   months = 1,
   couponCode?: string,
-  config: PlanConfig = loadPlanConfigLocal()
+  config: PlanConfig = loadPlanConfigLocal(),
+  coupons?: SubscriptionCoupon[]
 ): SubscriptionRenewQuote {
   const plan = getPlanDefinition(config, user.plan);
   const monthlyTaka = renewalMonthlyPriceTaka(
@@ -62,7 +64,7 @@ export function subscriptionRenewQuote(
     planId: user.plan,
     months: monthCount,
     subtotalTaka,
-  });
+  }, coupons);
   if (!result.ok) return base;
 
   return {
@@ -78,7 +80,8 @@ export function applySubscriptionCoupon(
   user: DevUser,
   months: number,
   couponCode: string,
-  config: PlanConfig = loadPlanConfigLocal()
+  config: PlanConfig = loadPlanConfigLocal(),
+  coupons?: SubscriptionCoupon[]
 ):
   | { ok: true; quote: SubscriptionRenewQuote }
   | { ok: false; error: string } {
@@ -99,7 +102,7 @@ export function applySubscriptionCoupon(
     planId: user.plan,
     months: monthCount,
     subtotalTaka,
-  });
+  }, coupons);
   if (!result.ok) return result;
 
   return {
@@ -139,14 +142,17 @@ export async function startSubscriptionRenewPayment(
     return { ok: false, error: "Only expired accounts can pay to renew here." };
   }
 
-  const config = await fetchPublicPlanConfig();
-  const quote = subscriptionRenewQuote(sessionUser, months, couponCode, config);
+  const [config, coupons] = await Promise.all([
+    fetchPublicPlanConfig(),
+    fetchPublicSubscriptionCoupons(),
+  ]);
+  const quote = subscriptionRenewQuote(sessionUser, months, couponCode, config, coupons);
   if (quote.totalTaka <= 0) {
     return { ok: false, error: "Could not calculate plan price." };
   }
 
   if (couponCode?.trim()) {
-    const coupon = findSubscriptionCoupon(couponCode);
+    const coupon = findSubscriptionCoupon(couponCode, coupons);
     if (!coupon) {
       return { ok: false, error: "Coupon is no longer valid." };
     }
@@ -154,7 +160,7 @@ export async function startSubscriptionRenewPayment(
       planId: sessionUser.plan,
       months: quote.months,
       subtotalTaka: quote.subtotalTaka,
-    });
+    }, coupons);
     if (!check.ok) return check;
     if (check.totalTaka !== quote.totalTaka) {
       return { ok: false, error: "Coupon could not be applied. Try again." };

@@ -15,6 +15,7 @@ import {
   Layers,
   Receipt,
   BarChart3,
+  Tag,
   X,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -27,6 +28,7 @@ const devNav = [
   { label: "Request", href: "/dev-admin/requests", icon: ClipboardList },
   { label: "Software Users", href: "/dev-admin/users", icon: Users },
   { label: "Plan Packages", href: "/dev-admin/plans", icon: Layers },
+  { label: "Coupons", href: "/dev-admin/coupons", icon: Tag },
   { label: "SMS Control", href: "/dev-admin/sms", icon: MessageSquare },
   { label: "Auto Call Control", href: "/dev-admin/auto-call", icon: Phone },
   { label: "Payment History", href: "/dev-admin/payments", icon: Receipt },

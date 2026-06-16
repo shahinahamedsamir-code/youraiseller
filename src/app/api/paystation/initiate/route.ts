@@ -4,6 +4,7 @@ import { loadPlanConfig } from "@/lib/plan-config-server";
 import { getPlanDefinition } from "@/lib/plan-config-utils";
 import { calcSubscriptionRenewTotal, renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
 import { validateSubscriptionCoupon } from "@/lib/subscription-coupons";
+import { loadSubscriptionCoupons } from "@/lib/subscription-coupons-server";
 import {
   appBaseUrl,
   createPayStationInvoiceNumber,
@@ -64,11 +65,12 @@ export async function POST(req: Request) {
     let discountTaka = 0;
     let couponCode: string | undefined;
     if (body.couponCode?.trim()) {
+      const coupons = await loadSubscriptionCoupons();
       const coupon = validateSubscriptionCoupon(body.couponCode, {
         planId,
         months,
         subtotalTaka,
-      });
+      }, coupons);
       if (!coupon.ok) {
         return NextResponse.json({ error: coupon.error }, { status: 400 });
       }

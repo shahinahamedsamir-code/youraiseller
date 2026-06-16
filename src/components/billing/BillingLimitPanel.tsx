@@ -30,8 +30,9 @@ import {
   type PaymentHistoryEntry,
   type PaymentHistoryKind,
 } from "@/lib/payment-history-types";
-import { loadPlanConfigLocal } from "@/lib/plan-config-client";
+import { fetchPublicPlanConfig, loadPlanConfigLocal } from "@/lib/plan-config-client";
 import type { PlanId } from "@/lib/plan-config-types";
+import type { PlanConfig } from "@/lib/plan-config-types";
 import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
 import { formatSmsBdt } from "@/lib/sms-types";
 import { formatAutoCallBdt } from "@/lib/auto-call-store";
@@ -93,6 +94,7 @@ export function BillingLimitPanel() {
   const [smsOpen, setSmsOpen] = useState(false);
   const [autoCallOpen, setAutoCallOpen] = useState(false);
   const [entries, setEntries] = useState<PaymentHistoryEntry[]>([]);
+  const [planConfig, setPlanConfig] = useState<PlanConfig>(() => loadPlanConfigLocal());
   const [historyLoading, setHistoryLoading] = useState(true);
   const [kind, setKind] = useState<KindFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -117,6 +119,7 @@ export function BillingLimitPanel() {
 
   useEffect(() => {
     refreshCurrentSessionUser().then((u) => setUser(u ?? null));
+    fetchPublicPlanConfig().then(setPlanConfig);
   }, []);
 
   useEffect(() => {
@@ -125,11 +128,10 @@ export function BillingLimitPanel() {
 
   const planPrice = useMemo(() => {
     if (!user) return 0;
-    const config = loadPlanConfigLocal();
     const planId = user.plan as PlanId;
-    const plan = config.plans.find((p) => p.id === planId);
+    const plan = planConfig.plans.find((p) => p.id === planId);
     return renewalMonthlyPriceTaka(planId, plan?.priceLabel ?? "", user.customRenewalPriceTaka);
-  }, [user]);
+  }, [planConfig, user]);
 
   const completedTotal = entries
     .filter((row) => row.status === "completed")

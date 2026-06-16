@@ -17,6 +17,7 @@ type Body = {
   userId?: string;
   months?: number;
   couponCode?: string;
+  quotedMonthlyTaka?: number;
 };
 
 export async function POST(req: Request) {
@@ -49,11 +50,16 @@ export async function POST(req: Request) {
     const config = await loadPlanConfig();
     const plan = getPlanDefinition(config, planId);
     const customRenewalPriceTaka = Number(sessionUser.customRenewalPriceTaka);
-    const monthlyTaka = renewalMonthlyPriceTaka(
+    const serverMonthlyTaka = renewalMonthlyPriceTaka(
       planId,
       plan.priceLabel,
       Number.isFinite(customRenewalPriceTaka) ? customRenewalPriceTaka : undefined
     );
+    const quotedMonthlyTaka = Number(body.quotedMonthlyTaka);
+    const monthlyTaka =
+      Number.isFinite(quotedMonthlyTaka) && quotedMonthlyTaka > serverMonthlyTaka
+        ? Math.round(quotedMonthlyTaka * 100) / 100
+        : serverMonthlyTaka;
     const subtotalTaka = calcSubscriptionRenewTotal(monthlyTaka, months);
     let discountTaka = 0;
     let couponCode: string | undefined;

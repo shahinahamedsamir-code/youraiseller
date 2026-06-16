@@ -169,6 +169,7 @@ export async function startSubscriptionRenewPayment(
         months: quote.months,
         couponCode: quote.couponCode,
         userId: sessionUser.id,
+        quotedMonthlyTaka: quote.monthlyTaka,
       }),
     });
     const data = (await res.json()) as {

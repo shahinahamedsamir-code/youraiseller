@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { planPeriodFromNow } from "@/lib/subscription-period";
 import { recordPaymentHistory } from "@/lib/payment-history-server";
+import { applySmsRecharge } from "@/lib/sms-recharge-server";
+import { applyAutoCallRecharge } from "@/lib/auto-call-recharge-server";
 import {
   fetchPayStationTransactionStatus,
   getPendingPayStationPayment,
@@ -53,7 +55,7 @@ export async function GET(req: Request) {
 
     if (!paid) {
       await recordPaymentHistory({
-        kind: "plan_renewal",
+        kind: pending.kind,
         amountTaka: pending.amountTaka,
         method: "paystation",
         status: "failed",
@@ -63,32 +65,61 @@ export async function GET(req: Request) {
         company: pending.company,
         planId: pending.planId,
         months: pending.months,
+        scope: pending.scope,
+        smsCount: pending.smsCount,
+        callMinutes: pending.callMinutes,
         couponCode: pending.couponCode,
         discountTaka: pending.discountTaka,
         note: `PayStation ${verifiedStatus || callbackStatus || "failed"} · ${invoiceNumber}`,
       });
-      redirect.searchParams.set("payment", "failed");
-      redirect.searchParams.set("invoice", invoiceNumber);
-      return NextResponse.redirect(redirect);
+      const failedRedirect = payStationRedirectForPending(url.origin, pending.kind, false);
+      failedRedirect.searchParams.set("invoice", invoiceNumber);
+      return NextResponse.redirect(failedRedirect);
     }
 
-    const users = await readDevUsersFile();
-    const idx = users.findIndex((u) => String(u.id) === pending.userId);
-    if (idx < 0) {
-      redirect.searchParams.set("payment", "failed");
-      redirect.searchParams.set("reason", "user_not_found");
-      return NextResponse.redirect(redirect);
+    if (pending.kind === "plan_renewal") {
+      const users = await readDevUsersFile();
+      const idx = users.findIndex((u) => String(u.id) === pending.userId);
+      if (idx < 0 || !pending.userId) {
+        redirect.searchParams.set("payment", "failed");
+        redirect.searchParams.set("reason", "user_not_found");
+        return NextResponse.redirect(redirect);
+      }
+
+      users[idx] = {
+        ...users[idx],
+        status: "active",
+        expiredAt: undefined,
+        ...planPeriodFromNow(pending.months ?? 1),
+      };
+      await writeDevUsersFile(users);
+    } else if (pending.kind === "sms_recharge") {
+      if (!pending.scope || !pending.smsCount) {
+        const failedRedirect = payStationRedirectForPending(url.origin, pending.kind, false);
+        failedRedirect.searchParams.set("reason", "invalid_sms_recharge");
+        return NextResponse.redirect(failedRedirect);
+      }
+      await applySmsRecharge({
+        scope: pending.scope,
+        smsCredits: pending.smsCount,
+        taka: Math.ceil(pending.amountTaka),
+        source: "self_paystation",
+      });
+    } else if (pending.kind === "auto_call_recharge") {
+      if (!pending.scope || !pending.callMinutes) {
+        const failedRedirect = payStationRedirectForPending(url.origin, pending.kind, false);
+        failedRedirect.searchParams.set("reason", "invalid_auto_call_recharge");
+        return NextResponse.redirect(failedRedirect);
+      }
+      await applyAutoCallRecharge({
+        scope: pending.scope,
+        taka: pending.amountTaka,
+        source: "self_paystation",
+      });
     }
 
-    users[idx] = {
-      ...users[idx],
-      status: "active",
-      expiredAt: undefined,
-      ...planPeriodFromNow(pending.months),
-    };
-    await writeDevUsersFile(users);
     await recordPaymentHistory({
-      kind: "plan_renewal",
+      kind: pending.kind,
       amountTaka: pending.amountTaka,
       method: "paystation",
       status: "completed",
@@ -98,20 +129,25 @@ export async function GET(req: Request) {
       company: pending.company,
       planId: pending.planId,
       months: pending.months,
+      scope: pending.scope,
+      smsCount: pending.smsCount,
+      callMinutes: pending.callMinutes,
       couponCode: pending.couponCode,
       discountTaka: pending.discountTaka,
       note: `PayStation ${status.data?.payment_method || "payment"} · ${status.data?.trx_id || callbackTrxId || invoiceNumber}`,
     });
     await removePendingPayStationPayment(invoiceNumber);
 
-    redirect.searchParams.set("payment", "success");
-    redirect.searchParams.set("invoice", invoiceNumber);
-    const res = NextResponse.redirect(redirect);
-    res.cookies.set(
-      SELLER_AUTH_COOKIE,
-      signSellerSession(pending.userId),
-      sellerSessionCookieOptions()
-    );
+    const successRedirect = payStationRedirectForPending(url.origin, pending.kind, true);
+    successRedirect.searchParams.set("invoice", invoiceNumber);
+    const res = NextResponse.redirect(successRedirect);
+    if (pending.kind === "plan_renewal" && pending.userId) {
+      res.cookies.set(
+        SELLER_AUTH_COOKIE,
+        signSellerSession(pending.userId),
+        sellerSessionCookieOptions()
+      );
+    }
     return res;
   } catch (e) {
     console.error("[paystation/callback]", e);
@@ -119,4 +155,21 @@ export async function GET(req: Request) {
     redirect.searchParams.set("reason", "server_error");
     return NextResponse.redirect(redirect);
   }
+}
+
+function payStationRedirectForPending(
+  origin: string,
+  kind: "plan_renewal" | "sms_recharge" | "auto_call_recharge",
+  success: boolean
+): URL {
+  const path =
+    kind === "sms_recharge"
+      ? "/dashboard/integration/sms"
+      : kind === "auto_call_recharge"
+        ? "/dashboard/integration/auto-call"
+        : "/renew";
+  const redirect = new URL(path, origin);
+  redirect.searchParams.set("payment", success ? "success" : "failed");
+  redirect.searchParams.set("kind", kind);
+  return redirect;
 }

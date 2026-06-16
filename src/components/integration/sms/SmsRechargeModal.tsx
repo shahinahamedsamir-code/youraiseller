@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Coins, Loader2, X } from "lucide-react";
-import { selfRechargeViaBkash } from "@/lib/sms-store";
+import { selfRechargeViaPayStation } from "@/lib/sms-store";
 import { formatSmsBdt, type SmsAccount } from "@/lib/sms-types";
 
 type Props = {
@@ -21,7 +21,6 @@ export function SmsRechargeModal({
   balance,
   smsPriceTaka,
   onClose,
-  onSuccess,
   onError,
 }: Props) {
   const [mounted, setMounted] = useState(false);
@@ -53,14 +52,13 @@ export function SmsRechargeModal({
 
   const handlePay = async () => {
     setPaying(true);
-    const res = await selfRechargeViaBkash(Math.floor(smsCount) || 1);
+    const res = await selfRechargeViaPayStation(Math.floor(smsCount) || 1);
     setPaying(false);
-    if (!res.ok || !res.account) {
+    if (!res.ok || !res.paymentUrl) {
       onError(res.error ?? "Payment failed");
       return;
     }
-    onSuccess(res.account, res.message ?? "Recharge successful");
-    onClose();
+    window.location.href = res.paymentUrl;
   };
 
   if (!open || !mounted) return null;
@@ -118,7 +116,7 @@ export function SmsRechargeModal({
             <span className="text-rose-600">{formatSmsBdt(totalTaka)}</span>
           </p>
           <p className="text-[11px] text-slate-500">
-            BDT {smsPriceTaka}/SMS · bKash payment (live gateway coming soon)
+            BDT {smsPriceTaka}/SMS · PayStation hosted checkout
           </p>
 
           <button
@@ -131,7 +129,7 @@ export function SmsRechargeModal({
             )}
           >
             {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Pay with bKash
+            Pay with PayStation
           </button>
         </div>
       </div>

@@ -7,17 +7,20 @@ import {
 import { recordPaymentHistory } from "@/lib/payment-history-server";
 import { sellerInfoForScope } from "@/lib/payment-history-user";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
+import {
+  appBaseUrl,
+  createPayStationInvoiceNumber,
+  initiatePayStationPayment,
+  payStationCredentials,
+  savePendingPayStationPayment,
+} from "@/lib/paystation-server";
 
 type Body = {
   scope?: string;
   smsCount?: number;
-  paymentMethod?: "bkash";
+  paymentMethod?: "bkash" | "paystation";
 };
 
-/**
- * Self recharge — bKash payment integration hooks here.
- * Until live gateway: mock success when user confirms Pay with bKash.
- */
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
@@ -46,16 +49,68 @@ export async function POST(req: Request) {
     }
 
     const method = body.paymentMethod ?? "bkash";
-    if (method !== "bkash") {
+    if (method !== "bkash" && method !== "paystation") {
       return NextResponse.json({ error: "Unsupported payment method" }, { status: 400 });
     }
 
     const preview = calcRechargeTotals(smsCount, control.smsPriceTaka);
-
-    // TODO: bKash Checkout API — create payment session, return redirect URL.
-    // Mock: payment succeeds immediately for development.
-    const { account, totalTaka } = await applySelfBkashRecharge(scope, smsCount);
     const seller = await sellerInfoForScope(scope);
+
+    if (method === "paystation") {
+      const creds = payStationCredentials();
+      if (!creds.ok) {
+        return NextResponse.json({ error: creds.error }, { status: 500 });
+      }
+
+      const invoiceNumber = createPayStationInvoiceNumber(scope);
+      const result = await initiatePayStationPayment({
+        merchantId: creds.merchantId,
+        password: creds.password,
+        invoiceNumber,
+        amountTaka: preview.totalTaka,
+        customerName: seller.userName || seller.company || "YourAI Seller",
+        customerEmail: seller.userEmail || "customer@youraiseller.com",
+        customerAddress: seller.company || "YourAI Seller SMS recharge",
+        callbackUrl: `${appBaseUrl(req)}/api/paystation/callback`,
+        reference: "YourAI Seller SMS recharge",
+        checkoutItems: {
+          kind: "sms_recharge",
+          scope,
+          smsCount: preview.smsCount,
+        },
+      });
+
+      if (String(result.status_code) !== "200" || result.status !== "success" || !result.payment_url) {
+        return NextResponse.json(
+          { error: result.message || "PayStation could not create payment link." },
+          { status: 502 }
+        );
+      }
+
+      await savePendingPayStationPayment({
+        kind: "sms_recharge",
+        invoiceNumber,
+        scope,
+        userId: seller.userId,
+        userEmail: seller.userEmail,
+        userName: seller.userName,
+        company: seller.company,
+        smsCount: preview.smsCount,
+        amountTaka: preview.totalTaka,
+        createdAt: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        ok: true,
+        paymentMethod: "paystation",
+        paymentUrl: result.payment_url,
+        invoiceNumber,
+        smsCount: preview.smsCount,
+        totalTaka: preview.totalTaka,
+      });
+    }
+
+    const { account, totalTaka } = await applySelfBkashRecharge(scope, smsCount);
     await recordPaymentHistory({
       kind: "sms_recharge",
       amountTaka: totalTaka,
@@ -72,7 +127,7 @@ export async function POST(req: Request) {
       smsCount: preview.smsCount,
       totalTaka,
       account,
-      message: `bKash payment successful · ${preview.smsCount} SMS added`,
+      message: `bKash payment successful - ${preview.smsCount} SMS added`,
     });
   } catch (e) {
     console.error("[sms/recharge]", e);

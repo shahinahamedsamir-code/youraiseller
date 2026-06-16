@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { Coins, Loader2, X } from "lucide-react";
-import { formatAutoCallBdt, formatAutoCallTaka, selfRechargeAutoCallViaBkash } from "@/lib/auto-call-store";
+import {
+  formatAutoCallBdt,
+  formatAutoCallTaka,
+  selfRechargeAutoCallViaPayStation,
+} from "@/lib/auto-call-store";
 import type { AutoCallAccount } from "@/lib/auto-call-types";
 
 type Props = {
@@ -21,7 +25,6 @@ export function AutoCallRechargeModal({
   balanceTaka,
   callPriceTaka,
   onClose,
-  onSuccess,
   onError,
 }: Props) {
   const [mounted, setMounted] = useState(false);
@@ -53,14 +56,13 @@ export function AutoCallRechargeModal({
 
   const handlePay = async () => {
     setPaying(true);
-    const res = await selfRechargeAutoCallViaBkash(Math.floor(callMinutes) || 1);
+    const res = await selfRechargeAutoCallViaPayStation(Math.floor(callMinutes) || 1);
     setPaying(false);
-    if (!res.ok || !res.account) {
+    if (!res.ok || !res.paymentUrl) {
       onError(res.error ?? "Payment failed");
       return;
     }
-    onSuccess(res.account, res.message ?? "Recharge successful");
-    onClose();
+    window.location.href = res.paymentUrl;
   };
 
   if (!open || !mounted) return null;
@@ -116,7 +118,7 @@ export function AutoCallRechargeModal({
             <span className="text-rose-600">{formatAutoCallBdt(totalTaka)}</span>
           </p>
           <p className="text-[11px] text-slate-500">
-            {formatAutoCallTaka(callPriceTaka)} BDT per call
+            {formatAutoCallTaka(callPriceTaka)} BDT per call · PayStation hosted checkout
           </p>
 
           <button
@@ -129,7 +131,7 @@ export function AutoCallRechargeModal({
             )}
           >
             {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Pay with bKash
+            Pay with PayStation
           </button>
         </div>
       </div>

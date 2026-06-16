@@ -2,7 +2,11 @@ import { loadAutoCallAccount, saveAutoCallAccount } from "./auto-call-account-se
 import { loadAutoCallPlatformControl } from "./auto-call-platform-control";
 import type { AutoCallAccount } from "./auto-call-types";
 
-export type AutoCallRechargeSource = "self_bkash" | "admin" | "admin_minutes";
+export type AutoCallRechargeSource =
+  | "self_bkash"
+  | "self_paystation"
+  | "admin"
+  | "admin_minutes";
 
 export type ApplyAutoCallRechargeInput = {
   scope: string;

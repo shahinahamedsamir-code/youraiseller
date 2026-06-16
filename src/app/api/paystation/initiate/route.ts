@@ -72,6 +72,7 @@ export async function POST(req: Request) {
     const baseUrl = appBaseUrl(req);
     const callbackUrl = `${baseUrl}/api/paystation/callback`;
     const payment = {
+      kind: "plan_renewal" as const,
       invoiceNumber,
       userId: String(sessionUser.id),
       userEmail: String(sessionUser.email ?? ""),

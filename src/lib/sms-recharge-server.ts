@@ -3,7 +3,7 @@ import { loadSmsPlatformControl } from "./sms-platform-control";
 import { smsCreditsFromTaka } from "./sms-admin-server";
 import type { SmsAccount } from "./sms-types";
 
-export type RechargeSource = "self_bkash" | "admin" | "admin_credits";
+export type RechargeSource = "self_bkash" | "self_paystation" | "admin" | "admin_credits";
 
 export type ApplyRechargeInput = {
   scope: string;

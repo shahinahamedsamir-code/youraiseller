@@ -7,11 +7,18 @@ import {
 import { recordPaymentHistory } from "@/lib/payment-history-server";
 import { sellerInfoForScope } from "@/lib/payment-history-user";
 import { sanitizeSmsScope } from "@/lib/teamitqan-sms";
+import {
+  appBaseUrl,
+  createPayStationInvoiceNumber,
+  initiatePayStationPayment,
+  payStationCredentials,
+  savePendingPayStationPayment,
+} from "@/lib/paystation-server";
 
 type Body = {
   scope?: string;
   callMinutes?: number;
-  paymentMethod?: "bkash";
+  paymentMethod?: "bkash" | "paystation";
 };
 
 export async function POST(req: Request) {
@@ -39,13 +46,68 @@ export async function POST(req: Request) {
     }
 
     const method = body.paymentMethod ?? "bkash";
-    if (method !== "bkash") {
+    if (method !== "bkash" && method !== "paystation") {
       return NextResponse.json({ error: "Unsupported payment method" }, { status: 400 });
     }
 
     const preview = calcAutoCallRechargeTotals(callMinutes, control.callPriceTaka);
-    const { account, totalTaka } = await applySelfBkashAutoCallRecharge(scope, callMinutes);
     const seller = await sellerInfoForScope(scope);
+
+    if (method === "paystation") {
+      const creds = payStationCredentials();
+      if (!creds.ok) {
+        return NextResponse.json({ error: creds.error }, { status: 500 });
+      }
+
+      const invoiceNumber = createPayStationInvoiceNumber(scope);
+      const result = await initiatePayStationPayment({
+        merchantId: creds.merchantId,
+        password: creds.password,
+        invoiceNumber,
+        amountTaka: preview.totalTaka,
+        customerName: seller.userName || seller.company || "YourAI Seller",
+        customerEmail: seller.userEmail || "customer@youraiseller.com",
+        customerAddress: seller.company || "YourAI Seller auto call recharge",
+        callbackUrl: `${appBaseUrl(req)}/api/paystation/callback`,
+        reference: "YourAI Seller Auto Call recharge",
+        checkoutItems: {
+          kind: "auto_call_recharge",
+          scope,
+          callMinutes: preview.callMinutes,
+        },
+      });
+
+      if (String(result.status_code) !== "200" || result.status !== "success" || !result.payment_url) {
+        return NextResponse.json(
+          { error: result.message || "PayStation could not create payment link." },
+          { status: 502 }
+        );
+      }
+
+      await savePendingPayStationPayment({
+        kind: "auto_call_recharge",
+        invoiceNumber,
+        scope,
+        userId: seller.userId,
+        userEmail: seller.userEmail,
+        userName: seller.userName,
+        company: seller.company,
+        callMinutes: preview.callMinutes,
+        amountTaka: preview.totalTaka,
+        createdAt: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        ok: true,
+        paymentMethod: "paystation",
+        paymentUrl: result.payment_url,
+        invoiceNumber,
+        callMinutes: preview.callMinutes,
+        totalTaka: preview.totalTaka,
+      });
+    }
+
+    const { account, totalTaka } = await applySelfBkashAutoCallRecharge(scope, callMinutes);
     await recordPaymentHistory({
       kind: "auto_call_recharge",
       amountTaka: totalTaka,
@@ -62,7 +124,7 @@ export async function POST(req: Request) {
       callMinutes: preview.callMinutes,
       totalTaka,
       account,
-      message: `bKash payment successful · ${formatMinutes(preview.callMinutes)} added`,
+      message: `bKash payment successful - ${formatMinutes(preview.callMinutes)} added`,
     });
   } catch (e) {
     console.error("[auto-call/recharge]", e);

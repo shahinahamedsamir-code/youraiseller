@@ -479,6 +479,33 @@ export async function selfRechargeAutoCallViaBkash(callMinutes: number): Promise
   };
 }
 
+export async function selfRechargeAutoCallViaPayStation(callMinutes: number): Promise<{
+  ok: boolean;
+  error?: string;
+  paymentUrl?: string;
+  invoiceNumber?: string;
+  totalTaka?: number;
+}> {
+  const scope = getSellerStorageScope();
+  if (!scope) return { ok: false, error: "Not signed in" };
+
+  const res = await fetch("/api/auto-call/recharge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope, callMinutes, paymentMethod: "paystation" }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.paymentUrl) {
+    return { ok: false, error: json.error ?? "Recharge failed" };
+  }
+  return {
+    ok: true,
+    paymentUrl: json.paymentUrl,
+    invoiceNumber: json.invoiceNumber,
+    totalTaka: json.totalTaka,
+  };
+}
+
 export function saveAutoCallWallet(wallet: AutoCallWallet): void {
   const scope = getSellerStorageScope();
   if (!scope) return;

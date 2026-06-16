@@ -159,6 +159,33 @@ export async function selfRechargeViaBkash(smsCount: number): Promise<{
   };
 }
 
+export async function selfRechargeViaPayStation(smsCount: number): Promise<{
+  ok: boolean;
+  error?: string;
+  paymentUrl?: string;
+  invoiceNumber?: string;
+  totalTaka?: number;
+}> {
+  const scope = getSellerStorageScope();
+  if (!scope) return { ok: false, error: "Not signed in" };
+
+  const res = await fetch("/api/sms/recharge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope, smsCount, paymentMethod: "paystation" }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.paymentUrl) {
+    return { ok: false, error: json.error ?? "Recharge failed" };
+  }
+  return {
+    ok: true,
+    paymentUrl: json.paymentUrl,
+    invoiceNumber: json.invoiceNumber,
+    totalTaka: json.totalTaka,
+  };
+}
+
 export async function saveAutoSmsSettings(
   autoSettings: Record<AutoSmsTab, AutoSmsSetting[]>
 ): Promise<{ ok: boolean; error?: string; account?: SmsAccount }> {

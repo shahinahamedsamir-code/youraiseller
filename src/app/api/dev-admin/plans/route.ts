@@ -6,6 +6,9 @@ import {
   savePlanConfig,
 } from "@/lib/plan-config-server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   if (!isDevAdminAuthenticated()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -13,7 +16,10 @@ export async function GET() {
 
   try {
     const config = await loadPlanConfig();
-    return NextResponse.json({ ok: true, config });
+    return NextResponse.json(
+      { ok: true, config },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (e) {
     console.error("[dev-admin/plans GET]", e);
     return NextResponse.json({ error: "Failed to load plans" }, { status: 500 });
@@ -29,7 +35,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const config = normalizePlanConfig(body.config ?? body);
     const saved = await savePlanConfig(config);
-    return NextResponse.json({ ok: true, config: saved });
+    return NextResponse.json(
+      { ok: true, config: saved },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (e) {
     console.error("[dev-admin/plans POST]", e);
     return NextResponse.json({ error: "Failed to save plans" }, { status: 500 });

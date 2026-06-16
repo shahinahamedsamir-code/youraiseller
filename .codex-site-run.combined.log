@@ -1,0 +1,4 @@
+
+> youraiseller@0.1.0 predev
+> node scripts/clean-next.js --if-idle
+

@@ -28,25 +28,42 @@ import {
   Clock,
   CheckCircle2,
   Ban,
+  CreditCard,
+  LayoutDashboard,
 } from "lucide-react";
 import clsx from "clsx";
 import { SearchField } from "@/components/ui/SearchField";
 
-type Tab = "pending" | "approved" | "cancelled";
+type Tab = "pending" | "payment_pending" | "dashboard_pending" | "active" | "cancelled";
 
 const tabs: { id: Tab; label: string; icon: typeof Clock }[] = [
   { id: "pending", label: "Pending", icon: Clock },
-  { id: "approved", label: "Approved", icon: CheckCircle2 },
+  { id: "payment_pending", label: "Payment Pending", icon: CreditCard },
+  { id: "dashboard_pending", label: "Dashboard Pending", icon: LayoutDashboard },
+  { id: "active", label: "Active", icon: CheckCircle2 },
   { id: "cancelled", label: "Cancelled", icon: Ban },
 ];
 
-const statusBadge: Record<string, string> = {
-  pending: "bg-amber-500/20 text-amber-300",
-  inactive: "bg-orange-500/20 text-orange-300",
-  active: "bg-emerald-500/20 text-emerald-300",
-  rejected: "bg-rose-500/20 text-rose-300",
-  expired: "bg-slate-500/20 text-slate-300",
-};
+function requestStatusLabel(user: DevUser): string {
+  if (user.status === "inactive") {
+    return user.planPaymentPaidAt ? "Dashboard pending" : "Payment pending";
+  }
+  if (user.status === "active") return "Active";
+  if (user.status === "rejected") return "Cancelled";
+  if (user.status === "pending") return "Pending";
+  return user.status;
+}
+
+function requestStatusBadge(user: DevUser): string {
+  if (user.status === "inactive" && user.planPaymentPaidAt) {
+    return "bg-emerald-500/20 text-emerald-300";
+  }
+  if (user.status === "inactive") return "bg-orange-500/20 text-orange-300";
+  if (user.status === "active") return "bg-emerald-500/20 text-emerald-300";
+  if (user.status === "rejected") return "bg-rose-500/20 text-rose-300";
+  if (user.status === "expired") return "bg-slate-500/20 text-slate-300";
+  return "bg-amber-500/20 text-amber-300";
+}
 
 export default function DevRequestsPage() {
   const [tab, setTab] = useState<Tab>("pending");
@@ -78,16 +95,25 @@ export default function DevRequestsPage() {
   }, []);
 
   const q = search.trim();
+  const paymentPending = approved.filter((u) => u.status === "inactive" && !u.planPaymentPaidAt);
+  const dashboardPending = approved.filter((u) => u.status === "inactive" && u.planPaymentPaidAt);
+  const active = approved.filter((u) => u.status === "active");
   const list =
     tab === "pending"
       ? pending.filter((u) => matchesUserSearch(u, q))
-      : tab === "approved"
-        ? approved.filter((u) => matchesUserSearch(u, q))
-        : cancelled.filter((u) => matchesUserSearch(u, q));
+      : tab === "payment_pending"
+        ? paymentPending.filter((u) => matchesUserSearch(u, q))
+        : tab === "dashboard_pending"
+          ? dashboardPending.filter((u) => matchesUserSearch(u, q))
+          : tab === "active"
+            ? active.filter((u) => matchesUserSearch(u, q))
+            : cancelled.filter((u) => matchesUserSearch(u, q));
 
   const counts = {
     pending: pending.length,
-    approved: approved.length,
+    payment_pending: paymentPending.length,
+    dashboard_pending: dashboardPending.length,
+    active: active.length,
     cancelled: cancelled.length,
   };
 
@@ -96,7 +122,7 @@ export default function DevRequestsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Account requests</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Review Google signups — approve, activate later, or cancel with a note
+          Review signups, collect payment, then unlock the dashboard
         </p>
       </div>
 
@@ -158,7 +184,7 @@ export default function DevRequestsPage() {
               setRecoverMsg(
                 added > 0
                   ? `Recovered ${added} account(s) from browser backup.`
-                  : "No extra accounts in backup. Check Approved tab — old email may already be approved."
+                  : "No extra accounts in backup. Check Payment Pending, Dashboard Pending, or Active tabs."
               );
             }}
             className="rounded-lg border border-amber-500/50 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/10"
@@ -180,17 +206,21 @@ export default function DevRequestsPage() {
                   <div className="space-y-2">
                     <p>No pending signup requests.</p>
                     <p className="text-xs text-slate-600">
-                      New Google signups land here first as <strong>Pending</strong>.
-                      Click <strong>Approve</strong> to move to Approved, or{" "}
+                      New signups land here first as <strong>Pending</strong>.
+                      Click <strong>Approve</strong> to move to Payment Pending, or{" "}
                       <strong>Cancel</strong> with a note. Use{" "}
                       <strong>Refresh list</strong> after a new signup (same URL:
                       localhost:3000).
                     </p>
                   </div>
                 )
-              : tab === "approved"
-                ? "No approved requests yet."
-                : "No cancelled requests."}
+              : tab === "payment_pending"
+                ? "No users waiting for payment."
+                : tab === "dashboard_pending"
+                  ? "No paid users waiting for dashboard activation."
+                  : tab === "active"
+                    ? "No active request users yet."
+                    : "No cancelled requests."}
         </div>
       ) : (
         <div className="space-y-3">
@@ -208,10 +238,10 @@ export default function DevRequestsPage() {
                     <span
                       className={clsx(
                         "rounded-full px-2 py-0.5 text-[10px] font-bold capitalize",
-                        statusBadge[u.status]
+                        requestStatusBadge(u)
                       )}
                     >
-                      {u.status}
+                      {requestStatusLabel(u)}
                     </span>
                   </div>
                   <p className="mt-1 font-semibold text-white">{u.name}</p>
@@ -263,7 +293,7 @@ export default function DevRequestsPage() {
                           approveUser(u.id);
                           await waitForDevUsersSync();
                           refresh();
-                          setTab("approved");
+                          setTab("payment_pending");
                         }}
                         className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white"
                       >
@@ -279,7 +309,7 @@ export default function DevRequestsPage() {
                     </>
                   )}
 
-                  {tab === "approved" && u.status === "inactive" && (
+                  {tab === "dashboard_pending" && u.status === "inactive" && (
                     <button
                       type="button"
                       onClick={async () => {
@@ -293,7 +323,10 @@ export default function DevRequestsPage() {
                     </button>
                   )}
 
-                  {tab === "approved" && (u.status === "active" || u.status === "inactive") && (
+                  {(tab === "payment_pending" ||
+                    tab === "dashboard_pending" ||
+                    tab === "active") &&
+                    (u.status === "active" || u.status === "inactive") && (
                     <>
                       <button
                         type="button"
@@ -326,8 +359,8 @@ export default function DevRequestsPage() {
 
       {tab === "pending" && pending.length > 0 && (
         <p className="mt-6 text-xs text-slate-500">
-          Approve → user sees Renew page. Activate dashboard from Approved tab or
-          Software Users.
+          Approve - user sees Pay Now on Renew page. After payment, they move to
+          Dashboard Pending for final activation.
         </p>
       )}
 

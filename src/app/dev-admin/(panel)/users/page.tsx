@@ -14,7 +14,6 @@ import {
   syncDevUsersFromServer,
   waitForDevUsersSync,
   type DevUser,
-  type UserStatus,
 } from "@/lib/dev-users";
 import clsx from "clsx";
 import { countEffectiveFeatures, GLOBAL_FEATURES_UPDATED } from "@/lib/feature-storage";
@@ -64,20 +63,22 @@ const statusFilters: {
   { id: "active", label: "Active", icon: CheckCircle2, match: (u) => u.status === "active" },
   {
     id: "deactive",
-    label: "Deactive",
+    label: "Pending Access",
     icon: PowerOff,
     match: (u) => u.status === "inactive",
   },
   { id: "expired", label: "Expired", icon: TimerOff, match: (u) => u.status === "expired" },
 ];
 
-const statusLabels: Record<UserStatus, string> = {
-  pending: "Pending",
-  inactive: "Deactive",
-  active: "Active",
-  expired: "Expired",
-  rejected: "Cancelled",
-};
+function userStatusLabel(user: DevUser): string {
+  if (user.status === "inactive") {
+    return user.planPaymentPaidAt ? "Dashboard pending" : "Payment pending";
+  }
+  if (user.status === "pending") return "Pending";
+  if (user.status === "active") return "Active";
+  if (user.status === "expired") return "Expired";
+  return "Cancelled";
+}
 
 const planColors = {
   basic: "bg-slate-600 text-slate-200",
@@ -101,13 +102,16 @@ function planBadgeClass(planId: DevUser["plan"], config: PlanConfig | null): str
   return planColors[planId];
 }
 
-const statusColors: Record<UserStatus, string> = {
-  pending: "bg-amber-500/20 text-amber-300",
-  inactive: "bg-orange-500/20 text-orange-300",
-  active: "bg-emerald-500/20 text-emerald-300",
-  expired: "bg-slate-500/20 text-slate-300",
-  rejected: "bg-rose-500/20 text-rose-300",
-};
+function userStatusColor(user: DevUser): string {
+  if (user.status === "inactive" && user.planPaymentPaidAt) {
+    return "bg-emerald-500/20 text-emerald-300";
+  }
+  if (user.status === "inactive") return "bg-orange-500/20 text-orange-300";
+  if (user.status === "active") return "bg-emerald-500/20 text-emerald-300";
+  if (user.status === "expired") return "bg-slate-500/20 text-slate-300";
+  if (user.status === "rejected") return "bg-rose-500/20 text-rose-300";
+  return "bg-amber-500/20 text-amber-300";
+}
 
 export default function DevUsersPage() {
   const [users, setUsers] = useState<DevUser[]>([]);
@@ -420,9 +424,9 @@ export default function DevUsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${statusColors[u.status]}`}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${userStatusColor(u)}`}
                     >
-                      {statusLabels[u.status]}
+                      {userStatusLabel(u)}
                     </span>
                     {u.status === "active" && u.planExpiresAt ? (
                       <p className="mt-1 text-[10px] text-slate-500">

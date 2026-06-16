@@ -28,11 +28,17 @@ import {
   supportWhatsAppHref,
 } from "@/lib/support-contact";
 
-const PENDING_STEPS = [
-  { id: "signed", label: "Signed in with Google", done: true },
-  { id: "review", label: "Admin reviews your store", done: false, current: true },
-  { id: "active", label: "Dashboard unlocked", done: false },
-];
+function pendingSteps(authProvider: DevUser["authProvider"]) {
+  return [
+    {
+      id: "signed",
+      label: authProvider === "google" ? "Signed in with Google" : "Signed up with email",
+      done: true,
+    },
+    { id: "review", label: "Admin reviews your store", done: false, current: true },
+    { id: "active", label: "Dashboard unlocked", done: false },
+  ];
+}
 
 const INACTIVE_STEPS = [
   { id: "approved", label: "Account approved", done: true },
@@ -134,7 +140,7 @@ function RenewContent() {
   const isInactive = user.status === "inactive";
   const hasPaidPlan = Boolean(user.planPaymentPaidAt);
   const canPay = isExpired || (isInactive && !hasPaidPlan);
-  const steps = isPending ? PENDING_STEPS : hasPaidPlan ? PAID_STEPS : INACTIVE_STEPS;
+  const steps = isPending ? pendingSteps(user.authProvider) : hasPaidPlan ? PAID_STEPS : INACTIVE_STEPS;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f4f6fb]">
@@ -288,9 +294,11 @@ function RenewContent() {
             >
               {isPending ? (
                 <>
-                  <strong className="font-semibold">Google sign-in worked.</strong> Your
-                  seller account is saved. An admin will approve your store. After
-                  approval, you can select a plan and pay from this page.
+                  <strong className="font-semibold">
+                    {user.authProvider === "google" ? "Google sign-in worked." : "Email signup worked."}
+                  </strong>{" "}
+                  Your seller account is saved. An admin will approve your store.
+                  After approval, you can select a plan and pay from this page.
                 </>
               ) : isRejected ? (
                 <>

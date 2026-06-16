@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   MessageCircle,
@@ -40,7 +40,15 @@ const INACTIVE_STEPS = [
   { id: "dashboard", label: "Full dashboard access", done: false },
 ];
 
-export default function RenewPage() {
+function RenewLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#f4f6fb] text-sm text-slate-500">
+      Loading your account…
+    </div>
+  );
+}
+
+function RenewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<DevUser | null>(null);
@@ -412,5 +420,13 @@ export default function RenewPage() {
         />
       ) : null}
     </div>
+  );
+}
+
+export default function RenewPage() {
+  return (
+    <Suspense fallback={<RenewLoading />}>
+      <RenewContent />
+    </Suspense>
   );
 }

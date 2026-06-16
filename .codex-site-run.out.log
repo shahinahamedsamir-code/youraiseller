@@ -1982,3 +1982,164 @@
  GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 34ms
  GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 21ms
  GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 39ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 40ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 25ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 45ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 21ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 59ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 23ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 23ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 21ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 34ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 19ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 18ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 17ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 30ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 19ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 23ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 22ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 31ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 35ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 21ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 19ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 22ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 81ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 45ms
+ GET /dashboard 200 in 542ms
+ ✓ Compiled /api/platform/global-features in 279ms (1523 modules)
+ ✓ Compiled (1527 modules)
+ GET /api/platform/global-features 200 in 716ms
+ GET /api/platform/global-features 200 in 710ms
+ GET /api/dev-users 200 in 722ms
+ GET /api/dev-users 200 in 724ms
+ ○ Compiling /api/auth/session ...
+ ✓ Compiled /api/auth/session in 572ms (1529 modules)
+ POST /api/dev-users 200 in 1098ms
+ POST /api/auth/session 200 in 1101ms
+ POST /api/auth/session 200 in 1084ms
+ POST /api/dev-users 200 in 1089ms
+ ✓ Compiled /api/seller-data in 333ms (1536 modules)
+ GET /api/seller-data?scope=U-003&kind=orders 200 in 393ms
+ GET /api/seller-data?scope=U-003&kind=inventory 200 in 18ms
+ GET /api/seller-data?scope=U-003&kind=customers 200 in 17ms
+ GET /api/seller-data?scope=U-003&kind=woocommerce 200 in 18ms
+ GET /api/seller-data?scope=U-003&kind=business 200 in 19ms
+ GET /api/seller-data?scope=U-003&kind=ordersources 200 in 19ms
+ GET /api/seller-data?scope=U-003&kind=shippingnotes 200 in 23ms
+ GET /api/seller-data?scope=U-003&kind=ordertags 200 in 52ms
+ GET /api/seller-data?scope=U-003&kind=advancesettings 200 in 37ms
+ GET /api/seller-data?scope=U-003&kind=deliverymethods 200 in 18ms
+ GET /api/seller-data?scope=U-003&kind=sms 200 in 28ms
+ GET /api/seller-data?scope=U-003&kind=accounting 200 in 21ms
+ ○ Compiling /api/sms/account ...
+ ✓ Compiled /api/sms/account in 889ms (1540 modules)
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 1208ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ GET /api/sms/account?scope=U-003 200 in 1274ms
+ GET /api/sms/account?scope=U-003 200 in 1365ms
+ GET /api/sms/account?scope=U-003 200 in 116ms
+ ○ Compiling /api/auto-call/account ...
+ ✓ Compiled /api/auto-call/account in 557ms (1543 modules)
+ ✓ Compiled (1562 modules)
+ GET /api/dev-users 200 in 1244ms
+ GET /api/sms/account?scope=U-003 200 in 1292ms
+ GET /api/dev-users 200 in 1107ms
+ GET /api/payments/history? 200 in 1310ms
+ GET /api/payments/history? 200 in 102ms
+ GET /api/auto-call/account?scope=U-003 200 in 1421ms
+ GET /api/auto-call/account?scope=U-003 200 in 1407ms
+ POST /api/dev-users 200 in 94ms
+ POST /api/auth/session 200 in 105ms
+ POST /api/dev-users 200 in 111ms
+ POST /api/auth/session 200 in 45ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 94ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 17ms
+ GET /api/payments/history?kind=plan_renewal 200 in 21ms
+ GET /api/payments/history?kind=sms_recharge 200 in 21ms
+ GET /api/payments/history?kind=auto_call_recharge 200 in 28ms
+ GET /api/payments/history?kind=auto_call_recharge&status=completed 200 in 28ms
+ GET /api/payments/history?kind=auto_call_recharge&status=pending 200 in 32ms
+ GET /api/payments/history?kind=auto_call_recharge&status=failed 200 in 28ms
+ GET /api/payments/history?kind=plan_renewal&status=failed 200 in 34ms
+ GET /api/payments/history?status=failed 200 in 24ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 35ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 17ms
+ GET /api/payments/history?status=failed 200 in 43ms
+ GET /api/auto-call/account?scope=U-003 200 in 51ms
+ GET /api/sms/account?scope=U-003 200 in 104ms
+ GET /api/payments/history?status=failed 200 in 164ms
+ GET /api/auto-call/account?scope=U-003 200 in 172ms
+ GET /api/sms/account?scope=U-003 200 in 180ms
+ GET /api/payments/history?status=failed 200 in 43ms
+ GET /api/auto-call/account?scope=U-003 200 in 55ms
+ GET /api/sms/account?scope=U-003 200 in 61ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 18ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 21ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 26ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 34ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 19ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 22ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 22ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 29ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 23ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 49ms
+ ✓ Compiled /api/plans in 451ms (1515 modules)
+ GET /api/plans 200 in 568ms
+ GET /api/plans 200 in 42ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 30ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 31ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 30ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 21ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 25ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 39ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 28ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 25ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 21ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 27ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 18ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 27ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 24ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 82ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 22ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 46ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 26ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 22ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 26ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 20ms
+ ✓ Compiled in 2.2s (1547 modules)
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 218ms
+ ✓ Compiled in 2.1s (1547 modules)
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 446ms
+ ✓ Compiled in 723ms (1533 modules)
+ ✓ Compiled in 250ms (1533 modules)
+ ✓ Compiled in 1247ms (1547 modules)
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 200 in 83ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 200 in 22ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1425ms (3045 modules)
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 404 in 1669ms
+ ✓ Compiled in 1423ms (3045 modules)
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 404 in 1422ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 404 in 69ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 404 in 60ms
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 404 in 134ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 404 in 71ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 4.3s (3271 modules)
+ ✓ Compiled in 333ms (1721 modules)
+ GET /api/webhooks/steadfast/pending?sellerId=U-003 500 in 6507ms
+ GET /api/webhooks/carrybee/pending?sellerId=U-003 500 in 49ms
+ GET /dashboard/billing-limit 500 in 34ms

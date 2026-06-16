@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { planPeriodFromNow } from "@/lib/subscription-period";
+import { formatPlanDate, planPeriodFromNow } from "@/lib/subscription-period";
 import { recordPaymentHistory } from "@/lib/payment-history-server";
 import { getPaymentHistoryByInvoice } from "@/lib/payment-history-server";
+import { loadPlanConfig } from "@/lib/plan-config-server";
+import { planFeaturesFromConfig } from "@/lib/plan-config-utils";
 import { applySmsRecharge } from "@/lib/sms-recharge-server";
 import { applyAutoCallRecharge } from "@/lib/auto-call-recharge-server";
 import {
@@ -114,11 +116,32 @@ export async function GET(req: Request) {
         return NextResponse.redirect(redirect);
       }
 
+      const config = await loadPlanConfig();
+      const paidPlanId =
+        pending.planId === "basic" ||
+        pending.planId === "pro" ||
+        pending.planId === "enterprise"
+          ? pending.planId
+          : "basic";
+      const wasExpiredRenewal = users[idx].status === "expired";
       users[idx] = {
         ...users[idx],
-        status: "active",
+        plan: paidPlanId,
+        features: planFeaturesFromConfig(config, paidPlanId),
+        status: wasExpiredRenewal ? "active" : "inactive",
         expiredAt: undefined,
-        ...planPeriodFromNow(pending.months ?? 1),
+        ...(wasExpiredRenewal
+          ? {
+              planPaymentPaidAt: undefined,
+              planPaymentInvoice: undefined,
+              planPaymentMonths: undefined,
+              ...planPeriodFromNow(pending.months ?? 1),
+            }
+          : {
+              planPaymentPaidAt: formatPlanDate(new Date()),
+              planPaymentInvoice: invoiceNumber,
+              planPaymentMonths: pending.months ?? 1,
+            }),
       };
       await writeDevUsersFile(users);
     } else if (pending.kind === "sms_recharge") {

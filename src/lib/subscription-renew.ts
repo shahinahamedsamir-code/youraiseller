@@ -1,7 +1,7 @@
 import { getSessionUser, type DevUser } from "./dev-users";
 import { fetchPublicPlanConfig, loadPlanConfigLocal } from "./plan-config-client";
 import { getPlanDefinition } from "./plan-config-utils";
-import type { PlanConfig } from "./plan-config-types";
+import type { PlanConfig, PlanId } from "./plan-config-types";
 import {
   findSubscriptionCoupon,
   fetchPublicSubscriptionCoupons,
@@ -31,11 +31,12 @@ export function subscriptionRenewQuote(
   months = 1,
   couponCode?: string,
   config: PlanConfig = loadPlanConfigLocal(),
-  coupons?: SubscriptionCoupon[]
+  coupons?: SubscriptionCoupon[],
+  planId: PlanId = user.plan
 ): SubscriptionRenewQuote {
-  const plan = getPlanDefinition(config, user.plan);
+  const plan = getPlanDefinition(config, planId);
   const monthlyTaka = renewalMonthlyPriceTaka(
-    user.plan,
+    planId,
     plan.priceLabel,
     user.customRenewalPriceTaka
   );
@@ -47,7 +48,7 @@ export function subscriptionRenewQuote(
   const subtotalTaka = calcSubscriptionRenewTotal(monthlyTaka, monthCount);
 
   const base: SubscriptionRenewQuote = {
-    planId: user.plan,
+    planId,
     planName: plan.name,
     priceLabel,
     monthlyTaka,
@@ -61,7 +62,7 @@ export function subscriptionRenewQuote(
   if (!code) return base;
 
   const result = validateSubscriptionCoupon(code, {
-    planId: user.plan,
+    planId,
     months: monthCount,
     subtotalTaka,
   }, coupons);
@@ -81,13 +82,14 @@ export function applySubscriptionCoupon(
   months: number,
   couponCode: string,
   config: PlanConfig = loadPlanConfigLocal(),
-  coupons?: SubscriptionCoupon[]
+  coupons?: SubscriptionCoupon[],
+  planId: PlanId = user.plan
 ):
   | { ok: true; quote: SubscriptionRenewQuote }
   | { ok: false; error: string } {
-  const plan = getPlanDefinition(config, user.plan);
+  const plan = getPlanDefinition(config, planId);
   const monthlyTaka = renewalMonthlyPriceTaka(
-    user.plan,
+    planId,
     plan.priceLabel,
     user.customRenewalPriceTaka
   );
@@ -99,7 +101,7 @@ export function applySubscriptionCoupon(
   const subtotalTaka = calcSubscriptionRenewTotal(monthlyTaka, monthCount);
 
   const result = validateSubscriptionCoupon(couponCode, {
-    planId: user.plan,
+    planId,
     months: monthCount,
     subtotalTaka,
   }, coupons);
@@ -108,7 +110,7 @@ export function applySubscriptionCoupon(
   return {
     ok: true,
     quote: {
-      planId: user.plan,
+      planId,
       planName: plan.name,
       priceLabel,
       monthlyTaka,
@@ -123,13 +125,14 @@ export function applySubscriptionCoupon(
 }
 
 /**
- * Self-renew expired plan through PayStation Hosted Checkout.
- * The server creates the payment link and verifies the callback before activation.
+ * Self-pay an approved/expired plan through PayStation Hosted Checkout.
+ * The server verifies callback, then admin activation unlocks the dashboard.
  */
 export async function startSubscriptionRenewPayment(
   userId: string,
   months = 1,
-  couponCode?: string
+  couponCode?: string,
+  planId?: PlanId
 ): Promise<
   | { ok: true; paymentUrl: string; invoiceNumber: string; totalTaka: number }
   | { ok: false; error: string }
@@ -138,15 +141,29 @@ export async function startSubscriptionRenewPayment(
   if (!sessionUser || sessionUser.id !== userId) {
     return { ok: false, error: "Session expired — sign in again." };
   }
-  if (sessionUser.status !== "expired") {
-    return { ok: false, error: "Only expired accounts can pay to renew here." };
+  if (sessionUser.status !== "expired" && sessionUser.status !== "inactive") {
+    return { ok: false, error: "Only approved or expired accounts can pay here." };
+  }
+  if (sessionUser.status === "inactive" && sessionUser.planPaymentPaidAt) {
+    return {
+      ok: false,
+      error: "Payment already received. Dashboard is waiting for admin approval.",
+    };
   }
 
   const [config, coupons] = await Promise.all([
     fetchPublicPlanConfig(),
     fetchPublicSubscriptionCoupons(),
   ]);
-  const quote = subscriptionRenewQuote(sessionUser, months, couponCode, config, coupons);
+  const selectedPlanId = planId ?? sessionUser.plan;
+  const quote = subscriptionRenewQuote(
+    sessionUser,
+    months,
+    couponCode,
+    config,
+    coupons,
+    selectedPlanId
+  );
   if (quote.totalTaka <= 0) {
     return { ok: false, error: "Could not calculate plan price." };
   }
@@ -157,7 +174,7 @@ export async function startSubscriptionRenewPayment(
       return { ok: false, error: "Coupon is no longer valid." };
     }
     const check = validateSubscriptionCoupon(couponCode, {
-      planId: sessionUser.plan,
+      planId: quote.planId,
       months: quote.months,
       subtotalTaka: quote.subtotalTaka,
     }, coupons);
@@ -175,6 +192,7 @@ export async function startSubscriptionRenewPayment(
         months: quote.months,
         couponCode: quote.couponCode,
         userId: sessionUser.id,
+        planId: quote.planId,
         quotedMonthlyTaka: quote.monthlyTaka,
       }),
     });

@@ -20,7 +20,7 @@ import {
   loadSubscriptionCouponsLocal,
   type SubscriptionCoupon,
 } from "@/lib/subscription-coupons";
-import type { PlanConfig } from "@/lib/plan-config-types";
+import type { PlanConfig, PlanId } from "@/lib/plan-config-types";
 
 type Props = {
   open: boolean;
@@ -37,6 +37,7 @@ export function PlanRenewPayModal({
   onError,
 }: Props) {
   const [mounted, setMounted] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<PlanId>(user.plan);
   const [months, setMonths] = useState(1);
   const [paying, setPaying] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
@@ -55,6 +56,7 @@ export function PlanRenewPayModal({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setSelectedPlanId(user.plan);
     setMonths(1);
     setCouponOpen(false);
     setCouponInput("");
@@ -76,25 +78,60 @@ export function PlanRenewPayModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, paying]);
+  }, [open, onClose, paying, user.plan]);
+
+  const activePlans = useMemo(
+    () =>
+      planConfig.plans
+        .filter((plan) => plan.active)
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [planConfig]
+  );
+
+  useEffect(() => {
+    if (activePlans.some((plan) => plan.id === selectedPlanId)) return;
+    setSelectedPlanId(activePlans[0]?.id ?? user.plan);
+  }, [activePlans, selectedPlanId, user.plan]);
 
   const quote = useMemo(
-    () => subscriptionRenewQuote(user, months, appliedCoupon, planConfig, coupons),
-    [user, months, appliedCoupon, planConfig, coupons]
+    () =>
+      subscriptionRenewQuote(
+        user,
+        months,
+        appliedCoupon,
+        planConfig,
+        coupons,
+        selectedPlanId
+      ),
+    [user, months, appliedCoupon, planConfig, coupons, selectedPlanId]
   );
 
   useEffect(() => {
     if (!appliedCoupon) return;
-    const result = applySubscriptionCoupon(user, months, appliedCoupon, planConfig, coupons);
+    const result = applySubscriptionCoupon(
+      user,
+      months,
+      appliedCoupon,
+      planConfig,
+      coupons,
+      selectedPlanId
+    );
     if (!result.ok) {
       setAppliedCoupon(undefined);
       setCouponError(result.error);
     }
-  }, [user, months, appliedCoupon, planConfig, coupons]);
+  }, [user, months, appliedCoupon, planConfig, coupons, selectedPlanId]);
 
   const handleApplyCoupon = () => {
     setCouponError("");
-    const result = applySubscriptionCoupon(user, months, couponInput, planConfig, coupons);
+    const result = applySubscriptionCoupon(
+      user,
+      months,
+      couponInput,
+      planConfig,
+      coupons,
+      selectedPlanId
+    );
     if (!result.ok) {
       setCouponError(result.error);
       return;
@@ -111,7 +148,12 @@ export function PlanRenewPayModal({
 
   const handlePay = async () => {
     setPaying(true);
-    const res = await startSubscriptionRenewPayment(user.id, months, appliedCoupon);
+    const res = await startSubscriptionRenewPayment(
+      user.id,
+      months,
+      appliedCoupon,
+      quote.planId
+    );
     setPaying(false);
     if (!res.ok) {
       onError(res.error);
@@ -158,6 +200,29 @@ export function PlanRenewPayModal({
             <p className="font-semibold text-slate-900">{user.company}</p>
             <p className="text-xs text-slate-500">{user.email}</p>
           </div>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-500">
+              Plan package
+            </span>
+            <select
+              value={selectedPlanId}
+              disabled={paying || user.status === "expired"}
+              onChange={(e) => {
+                setSelectedPlanId(e.target.value as PlanId);
+                setAppliedCoupon(undefined);
+                setCouponInput("");
+                setCouponError("");
+              }}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-100"
+            >
+              {activePlans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} - {plan.priceLabel}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-500">

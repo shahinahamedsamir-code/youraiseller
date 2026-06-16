@@ -435,6 +435,11 @@ export default function DevUsersPage() {
                         {u.planExpiresAt ? ` · due ${u.planExpiresAt}` : ""}
                       </p>
                     ) : null}
+                    {u.status === "inactive" && u.planPaymentPaidAt ? (
+                      <p className="mt-1 text-[10px] font-semibold text-emerald-300">
+                        Payment done - dashboard pending
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1.5">

@@ -225,6 +225,17 @@ export default function DevRequestsPage() {
                     {u.approvedAt ? ` · Approved ${u.approvedAt}` : ""}
                     {u.rejectedAt ? ` · Cancelled ${u.rejectedAt}` : ""}
                   </p>
+                  {u.planPaymentPaidAt ? (
+                    <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase text-emerald-300/90">
+                        Payment done - dashboard pending
+                      </p>
+                      <p className="mt-0.5 text-xs text-emerald-50/90">
+                        {u.planPaymentPaidAt}
+                        {u.planPaymentInvoice ? ` - ${u.planPaymentInvoice}` : ""}
+                      </p>
+                    </div>
+                  ) : null}
                   {u.cancelNote ? (
                     <div className="mt-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2">
                       <p className="text-[10px] font-bold uppercase text-rose-300/90">

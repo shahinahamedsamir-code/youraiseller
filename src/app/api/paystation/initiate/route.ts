@@ -16,6 +16,7 @@ import { recordPaymentHistory } from "@/lib/payment-history-server";
 
 type Body = {
   userId?: string;
+  planId?: string;
   months?: number;
   couponCode?: string;
   quotedMonthlyTaka?: number;
@@ -34,14 +35,20 @@ export async function POST(req: Request) {
     if (!sessionUser || String(sessionUser.id) !== requestedUserId) {
       return NextResponse.json({ error: "Session expired. Sign in again." }, { status: 401 });
     }
-    if (sessionUser.status !== "expired") {
+    if (sessionUser.status !== "expired" && sessionUser.status !== "inactive") {
       return NextResponse.json(
-        { error: "Only expired accounts can renew from this payment page." },
+        { error: "Only approved or expired accounts can pay from this page." },
+        { status: 400 }
+      );
+    }
+    if (sessionUser.status === "inactive" && sessionUser.planPaymentPaidAt) {
+      return NextResponse.json(
+        { error: "Payment already received. Dashboard is waiting for admin approval." },
         { status: 400 }
       );
     }
 
-    const planId =
+    const currentPlanId =
       sessionUser.plan === "basic" ||
       sessionUser.plan === "pro" ||
       sessionUser.plan === "enterprise"
@@ -49,6 +56,15 @@ export async function POST(req: Request) {
         : "basic";
     const months = Math.max(1, Math.floor(Number(body.months)) || 1);
     const config = await loadPlanConfig();
+    const requestedPlanId =
+      body.planId === "basic" || body.planId === "pro" || body.planId === "enterprise"
+        ? body.planId
+        : currentPlanId;
+    const requestedPlan = getPlanDefinition(config, requestedPlanId);
+    if (!requestedPlan.active) {
+      return NextResponse.json({ error: "Selected plan is not available." }, { status: 400 });
+    }
+    const planId = requestedPlanId;
     const plan = getPlanDefinition(config, planId);
     const customRenewalPriceTaka = Number(sessionUser.customRenewalPriceTaka);
     const serverMonthlyTaka = renewalMonthlyPriceTaka(

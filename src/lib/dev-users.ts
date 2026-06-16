@@ -82,6 +82,10 @@ export type DevUser = {
   planExpiresAt?: string;
   /** Optional per-customer renewal monthly price. Falls back to plan package price. */
   customRenewalPriceTaka?: number;
+  /** Plan payment received, but dashboard still needs admin activation. */
+  planPaymentPaidAt?: string;
+  planPaymentInvoice?: string;
+  planPaymentMonths?: number;
   expiredAt?: string;
   rejectedAt?: string;
   /** Note when signup request was cancelled/rejected */
@@ -297,6 +301,14 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
       Number.isFinite(u.customRenewalPriceTaka) &&
       u.customRenewalPriceTaka > 0
         ? Math.round(u.customRenewalPriceTaka * 100) / 100
+        : undefined,
+    planPaymentPaidAt: u.planPaymentPaidAt,
+    planPaymentInvoice: u.planPaymentInvoice,
+    planPaymentMonths:
+      typeof u.planPaymentMonths === "number" &&
+      Number.isFinite(u.planPaymentMonths) &&
+      u.planPaymentMonths > 0
+        ? Math.floor(u.planPaymentMonths)
         : undefined,
     expiredAt: u.expiredAt,
     rejectedAt: u.rejectedAt,
@@ -770,6 +782,9 @@ export function updateDevUser(
       | "planStartedAt"
       | "planExpiresAt"
       | "customRenewalPriceTaka"
+      | "planPaymentPaidAt"
+      | "planPaymentInvoice"
+      | "planPaymentMonths"
       | "expiredAt"
       | "rejectedAt"
       | "cancelNote"
@@ -788,6 +803,11 @@ export function updateDevUser(
   const idx = users.findIndex((u) => u.id === id);
   if (idx === -1) return null;
   const updated = applyStatusFields(users[idx], patch);
+  if (patch.status === "active") {
+    updated.planPaymentPaidAt = undefined;
+    updated.planPaymentInvoice = undefined;
+    updated.planPaymentMonths = undefined;
+  }
   if (patch.features) updated.features = normalizeFeatures(patch.features);
   if (patch.companyAddress !== undefined) {
     updated.companyAddress = normalizeAddress(patch.companyAddress);
@@ -846,10 +866,12 @@ export function rejectUser(id: string, cancelNote: string): DevUser | null {
 }
 
 export function activateUser(id: string, periodMonths = 1): DevUser | null {
+  const existing = loadDevUsers().find((u) => u.id === id);
+  const paidMonths = existing?.planPaymentMonths;
   return updateDevUser(id, {
     status: "active",
     expiredAt: undefined,
-    ...planPeriodFromNow(periodMonths),
+    ...planPeriodFromNow(paidMonths ?? periodMonths),
   });
 }
 

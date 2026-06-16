@@ -36,8 +36,14 @@ const PENDING_STEPS = [
 
 const INACTIVE_STEPS = [
   { id: "approved", label: "Account approved", done: true },
-  { id: "activate", label: "Plan activation", done: false, current: true },
-  { id: "dashboard", label: "Full dashboard access", done: false },
+  { id: "pay", label: "Choose plan and pay", done: false, current: true },
+  { id: "dashboard", label: "Dashboard pending", done: false },
+];
+
+const PAID_STEPS = [
+  { id: "approved", label: "Account approved", done: true },
+  { id: "paid", label: "Payment done", done: true },
+  { id: "dashboard", label: "Dashboard pending", done: false, current: true },
 ];
 
 function RenewLoading() {
@@ -125,7 +131,10 @@ function RenewContent() {
   const isPending = user.status === "pending";
   const isRejected = user.status === "rejected";
   const isExpired = user.status === "expired";
-  const steps = isPending ? PENDING_STEPS : INACTIVE_STEPS;
+  const isInactive = user.status === "inactive";
+  const hasPaidPlan = Boolean(user.planPaymentPaidAt);
+  const canPay = isExpired || (isInactive && !hasPaidPlan);
+  const steps = isPending ? PENDING_STEPS : hasPaidPlan ? PAID_STEPS : INACTIVE_STEPS;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f4f6fb]">
@@ -151,9 +160,13 @@ function RenewContent() {
               isPending && "bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white",
               isRejected && "bg-gradient-to-br from-rose-600 to-rose-800 text-white",
               isExpired && "bg-gradient-to-br from-slate-600 to-slate-800 text-white",
+              isInactive &&
+                hasPaidPlan &&
+                "bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-800 text-white",
               !isPending &&
                 !isRejected &&
                 !isExpired &&
+                !hasPaidPlan &&
                 "bg-gradient-to-br from-amber-500 via-amber-600 to-orange-700 text-white"
             )}
           >
@@ -164,6 +177,8 @@ function RenewContent() {
                 <ShieldCheck className="h-8 w-8" />
               ) : isExpired ? (
                 <Clock className="h-8 w-8" />
+              ) : hasPaidPlan ? (
+                <ShieldCheck className="h-8 w-8" />
               ) : (
                 <CreditCard className="h-8 w-8" />
               )}
@@ -175,7 +190,9 @@ function RenewContent() {
                   ? "Application not approved"
                   : isExpired
                     ? "Account expired"
-                    : "Activate your plan"}
+                    : hasPaidPlan
+                      ? "Dashboard pending"
+                      : "Activate your plan"}
             </h1>
             <p className="mt-2 text-sm text-white/85">
               {isPending
@@ -183,8 +200,10 @@ function RenewContent() {
                 : isRejected
                   ? "This signup was declined. Contact support if you have questions."
                   : isExpired
-                    ? "Your subscription has ended. Pay now or contact us to renew access."
-                    : "Your store is approved. Dashboard opens after activation."}
+                    ? "Your subscription has ended. Pay now to reopen the dashboard."
+                    : hasPaidPlan
+                      ? "Payment received. Admin will unlock your dashboard."
+                      : "Your store is approved. Choose your plan and pay to continue."}
             </p>
           </div>
 
@@ -259,18 +278,19 @@ function RenewContent() {
                 isPending && "border-indigo-100 bg-indigo-50/80 text-indigo-900",
                 isRejected && "border-rose-100 bg-rose-50 text-rose-900",
                 isExpired && "border-slate-200 bg-slate-50 text-slate-800",
+                hasPaidPlan && "border-emerald-100 bg-emerald-50/80 text-emerald-950",
                 !isPending &&
                   !isRejected &&
                   !isExpired &&
+                  !hasPaidPlan &&
                   "border-amber-100 bg-amber-50/80 text-amber-950"
               )}
             >
               {isPending ? (
                 <>
                   <strong className="font-semibold">Google sign-in worked.</strong> Your
-                  seller account is saved. An admin will approve your store, then
-                  activate your plan — after that, refresh this page or sign in again
-                  to open the dashboard.
+                  seller account is saved. An admin will approve your store. After
+                  approval, you can select a plan and pay from this page.
                 </>
               ) : isRejected ? (
                 <>
@@ -280,20 +300,26 @@ function RenewContent() {
               ) : isExpired ? (
                 <>
                   <strong className="font-semibold">Access ended.</strong> Your plan has
-                  expired. Pay now with bKash to reopen instantly, or contact support on
-                  WhatsApp if you need help.
+                  expired. Pay now through our payment gateway to reopen instantly, or
+                  contact support if you need help.
+                </>
+              ) : hasPaidPlan ? (
+                <>
+                  <strong className="font-semibold">Payment done.</strong> Dashboard
+                  access is pending admin approval. Check status after admin activates
+                  your account.
                 </>
               ) : (
                 <>
-                  <strong className="font-semibold">Almost there.</strong> Subscription
-                  or plan activation is handled by admin. Once active, you will see
-                  orders, inventory, and web tools immediately.
+                  <strong className="font-semibold">Approved.</strong> Choose your plan
+                  and pay with our payment gateway. After payment, admin will approve
+                  dashboard access.
                 </>
               )}
             </div>
 
             {/* Actions */}
-            {isExpired ? (
+            {canPay ? (
               <div className="space-y-2.5">
                 <div className="flex flex-col gap-2.5 sm:flex-row">
                   <button
@@ -302,7 +328,7 @@ function RenewContent() {
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#E2136E] px-5 py-3 text-sm font-bold text-white shadow-md shadow-rose-200/40 transition hover:bg-[#c91062]"
                   >
                     <Wallet className="h-4 w-4" />
-                    Pay now
+                    {isExpired ? "Renew plan" : "Pay now"}
                   </button>
                   <a
                     href={supportWhatsAppHref(
@@ -351,7 +377,11 @@ function RenewContent() {
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-200/40 transition hover:brightness-105"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  {isPending ? "Contact support" : "Contact to activate"}
+                  {isPending
+                    ? "Contact support"
+                    : hasPaidPlan
+                      ? "Contact admin"
+                      : "Contact to activate"}
                 </a>
                 {!isRejected && (
                   <button
@@ -383,10 +413,18 @@ function RenewContent() {
             ) : null}
 
             {user.status === "inactive" && user.approvedAt && (
-              <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Approved on {user.approvedAt}
-              </p>
+              <div className="space-y-1 text-center text-xs text-slate-500">
+                <p className="flex items-center justify-center gap-1.5">
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Approved on {user.approvedAt}
+                </p>
+                {user.planPaymentPaidAt ? (
+                  <p>
+                    Payment done on {user.planPaymentPaidAt}
+                    {user.planPaymentInvoice ? ` - ${user.planPaymentInvoice}` : ""}
+                  </p>
+                ) : null}
+              </div>
             )}
 
             <button
@@ -406,7 +444,7 @@ function RenewContent() {
         </p>
       </div>
 
-      {isExpired ? (
+      {canPay ? (
         <PlanRenewPayModal
           open={payOpen}
           user={user}
@@ -414,7 +452,6 @@ function RenewContent() {
           onSuccess={(next, message) => {
             setUser(next);
             setToast({ type: "ok", text: message });
-            router.replace("/dashboard");
           }}
           onError={(text) => setToast({ type: "err", text })}
         />

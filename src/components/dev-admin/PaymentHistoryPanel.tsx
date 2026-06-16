@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { CreditCard, List, Loader2, RefreshCw, Scale, Wallet, X } from "lucide-react";
+import {
+  Copy,
+  CreditCard,
+  List,
+  Loader2,
+  RefreshCw,
+  Scale,
+  ShieldCheck,
+  Wallet,
+  X,
+} from "lucide-react";
 import { PaymentBalanceReportPanel } from "@/components/dev-admin/PaymentBalanceReportPanel";
 import {
   PAYMENT_KIND_LABELS,
@@ -92,6 +102,7 @@ export function PaymentHistoryPanel() {
   const [tab, setTab] = useState<Tab>("transactions");
   const [balanceKey, setBalanceKey] = useState(0);
   const [selected, setSelected] = useState<PaymentHistoryEntry | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,6 +124,37 @@ export function PaymentHistoryPanel() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const copyText = useCallback((value?: string) => {
+    if (!value) return;
+    navigator.clipboard?.writeText(value).catch(() => {});
+  }, []);
+
+  const verifySelected = useCallback(async () => {
+    if (!selected?.invoiceNumber) return;
+    setVerifying(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/dev-admin/payments/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceNumber: selected.invoiceNumber }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok && !json.entry) {
+        throw new Error(json.error ?? "Verify failed");
+      }
+      if (json.entry) {
+        setSelected(json.entry);
+      }
+      setMsg(json.message ?? (res.ok ? "Payment verified" : json.error ?? "Verify completed"));
+      await load();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Verify failed");
+    } finally {
+      setVerifying(false);
+    }
+  }, [load, selected]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -367,50 +409,84 @@ export function PaymentHistoryPanel() {
                 <h2 className="text-lg font-extrabold text-white">Transaction details</h2>
                 <p className="mt-1 text-xs text-slate-400">{formatWhen(selected.createdAt)}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {selected.status === "pending" && selected.invoiceNumber ? (
+                  <button
+                    type="button"
+                    disabled={verifying}
+                    onClick={verifySelected}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-200 hover:bg-amber-500/20 disabled:opacity-60"
+                  >
+                    {verifying ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                    )}
+                    Verify now
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             <div className="grid gap-3 p-5 sm:grid-cols-2">
               {[
-                ["Status", selected.status],
-                ["Amount", formatSmsBdt(selected.amountTaka)],
-                ["Type", PAYMENT_KIND_LABELS[selected.kind]],
-                ["Method", selected.method.toUpperCase()],
-                ["Invoice", selected.invoiceNumber],
-                ["Transaction ID", selected.transactionId],
-                ["Gateway status", selected.gatewayStatus],
-                ["Gateway method", selected.gatewayMethod],
-                ["Gateway reference", selected.gatewayReference],
+                { label: "Status", value: selected.status },
+                { label: "Amount", value: formatSmsBdt(selected.amountTaka) },
+                { label: "Type", value: PAYMENT_KIND_LABELS[selected.kind] },
+                { label: "Method", value: selected.method.toUpperCase() },
+                { label: "Invoice", value: selected.invoiceNumber, copy: true },
+                { label: "Transaction ID", value: selected.transactionId, copy: true },
+                { label: "Gateway status", value: selected.gatewayStatus },
+                { label: "Gateway method", value: selected.gatewayMethod },
+                { label: "Gateway reference", value: selected.gatewayReference, copy: true },
                 [
                   "Gateway amount",
                   selected.gatewayAmountTaka != null
                     ? formatSmsBdt(selected.gatewayAmountTaka)
                     : undefined,
                 ],
-                ["User", selected.userName || selected.company || selected.scope],
-                ["Email", selected.userEmail],
-                ["Scope/User ID", selected.scope || selected.userId],
-                ["Details", paymentDetails(selected)],
-                ["Note", selected.note],
-              ].map(([label, value]) => (
+                { label: "User", value: selected.userName || selected.company || selected.scope },
+                { label: "Email", value: selected.userEmail, copy: true },
+                { label: "Scope/User ID", value: selected.scope || selected.userId, copy: true },
+                { label: "Details", value: paymentDetails(selected) },
+                { label: "Note", value: selected.note },
+              ].map((item) => {
+                const detail = Array.isArray(item)
+                  ? { label: item[0], value: item[1] }
+                  : item;
+                return (
                 <div
-                  key={String(label)}
+                  key={String(detail.label)}
                   className="rounded-xl border border-slate-700/80 bg-slate-800/60 px-4 py-3"
                 >
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                    {label}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                      {detail.label}
+                    </p>
+                    {"copy" in detail && detail.copy && detail.value ? (
+                      <button
+                        type="button"
+                        onClick={() => copyText(String(detail.value))}
+                        className="rounded-md p-1 text-slate-500 hover:bg-slate-700 hover:text-white"
+                        title="Copy"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                   <p className="mt-1 break-all text-sm font-semibold text-slate-100">
-                    {value || "-"}
+                    {detail.value || "-"}
                   </p>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         </div>

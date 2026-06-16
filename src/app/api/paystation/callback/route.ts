@@ -68,8 +68,10 @@ export async function GET(req: Request) {
     const verifiedStatus = status.data?.trx_status ?? callbackStatus;
     const gatewayAmount = Number(status.data?.payment_amount);
     const paid = String(status.status_code) === "200" && isPayStationSuccessStatus(verifiedStatus);
+    const amountOk =
+      !Number.isFinite(gatewayAmount) || gatewayAmount + 1e-9 >= pending.amountTaka;
 
-    if (!paid) {
+    if (!paid || !amountOk) {
       await recordPaymentHistory({
         kind: pending.kind,
         amountTaka: pending.amountTaka,
@@ -77,7 +79,9 @@ export async function GET(req: Request) {
         status: "failed",
         invoiceNumber,
         transactionId: status.data?.trx_id || callbackTrxId,
-        gatewayStatus: String(verifiedStatus || callbackStatus || "failed"),
+        gatewayStatus: amountOk
+          ? String(verifiedStatus || callbackStatus || "failed")
+          : "amount_mismatch",
         gatewayMethod: status.data?.payment_method,
         gatewayReference: status.data?.reference,
         gatewayAmountTaka: Number.isFinite(gatewayAmount) ? gatewayAmount : undefined,
@@ -92,7 +96,9 @@ export async function GET(req: Request) {
         callMinutes: pending.callMinutes,
         couponCode: pending.couponCode,
         discountTaka: pending.discountTaka,
-        note: `PayStation ${verifiedStatus || callbackStatus || "failed"} · ${invoiceNumber}`,
+        note: amountOk
+          ? `PayStation ${verifiedStatus || callbackStatus || "failed"} · ${invoiceNumber}`
+          : `PayStation amount mismatch · expected ${pending.amountTaka}, got ${gatewayAmount}`,
       });
       const failedRedirect = payStationRedirectForPending(redirectOrigin, pending.kind, false);
       failedRedirect.searchParams.set("invoice", invoiceNumber);

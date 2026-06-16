@@ -96,6 +96,18 @@ export async function POST(req: Request) {
         amountTaka: preview.totalTaka,
         createdAt: new Date().toISOString(),
       });
+      await recordPaymentHistory({
+        kind: "auto_call_recharge",
+        amountTaka: preview.totalTaka,
+        method: "paystation",
+        status: "pending",
+        invoiceNumber,
+        gatewayStatus: "initiated",
+        scope,
+        callMinutes: preview.callMinutes,
+        ...seller,
+        note: `PayStation initiated - ${invoiceNumber}`,
+      });
 
       return NextResponse.json({
         ok: true,

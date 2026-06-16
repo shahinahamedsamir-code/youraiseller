@@ -5,7 +5,7 @@ export type PaymentHistoryKind =
 
 export type PaymentHistoryMethod = "bkash" | "paystation" | "admin" | "manual";
 
-export type PaymentHistoryStatus = "completed" | "failed";
+export type PaymentHistoryStatus = "pending" | "completed" | "failed";
 
 export type PaymentHistoryEntry = {
   id: string;
@@ -14,6 +14,13 @@ export type PaymentHistoryEntry = {
   method: PaymentHistoryMethod;
   status: PaymentHistoryStatus;
   createdAt: string;
+  updatedAt?: string;
+  invoiceNumber?: string;
+  transactionId?: string;
+  gatewayStatus?: string;
+  gatewayMethod?: string;
+  gatewayReference?: string;
+  gatewayAmountTaka?: number;
   userId?: string;
   userEmail?: string;
   userName?: string;

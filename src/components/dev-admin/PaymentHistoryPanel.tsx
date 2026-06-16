@@ -24,6 +24,8 @@ type Totals = {
   planCount?: number;
   smsCount?: number;
   autoCallCount?: number;
+  pendingCount?: number;
+  failedCount?: number;
 };
 
 const FILTERS: { id: KindFilter; label: string }[] = [
@@ -62,6 +64,22 @@ function paymentDetails(row: PaymentHistoryEntry): string {
     return row.callMinutes ? `${row.callMinutes} min` : row.note ?? "Call balance";
   }
   return row.note ?? "—";
+}
+
+function gatewayDetails(row: PaymentHistoryEntry): string {
+  const parts = [
+    row.invoiceNumber ? `INV ${row.invoiceNumber}` : null,
+    row.transactionId ? `TRX ${row.transactionId}` : null,
+    row.gatewayStatus ? `Gateway: ${row.gatewayStatus}` : null,
+    row.gatewayMethod ? row.gatewayMethod : null,
+  ].filter(Boolean);
+  return parts.join(" · ") || row.note || "-";
+}
+
+function statusClass(status: PaymentHistoryEntry["status"]): string {
+  if (status === "completed") return "bg-emerald-500/15 text-emerald-300 ring-emerald-500/25";
+  if (status === "pending") return "bg-amber-500/15 text-amber-300 ring-amber-500/25";
+  return "bg-rose-500/15 text-rose-300 ring-rose-500/25";
 }
 
 export function PaymentHistoryPanel() {
@@ -107,6 +125,12 @@ export function PaymentHistoryPanel() {
         row.planId,
         row.couponCode,
         row.note,
+        row.status,
+        row.invoiceNumber,
+        row.transactionId,
+        row.gatewayStatus,
+        row.gatewayMethod,
+        row.gatewayReference,
         PAYMENT_KIND_LABELS[row.kind],
         row.method,
       ]
@@ -182,7 +206,7 @@ export function PaymentHistoryPanel() {
             {
               label: "Total collected",
               value: formatSmsBdt(totals.totalTaka),
-              sub: `${totals.count} payment${totals.count === 1 ? "" : "s"}`,
+              sub: `${totals.count} paid · ${totals.pendingCount ?? 0} pending · ${totals.failedCount ?? 0} failed`,
               icon: Wallet,
             },
             {
@@ -244,7 +268,7 @@ export function PaymentHistoryPanel() {
         <SearchField
           value={search}
           onChange={setSearch}
-          placeholder="Search user, email, company…"
+          placeholder="Search user, email, invoice, trx..."
           className="w-full sm:max-w-xs"
           variant="dark"
         />
@@ -265,20 +289,22 @@ export function PaymentHistoryPanel() {
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Method</th>
+                <th className="px-4 py-3">Gateway ID</th>
                 <th className="px-4 py-3">Details</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
                     <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
                     No payments recorded yet.
                   </td>
                 </tr>
@@ -307,8 +333,16 @@ export function PaymentHistoryPanel() {
                     <td className="whitespace-nowrap px-4 py-3 font-bold text-emerald-400">
                       {formatSmsBdt(row.amountTaka)}
                     </td>
+                    <td className="px-4 py-3">
+                      <span className={clsx("rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ring-1", statusClass(row.status))}>
+                        {row.status}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-xs uppercase text-slate-400">
                       {row.method}
+                    </td>
+                    <td className="max-w-[16rem] px-4 py-3 text-xs text-slate-400">
+                      <p className="break-all">{gatewayDetails(row)}</p>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-400">
                       {paymentDetails(row)}

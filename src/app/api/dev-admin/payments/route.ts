@@ -47,6 +47,8 @@ export async function GET(req: Request) {
         planCount: completed.filter((e) => e.kind === "plan_renewal").length,
         smsCount: completed.filter((e) => e.kind === "sms_recharge").length,
         autoCallCount: completed.filter((e) => e.kind === "auto_call_recharge").length,
+        pendingCount: entries.filter((e) => e.status === "pending").length,
+        failedCount: entries.filter((e) => e.status === "failed").length,
       },
     });
   } catch (e) {

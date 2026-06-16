@@ -53,6 +53,7 @@ export async function GET(req: Request) {
       invoiceNumber,
     });
     const verifiedStatus = status.data?.trx_status ?? callbackStatus;
+    const gatewayAmount = Number(status.data?.payment_amount);
     const paid = String(status.status_code) === "200" && isPayStationSuccessStatus(verifiedStatus);
 
     if (!paid) {
@@ -61,6 +62,12 @@ export async function GET(req: Request) {
         amountTaka: pending.amountTaka,
         method: "paystation",
         status: "failed",
+        invoiceNumber,
+        transactionId: status.data?.trx_id || callbackTrxId,
+        gatewayStatus: String(verifiedStatus || callbackStatus || "failed"),
+        gatewayMethod: status.data?.payment_method,
+        gatewayReference: status.data?.reference,
+        gatewayAmountTaka: Number.isFinite(gatewayAmount) ? gatewayAmount : undefined,
         userId: pending.userId,
         userEmail: pending.userEmail,
         userName: pending.userName,
@@ -125,6 +132,12 @@ export async function GET(req: Request) {
       amountTaka: pending.amountTaka,
       method: "paystation",
       status: "completed",
+      invoiceNumber,
+      transactionId: status.data?.trx_id || callbackTrxId,
+      gatewayStatus: String(verifiedStatus || "successful"),
+      gatewayMethod: status.data?.payment_method,
+      gatewayReference: status.data?.reference,
+      gatewayAmountTaka: Number.isFinite(gatewayAmount) ? gatewayAmount : undefined,
       userId: pending.userId,
       userEmail: pending.userEmail,
       userName: pending.userName,

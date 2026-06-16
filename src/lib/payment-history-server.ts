@@ -15,6 +15,12 @@ export type RecordPaymentInput = {
   amountTaka: number;
   method?: PaymentHistoryMethod;
   status?: PaymentHistoryStatus;
+  invoiceNumber?: string;
+  transactionId?: string;
+  gatewayStatus?: string;
+  gatewayMethod?: string;
+  gatewayReference?: string;
+  gatewayAmountTaka?: number;
   userId?: string;
   userEmail?: string;
   userName?: string;
@@ -48,13 +54,24 @@ async function writeEntries(entries: PaymentHistoryEntry[]): Promise<void> {
 export async function recordPaymentHistory(
   input: RecordPaymentInput
 ): Promise<PaymentHistoryEntry> {
+  const now = new Date().toISOString();
   const entry: PaymentHistoryEntry = {
     id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     kind: input.kind,
     amountTaka: Math.max(0, Math.round(input.amountTaka * 100) / 100),
     method: input.method ?? "bkash",
     status: input.status ?? "completed",
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
+    invoiceNumber: input.invoiceNumber?.trim() || undefined,
+    transactionId: input.transactionId?.trim() || undefined,
+    gatewayStatus: input.gatewayStatus?.trim() || undefined,
+    gatewayMethod: input.gatewayMethod?.trim() || undefined,
+    gatewayReference: input.gatewayReference?.trim() || undefined,
+    gatewayAmountTaka:
+      input.gatewayAmountTaka != null && Number.isFinite(input.gatewayAmountTaka)
+        ? Math.max(0, Math.round(input.gatewayAmountTaka * 100) / 100)
+        : undefined,
     userId: input.userId?.trim() || undefined,
     userEmail: input.userEmail?.trim().toLowerCase() || undefined,
     userName: input.userName?.trim() || undefined,
@@ -73,6 +90,23 @@ export async function recordPaymentHistory(
   };
 
   const rows = await readEntries();
+  const existingIndex = entry.invoiceNumber
+    ? rows.findIndex((row) => row.invoiceNumber === entry.invoiceNumber)
+    : -1;
+  if (existingIndex >= 0) {
+    const existing = rows[existingIndex];
+    const updated: PaymentHistoryEntry = {
+      ...existing,
+      ...entry,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: now,
+    };
+    rows[existingIndex] = updated;
+    await writeEntries(rows.slice(0, MAX_ENTRIES));
+    return updated;
+  }
+
   rows.unshift(entry);
   await writeEntries(rows.slice(0, MAX_ENTRIES));
   return entry;

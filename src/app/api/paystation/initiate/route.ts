@@ -11,6 +11,7 @@ import {
   payStationCredentials,
   savePendingPayStationPayment,
 } from "@/lib/paystation-server";
+import { recordPaymentHistory } from "@/lib/payment-history-server";
 
 type Body = {
   userId?: string;
@@ -115,6 +116,23 @@ export async function POST(req: Request) {
     }
 
     await savePendingPayStationPayment(payment);
+    await recordPaymentHistory({
+      kind: "plan_renewal",
+      amountTaka: totalTaka,
+      method: "paystation",
+      status: "pending",
+      invoiceNumber,
+      gatewayStatus: "initiated",
+      userId: payment.userId,
+      userEmail: payment.userEmail,
+      userName: payment.userName,
+      company: payment.company,
+      planId,
+      months,
+      couponCode,
+      discountTaka,
+      note: `PayStation initiated - ${invoiceNumber}`,
+    });
 
     return NextResponse.json({
       ok: true,

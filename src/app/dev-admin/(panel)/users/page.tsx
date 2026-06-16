@@ -407,6 +407,11 @@ export default function DevUsersPage() {
                     >
                       {planBadgeLabel(u.plan, planConfig)}
                     </span>
+                    {u.customRenewalPriceTaka ? (
+                      <p className="mt-1 text-[10px] font-semibold text-orange-300">
+                        Renew: BDT {u.customRenewalPriceTaka.toLocaleString("en-BD")}/mo
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-semibold text-emerald-400">

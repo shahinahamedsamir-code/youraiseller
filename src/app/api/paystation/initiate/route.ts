@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSellerSessionUser } from "@/lib/seller-auth-server";
 import { loadPlanConfig } from "@/lib/plan-config-server";
 import { getPlanDefinition } from "@/lib/plan-config-utils";
-import { planMonthlyPriceTaka, calcSubscriptionRenewTotal } from "@/lib/subscription-pricing";
+import { calcSubscriptionRenewTotal, renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
 import { validateSubscriptionCoupon } from "@/lib/subscription-coupons";
 import {
   appBaseUrl,
@@ -48,7 +48,12 @@ export async function POST(req: Request) {
     const months = Math.max(1, Math.floor(Number(body.months)) || 1);
     const config = await loadPlanConfig();
     const plan = getPlanDefinition(config, planId);
-    const monthlyTaka = planMonthlyPriceTaka(planId, plan.priceLabel);
+    const customRenewalPriceTaka = Number(sessionUser.customRenewalPriceTaka);
+    const monthlyTaka = renewalMonthlyPriceTaka(
+      planId,
+      plan.priceLabel,
+      Number.isFinite(customRenewalPriceTaka) ? customRenewalPriceTaka : undefined
+    );
     const subtotalTaka = calcSubscriptionRenewTotal(monthlyTaka, months);
     let discountTaka = 0;
     let couponCode: string | undefined;

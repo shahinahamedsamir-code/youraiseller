@@ -18,6 +18,21 @@ export function planMonthlyPriceTaka(planId: PlanId, priceLabel: string): number
   return parsed > 0 ? parsed : FALLBACK_PLAN_PRICE[planId];
 }
 
+export function renewalMonthlyPriceTaka(
+  planId: PlanId,
+  priceLabel: string,
+  customRenewalPriceTaka?: number
+): number {
+  if (
+    typeof customRenewalPriceTaka === "number" &&
+    Number.isFinite(customRenewalPriceTaka) &&
+    customRenewalPriceTaka > 0
+  ) {
+    return Math.round(customRenewalPriceTaka * 100) / 100;
+  }
+  return planMonthlyPriceTaka(planId, priceLabel);
+}
+
 export function calcSubscriptionRenewTotal(
   monthlyTaka: number,
   months: number

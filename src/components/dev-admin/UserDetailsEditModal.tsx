@@ -58,6 +58,7 @@ type Props = {
       | "contacts"
       | "adminNotes"
       | "plan"
+      | "customRenewalPriceTaka"
     > & { features?: DevUser["features"] }
   ) => void;
 };
@@ -77,6 +78,7 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
   const [contacts, setContacts] = useState<UserContact[]>([]);
   const [adminNotes, setAdminNotes] = useState("");
   const [plan, setPlan] = useState<DevUser["plan"]>("basic");
+  const [customRenewalPrice, setCustomRenewalPrice] = useState("");
   const [planConfig, setPlanConfig] = useState<PlanConfig | null>(null);
   const [applyPlanFeatures, setApplyPlanFeatures] = useState(false);
 
@@ -101,6 +103,9 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
     );
     setAdminNotes(user.adminNotes ?? "");
     setPlan(user.plan);
+    setCustomRenewalPrice(
+      user.customRenewalPriceTaka ? String(user.customRenewalPriceTaka) : ""
+    );
     setApplyPlanFeatures(false);
   }, [user]);
 
@@ -147,6 +152,10 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
         .filter((c) => c.name || c.phone || c.email || c.whatsapp),
       adminNotes: adminNotes.trim(),
       plan,
+      customRenewalPriceTaka:
+        customRenewalPrice.trim() && Number(customRenewalPrice) > 0
+          ? Math.round(Number(customRenewalPrice) * 100) / 100
+          : undefined,
       ...(applyPlanFeatures ? { features: getPlanFeatures(plan) } : {}),
     });
   };
@@ -269,6 +278,22 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
                     Also reset features to this plan&apos;s package defaults
                   </label>
                 ) : null}
+                <div className="mt-4 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+                  <label className={labelClass}>Custom renewal price / month</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={customRenewalPrice}
+                    onChange={(e) => setCustomRenewalPrice(e.target.value)}
+                    className={inputClass}
+                    placeholder="Blank = use plan package price"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Blank রাখলে Plan Packages-এর price renew modal-এ দেখাবে।
+                    এখানে value দিলে শুধু এই customer-এর renew price override হবে।
+                  </p>
+                </div>
               </>
             ) : (
               <p className="text-xs text-slate-500">Loading plans…</p>

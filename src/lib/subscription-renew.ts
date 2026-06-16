@@ -9,7 +9,7 @@ import {
 } from "./subscription-coupons";
 import {
   calcSubscriptionRenewTotal,
-  planMonthlyPriceTaka,
+  renewalMonthlyPriceTaka,
 } from "./subscription-pricing";
 
 export type SubscriptionRenewQuote = {
@@ -32,14 +32,22 @@ export function subscriptionRenewQuote(
   config: PlanConfig = loadPlanConfigLocal()
 ): SubscriptionRenewQuote {
   const plan = getPlanDefinition(config, user.plan);
-  const monthlyTaka = planMonthlyPriceTaka(user.plan, plan.priceLabel);
+  const monthlyTaka = renewalMonthlyPriceTaka(
+    user.plan,
+    plan.priceLabel,
+    user.customRenewalPriceTaka
+  );
+  const priceLabel =
+    user.customRenewalPriceTaka && user.customRenewalPriceTaka > 0
+      ? `BDT ${monthlyTaka.toLocaleString("en-BD")}/mo`
+      : plan.priceLabel;
   const monthCount = Math.max(1, Math.floor(months) || 1);
   const subtotalTaka = calcSubscriptionRenewTotal(monthlyTaka, monthCount);
 
   const base: SubscriptionRenewQuote = {
     planId: user.plan,
     planName: plan.name,
-    priceLabel: plan.priceLabel,
+    priceLabel,
     monthlyTaka,
     months: monthCount,
     subtotalTaka,
@@ -75,7 +83,15 @@ export function applySubscriptionCoupon(
   | { ok: true; quote: SubscriptionRenewQuote }
   | { ok: false; error: string } {
   const plan = getPlanDefinition(config, user.plan);
-  const monthlyTaka = planMonthlyPriceTaka(user.plan, plan.priceLabel);
+  const monthlyTaka = renewalMonthlyPriceTaka(
+    user.plan,
+    plan.priceLabel,
+    user.customRenewalPriceTaka
+  );
+  const priceLabel =
+    user.customRenewalPriceTaka && user.customRenewalPriceTaka > 0
+      ? `BDT ${monthlyTaka.toLocaleString("en-BD")}/mo`
+      : plan.priceLabel;
   const monthCount = Math.max(1, Math.floor(months) || 1);
   const subtotalTaka = calcSubscriptionRenewTotal(monthlyTaka, monthCount);
 
@@ -91,7 +107,7 @@ export function applySubscriptionCoupon(
     quote: {
       planId: user.plan,
       planName: plan.name,
-      priceLabel: plan.priceLabel,
+      priceLabel,
       monthlyTaka,
       months: monthCount,
       subtotalTaka,

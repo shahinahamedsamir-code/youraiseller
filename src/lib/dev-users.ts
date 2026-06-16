@@ -80,6 +80,8 @@ export type DevUser = {
   planStartedAt?: string;
   /** Auto-expire on this date — same day next month from planStartedAt. */
   planExpiresAt?: string;
+  /** Optional per-customer renewal monthly price. Falls back to plan package price. */
+  customRenewalPriceTaka?: number;
   expiredAt?: string;
   rejectedAt?: string;
   /** Note when signup request was cancelled/rejected */
@@ -290,6 +292,12 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
     approvedAt: u.approvedAt,
     planStartedAt: u.planStartedAt,
     planExpiresAt: u.planExpiresAt,
+    customRenewalPriceTaka:
+      typeof u.customRenewalPriceTaka === "number" &&
+      Number.isFinite(u.customRenewalPriceTaka) &&
+      u.customRenewalPriceTaka > 0
+        ? Math.round(u.customRenewalPriceTaka * 100) / 100
+        : undefined,
     expiredAt: u.expiredAt,
     rejectedAt: u.rejectedAt,
     cancelNote: u.cancelNote?.trim() || undefined,
@@ -761,6 +769,7 @@ export function updateDevUser(
       | "approvedAt"
       | "planStartedAt"
       | "planExpiresAt"
+      | "customRenewalPriceTaka"
       | "expiredAt"
       | "rejectedAt"
       | "cancelNote"

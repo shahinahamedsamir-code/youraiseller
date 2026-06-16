@@ -61,6 +61,7 @@ export type FeatureKey =
   | "settings_order_tags"
   | "settings_shipping_note"
   | "settings_advance"
+  | "billing_limits"
   | "reports"
   | "customers"
   | "sms"
@@ -147,6 +148,7 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "settings_order_tags", label: "Order Tags", description: "Tags for New Order (Engraving, Scammer, etc.)", category: "extras", parent: "settings" },
   { key: "settings_shipping_note", label: "Shipping Note Template", description: "Reusable shipping note presets", category: "extras", parent: "settings" },
   { key: "settings_advance", label: "Advance Setting", description: "Required/optional order fields", category: "extras", parent: "settings" },
+  { key: "billing_limits", label: "Billing and Limit", description: "Plan, payment and usage balances", category: "extras" },
   { key: "reports", label: "Reports", description: "Business reports", category: "extras" },
   { key: "customers", label: "Customer", description: "Customer database", category: "extras" },
   { key: "help_assistant", label: "Help Assistant Widget", description: "Floating help button", category: "extras" },
@@ -290,6 +292,7 @@ export function getFeatureKeyFromPath(pathname: string): FeatureKey | null {
     ["/dashboard/settings/shipping-note", "settings_shipping_note"],
     ["/dashboard/settings/advance", "settings_advance"],
     ["/dashboard/settings", "settings"],
+    ["/dashboard/billing-limit", "billing_limits"],
     ["/dashboard/reports", "reports"],
     ["/dashboard/customers", "customers"],
     ["/dashboard/sms", "sms"],

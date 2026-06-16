@@ -12,6 +12,7 @@ import {
   Truck,
   Plug,
   Settings,
+  BadgeDollarSign,
   BarChart3,
   UserCircle,
   type LucideIcon,
@@ -125,6 +126,12 @@ export const mainNav: NavItem[] = [
     })),
   },
   { label: "Setting", href: "/dashboard/settings", icon: Settings, featureKey: "settings" },
+  {
+    label: "Billing and Limit",
+    href: "/dashboard/billing-limit",
+    icon: BadgeDollarSign,
+    featureKey: "billing_limits",
+  },
   {
     label: "Reports",
     icon: BarChart3,

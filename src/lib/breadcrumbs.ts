@@ -36,6 +36,7 @@ const labels: Record<string, string> = {
   shopify: "Shopify Integration",
   courier: "Courier Integration",
   settings: "Setting",
+  "billing-limit": "Billing and Limit",
   reports: "Reports",
   customers: "Customer",
   sms: "SMS Integration",

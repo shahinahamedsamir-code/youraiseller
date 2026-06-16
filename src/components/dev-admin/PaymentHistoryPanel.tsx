@@ -5,6 +5,8 @@ import clsx from "clsx";
 import {
   Copy,
   CreditCard,
+  Download,
+  ExternalLink,
   List,
   Loader2,
   RefreshCw,
@@ -19,10 +21,12 @@ import {
   type PaymentHistoryEntry,
   type PaymentHistoryKind,
 } from "@/lib/payment-history-types";
+import { buildPaymentReceiptHtml } from "@/lib/payment-receipt";
 import { formatSmsBdt } from "@/lib/sms-types";
 import { SearchField } from "@/components/ui/SearchField";
 
 type KindFilter = "all" | PaymentHistoryKind;
+type StatusFilter = "all" | PaymentHistoryEntry["status"];
 type Tab = "transactions" | "balance";
 
 type Totals = {
@@ -43,6 +47,13 @@ const FILTERS: { id: KindFilter; label: string }[] = [
   { id: "plan_renewal", label: "Plan" },
   { id: "sms_recharge", label: "SMS" },
   { id: "auto_call_recharge", label: "Auto Call" },
+];
+
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: "all", label: "All status" },
+  { id: "completed", label: "Success" },
+  { id: "pending", label: "Pending" },
+  { id: "failed", label: "Failed" },
 ];
 
 function formatWhen(iso: string): string {
@@ -97,6 +108,7 @@ export function PaymentHistoryPanel() {
   const [totals, setTotals] = useState<Totals | null>(null);
   const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState<KindFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState("");
   const [tab, setTab] = useState<Tab>("transactions");
@@ -156,10 +168,32 @@ export function PaymentHistoryPanel() {
     }
   }, [load, selected]);
 
+  const viewReceipt = useCallback((row: PaymentHistoryEntry) => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.open();
+    win.document.write(buildPaymentReceiptHtml(row));
+    win.document.close();
+  }, []);
+
+  const downloadReceipt = useCallback((row: PaymentHistoryEntry) => {
+    const html = buildPaymentReceiptHtml(row);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `payment-receipt-${row.invoiceNumber || row.transactionId || row.id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, []);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return entries;
     return entries.filter((row) => {
+      if (statusFilter !== "all" && row.status !== statusFilter) return false;
+      if (!q) return true;
       const blob = [
         row.userName,
         row.userEmail,
@@ -182,7 +216,7 @@ export function PaymentHistoryPanel() {
         .toLowerCase();
       return blob.includes(q);
     });
-  }, [entries, search]);
+  }, [entries, search, statusFilter]);
 
   return (
     <div className="space-y-5">
@@ -292,21 +326,40 @@ export function PaymentHistoryPanel() {
       <>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setKind(f.id)}
-              className={clsx(
-                "rounded-xl px-3 py-1.5 text-xs font-bold transition",
-                kind === f.id
-                  ? "bg-orange-500/25 text-orange-200 ring-1 ring-orange-500/40"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setKind(f.id)}
+                className={clsx(
+                  "rounded-xl px-3 py-1.5 text-xs font-bold transition",
+                  kind === f.id
+                    ? "bg-orange-500/25 text-orange-200 ring-1 ring-orange-500/40"
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setStatusFilter(f.id)}
+                className={clsx(
+                  "rounded-xl px-3 py-1.5 text-xs font-bold transition",
+                  statusFilter === f.id
+                    ? "bg-teal-500/20 text-teal-200 ring-1 ring-teal-500/40"
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
         <SearchField
           value={search}
@@ -404,12 +457,28 @@ export function PaymentHistoryPanel() {
       {selected ? (
         <div className="fixed inset-0 z-[260] flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-w-2xl sm:rounded-2xl">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-700 px-5 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-700 px-5 py-4">
               <div>
                 <h2 className="text-lg font-extrabold text-white">Transaction details</h2>
                 <p className="mt-1 text-xs text-slate-400">{formatWhen(selected.createdAt)}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => viewReceipt(selected)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  View receipt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadReceipt(selected)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </button>
                 {selected.status === "pending" && selected.invoiceNumber ? (
                   <button
                     type="button"
@@ -446,34 +515,32 @@ export function PaymentHistoryPanel() {
                 { label: "Gateway status", value: selected.gatewayStatus },
                 { label: "Gateway method", value: selected.gatewayMethod },
                 { label: "Gateway reference", value: selected.gatewayReference, copy: true },
-                [
-                  "Gateway amount",
-                  selected.gatewayAmountTaka != null
-                    ? formatSmsBdt(selected.gatewayAmountTaka)
-                    : undefined,
-                ],
+                {
+                  label: "Gateway amount",
+                  value:
+                    selected.gatewayAmountTaka != null
+                      ? formatSmsBdt(selected.gatewayAmountTaka)
+                      : undefined,
+                },
                 { label: "User", value: selected.userName || selected.company || selected.scope },
                 { label: "Email", value: selected.userEmail, copy: true },
                 { label: "Scope/User ID", value: selected.scope || selected.userId, copy: true },
                 { label: "Details", value: paymentDetails(selected) },
                 { label: "Note", value: selected.note },
               ].map((item) => {
-                const detail = Array.isArray(item)
-                  ? { label: item[0], value: item[1] }
-                  : item;
                 return (
                 <div
-                  key={String(detail.label)}
+                  key={String(item.label)}
                   className="rounded-xl border border-slate-700/80 bg-slate-800/60 px-4 py-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                      {detail.label}
+                      {item.label}
                     </p>
-                    {"copy" in detail && detail.copy && detail.value ? (
+                    {"copy" in item && item.copy && item.value ? (
                       <button
                         type="button"
-                        onClick={() => copyText(String(detail.value))}
+                        onClick={() => copyText(String(item.value))}
                         className="rounded-md p-1 text-slate-500 hover:bg-slate-700 hover:text-white"
                         title="Copy"
                       >
@@ -482,7 +549,7 @@ export function PaymentHistoryPanel() {
                     ) : null}
                   </div>
                   <p className="mt-1 break-all text-sm font-semibold text-slate-100">
-                    {detail.value || "-"}
+                    {item.value || "-"}
                   </p>
                 </div>
               );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   MessageCircle,
   LogOut,
@@ -21,7 +22,6 @@ import {
   refreshCurrentSessionUser,
   type DevUser,
 } from "@/lib/dev-users";
-import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import {
   buildSellerSupportWhatsAppMessage,
@@ -42,6 +42,7 @@ const INACTIVE_STEPS = [
 
 export default function RenewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<DevUser | null>(null);
   const [checking, setChecking] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -59,7 +60,14 @@ export default function RenewPage() {
         return;
       }
       if (u.status === "active") {
-        router.replace("/dashboard");
+        const payment = searchParams.get("payment");
+        const kind = searchParams.get("kind");
+        const invoice = searchParams.get("invoice");
+        const suffix =
+          payment && kind && invoice
+            ? `?payment=${encodeURIComponent(payment)}&kind=${encodeURIComponent(kind)}&invoice=${encodeURIComponent(invoice)}`
+            : "";
+        router.replace(`/dashboard${suffix}`);
         return;
       }
       setUser(u);
@@ -67,7 +75,7 @@ export default function RenewPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, searchParams]);
 
   useEffect(() => {
     if (!toast) return;

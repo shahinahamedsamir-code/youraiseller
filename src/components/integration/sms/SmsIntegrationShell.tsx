@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, ExternalLink } from "lucide-react";
 import { smsIntegrationBasePath, smsNav } from "@/lib/sms-nav";
 import { setSmsServiceEnabled } from "@/lib/sms-store";
 import { SmsBalanceBar } from "@/components/integration/sms/SmsBalanceBar";
@@ -26,6 +26,7 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
   const [feedback, setFeedback] = useState<{
     type: "ok" | "err";
     text: string;
+    invoice?: string;
   } | null>(null);
   const [togglingService, setTogglingService] = useState(false);
 
@@ -39,12 +40,14 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
       setFeedback({
         type: "ok",
         text: `PayStation payment successful${invoice ? ` · ${invoice}` : ""}. SMS balance updated.`,
+        invoice: invoice || undefined,
       });
       void reload();
     } else {
       setFeedback({
         type: "err",
         text: `PayStation payment cancelled or failed${invoice ? ` · ${invoice}` : ""}. Balance was not changed.`,
+        invoice: invoice || undefined,
       });
     }
 
@@ -87,18 +90,38 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
       {feedback ? (
         <div
           className={clsx(
-            "flex items-start gap-2 rounded-xl px-4 py-3 text-sm font-medium",
+            "flex flex-wrap items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium",
             feedback.type === "ok"
               ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
               : "bg-rose-50 text-rose-800 ring-1 ring-rose-200"
           )}
         >
           {feedback.type === "ok" ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
           ) : (
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0" />
           )}
-          {feedback.text}
+          <span className="min-w-0 flex-1">{feedback.text}</span>
+          {feedback.type === "ok" && feedback.invoice ? (
+            <span className="flex flex-wrap gap-2">
+              <a
+                href={`/api/payments/receipt?invoice=${encodeURIComponent(feedback.invoice)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-200 hover:bg-white"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                View receipt
+              </a>
+              <a
+                href={`/api/payments/receipt?invoice=${encodeURIComponent(feedback.invoice)}&download=1`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-200 hover:bg-white"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download
+              </a>
+            </span>
+          ) : null}
         </div>
       ) : null}
 

@@ -124,6 +124,15 @@ export async function listPaymentHistory(options?: {
   return rows.slice(0, limit);
 }
 
+export async function getPaymentHistoryByInvoice(
+  invoiceNumber: string
+): Promise<PaymentHistoryEntry | null> {
+  const invoice = invoiceNumber.trim();
+  if (!invoice) return null;
+  const rows = await readEntries();
+  return rows.find((row) => row.invoiceNumber === invoice) ?? null;
+}
+
 export function paymentHistoryTotals(entries: PaymentHistoryEntry[]) {
   const completed = entries.filter((e) => e.status === "completed");
   return {

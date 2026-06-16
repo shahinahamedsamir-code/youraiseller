@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { CreditCard, List, Loader2, RefreshCw, Scale, Wallet } from "lucide-react";
+import { CreditCard, List, Loader2, RefreshCw, Scale, Wallet, X } from "lucide-react";
 import { PaymentBalanceReportPanel } from "@/components/dev-admin/PaymentBalanceReportPanel";
 import {
   PAYMENT_KIND_LABELS,
@@ -91,6 +91,7 @@ export function PaymentHistoryPanel() {
   const [msg, setMsg] = useState("");
   const [tab, setTab] = useState<Tab>("transactions");
   const [balanceKey, setBalanceKey] = useState(0);
+  const [selected, setSelected] = useState<PaymentHistoryEntry | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -312,7 +313,8 @@ export function PaymentHistoryPanel() {
                 filtered.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-t border-slate-700/60 hover:bg-slate-800/60"
+                    className="cursor-pointer border-t border-slate-700/60 hover:bg-slate-800/60"
+                    onClick={() => setSelected(row)}
                   >
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-400">
                       {formatWhen(row.createdAt)}
@@ -355,6 +357,63 @@ export function PaymentHistoryPanel() {
         </div>
       </div>
       </>
+      ) : null}
+
+      {selected ? (
+        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-w-2xl sm:rounded-2xl">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-700 px-5 py-4">
+              <div>
+                <h2 className="text-lg font-extrabold text-white">Transaction details</h2>
+                <p className="mt-1 text-xs text-slate-400">{formatWhen(selected.createdAt)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid gap-3 p-5 sm:grid-cols-2">
+              {[
+                ["Status", selected.status],
+                ["Amount", formatSmsBdt(selected.amountTaka)],
+                ["Type", PAYMENT_KIND_LABELS[selected.kind]],
+                ["Method", selected.method.toUpperCase()],
+                ["Invoice", selected.invoiceNumber],
+                ["Transaction ID", selected.transactionId],
+                ["Gateway status", selected.gatewayStatus],
+                ["Gateway method", selected.gatewayMethod],
+                ["Gateway reference", selected.gatewayReference],
+                [
+                  "Gateway amount",
+                  selected.gatewayAmountTaka != null
+                    ? formatSmsBdt(selected.gatewayAmountTaka)
+                    : undefined,
+                ],
+                ["User", selected.userName || selected.company || selected.scope],
+                ["Email", selected.userEmail],
+                ["Scope/User ID", selected.scope || selected.userId],
+                ["Details", paymentDetails(selected)],
+                ["Note", selected.note],
+              ].map(([label, value]) => (
+                <div
+                  key={String(label)}
+                  className="rounded-xl border border-slate-700/80 bg-slate-800/60 px-4 py-3"
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                    {label}
+                  </p>
+                  <p className="mt-1 break-all text-sm font-semibold text-slate-100">
+                    {value || "-"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

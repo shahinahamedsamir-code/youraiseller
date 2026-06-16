@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { smsIntegrationBasePath, smsNav } from "@/lib/sms-nav";
@@ -12,6 +12,8 @@ import { useSmsAccount } from "@/components/integration/sms/useSmsAccount";
 
 export function SmsIntegrationShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     account,
     setAccount,
@@ -19,12 +21,35 @@ export function SmsIntegrationShell({ children }: { children: React.ReactNode })
     selfRechargeEnabled,
     smsPriceTaka,
     loading,
+    reload,
   } = useSmsAccount();
   const [feedback, setFeedback] = useState<{
     type: "ok" | "err";
     text: string;
   } | null>(null);
   const [togglingService, setTogglingService] = useState(false);
+
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    const kind = searchParams.get("kind");
+    const invoice = searchParams.get("invoice");
+    if (!payment || kind !== "sms_recharge") return;
+
+    if (payment === "success") {
+      setFeedback({
+        type: "ok",
+        text: `PayStation payment successful${invoice ? ` · ${invoice}` : ""}. SMS balance updated.`,
+      });
+      void reload();
+    } else {
+      setFeedback({
+        type: "err",
+        text: `PayStation payment cancelled or failed${invoice ? ` · ${invoice}` : ""}. Balance was not changed.`,
+      });
+    }
+
+    router.replace(pathname, { scroll: false });
+  }, [pathname, reload, router, searchParams]);
 
   const handleServiceToggle = async (enabled: boolean) => {
     setTogglingService(true);

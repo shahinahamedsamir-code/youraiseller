@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { planPeriodFromNow } from "@/lib/subscription-period";
 import { recordPaymentHistory } from "@/lib/payment-history-server";
+import { getPaymentHistoryByInvoice } from "@/lib/payment-history-server";
 import { applySmsRecharge } from "@/lib/sms-recharge-server";
 import { applyAutoCallRecharge } from "@/lib/auto-call-recharge-server";
 import {
@@ -39,6 +40,18 @@ export async function GET(req: Request) {
       redirect.searchParams.set("payment", "failed");
       redirect.searchParams.set("reason", "invoice_not_found");
       return NextResponse.redirect(redirect);
+    }
+
+    const existing = await getPaymentHistoryByInvoice(invoiceNumber);
+    if (existing?.status === "completed") {
+      const duplicateRedirect = payStationRedirectForPending(
+        redirectOrigin,
+        pending.kind,
+        true
+      );
+      duplicateRedirect.searchParams.set("invoice", invoiceNumber);
+      duplicateRedirect.searchParams.set("duplicate", "1");
+      return NextResponse.redirect(duplicateRedirect);
     }
 
     const creds = payStationCredentials();

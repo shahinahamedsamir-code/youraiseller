@@ -28,6 +28,7 @@ import {
   type WebDisplayStatus,
 } from "@/lib/orders-store";
 import { AdvancePaymentPanel } from "@/components/orders/AdvancePaymentPanel";
+import { hasAssignedAdvancePaymentAccounts } from "@/lib/assigned-payment-accounts";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { loadDeliveryMethods, type DeliveryMethod } from "@/lib/delivery-methods-store";
 import { BD_DISTRICTS } from "@/lib/approved-orders-nav";
@@ -286,6 +287,10 @@ export function OrderEditModal({
     }
     if ((isPreorder || isPreorderEdit) && !preorderDeliveryLocal.trim()) {
       setError("Select tentative delivery date & time for this preorder.");
+      return null;
+    }
+    if (advance > 0 && !hasAssignedAdvancePaymentAccounts()) {
+      setError("Assign or create an advance payment method from Accounting > Accounts.");
       return null;
     }
 

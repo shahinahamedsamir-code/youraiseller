@@ -34,6 +34,7 @@ import { CourierRatioPanel } from "@/components/orders/CourierRatioPanel";
 import { DeliveryMethodSelect } from "@/components/delivery/DeliveryMethodSelect";
 import { WebOrderWooSummary } from "@/components/web-orders/WebOrderWooSummary";
 import { WebOrderSummaryAside } from "@/components/web-orders/WebOrderSummaryAside";
+import { hasAssignedAdvancePaymentAccounts } from "@/lib/assigned-payment-accounts";
 import { findPriorOrdersByPhone } from "@/lib/web-order-display";
 import {
   buildAdvancePaymentRecord,
@@ -382,6 +383,10 @@ export function WebOrderEditForm({ orderId }: Props) {
     }
     if (isPreorder && !preorderDeliveryLocal.trim()) {
       setError("Select tentative delivery date & time for preorder.");
+      return null;
+    }
+    if (showAdvancePayment && !hasAssignedAdvancePaymentAccounts()) {
+      setError("Assign or create an advance payment method from Accounting > Accounts.");
       return null;
     }
     if (showAdvancePayment) {

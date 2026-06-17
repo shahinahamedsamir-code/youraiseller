@@ -19,6 +19,7 @@ export type FeatureKey =
   | "additional_sites"
   | "manual_web_order"
   | "order_block_list"
+  | "pos_sales"
   | "inventory"
   | "inv_add_product"
   | "inv_product_list"
@@ -97,6 +98,7 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "manual_web_order", label: "Manual Web Order", description: "Manual order form", category: "web_orders", parent: "web_orders" },
   { key: "order_block_list", label: "Order Block List", description: "Blocked phones/IPs", category: "web_orders", parent: "web_orders" },
   { key: "preorders", label: "Preorders", description: "Preorder management", category: "web_orders", parent: "web_orders" },
+  { key: "pos_sales", label: "POS Sales", description: "Counter sales, draft, return and payment workflow", category: "operations" },
   // Inventory parent + children
   { key: "inventory", label: "Inventory", description: "Stock & SKU management (parent menu)", category: "operations" },
   { key: "inv_add_product", label: "Add New Product", description: "Create a product", category: "operations", parent: "inventory" },
@@ -254,6 +256,7 @@ export function getFeatureKeyFromPath(pathname: string): FeatureKey | null {
     ["/dashboard/orders/approved", "approved_orders"],
     ["/dashboard/orders/new", "new_order"],
     ["/dashboard/search", "search"],
+    ["/dashboard/pos", "pos_sales"],
     ["/dashboard/inventory/products/new", "inv_add_product"],
     ["/dashboard/inventory/products", "inv_product_list"],
     ["/dashboard/inventory/categories", "inv_categories"],

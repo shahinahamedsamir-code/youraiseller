@@ -3,6 +3,7 @@ import {
   Search,
   CheckCircle2,
   Globe,
+  ShoppingCart,
   Package,
   Megaphone,
   Calculator,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import type { FeatureKey } from "./features";
 import { webOrdersNav, webOrdersBasePath } from "./web-orders-nav";
+import { posSalesNav, posSalesBasePath } from "./pos-sales-nav";
 import { inventoryNav, inventoryBasePath } from "./inventory-nav";
 import { approvedOrdersNav, approvedOrdersBasePath } from "./approved-orders-nav";
 import { deliveryNav, deliveryBasePath } from "./delivery-nav";
@@ -69,6 +71,23 @@ export const mainNav: NavItem[] = [
       label,
       href,
       featureKey,
+    })),
+  },
+  {
+    label: "POS Sales",
+    icon: ShoppingCart,
+    featureKey: "pos_sales",
+    expandPath: posSalesBasePath,
+    children: posSalesNav.map(({ label, href, featureKey, expandPath, children }) => ({
+      label,
+      href,
+      featureKey,
+      expandPath,
+      children: children?.map(({ label: l, href: h, featureKey: k }) => ({
+        label: l,
+        href: h,
+        featureKey: k,
+      })),
     })),
   },
   {

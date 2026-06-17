@@ -29,6 +29,7 @@ import {
   PAYMENT_METHOD_KEY_LABELS,
   resolveAccountSectionType,
   setDefaultPaymentReceiveAccount,
+  updateAccount,
   type AccountType,
   type AccountingAccount,
   type AccountingData,
@@ -61,6 +62,9 @@ function AccountsTableHead() {
         <th className={clsx(ACCOUNTS_TH, "w-[12%]")}>Status</th>
         <th className={clsx(ACCOUNTS_TH, "w-[10%] text-center")} title="Default on payment approve">
           Default
+        </th>
+        <th className={clsx(ACCOUNTS_TH, "w-[10%] text-center")} title="Show in POS payment methods">
+          POS
         </th>
         <th className={clsx(ACCOUNTS_TH, "w-[16%] text-right")}>Action</th>
       </tr>
@@ -178,6 +182,10 @@ export function AccountListPanel() {
                       setDefaultPaymentReceiveAccount(id);
                       refresh();
                     }}
+                    onTogglePos={(account) => {
+                      updateAccount(account.id, { posEnabled: !account.posEnabled });
+                      refresh();
+                    }}
                   />
                 ))}
                 {fixedAssetRows.length > 0 && (
@@ -204,11 +212,13 @@ function AccountSection({
   accounts,
   onTransferFrom,
   onToggleDefault,
+  onTogglePos,
 }: {
   type: AccountType;
   accounts: AccountingAccount[];
   onTransferFrom: (accountId: string) => void;
   onToggleDefault: (accountId: string) => void;
+  onTogglePos: (account: AccountingAccount) => void;
 }) {
   const sectionTotal = accounts.reduce((s, a) => s + getAccountBalance(a.id), 0);
   const headerBg =
@@ -221,7 +231,7 @@ function AccountSection({
   return (
     <>
       <tr className={clsx("border-b border-slate-100", headerBg)}>
-        <td colSpan={5} className="px-3 py-2">
+        <td colSpan={6} className="px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-slate-800">{ACCOUNT_SECTION_LABELS[type]}</span>
@@ -291,6 +301,24 @@ function AccountSection({
                 <span className="text-slate-300">—</span>
               )}
             </td>
+            <td className={clsx(ACCOUNTS_TD, "text-center")}>
+              {a.active ? (
+                <button
+                  type="button"
+                  onClick={() => onTogglePos(a)}
+                  className={clsx(
+                    "inline-flex rounded-lg px-2 py-1 text-[11px] font-black transition",
+                    a.posEnabled
+                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                      : "bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
+                  )}
+                >
+                  {a.posEnabled ? "Assigned" : "Assign"}
+                </button>
+              ) : (
+                <span className="text-slate-300">—</span>
+              )}
+            </td>
             <td className={clsx(ACCOUNTS_TD, "text-right")}>
               {a.active && (
                 <button
@@ -325,7 +353,7 @@ function FixedAssetsSection({
   return (
     <>
       <tr className="border-b border-slate-100 bg-amber-50/90">
-        <td colSpan={5} className="px-3 py-2">
+        <td colSpan={6} className="px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-slate-800">Fixed Assets</span>
@@ -372,6 +400,7 @@ function FixedAssetsSection({
               {row.active ? "Active" : "Inactive"}
             </span>
           </td>
+          <td className={clsx(ACCOUNTS_TD, "text-center text-slate-300")}>—</td>
           <td className={clsx(ACCOUNTS_TD, "text-center text-slate-300")}>—</td>
           <td className={clsx(ACCOUNTS_TD, "text-right")}>
             <Link

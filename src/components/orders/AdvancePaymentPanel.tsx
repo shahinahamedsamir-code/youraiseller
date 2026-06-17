@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import {
   Wallet,
   Smartphone,
@@ -14,6 +15,7 @@ import {
   ADVANCE_PAYMENT_LABELS,
   type AdvancePaymentMethod,
 } from "@/lib/orders-store";
+import { listAssignedAdvancePaymentAccounts } from "@/lib/assigned-payment-accounts";
 import clsx from "clsx";
 
 const METHODS: {
@@ -89,6 +91,19 @@ export function AdvancePaymentPanel({
   proofRequired = true,
 }: Props) {
   const isHandCash = method === "hand_cash";
+  const assignedAccounts = useMemo(() => listAssignedAdvancePaymentAccounts(), []);
+  const availableMethods = useMemo(
+    () => new Set(assignedAccounts.map((item) => item.method)),
+    [assignedAccounts]
+  );
+  const selectedAccount = assignedAccounts.find((item) => item.method === method);
+
+  useEffect(() => {
+    if (assignedAccounts.length > 0 && !availableMethods.has(method)) {
+      onMethodChange(assignedAccounts[0].method);
+    }
+  }, [assignedAccounts, availableMethods, method, onMethodChange]);
+
   const ReqBadge = () =>
     proofRequired ? (
       <span className="text-rose-500"> *</span>
@@ -127,12 +142,22 @@ export function AdvancePaymentPanel({
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">
             1. Choose payment method
           </p>
+          {assignedAccounts.length === 0 ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+              No advance payment method assigned. Add or assign a payment account from Accounting &gt; Accounts.
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {METHODS.map(({ id, icon: Icon, hint, color, activeRing }) => {
+            {assignedAccounts.map(({ account, method: id }) => {
+              const meta = METHODS.find((m) => m.id === id) ?? METHODS[0];
+              const Icon = meta.icon;
+              const hint = ADVANCE_PAYMENT_LABELS[id];
+              const color = meta.color;
+              const activeRing = meta.activeRing;
               const active = method === id;
               return (
                 <button
-                  key={id}
+                  key={account.id}
                   type="button"
                   onClick={() => onMethodChange(id)}
                   className={clsx(
@@ -157,7 +182,7 @@ export function AdvancePaymentPanel({
                       active ? "text-slate-900" : "text-slate-600"
                     )}
                   >
-                    {ADVANCE_PAYMENT_LABELS[id]}
+                    {account.name}
                   </span>
                   <span className="text-[10px] text-slate-400">{hint}</span>
                   {active && (
@@ -169,6 +194,7 @@ export function AdvancePaymentPanel({
               );
             })}
           </div>
+          )}
         </div>
 
         <div className="rounded-xl border border-slate-100 bg-white/90 p-4 shadow-inner">
@@ -216,6 +242,7 @@ export function AdvancePaymentPanel({
                 Transaction ID
                 <span className="font-normal text-slate-400">
                   ({ADVANCE_PAYMENT_LABELS[method]})
+                  {selectedAccount ? ` - ${selectedAccount.account.name}` : ""}
                 </span>
                 <ReqBadge />
               </label>

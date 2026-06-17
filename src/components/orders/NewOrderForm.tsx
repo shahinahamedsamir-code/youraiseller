@@ -43,6 +43,7 @@ import {
   type Order,
 } from "@/lib/orders-store";
 import type { Product } from "@/lib/inventory-store";
+import { hasAssignedAdvancePaymentAccounts } from "@/lib/assigned-payment-accounts";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import {
   getPreorderReason,
@@ -364,6 +365,10 @@ export function NewOrderForm({ orderId }: Props = {}) {
     }
     if (lines.length === 0) {
       setError("Add at least one product.");
+      return;
+    }
+    if (showAdvancePayment && !hasAssignedAdvancePaymentAccounts()) {
+      setError("Assign or create an advance payment method from Accounting > Accounts.");
       return;
     }
     if (showAdvancePayment && requiredFields.transactionId) {

@@ -30,11 +30,18 @@ import {
   Ban,
   CreditCard,
   LayoutDashboard,
+  ShieldQuestion,
 } from "lucide-react";
 import clsx from "clsx";
 import { SearchField } from "@/components/ui/SearchField";
 
 type Tab = "pending" | "payment_pending" | "dashboard_pending" | "active" | "cancelled";
+type ConfirmAction =
+  | "approve"
+  | "cancel_request"
+  | "dashboard_pending"
+  | "activate_dashboard"
+  | "move_pending";
 
 const tabs: { id: Tab; label: string; icon: typeof Clock }[] = [
   { id: "pending", label: "Pending", icon: Clock },
@@ -65,6 +72,14 @@ function requestStatusBadge(user: DevUser): string {
   return "bg-amber-500/20 text-amber-300";
 }
 
+function formatManualPaymentDate(): string {
+  return new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function DevRequestsPage() {
   const [tab, setTab] = useState<Tab>("pending");
   const [pending, setPending] = useState<DevUser[]>([]);
@@ -73,6 +88,10 @@ export default function DevRequestsPage() {
   const [search, setSearch] = useState("");
   const [detailsUser, setDetailsUser] = useState<DevUser | null>(null);
   const [cancelUser, setCancelUser] = useState<DevUser | null>(null);
+  const [confirmMove, setConfirmMove] = useState<{
+    action: ConfirmAction;
+    user: DevUser;
+  } | null>(null);
   const [recoverMsg, setRecoverMsg] = useState("");
 
   const refresh = () => {
@@ -115,6 +134,34 @@ export default function DevRequestsPage() {
     dashboard_pending: dashboardPending.length,
     active: active.length,
     cancelled: cancelled.length,
+  };
+
+  const handleConfirmMove = async () => {
+    if (!confirmMove) return;
+    const { action, user } = confirmMove;
+    if (action === "approve") {
+      approveUser(user.id);
+      setTab("payment_pending");
+    } else if (action === "cancel_request") {
+      setConfirmMove(null);
+      setCancelUser(user);
+      return;
+    } else if (action === "dashboard_pending") {
+      updateDevUser(user.id, {
+        planPaymentPaidAt: `Manual payment marked ${formatManualPaymentDate()}`,
+        planPaymentInvoice: `MANUAL-${getCustomerDisplayId(user)}`,
+      });
+      setTab("dashboard_pending");
+    } else if (action === "activate_dashboard") {
+      activateUser(user.id);
+      setTab("active");
+    } else {
+      reopenAsPending(user.id);
+      setTab("pending");
+    }
+    await waitForDevUsersSync();
+    refresh();
+    setConfirmMove(null);
   };
 
   return (
@@ -289,19 +336,14 @@ export default function DevRequestsPage() {
                     <>
                       <button
                         type="button"
-                        onClick={async () => {
-                          approveUser(u.id);
-                          await waitForDevUsersSync();
-                          refresh();
-                          setTab("payment_pending");
-                        }}
+                        onClick={() => setConfirmMove({ action: "approve", user: u })}
                         className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white"
                       >
                         <Check className="h-3.5 w-3.5" /> Approve
                       </button>
                       <button
                         type="button"
-                        onClick={() => setCancelUser(u)}
+                        onClick={() => setConfirmMove({ action: "cancel_request", user: u })}
                         className="flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-bold text-white"
                       >
                         <X className="h-3.5 w-3.5" /> Cancel
@@ -309,14 +351,20 @@ export default function DevRequestsPage() {
                     </>
                   )}
 
+                  {tab === "payment_pending" && u.status === "inactive" && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmMove({ action: "dashboard_pending", user: u })}
+                      className="flex items-center gap-1 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-bold text-white"
+                    >
+                      <Power className="h-3.5 w-3.5" /> Move to Dashboard Pending
+                    </button>
+                  )}
+
                   {tab === "dashboard_pending" && u.status === "inactive" && (
                     <button
                       type="button"
-                      onClick={async () => {
-                        activateUser(u.id);
-                        await waitForDevUsersSync();
-                        refresh();
-                      }}
+                      onClick={() => setConfirmMove({ action: "activate_dashboard", user: u })}
                       className="flex items-center gap-1 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-bold text-white"
                     >
                       <Power className="h-3.5 w-3.5" /> Activate dashboard
@@ -330,12 +378,7 @@ export default function DevRequestsPage() {
                     <>
                       <button
                         type="button"
-                        onClick={async () => {
-                          reopenAsPending(u.id);
-                          await waitForDevUsersSync();
-                          refresh();
-                          setTab("pending");
-                        }}
+                        onClick={() => setConfirmMove({ action: "move_pending", user: u })}
                         className="rounded-lg border border-amber-500/50 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/10"
                       >
                         Move to pending
@@ -398,6 +441,106 @@ export default function DevRequestsPage() {
           setTab("cancelled");
         }}
       />
+
+      <ConfirmRequestMoveModal
+        action={confirmMove?.action ?? null}
+        user={confirmMove?.user ?? null}
+        onClose={() => setConfirmMove(null)}
+        onConfirm={handleConfirmMove}
+      />
+    </div>
+  );
+}
+
+function ConfirmRequestMoveModal({
+  action,
+  user,
+  onClose,
+  onConfirm,
+}: {
+  action: ConfirmAction | null;
+  user: DevUser | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!action || !user) return null;
+
+  const isApprove = action === "approve";
+  const isCancelRequest = action === "cancel_request";
+  const isActivation = action === "activate_dashboard";
+  const isMovePending = action === "move_pending";
+  const title = isApprove
+    ? "Approve this request?"
+    : isCancelRequest
+      ? "Cancel this request?"
+      : isActivation
+    ? "Activate dashboard?"
+    : isMovePending
+      ? "Move back to Pending?"
+      : "Move to Dashboard Pending?";
+  const message = isApprove
+    ? "This user will move to Payment Pending and can continue the plan payment flow."
+    : isCancelRequest
+      ? "You will add a cancel note next. The request will not be cancelled until the note is confirmed."
+      : isActivation
+    ? "This user will become Active and can open the dashboard."
+    : isMovePending
+      ? "This user will return to Pending review and will not move unless you confirm."
+      : "This will mark the payment as done and move the user to Dashboard Pending.";
+  const confirmLabel = isApprove
+    ? "Yes, approve"
+    : isCancelRequest
+      ? "Continue"
+      : isActivation
+    ? "Yes, activate"
+    : isMovePending
+      ? "Yes, move pending"
+      : "Yes, move";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+        <div className="border-b border-slate-800 bg-slate-950 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
+              <ShieldQuestion className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">{title}</h3>
+              <p className="text-xs text-slate-400">Please confirm before changing status.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 px-5 py-5">
+          <div className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3">
+            <p className="font-semibold text-white">{user.name}</p>
+            <p className="text-sm text-slate-400">{user.email}</p>
+            <p className="mt-1 font-mono text-xs text-orange-300">
+              {getCustomerDisplayId(user)}
+            </p>
+          </div>
+
+          <p className="text-sm leading-6 text-slate-300">{message}</p>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-bold text-slate-200 hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="flex-1 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-500"
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

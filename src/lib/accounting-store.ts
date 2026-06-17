@@ -27,6 +27,8 @@ export type AccountingAccount = {
   paymentMethodKey?: PaymentMethodKey;
   /** Default "Received In" on payment approval modals */
   defaultPaymentReceive?: boolean;
+  /** Show this account as a selectable payment account in POS. */
+  posEnabled?: boolean;
   createdAt: string;
 };
 

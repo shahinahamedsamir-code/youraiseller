@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   createDevUser,
@@ -48,10 +48,38 @@ import {
   CheckCircle2,
   TimerOff,
   LayoutGrid,
+  ShieldQuestion,
 } from "lucide-react";
 import { SearchField } from "@/components/ui/SearchField";
 
 type StatusFilter = "all" | "active" | "deactive" | "expired";
+type UserStatusAction = "activate" | "deactivate" | "expire";
+
+function isRequestPaymentPendingUser(user: DevUser): boolean {
+  return (
+    user.status === "inactive" &&
+    Boolean(user.approvedAt) &&
+    !user.planStartedAt &&
+    !user.planPaymentPaidAt
+  );
+}
+
+function isRequestDashboardPendingUser(user: DevUser): boolean {
+  return user.status === "inactive" && Boolean(user.planPaymentPaidAt);
+}
+
+function isSoftwareUserVisible(user: DevUser): boolean {
+  if (user.parentAccountId) return false;
+  if (user.status === "pending" || user.status === "rejected") return false;
+  if (isRequestPaymentPendingUser(user) || isRequestDashboardPendingUser(user)) {
+    return false;
+  }
+  return true;
+}
+
+function isDeactiveSoftwareUser(user: DevUser): boolean {
+  return user.status === "inactive" && isSoftwareUserVisible(user);
+}
 
 const statusFilters: {
   id: StatusFilter;
@@ -63,17 +91,15 @@ const statusFilters: {
   { id: "active", label: "Active", icon: CheckCircle2, match: (u) => u.status === "active" },
   {
     id: "deactive",
-    label: "Pending Access",
+    label: "Deactive",
     icon: PowerOff,
-    match: (u) => u.status === "inactive",
+    match: isDeactiveSoftwareUser,
   },
   { id: "expired", label: "Expired", icon: TimerOff, match: (u) => u.status === "expired" },
 ];
 
 function userStatusLabel(user: DevUser): string {
-  if (user.status === "inactive") {
-    return user.planPaymentPaidAt ? "Dashboard pending" : "Payment pending";
-  }
+  if (user.status === "inactive") return "Deactive";
   if (user.status === "pending") return "Pending";
   if (user.status === "active") return "Active";
   if (user.status === "expired") return "Expired";
@@ -120,6 +146,10 @@ export default function DevUsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [detailsUser, setDetailsUser] = useState<DevUser | null>(null);
+  const [confirmStatusAction, setConfirmStatusAction] = useState<{
+    action: UserStatusAction;
+    user: DevUser;
+  } | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [form, setForm] = useState({
@@ -135,14 +165,7 @@ export default function DevUsersPage() {
 
   const refresh = () => {
     const all = loadDevUsers();
-    setUsers(
-      all.filter(
-        (u) =>
-          !u.parentAccountId &&
-          u.status !== "pending" &&
-          u.status !== "rejected"
-      )
-    );
+    setUsers(all.filter(isSoftwareUserVisible));
     setPendingCount(getPendingUsers().length);
   };
 
@@ -195,9 +218,10 @@ export default function DevUsersPage() {
   };
 
   const q = search.trim();
-  const filterDef = statusFilters.find((f) => f.id === statusFilter)!;
-  const filteredUsers = users.filter(
-    (u) => filterDef.match(u) && matchesUserSearch(u, q)
+  const filterDef = statusFilters.find((f) => f.id === statusFilter) ?? statusFilters[0];
+  const filteredUsers = useMemo(
+    () => users.filter((u) => filterDef.match(u) && matchesUserSearch(u, q)),
+    [filterDef, q, users]
   );
 
   const statusCounts = statusFilters.reduce(
@@ -213,6 +237,21 @@ export default function DevUsersPage() {
     if (user.status === "active") window.open("/dashboard", "_blank");
     else if (user.status === "inactive") window.open("/renew", "_blank");
     else alert(`User status: ${user.status}`);
+  };
+
+  const handleConfirmStatusAction = async () => {
+    if (!confirmStatusAction) return;
+    const { action, user } = confirmStatusAction;
+    if (action === "activate") {
+      activateUser(user.id);
+    } else if (action === "deactivate") {
+      deactivateUser(user.id);
+    } else {
+      expireUser(user.id);
+    }
+    await waitForDevUsersSync();
+    refresh();
+    setConfirmStatusAction(null);
   };
 
   return (
@@ -359,7 +398,7 @@ export default function DevUsersPage() {
               <th className="min-w-[220px] px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody key={`${statusFilter}:${q}`}>
             {filteredUsers.length === 0 ? (
               <tr>
                 <td
@@ -451,21 +490,14 @@ export default function DevUsersPage() {
                         <>
                           <button
                             type="button"
-                            onClick={() => {
-                              activateUser(u.id);
-                              refresh();
-                            }}
+                            onClick={() => setConfirmStatusAction({ action: "activate", user: u })}
                             className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white"
                           >
                             <Power className="h-3 w-3" /> Activate
                           </button>
                           <button
                             type="button"
-                            onClick={async () => {
-                              expireUser(u.id);
-                              await waitForDevUsersSync();
-                              refresh();
-                            }}
+                            onClick={() => setConfirmStatusAction({ action: "expire", user: u })}
                             className="flex items-center gap-1 rounded-lg bg-slate-600 px-2 py-1 text-xs font-bold text-white"
                           >
                             <TimerOff className="h-3 w-3" /> Expire
@@ -476,22 +508,14 @@ export default function DevUsersPage() {
                         <>
                           <button
                             type="button"
-                            onClick={async () => {
-                              deactivateUser(u.id);
-                              await waitForDevUsersSync();
-                              refresh();
-                            }}
+                            onClick={() => setConfirmStatusAction({ action: "deactivate", user: u })}
                             className="flex items-center gap-1 rounded-lg bg-orange-600 px-2 py-1 text-xs font-bold text-white"
                           >
                             <PowerOff className="h-3 w-3" /> Deactivate
                           </button>
                           <button
                             type="button"
-                            onClick={async () => {
-                              expireUser(u.id);
-                              await waitForDevUsersSync();
-                              refresh();
-                            }}
+                            onClick={() => setConfirmStatusAction({ action: "expire", user: u })}
                             className="flex items-center gap-1 rounded-lg bg-slate-600 px-2 py-1 text-xs font-bold text-white"
                           >
                             <TimerOff className="h-3 w-3" /> Expire
@@ -501,11 +525,7 @@ export default function DevUsersPage() {
                       {u.status === "expired" && (
                         <button
                           type="button"
-                          onClick={async () => {
-                            activateUser(u.id);
-                            await waitForDevUsersSync();
-                            refresh();
-                          }}
+                          onClick={() => setConfirmStatusAction({ action: "activate", user: u })}
                           className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-xs font-bold text-white"
                         >
                           <Power className="h-3 w-3" /> Reactivate
@@ -608,6 +628,101 @@ export default function DevUsersPage() {
           setDetailsUser(null);
         }}
       />
+
+      <ConfirmUserStatusModal
+        action={confirmStatusAction?.action ?? null}
+        user={confirmStatusAction?.user ?? null}
+        onClose={() => setConfirmStatusAction(null)}
+        onConfirm={handleConfirmStatusAction}
+      />
+    </div>
+  );
+}
+
+function ConfirmUserStatusModal({
+  action,
+  user,
+  onClose,
+  onConfirm,
+}: {
+  action: UserStatusAction | null;
+  user: DevUser | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!action || !user) return null;
+
+  const isActivate = action === "activate";
+  const isDeactivate = action === "deactivate";
+  const title = isActivate
+    ? user.status === "expired"
+      ? "Reactivate this user?"
+      : "Activate this user?"
+    : isDeactivate
+      ? "Deactivate this user?"
+      : "Expire this user?";
+  const message = isActivate
+    ? "This user will get dashboard access again."
+    : isDeactivate
+      ? "This user will lose dashboard access until you activate them again."
+      : "This user will be marked expired and must renew before using the dashboard.";
+  const confirmLabel = isActivate
+    ? user.status === "expired"
+      ? "Yes, reactivate"
+      : "Yes, activate"
+    : isDeactivate
+      ? "Yes, deactivate"
+      : "Yes, expire";
+  const confirmClass = isActivate
+    ? "bg-emerald-600 hover:bg-emerald-500"
+    : isDeactivate
+      ? "bg-orange-600 hover:bg-orange-500"
+      : "bg-slate-600 hover:bg-slate-500";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+        <div className="border-b border-slate-800 bg-slate-950 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
+              <ShieldQuestion className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">{title}</h3>
+              <p className="text-xs text-slate-400">Please confirm before changing access.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 px-5 py-5">
+          <div className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3">
+            <p className="font-semibold text-white">{user.name}</p>
+            <p className="text-sm text-slate-400">{user.email}</p>
+            <p className="mt-1 font-mono text-xs text-orange-300">
+              {getCustomerDisplayId(user)}
+            </p>
+          </div>
+
+          <p className="text-sm leading-6 text-slate-300">{message}</p>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-bold text-slate-200 hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white ${confirmClass}`}
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

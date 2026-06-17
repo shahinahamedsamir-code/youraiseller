@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { ChevronDown } from "lucide-react";
 import { mainNav, type NavChild } from "@/lib/navigation";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -65,19 +65,6 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
       })
       .filter(Boolean) as typeof mainNav;
   }, [isEnabled, hydrated]);
-
-  useEffect(() => {
-    filteredNav.forEach((item) => {
-      if (item.expandPath && pathname.startsWith(item.expandPath)) {
-        setOpenGroups((g) => ({ ...g, [item.label]: true }));
-      }
-      item.children?.forEach((child) => {
-        if (child.expandPath && pathname.startsWith(child.expandPath)) {
-          setOpenGroups((g) => ({ ...g, [child.label]: true }));
-        }
-      });
-    });
-  }, [pathname, filteredNav]);
 
   return (
     <aside

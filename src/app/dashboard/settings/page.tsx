@@ -115,6 +115,17 @@ const GROUPS: SettingGroup[] = [
         featureKey: "settings_sticker",
       },
       {
+        key: "product-label",
+        title: "Product / Price Label",
+        desc: "Barcode price labels for products",
+        icon: Tag,
+        from: "from-teal-500",
+        to: "to-cyan-600",
+        ring: "ring-teal-100",
+        href: "/dashboard/settings/product-label",
+        featureKey: "settings_sticker",
+      },
+      {
         key: "shipping-note",
         title: "Shipping Note Template",
         desc: "Customise the note printed on parcels",

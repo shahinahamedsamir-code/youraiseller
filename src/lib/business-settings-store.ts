@@ -39,6 +39,9 @@ export type BusinessSettings = {
     | "express"
     | "mono";
   stickerSize: "3x3" | "2x3" | "3x4";
+  /** Product / price label printed for shelf, tag or barcode printers. */
+  productLabelTemplate: "retail" | "tag" | "shelf" | "mini" | "price" | "sku";
+  productLabelSize: "1.5x1" | "2x1" | "3x1";
   /** Order defaults */
   defaultDeliveryCost: number;
   orderNote: string;
@@ -70,6 +73,8 @@ function emptySettings(): BusinessSettings {
     deliveryInvoices: {},
     stickerTemplate: "classic",
     stickerSize: "3x3",
+    productLabelTemplate: "retail",
+    productLabelSize: "2x1",
     defaultDeliveryCost: 0,
     orderNote: "",
   };
@@ -129,6 +134,17 @@ function normalize(raw: Partial<BusinessSettings>): BusinessSettings {
       : "classic",
     stickerSize:
       raw.stickerSize === "2x3" ? "2x3" : raw.stickerSize === "3x4" ? "3x4" : "3x3",
+    productLabelTemplate: (
+      ["retail", "tag", "shelf", "mini", "price", "sku"] as const
+    ).includes(raw.productLabelTemplate as never)
+      ? (raw.productLabelTemplate as BusinessSettings["productLabelTemplate"])
+      : "retail",
+    productLabelSize:
+      raw.productLabelSize === "1.5x1"
+        ? "1.5x1"
+        : raw.productLabelSize === "3x1"
+          ? "3x1"
+          : "2x1",
     nextInvoiceNumber:
       typeof raw.nextInvoiceNumber === "number" && raw.nextInvoiceNumber > 0
         ? Math.floor(raw.nextInvoiceNumber)

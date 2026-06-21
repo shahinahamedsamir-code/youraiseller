@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BadgePercent,
   Barcode,
   Check,
   CreditCard,
+  Hash,
   Minus,
   Phone,
   Plus,
@@ -13,6 +14,7 @@ import {
   RotateCcw,
   Search,
   ShoppingBag,
+  Save,
   Trash2,
   UserPlus,
   UserRound,
@@ -20,7 +22,11 @@ import {
   X,
 } from "lucide-react";
 import clsx from "clsx";
-import { loadProducts, type Product } from "@/lib/inventory-store";
+import {
+  getProductDisplayImage,
+  loadProducts,
+  type Product,
+} from "@/lib/inventory-store";
 import { addCustomer, loadCustomers, type SellerCustomer } from "@/lib/customers-store";
 import {
   addIncome,
@@ -28,6 +34,11 @@ import {
   loadAccountingData,
   type AccountingAccount,
 } from "@/lib/accounting-store";
+import { saveCompletedSale } from "./CompleteSaleReceipt";
+import { loadBusinessSettings } from "@/lib/business-settings-store";
+import { openPosInvoicePrint } from "@/lib/pos-invoice";
+import { savePosDraftSale, type PosDraftSaleRecord } from "@/lib/pos-drafts";
+import { autoRecordCashSale } from "@/lib/pos-cash-register";
 
 type CartLine = {
   product: Product;
@@ -64,6 +75,9 @@ function stockTone(product: Product): string {
 export function NewSalePanel() {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [products, setProducts] = useState<Product[]>(() =>
+    loadProducts().filter((p) => p.active !== false)
+  );
   const [customers, setCustomers] = useState<SellerCustomer[]>(() => loadCustomers());
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
@@ -74,7 +88,7 @@ export function NewSalePanel() {
   });
   const [customerError, setCustomerError] = useState("");
   const [discount, setDiscount] = useState(0);
-  const [paymentAccounts, setPaymentAccounts] = useState<AccountingAccount[]>(() =>
+  const [paymentAccounts] = useState<AccountingAccount[]>(() =>
     listVisiblePaymentAccounts(loadAccountingData()).filter(
       (account) => account.active && account.posEnabled
     )
@@ -83,12 +97,39 @@ export function NewSalePanel() {
     () => paymentAccounts.find((account) => account.defaultPaymentReceive)?.id ?? paymentAccounts[0]?.id ?? ""
   );
   const [paid, setPaid] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [completeMsg, setCompleteMsg] = useState("");
 
-  const products = useMemo(
-    () => loadProducts().filter((p) => p.active !== false),
-    []
-  );
+  useEffect(() => {
+    const refreshProducts = () => {
+      setProducts(loadProducts().filter((p) => p.active !== false));
+    };
+    refreshProducts();
+    window.addEventListener("youraiseller-data-updated", refreshProducts);
+    return () => window.removeEventListener("youraiseller-data-updated", refreshProducts);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("pos_edit_draft");
+      if (!raw) return;
+      localStorage.removeItem("pos_edit_draft");
+      const draft: PosDraftSaleRecord = JSON.parse(raw);
+      const allProducts = loadProducts().filter((p) => p.active !== false);
+      const cartLines: CartLine[] = draft.lines
+        .map((line) => {
+          const liveProduct = allProducts.find((p) => p.id === line.product.id);
+          return liveProduct ? { product: liveProduct, qty: line.qty } : null;
+        })
+        .filter((l): l is CartLine => l !== null);
+      setCart(cartLines);
+      if (draft.customerId) setSelectedCustomerId(draft.customerId);
+      setDiscount(draft.discount);
+      setPaid(draft.paid);
+      if (draft.paymentAccountId) setPaymentAccountId(draft.paymentAccountId);
+      if (draft.transactionId) setTransactionId(draft.transactionId);
+    } catch {}
+  }, []);
 
   const filteredProducts = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -107,6 +148,9 @@ export function NewSalePanel() {
     customers.find((item) => item.id === selectedCustomerId) ?? null;
   const selectedPaymentAccount =
     paymentAccounts.find((account) => account.id === paymentAccountId) ?? null;
+  const needsTrxId =
+    selectedPaymentAccount?.type === "mobile_wallet" ||
+    selectedPaymentAccount?.type === "bank";
   const safeDiscount = Math.min(Math.max(0, discount), subtotal);
   const total = subtotal - safeDiscount;
   const paidAmount = Number(paid) || 0;
@@ -146,6 +190,7 @@ export function NewSalePanel() {
     setSelectedCustomerId("");
     setDiscount(0);
     setPaid("");
+    setTransactionId("");
     setPaymentAccountId(
       paymentAccounts.find((account) => account.defaultPaymentReceive)?.id ??
         paymentAccounts[0]?.id ??
@@ -157,6 +202,7 @@ export function NewSalePanel() {
   const completeSale = () => {
     if (cart.length === 0 || !selectedPaymentAccount) return;
     const reference = `POS-${Date.now().toString().slice(-8)}`;
+    const now = new Date();
     addIncome({
       title: `POS Sale${selectedCustomer ? ` - ${selectedCustomer.name}` : ""}`,
       amount: total,
@@ -165,16 +211,80 @@ export function NewSalePanel() {
       source: "order",
       accountId: selectedPaymentAccount.id,
       reference,
-      note: `${cart.length} item${cart.length === 1 ? "" : "s"} sold from POS`,
+      note: transactionId
+        ? `TrxID: ${transactionId} | ${cart.length} item${cart.length === 1 ? "" : "s"} sold from POS`
+        : `${cart.length} item${cart.length === 1 ? "" : "s"} sold from POS`,
     });
-    setPaymentAccounts(
-      listVisiblePaymentAccounts(loadAccountingData()).filter(
-        (account) => account.active && account.posEnabled
-      )
-    );
-    setCompleteMsg(
-      `Sale completed: ${money(total)} added to ${selectedPaymentAccount.name}${selectedCustomer ? ` for ${selectedCustomer.name}` : ""}. Ref ${reference}.`
-    );
+    const saleData = {
+      reference,
+      date: todayLabel(),
+      time: now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
+      items: cart.map((line) => ({
+        name: line.product.name,
+        code: line.product.code,
+        qty: line.qty,
+        unitPrice: line.product.sellPrice,
+        lineTotal: line.product.sellPrice * line.qty,
+      })),
+      customerName: selectedCustomer?.name ?? null,
+      customerPhone: selectedCustomer?.phone ?? null,
+      subtotal,
+      discount: safeDiscount,
+      total,
+      paid: paidAmount,
+      change,
+      due,
+      paymentAccount: selectedPaymentAccount.name,
+      transactionId: transactionId || undefined,
+    };
+    saveCompletedSale(saleData);
+    if (selectedPaymentAccount.type === "cash") {
+      autoRecordCashSale(total, reference, selectedCustomer?.name);
+    }
+    openPosInvoicePrint(saleData, loadBusinessSettings());
+    clearSale();
+  };
+
+  const saveDraft = () => {
+    if (cart.length === 0) return;
+    const now = new Date();
+    const draftId = selectedCustomerId
+      ? `DRF-${selectedCustomerId}-${Date.now().toString().slice(-6)}`
+      : `DRF-${Date.now().toString().slice(-8)}`;
+    const draftLabel = selectedCustomer
+      ? `${selectedCustomer.name} - ${cart.length} item${cart.length === 1 ? "" : "s"}`
+      : `Draft Sale - ${cart.length} item${cart.length === 1 ? "" : "s"}`;
+    savePosDraftSale({
+      id: draftId,
+      label: draftLabel,
+      customerId: selectedCustomerId,
+      customerName: selectedCustomer?.name ?? null,
+      customerPhone: selectedCustomer?.phone ?? null,
+      customerAddress: selectedCustomer?.address ?? null,
+      discount: safeDiscount,
+      paid,
+      paymentAccountId: paymentAccountId || "",
+      paymentAccountName: selectedPaymentAccount?.name ?? "",
+      note: `Saved from New Sale at ${now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`,
+      transactionId: transactionId || undefined,
+      lines: cart.map((line) => ({
+        product: {
+          id: line.product.id,
+          name: line.product.name,
+          code: line.product.code,
+          sellPrice: line.product.sellPrice,
+          manageStock: line.product.manageStock,
+          stockQty: line.product.stockQty,
+          imageDataUrl: line.product.imageDataUrl,
+        },
+        qty: line.qty,
+      })),
+      subtotal,
+      total,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    });
+    setCompleteMsg(`Draft saved: ${draftLabel}`);
   };
 
   const saveCustomer = () => {
@@ -241,6 +351,7 @@ export function NewSalePanel() {
           <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             {filteredProducts.map((product) => {
               const disabled = product.manageStock && product.stockQty <= 0;
+              const img = getProductDisplayImage(product);
               return (
                 <button
                   key={product.id}
@@ -252,8 +363,20 @@ export function NewSalePanel() {
                     disabled && "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-sm"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={img}
+                        alt=""
+                        className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-[10px] font-black text-slate-400">
+                        {product.code.slice(0, 4)}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-base font-extrabold text-slate-900">
                         {product.name}
                       </p>
@@ -475,6 +598,24 @@ export function NewSalePanel() {
                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-400 focus:bg-white"
               />
             </label>
+
+            {needsTrxId ? (
+              <label className="mt-4 block">
+                <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase text-slate-500">
+                  <Hash className="h-3.5 w-3.5" />
+                  Transaction ID ({selectedPaymentAccount?.name})
+                </span>
+                <input
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  placeholder="Paste trx ID from SMS or app"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-400 focus:bg-white"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Copy the ID from {selectedPaymentAccount?.name} confirmation message.
+                </p>
+              </label>
+            ) : null}
           </div>
 
           <div className="rounded-2xl bg-slate-950 p-4 text-white shadow-sm">
@@ -487,15 +628,26 @@ export function NewSalePanel() {
               <TotalRow label="Paid" value={money(paidAmount)} />
               <TotalRow label={due > 0 ? "Due" : "Change"} value={money(due > 0 ? due : change)} />
             </div>
-            <button
-              type="button"
-              disabled={cart.length === 0 || !selectedPaymentAccount}
-              onClick={completeSale}
-              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-            >
-              <Check className="h-5 w-5" />
-              Complete Sale
-            </button>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={cart.length === 0}
+                onClick={saveDraft}
+                className="flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                <Save className="h-4 w-4" />
+                Draft
+              </button>
+              <button
+                type="button"
+                disabled={cart.length === 0 || !selectedPaymentAccount}
+                onClick={completeSale}
+                className="flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+              >
+                <Check className="h-5 w-5" />
+                Complete
+              </button>
+            </div>
             {completeMsg ? (
               <p className="mt-3 rounded-xl bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-200">
                 {completeMsg}

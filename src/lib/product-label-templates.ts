@@ -249,6 +249,45 @@ export function sampleProductLabelProduct(): Product {
   };
 }
 
+export function renderMultiProductLabelDoc(
+  products: Product[],
+  biz: BusinessSettings,
+  template: ProductLabelTemplate,
+  size: ProductLabelSize
+): string {
+  const dim = SIZE[size];
+  const render = (p: Product) =>
+    template === "tag"
+      ? tag(p, biz, dim.w)
+      : template === "shelf"
+        ? shelf(p, biz, dim.w)
+        : template === "mini"
+          ? mini(p, biz, dim.w)
+          : template === "price"
+            ? price(p, biz, dim.w)
+            : template === "sku"
+              ? sku(p, biz, dim.w)
+              : retail(p, biz, dim.w);
+
+  const bodies = products.map((p) => render(p)).join("\n");
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Product Labels (${products.length})</title>
+  <style>
+    ${baseCss(dim.w, dim.h)}
+    @page{size:${dim.w}px ${dim.h}px;margin:0}
+    @media print{body{background:#fff}.sheet{page-break-after:always}}
+    body{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:16px}
+    @media print{body{gap:0;padding:0}}
+  </style>
+</head>
+<body>${bodies}<script>setTimeout(()=>print(),350)</script></body>
+</html>`;
+}
+
 export function productLabelSizeLabel(size: ProductLabelSize): string {
   return SIZE[size].label;
 }

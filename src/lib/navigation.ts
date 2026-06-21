@@ -167,9 +167,7 @@ export const mainNav: NavItem[] = [
 ];
 
 export const quickLinks = [
-  { label: "Search", href: "/dashboard/search", featureKey: "search" as FeatureKey },
-  { label: "NewOrder", href: "/dashboard/orders/approved/new", featureKey: "new_order" as FeatureKey },
-  { label: "WebOrders", href: "/dashboard/orders/web", featureKey: "web_order_list" as FeatureKey },
-  { label: "OrderList", href: "/dashboard/orders/web", featureKey: "web_order_list" as FeatureKey },
-  { label: "Send Message", href: "/dashboard/integration/sms", featureKey: "sms" as FeatureKey },
+  { label: "Search", href: "/dashboard/search", featureKey: "search" as FeatureKey, icon: Search },
+  { label: "POS Sell", href: "/dashboard/pos/new-sale", featureKey: "pos_sales" as FeatureKey, icon: ShoppingCart },
+  { label: "OrderList", href: "/dashboard/orders/web", featureKey: "web_order_list" as FeatureKey, icon: ListTodo },
 ];

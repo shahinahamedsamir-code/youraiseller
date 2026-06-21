@@ -6,7 +6,7 @@ import {
   loadProducts,
   deleteProduct,
   updateProduct,
-  getProductDisplayImage,
+  getProductDisplayImageFromList,
   createProduct,
   getProductMovementHistory,
   type Product,
@@ -415,7 +415,7 @@ export function ProductTable() {
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-3">
                       {(() => {
-                        const img = getProductDisplayImage(p);
+                        const img = getProductDisplayImageFromList(p, products);
                         return img ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img

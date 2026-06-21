@@ -106,15 +106,19 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       </div>
 
       <div className="hidden items-center gap-1 lg:flex">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-500 transition hover:bg-indigo-50 hover:text-indigo-700"
-          >
-            {link.label}
-          </Link>
-        ))}
+        {links.map((link) => {
+          const Icon = link.icon;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-500 transition hover:bg-indigo-50 hover:text-indigo-700"
+            >
+              {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+              {link.label}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="ml-auto flex items-center gap-2">

@@ -83,6 +83,26 @@ export type AbcAnalysisRow = {
   grade: "A" | "B" | "C";
 };
 
+function nextProductId(products: Product[]): string {
+  const used = new Set(products.map((p) => p.id));
+  let maxSeq = 0;
+  for (const p of products) {
+    const match = /^PRD-(\d+)$/.exec(p.id);
+    if (!match) continue;
+    const seq = Number(match[1]);
+    if (Number.isFinite(seq)) {
+      maxSeq = Math.max(maxSeq, seq);
+    }
+  }
+  let candidate = `PRD-${String(maxSeq + 1).padStart(3, "0")}`;
+  if (!used.has(candidate)) return candidate;
+  candidate = `PRD-${Date.now()}`;
+  if (!used.has(candidate)) return candidate;
+  let suffix = 1;
+  while (used.has(`${candidate}-${suffix}`)) suffix += 1;
+  return `${candidate}-${suffix}`;
+}
+
 function parseMovementDate(createdAt: string): Date | null {
   const d = new Date(createdAt);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -357,6 +377,37 @@ export function getProductDisplayImage(product: Product): string | undefined {
   return undefined;
 }
 
+export function getProductDisplayImageFromList(
+  product: Product,
+  products: Product[]
+): string | undefined {
+  if (product.imageDataUrl?.trim()) return product.imageDataUrl.trim();
+
+  if (product.wooParentId) {
+    const parent = products.find(
+      (p) => p.wooProductId === product.wooParentId && !p.wooVariationId
+    );
+    if (parent?.imageDataUrl?.trim()) return parent.imageDataUrl.trim();
+  }
+
+  // SKU prefix fallback (e.g. SHIRT-003-L → SHIRT-003)
+  if (product.wooVariationId || product.code.includes("-")) {
+    const dash = product.code.lastIndexOf("-");
+    if (dash > 0) {
+      const base = product.code.slice(0, dash);
+      const parent = products.find(
+        (p) =>
+          !p.wooVariationId &&
+          p.code.toLowerCase() === base.toLowerCase() &&
+          p.imageDataUrl?.trim()
+      );
+      if (parent?.imageDataUrl?.trim()) return parent.imageDataUrl.trim();
+    }
+  }
+
+  return undefined;
+}
+
 /** Resolve product image for an order line (saved URL, id, SKU, or Woo ids). */
 export function getProductImageForLine(line: {
   productId: string;
@@ -522,7 +573,7 @@ export function createProduct(
 
   const product: Product = {
     ...input,
-    id: `PRD-${String(data.products.length + 1).padStart(3, "0")}`,
+    id: nextProductId(data.products),
     createdAt: nowLabel(),
     updatedAt: nowLabel(),
   };

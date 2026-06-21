@@ -24,6 +24,7 @@ import { formatBdt } from "@/lib/accounting-store";
 import { ORDER_LIST_TABS, ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
 import { ChartClientOnly } from "@/components/dashboard/ChartClientOnly";
 import { AccountingPlOverview } from "@/components/reports/AccountingPlOverview";
+import { SalesReportPanel } from "@/components/pos/SalesReportPanel";
 import { OrderReportStatsPanel } from "@/components/reports/OrderReportStatsPanel";
 import {
   ProfitSalesDetailsCharts,
@@ -3055,6 +3056,16 @@ export function ReportsView(props: ReportsViewProps) {
           </div>
         </div>
       )}
+
+      {tab === "pos_sales" && (
+        <div className="space-y-4">
+          <PosSalesReportEmbed />
+        </div>
+      )}
     </div>
   );
+}
+
+function PosSalesReportEmbed() {
+  return <SalesReportPanel />;
 }

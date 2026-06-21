@@ -14,7 +14,8 @@ export type ReportTab =
   | "integrations"
   | "call_sms"
   | "marketing"
-  | "accounting";
+  | "accounting"
+  | "pos_sales";
 
 export type ReportGroupId =
   | "profit-sales"
@@ -24,7 +25,8 @@ export type ReportGroupId =
   | "customer-report"
   | "meta-ads"
   | "call-sms"
-  | "business-finance";
+  | "business-finance"
+  | "pos-sales-report";
 
 export type ReportGroup = {
   id: ReportGroupId;
@@ -42,6 +44,12 @@ export const REPORT_GROUPS: ReportGroup[] = [
     label: "Profit & Sales (Delivery Orders)",
     description: "Sales summary and profit chart",
     tabs: [{ id: "sales", label: "Sales" }],
+  },
+  {
+    id: "pos-sales-report",
+    label: "POS Sales Report",
+    description: "POS revenue, profit, trends and top products",
+    tabs: [{ id: "pos_sales", label: "POS Sales" }],
   },
   {
     id: "order-report",

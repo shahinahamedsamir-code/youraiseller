@@ -1709,7 +1709,23 @@ export function updateChartAccount(
 
 export type AccountDeleteResult = { ok: true } | { ok: false; message: string };
 
+const PROTECTED_PAYMENT_KEYS: Set<PaymentMethodKey> = new Set([
+  "bkash", "nagad", "rocket", "hand_cash", "bank",
+]);
+
+export function isProtectedAccount(accountId: string): boolean {
+  const data = loadAccountingData();
+  const acc = data.accounts.find((a) => a.id === accountId);
+  return !!acc?.paymentMethodKey && PROTECTED_PAYMENT_KEYS.has(acc.paymentMethodKey);
+}
+
 export function canDeleteAccount(accountId: string): AccountDeleteResult {
+  if (isProtectedAccount(accountId)) {
+    return {
+      ok: false,
+      message: "This is a default account and cannot be deleted.",
+    };
+  }
   const data = loadAccountingData();
   const hasTransfers = (data.transfers ?? []).some(
     (t) => t.fromAccountId === accountId || t.toAccountId === accountId

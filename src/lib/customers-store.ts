@@ -1,5 +1,6 @@
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
 import { pushSellerData } from "./seller-sync";
+import { emitDataUpdated } from "./data-events";
 
 export type SellerCustomer = {
   id: string;
@@ -98,7 +99,7 @@ function saveCustomers(list: SellerCustomer[]) {
   if (!key) return;
   localStorage.setItem(key, JSON.stringify(list));
   pushSellerData("customers", list);
-  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  emitDataUpdated();
 }
 
 /** Update customer DB from this seller's order list (no cross-account data). */

@@ -1,3 +1,4 @@
+import { emitDataUpdated } from "./data-events";
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
 import { pushSellerData } from "./seller-sync";
 
@@ -261,6 +262,23 @@ function nowLabel(): string {
   });
 }
 
+/**
+ * Parsed + migrated inventory cached by the exact stored string. getItem still
+ * runs (so external/cross-tab writes invalidate), but JSON.parse + migrate is
+ * skipped when nothing changed. Returns freshly cloned arrays so callers never
+ * mutate the cached copy.
+ */
+let inventoryRawCache: { key: string; raw: string; data: InventoryData } | null = null;
+
+function cloneInventory(data: InventoryData): InventoryData {
+  return {
+    products: [...data.products],
+    categories: [...data.categories],
+    brands: [...data.brands],
+    movements: [...data.movements],
+  };
+}
+
 function loadRaw(): InventoryData {
   if (typeof window === "undefined") {
     return emptyInventory();
@@ -272,14 +290,17 @@ function loadRaw(): InventoryData {
     if (!raw) {
       const initial = emptyInventory();
       saveRaw(initial);
-      return initial;
+      return cloneInventory(initial);
     }
-    const data = JSON.parse(raw) as InventoryData;
-    data.products = data.products.map((p) => ({
-      ...p,
-      active: p.active ?? true,
-    }));
-    return data;
+    if (!inventoryRawCache || inventoryRawCache.key !== key || inventoryRawCache.raw !== raw) {
+      const data = JSON.parse(raw) as InventoryData;
+      data.products = data.products.map((p) => ({
+        ...p,
+        active: p.active ?? true,
+      }));
+      inventoryRawCache = { key, raw, data };
+    }
+    return cloneInventory(inventoryRawCache.data);
   } catch {
     return emptyInventory();
   }
@@ -289,9 +310,11 @@ function saveRaw(data: InventoryData) {
   if (typeof window === "undefined") return;
   const key = storageKey();
   if (!key) return;
-  localStorage.setItem(key, JSON.stringify(data));
+  const json = JSON.stringify(data);
+  localStorage.setItem(key, json);
+  inventoryRawCache = { key, raw: json, data };
   pushSellerData("inventory", data);
-  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  emitDataUpdated();
 }
 
 export function loadProducts(): Product[] {

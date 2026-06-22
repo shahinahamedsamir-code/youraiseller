@@ -17,7 +17,26 @@ import {
 } from "@/lib/plan-config-client";
 import type { PlanConfig } from "@/lib/plan-config-types";
 import { PlanSelectorCards } from "@/components/dev-admin/PlanSelectorCards";
-import { X, Plus, Trash2, MapPin, Users, StickyNote } from "lucide-react";
+import { formatPlanDate, parsePlanDate } from "@/lib/subscription-period";
+import { X, Plus, Trash2, MapPin, Users, StickyNote, CalendarClock } from "lucide-react";
+
+/** "16 Jul 2026" → "2026-07-16" for the date input. */
+function toDateInputValue(planDate?: string): string {
+  const d = parsePlanDate(planDate);
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** "2026-07-16" → "16 Jul 2026" stored format. */
+function fromDateInputValue(value: string): string | undefined {
+  if (!value) return undefined;
+  const d = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return formatPlanDate(d);
+}
 
 function emptyAddress(): CompanyAddress {
   return {
@@ -59,6 +78,7 @@ type Props = {
       | "adminNotes"
       | "plan"
       | "customRenewalPriceTaka"
+      | "planExpiresAt"
     > & { features?: DevUser["features"] }
   ) => void;
 };
@@ -79,6 +99,7 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
   const [adminNotes, setAdminNotes] = useState("");
   const [plan, setPlan] = useState<DevUser["plan"]>("basic");
   const [customRenewalPrice, setCustomRenewalPrice] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
   const [planConfig, setPlanConfig] = useState<PlanConfig | null>(null);
   const [applyPlanFeatures, setApplyPlanFeatures] = useState(false);
 
@@ -106,6 +127,7 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
     setCustomRenewalPrice(
       user.customRenewalPriceTaka ? String(user.customRenewalPriceTaka) : ""
     );
+    setExpiresAt(toDateInputValue(user.planExpiresAt));
     setApplyPlanFeatures(false);
   }, [user]);
 
@@ -156,6 +178,7 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
         customRenewalPrice.trim() && Number(customRenewalPrice) > 0
           ? Math.round(Number(customRenewalPrice) * 100) / 100
           : undefined,
+      planExpiresAt: fromDateInputValue(expiresAt),
       ...(applyPlanFeatures ? { features: getPlanFeatures(plan) } : {}),
     });
   };
@@ -292,6 +315,38 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
                   <p className="mt-1 text-[11px] text-slate-500">
                     Blank রাখলে Plan Packages-এর price renew modal-এ দেখাবে।
                     এখানে value দিলে শুধু এই customer-এর renew price override হবে।
+                  </p>
+                </div>
+                <div className="mt-3 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+                  <label className={`${labelClass} flex items-center gap-1.5`}>
+                    <CalendarClock className="h-3.5 w-3.5 text-orange-300" />
+                    Plan expire date
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="date"
+                      value={expiresAt}
+                      onChange={(e) => setExpiresAt(e.target.value)}
+                      className={`${inputClass} max-w-[12rem]`}
+                    />
+                    {expiresAt ? (
+                      <button
+                        type="button"
+                        onClick={() => setExpiresAt("")}
+                        className="rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700"
+                      >
+                        Clear
+                      </button>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Manual expire date set করলে auto-expire এই তারিখ ধরে চলবে।
+                    এই তারিখের ৭ দিন আগে থেকে customer-কে renew reminder দেখাবে।
+                    {user.planExpiresAt ? (
+                      <>
+                        {" "}Current: <span className="font-mono text-orange-300/90">{user.planExpiresAt}</span>
+                      </>
+                    ) : null}
                   </p>
                 </div>
               </>

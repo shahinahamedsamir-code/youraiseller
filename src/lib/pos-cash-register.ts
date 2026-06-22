@@ -1,3 +1,5 @@
+import { emitDataUpdated } from "./data-events";
+
 export type CashMovementType = "cash_in" | "cash_out";
 
 export type CashMovement = {
@@ -40,7 +42,7 @@ export function loadSessions(): CashRegisterSession[] {
 
 function saveSessions(sessions: CashRegisterSession[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
-  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  emitDataUpdated();
 }
 
 export function getOpenSession(): CashRegisterSession | null {

@@ -6,7 +6,7 @@ import { ORDER_LIST_TABS, ORDER_STATUS_LABELS } from "./order-status-tabs";
 import type { OrderStatus } from "./orders-store";
 import { resolveWebDisplayStatus } from "./order-edit";
 import type { WebDisplayStatus } from "./orders-store";
-import { getProduct, loadProducts } from "./inventory-store";
+import { loadProducts } from "./inventory-store";
 import { parseActivityDate } from "./order-activity";
 import {
   getOrderSourceLabel,
@@ -186,17 +186,26 @@ function isCountableOrder(order: Order): boolean {
   return !["cancelled", "returned", "lost"].includes(order.status);
 }
 
-function orderCost(order: Order): number {
+/**
+ * Product id → cost price, built once per stats computation. Avoids calling
+ * getProduct() (a full localStorage parse) for every order line.
+ */
+function buildProductCostMap(): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const p of loadProducts()) map.set(p.id, p.costPrice);
+  return map;
+}
+
+function orderCost(order: Order, costMap: Map<string, number>): number {
   return order.items.reduce((sum, line) => {
-    const product = getProduct(line.productId);
-    const unitCost = product?.costPrice ?? line.price * 0.65;
+    const unitCost = costMap.get(line.productId) ?? line.price * 0.65;
     return sum + unitCost * line.qty;
   }, 0);
 }
 
-function orderProfit(order: Order): number {
+function orderProfit(order: Order, costMap: Map<string, number>): number {
   if (!isCountableOrder(order)) return 0;
-  return order.total - orderCost(order);
+  return order.total - orderCost(order, costMap);
 }
 
 function pctChange(current: number, previous: number): number | null {
@@ -217,7 +226,8 @@ function metricsForPeriod(
   orders: Order[],
   field: OverviewDateField,
   from: string,
-  to: string
+  to: string,
+  costMap: Map<string, number>
 ): PeriodMetrics {
   const inPeriod = orders.filter((o) =>
     inDateRange(getOverviewOrderDateMs(o, field), from, to)
@@ -228,7 +238,7 @@ function metricsForPeriod(
     sales: inPeriod
       .filter(isCountableOrder)
       .reduce((sum, o) => sum + o.total, 0),
-    profit: inPeriod.reduce((sum, o) => sum + orderProfit(o), 0),
+    profit: inPeriod.reduce((sum, o) => sum + orderProfit(o, costMap), 0),
   };
 }
 
@@ -236,6 +246,7 @@ export function buildOverviewStats(
   filters: OverviewFilterOptions = { dateField: "approved", datePreset: "today" }
 ) {
   const orders = loadOrders();
+  const costMap = buildProductCostMap();
   const webPending = countWebOrdersByTab(getWebOrdersFromStore()).processing;
   const range = resolveOverviewDateRange(filters.datePreset);
 
@@ -244,7 +255,7 @@ export function buildOverviewStats(
 
   if (!range) {
     const stats = getOrderStats();
-    const allProfit = orders.reduce((sum, o) => sum + orderProfit(o), 0);
+    const allProfit = orders.reduce((sum, o) => sum + orderProfit(o, costMap), 0);
     current = {
       orders: stats.total,
       sales: stats.revenue,
@@ -255,13 +266,15 @@ export function buildOverviewStats(
       orders,
       filters.dateField,
       range.from,
-      range.to
+      range.to,
+      costMap
     );
     previous = metricsForPeriod(
       orders,
       filters.dateField,
       range.prevFrom,
-      range.prevTo
+      range.prevTo,
+      costMap
     );
   }
 
@@ -644,12 +657,13 @@ export function buildFounderOverview(
 ) {
   const orders = loadOrders().filter((o) => founderOrderInRange(o, filter));
   const countable = orders.filter(isCountableOrder);
+  const costMap = buildProductCostMap();
 
   return {
     totalOrders: orders.length,
     totalOrderValue: countable.reduce((sum, o) => sum + o.total, 0),
     totalProductsInStock: loadProducts().reduce((sum, p) => sum + p.stockQty, 0),
-    totalProfit: orders.reduce((sum, o) => sum + orderProfit(o), 0),
+    totalProfit: orders.reduce((sum, o) => sum + orderProfit(o, costMap), 0),
     dateLabel: getFounderDateFilterSummary(filter),
     dateRangeLabel: getFounderDateRangeLabel(filter),
   };

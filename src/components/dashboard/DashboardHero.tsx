@@ -6,13 +6,62 @@ import { motion } from "framer-motion";
 import { Sparkles, Plus, Package, Zap, ArrowUpRight } from "lucide-react";
 import { getSessionUser } from "@/lib/dev-users";
 import { BRAND_NAME } from "@/lib/brand";
+import { getOrderStats } from "@/lib/orders-store";
+import { buildOverviewStats } from "@/lib/dashboard-stats";
+
+type HeroInsight = {
+  label: string;
+  value: string;
+  icon: typeof Sparkles;
+  color: string;
+};
+
+function computeHeroInsights(): HeroInsight[] {
+  const stats = getOrderStats();
+  const weekStats = buildOverviewStats({ dateField: "approved", datePreset: "7d" });
+
+  const pendingCount = stats.pending;
+  const rtsCount = stats.rts;
+  const needsAction = pendingCount + rtsCount;
+  const insightText =
+    needsAction > 0
+      ? `${needsAction} order${needsAction === 1 ? "" : "s"} need action today`
+      : "All orders are up to date";
+
+  const shippedCount = stats.shipped;
+  const fulfillmentText =
+    rtsCount > 0
+      ? `${rtsCount} RTS ready, ${shippedCount} shipped`
+      : shippedCount > 0
+        ? `${shippedCount} order${shippedCount === 1 ? "" : "s"} shipped`
+        : "No pending fulfillment";
+
+  const salesStat = weekStats.find((s) => s.id === "sales");
+  const trend = salesStat?.trend;
+  const growthText =
+    trend !== null && trend !== undefined
+      ? `${trend >= 0 ? "+" : ""}${Math.round(trend)}% vs last week`
+      : "No comparison data yet";
+
+  return [
+    { label: "AI Insight", value: insightText, icon: Sparkles, color: "text-amber-300" },
+    { label: "Fulfillment", value: fulfillmentText, icon: Zap, color: "text-cyan-300" },
+    { label: "Growth", value: growthText, icon: ArrowUpRight, color: "text-emerald-300" },
+  ];
+}
 
 export function DashboardHero() {
   const [userName, setUserName] = useState("");
+  const [insights, setInsights] = useState<HeroInsight[]>([
+    { label: "AI Insight", value: "Loading...", icon: Sparkles, color: "text-amber-300" },
+    { label: "Fulfillment", value: "Loading...", icon: Zap, color: "text-cyan-300" },
+    { label: "Growth", value: "Loading...", icon: ArrowUpRight, color: "text-emerald-300" },
+  ]);
 
   useEffect(() => {
     const user = getSessionUser();
     setUserName(user?.name ?? "Seller");
+    setInsights(computeHeroInsights());
   }, []);
 
   const hour = new Date().getHours();
@@ -76,26 +125,7 @@ export function DashboardHero() {
       </div>
 
       <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
-        {[
-          {
-            label: "AI Insight",
-            value: "3 orders need follow-up today",
-            icon: Sparkles,
-            color: "text-amber-300",
-          },
-          {
-            label: "Fulfillment",
-            value: "RTS queue healthy",
-            icon: Zap,
-            color: "text-cyan-300",
-          },
-          {
-            label: "Growth",
-            value: "+12% vs last week",
-            icon: ArrowUpRight,
-            color: "text-emerald-300",
-          },
-        ].map((item) => (
+        {insights.map((item) => (
           <div
             key={item.label}
             className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur transition hover:border-white/20 hover:bg-white/10"

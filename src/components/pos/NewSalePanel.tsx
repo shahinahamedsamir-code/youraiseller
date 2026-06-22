@@ -99,6 +99,14 @@ export function NewSalePanel() {
   const [paid, setPaid] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [completeMsg, setCompleteMsg] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1280);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     const refreshProducts = () => {
@@ -140,8 +148,9 @@ export function NewSalePanel() {
             p.code.toLowerCase().includes(q)
         )
       : products;
-    return list.slice(0, 16);
-  }, [products, query]);
+    const limit = isMobile && !q ? 4 : 16;
+    return list.slice(0, limit);
+  }, [products, query, isMobile]);
 
   const subtotal = cart.reduce((sum, line) => sum + line.product.sellPrice * line.qty, 0);
   const selectedCustomer =
@@ -305,11 +314,11 @@ export function NewSalePanel() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-24 xl:pb-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900">
-            <ShoppingBag className="h-7 w-7 text-indigo-600" />
+          <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
+            <ShoppingBag className="h-6 w-6 text-indigo-600 sm:h-7 sm:w-7" />
             New Sale
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -348,7 +357,7 @@ export function NewSalePanel() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 2xl:grid-cols-3">
             {filteredProducts.map((product) => {
               const disabled = product.manageStock && product.stockQty <= 0;
               const img = getProductDisplayImage(product);
@@ -359,48 +368,50 @@ export function NewSalePanel() {
                   disabled={disabled}
                   onClick={() => addProduct(product)}
                   className={clsx(
-                    "min-h-36 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md",
+                    "min-h-32 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md sm:min-h-36 sm:p-4",
                     disabled && "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-sm"
                   )}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2 sm:gap-3">
                     {img ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={img}
                         alt=""
-                        className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-cover"
+                        className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover sm:h-14 sm:w-14"
                       />
                     ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-[10px] font-black text-slate-400">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-[10px] font-black text-slate-400 sm:h-14 sm:w-14">
                         {product.code.slice(0, 4)}
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-extrabold text-slate-900">
+                      <p className="truncate text-sm font-extrabold text-slate-900 sm:text-base">
                         {product.name}
                       </p>
-                      <p className="mt-1 font-mono text-xs font-semibold text-slate-500">
+                      <p className="mt-1 font-mono text-[11px] font-semibold text-slate-500 sm:text-xs">
                         {product.code}
                       </p>
                     </div>
                     <span
                       className={clsx(
-                        "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold",
+                        "shrink-0 rounded-full px-2 py-1 text-[10px] font-bold sm:px-2.5 sm:text-[11px]",
                         stockTone(product)
                       )}
                     >
                       {product.manageStock ? `${product.stockQty} stock` : "Open"}
                     </span>
                   </div>
-                  <div className="mt-6 flex items-end justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-slate-400">Sale price</p>
-                      <p className="text-2xl font-black text-indigo-700">
+                  <div className="mt-4 flex items-end justify-between gap-2 sm:mt-6 sm:gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-slate-400 sm:text-xs">
+                        Sale price
+                      </p>
+                      <p className="truncate text-lg font-black text-indigo-700 sm:text-2xl">
                         {money(product.sellPrice)}
                       </p>
                     </div>
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 sm:h-10 sm:w-10">
                       <Plus className="h-5 w-5" />
                     </span>
                   </div>
@@ -655,6 +666,37 @@ export function NewSalePanel() {
             ) : null}
           </div>
         </aside>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-4px_16px_rgba(15,23,42,0.08)] backdrop-blur xl:hidden">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase text-slate-400">
+              {cart.length} item{cart.length === 1 ? "" : "s"} · {due > 0 ? "Due" : "Total"}
+            </p>
+            <p className="truncate text-lg font-black text-slate-900">
+              {money(due > 0 ? due : total)}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={cart.length === 0}
+            onClick={saveDraft}
+            aria-label="Save draft"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            <Save className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            disabled={cart.length === 0 || !selectedPaymentAccount}
+            onClick={completeSale}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          >
+            <Check className="h-5 w-5" />
+            Complete
+          </button>
+        </div>
       </div>
 
       {customerModalOpen ? (

@@ -35,6 +35,10 @@ import {
 type FeatureContextValue = {
   features: Record<FeatureKey, boolean>;
   isEnabled: (key: FeatureKey) => boolean;
+  /** Global Feature Control switch is ON (regardless of the user's plan). */
+  isGloballyEnabled: (key: FeatureKey) => boolean;
+  /** Allowed globally but NOT in the user's plan → show as locked / upgrade. */
+  isLocked: (key: FeatureKey) => boolean;
   toggle: (key: FeatureKey) => void;
   setFeature: (key: FeatureKey, enabled: boolean) => void;
   setFeatures: (features: Record<FeatureKey, boolean>) => void;
@@ -138,9 +142,30 @@ export function FeatureProvider({
   // its parent menu is off), used for runtime access checks & sidebar.
   const effectiveFeatures = useMemo(() => cascadeFeatures(features), [features]);
 
+  // Global Feature Control switches alone (ignores the user's plan). Used to
+  // tell "completely disabled by admin" apart from "needs a plan upgrade".
+  const globalEffective = useMemo(
+    () => cascadeFeatures(globalFeatures),
+    [globalFeatures]
+  );
+
   const isEnabled = useCallback(
     (key: FeatureKey) => effectiveFeatures[key] ?? true,
     [effectiveFeatures]
+  );
+
+  const isGloballyEnabled = useCallback(
+    (key: FeatureKey) => globalEffective[key] ?? true,
+    [globalEffective]
+  );
+
+  // Locked = admin allows it globally, but the user's plan does not include it.
+  const isLocked = useCallback(
+    (key: FeatureKey) =>
+      mode === "session" &&
+      (globalEffective[key] ?? true) &&
+      !(effectiveFeatures[key] ?? true),
+    [mode, globalEffective, effectiveFeatures]
   );
 
   const toggle = useCallback(
@@ -206,6 +231,8 @@ export function FeatureProvider({
     () => ({
       features,
       isEnabled,
+      isGloballyEnabled,
+      isLocked,
       toggle,
       setFeature,
       setFeatures,
@@ -220,6 +247,8 @@ export function FeatureProvider({
     [
       features,
       isEnabled,
+      isGloballyEnabled,
+      isLocked,
       toggle,
       setFeature,
       setFeatures,

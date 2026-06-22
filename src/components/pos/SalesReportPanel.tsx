@@ -40,14 +40,26 @@ function money(n: number): string {
   return `BDT ${Math.max(0, n).toLocaleString("en-BD")}`;
 }
 
-type DateRange = "today" | "7d" | "30d" | "all";
+type DatePreset = "today" | "7d" | "30d" | "all";
+type DateFilterMode = DatePreset | "single" | "range";
 
-const DATE_LABELS: Record<DateRange, string> = {
+const PRESET_LABELS: Record<DatePreset, string> = {
   today: "Today",
   "7d": "Last 7 Days",
   "30d": "Last 30 Days",
   all: "All Time",
 };
+
+function toInputDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function todayISO(): string {
+  return toInputDate(new Date());
+}
 
 function parseDate(dateStr: string): Date | null {
   const d = new Date(dateStr);
@@ -68,12 +80,41 @@ function formatShortDate(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 }
 
-function filterByRange(sales: CompletedSaleData[], range: DateRange): CompletedSaleData[] {
-  if (range === "all") return sales;
-  const now = startOfDay(new Date());
-  const daysBack = range === "today" ? 0 : range === "7d" ? 6 : 29;
-  const cutoff = new Date(now.getTime() - daysBack * 86400000);
+type DateFilter = {
+  mode: DateFilterMode;
+  singleDate: string;
+  rangeFrom: string;
+  rangeTo: string;
+};
 
+function filterSales(sales: CompletedSaleData[], filter: DateFilter): CompletedSaleData[] {
+  if (filter.mode === "all") return sales;
+
+  if (filter.mode === "single") {
+    if (!filter.singleDate) return sales;
+    const target = startOfDay(new Date(`${filter.singleDate}T12:00:00`));
+    return sales.filter((s) => {
+      const d = parseDate(s.date);
+      return d && startOfDay(d).getTime() === target.getTime();
+    });
+  }
+
+  if (filter.mode === "range") {
+    const from = filter.rangeFrom ? startOfDay(new Date(`${filter.rangeFrom}T00:00:00`)) : null;
+    const to = filter.rangeTo ? startOfDay(new Date(`${filter.rangeTo}T23:59:59`)) : null;
+    return sales.filter((s) => {
+      const d = parseDate(s.date);
+      if (!d) return false;
+      const day = startOfDay(d);
+      if (from && day < from) return false;
+      if (to && day > to) return false;
+      return true;
+    });
+  }
+
+  const now = startOfDay(new Date());
+  const daysBack = filter.mode === "today" ? 0 : filter.mode === "7d" ? 6 : 29;
+  const cutoff = new Date(now.getTime() - daysBack * 86400000);
   return sales.filter((s) => {
     const d = parseDate(s.date);
     return d && startOfDay(d) >= cutoff;
@@ -92,7 +133,7 @@ type DailyBucket = {
 function buildDailyData(
   sales: CompletedSaleData[],
   costMap: Map<string, number>,
-  range: DateRange
+  range: DateFilterMode
 ): DailyBucket[] {
   const bucketMap = new Map<string, DailyBucket>();
 
@@ -179,10 +220,27 @@ function buildPaymentBreakdown(sales: CompletedSaleData[]): PaymentBreakdown[] {
 
 const PIE_COLORS = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
+function getFilterLabel(filter: DateFilter): string {
+  if (filter.mode === "single") return filter.singleDate || "Select Date";
+  if (filter.mode === "range") {
+    if (filter.rangeFrom && filter.rangeTo) return `${filter.rangeFrom} — ${filter.rangeTo}`;
+    return "Date Range";
+  }
+  return PRESET_LABELS[filter.mode];
+}
+
 export function SalesReportPanel() {
   const [allSales, setAllSales] = useState<CompletedSaleData[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [range, setRange] = useState<DateRange>("7d");
+  const [filter, setFilter] = useState<DateFilter>({
+    mode: "7d",
+    singleDate: todayISO(),
+    rangeFrom: "",
+    rangeTo: "",
+  });
+
+  const setMode = (mode: DateFilterMode) =>
+    setFilter((f) => ({ ...f, mode }));
 
   useEffect(() => {
     const refresh = () => {
@@ -202,15 +260,15 @@ export function SalesReportPanel() {
     return map;
   }, [products]);
 
-  const sales = useMemo(() => filterByRange(allSales, range), [allSales, range]);
+  const sales = useMemo(() => filterSales(allSales, filter), [allSales, filter]);
 
   const summary = useMemo(() => {
-    const totalRevenue = sales.reduce((s, r) => s + r.total, 0);
-    const totalDiscount = sales.reduce((s, r) => s + r.discount, 0);
-    const totalPaid = sales.reduce((s, r) => s + r.paid, 0);
-    const totalDue = sales.reduce((s, r) => s + r.due, 0);
+    const totalRevenue = sales.reduce((s: number, r: CompletedSaleData) => s + r.total, 0);
+    const totalDiscount = sales.reduce((s: number, r: CompletedSaleData) => s + r.discount, 0);
+    const totalPaid = sales.reduce((s: number, r: CompletedSaleData) => s + r.paid, 0);
+    const totalDue = sales.reduce((s: number, r: CompletedSaleData) => s + r.due, 0);
     const totalItems = sales.reduce(
-      (s, r) => s + r.items.reduce((q, i) => q + i.qty, 0),
+      (s: number, r: CompletedSaleData) => s + r.items.reduce((q: number, i) => q + i.qty, 0),
       0
     );
     let totalCost = 0;
@@ -244,8 +302,8 @@ export function SalesReportPanel() {
   }, [sales, costMap]);
 
   const dailyData = useMemo(
-    () => buildDailyData(sales, costMap, range),
-    [sales, costMap, range]
+    () => buildDailyData(sales, costMap, filter.mode),
+    [sales, costMap, filter.mode]
   );
   const topProducts = useMemo(() => buildTopProducts(sales), [sales]);
   const paymentBreakdown = useMemo(() => buildPaymentBreakdown(sales), [sales]);
@@ -263,22 +321,55 @@ export function SalesReportPanel() {
             POS sales analytics — revenue, profit, trends and top products.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1">
-          {(Object.keys(DATE_LABELS) as DateRange[]).map((key) => (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1">
+            {(Object.keys(PRESET_LABELS) as DatePreset[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMode(key)}
+                className={clsx(
+                  "rounded-lg px-3.5 py-2 text-xs font-black transition",
+                  filter.mode === key
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-600 hover:bg-slate-50"
+                )}
+              >
+                {PRESET_LABELS[key]}
+              </button>
+            ))}
             <button
-              key={key}
               type="button"
-              onClick={() => setRange(key)}
+              onClick={() => setMode("range")}
               className={clsx(
-                "rounded-lg px-3.5 py-2 text-xs font-black transition",
-                range === key
+                "flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-black transition",
+                filter.mode === "range"
                   ? "bg-indigo-600 text-white"
                   : "text-slate-600 hover:bg-slate-50"
               )}
             >
-              {DATE_LABELS[key]}
+              <Calendar className="h-3.5 w-3.5" />
+              Date Range
             </button>
-          ))}
+          </div>
+
+          {filter.mode === "range" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={filter.rangeFrom}
+                onChange={(e) => setFilter((f) => ({ ...f, rangeFrom: e.target.value }))}
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+              <span className="text-xs font-bold text-slate-400">to</span>
+              <input
+                type="date"
+                value={filter.rangeTo}
+                onChange={(e) => setFilter((f) => ({ ...f, rangeTo: e.target.value }))}
+                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -325,7 +416,7 @@ export function SalesReportPanel() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-base font-extrabold text-slate-900">Revenue & Profit</h2>
-            <p className="text-xs text-slate-500">Daily breakdown for {DATE_LABELS[range].toLowerCase()}</p>
+            <p className="text-xs text-slate-500">Daily breakdown for {getFilterLabel(filter).toLowerCase()}</p>
           </div>
           <div className="flex items-center gap-4 text-xs font-bold">
             <span className="flex items-center gap-1.5">

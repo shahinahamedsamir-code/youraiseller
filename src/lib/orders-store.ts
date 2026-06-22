@@ -1,3 +1,4 @@
+import { emitDataUpdated } from "./data-events";
 import { getSessionUser, type TeamRole } from "./dev-users";
 import { syncCustomersFromOrderList } from "./customers-store";
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
@@ -676,6 +677,15 @@ function emptyOrders(): Order[] {
   return isDemoSellerAccount() ? DEFAULT_ORDERS : [];
 }
 
+/**
+ * Cache the parsed + migrated orders keyed by the exact stored string. The
+ * cheap localStorage.getItem still runs each call (so external writes are
+ * detected), but the expensive JSON.parse + migrate only runs when the data
+ * actually changed. Callers get a fresh array each time, so array-level
+ * mutations (push/filter/index-set) never touch the cached copy.
+ */
+let ordersRawCache: { key: string; raw: string; orders: Order[] } | null = null;
+
 function loadRaw(): OrdersData {
   if (typeof window === "undefined") return { orders: emptyOrders() };
   const key = storageKey();
@@ -684,12 +694,16 @@ function loadRaw(): OrdersData {
     const raw = localStorage.getItem(key);
     if (!raw) {
       const initial = { orders: emptyOrders() };
-      localStorage.setItem(key, JSON.stringify(initial));
-      return initial;
+      const json = JSON.stringify(initial);
+      localStorage.setItem(key, json);
+      ordersRawCache = { key, raw: json, orders: initial.orders };
+      return { orders: [...initial.orders] };
     }
-    const parsed = JSON.parse(raw) as OrdersData;
-    const orders = parsed.orders.map(migrateOrder);
-    return { orders };
+    if (!ordersRawCache || ordersRawCache.key !== key || ordersRawCache.raw !== raw) {
+      const parsed = JSON.parse(raw) as OrdersData;
+      ordersRawCache = { key, raw, orders: parsed.orders.map(migrateOrder) };
+    }
+    return { orders: [...ordersRawCache.orders] };
   } catch {
     return { orders: emptyOrders() };
   }
@@ -699,12 +713,14 @@ function saveRaw(data: OrdersData) {
   if (typeof window === "undefined") return;
   const key = storageKey();
   if (!key) return;
-  localStorage.setItem(key, JSON.stringify(data));
+  const json = JSON.stringify(data);
+  localStorage.setItem(key, json);
+  ordersRawCache = { key, raw: json, orders: data.orders };
   invalidateOrdersByPhoneCache();
   syncCustomersFromOrderList(data.orders);
   pushSellerData("orders", data);
   if (bulkOrderSyncDepth === 0) {
-    window.dispatchEvent(new Event("youraiseller-data-updated"));
+    emitDataUpdated();
   }
 }
 
@@ -718,7 +734,7 @@ export function runWithBulkOrderSync<T>(fn: () => T): T {
   } finally {
     bulkOrderSyncDepth = Math.max(0, bulkOrderSyncDepth - 1);
     if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
-      window.dispatchEvent(new Event("youraiseller-data-updated"));
+      emitDataUpdated();
     }
   }
 }
@@ -730,7 +746,7 @@ export async function runWithBulkOrderSyncAsync<T>(fn: () => Promise<T>): Promis
   } finally {
     bulkOrderSyncDepth = Math.max(0, bulkOrderSyncDepth - 1);
     if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
-      window.dispatchEvent(new Event("youraiseller-data-updated"));
+      emitDataUpdated();
     }
   }
 }

@@ -1289,6 +1289,11 @@ export function clearUserSession() {
   localStorage.removeItem(SESSION_FEATURES_KEY);
   sessionStorage.removeItem(SESSION_USER_KEY);
   sessionStorage.removeItem(SESSION_FEATURES_KEY);
+  // Reset dismissed plan-expiry reminders so the next login sees them again.
+  for (let i = sessionStorage.length - 1; i >= 0; i--) {
+    const key = sessionStorage.key(i);
+    if (key?.startsWith("plan-expiry-dismissed-")) sessionStorage.removeItem(key);
+  }
   fetch("/api/auth/seller-logout", { method: "POST" }).catch(() => {});
 }
 

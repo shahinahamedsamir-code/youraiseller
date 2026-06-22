@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { CheckCircle2, Crown, Download, ExternalLink, LayoutGrid } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -8,12 +9,27 @@ import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { OverviewSection } from "@/components/dashboard/OverviewSection";
 import { WebOrderReport } from "@/components/dashboard/WebOrderReport";
 import { OrdersBySource } from "@/components/dashboard/OrdersBySource";
-import { OrderCountsChart } from "@/components/dashboard/OrderCountsChart";
-import { HourlyOrdersChart } from "@/components/dashboard/HourlyOrdersChart";
 import { TopProductsList } from "@/components/dashboard/TopProductsList";
-import { FounderDashboard } from "@/components/dashboard/FounderDashboard";
 import { useFeatures } from "@/context/FeatureContext";
 import clsx from "clsx";
+
+// Charts pull in recharts (heavy) — load them after the dashboard shell paints
+// so they sit in their own async chunk instead of the initial bundle.
+const chartFallback = () => (
+  <div className="h-[300px] w-full animate-pulse rounded-2xl bg-slate-100" />
+);
+const OrderCountsChart = dynamic(
+  () => import("@/components/dashboard/OrderCountsChart").then((m) => m.OrderCountsChart),
+  { ssr: false, loading: chartFallback }
+);
+const HourlyOrdersChart = dynamic(
+  () => import("@/components/dashboard/HourlyOrdersChart").then((m) => m.HourlyOrdersChart),
+  { ssr: false, loading: chartFallback }
+);
+const FounderDashboard = dynamic(
+  () => import("@/components/dashboard/FounderDashboard").then((m) => m.FounderDashboard),
+  { ssr: false, loading: chartFallback }
+);
 
 export default function DashboardPage() {
   const pathname = usePathname();

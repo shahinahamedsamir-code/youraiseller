@@ -34,6 +34,7 @@ import { fetchPublicPlanConfig, loadPlanConfigLocal } from "@/lib/plan-config-cl
 import type { PlanId } from "@/lib/plan-config-types";
 import type { PlanConfig } from "@/lib/plan-config-types";
 import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
+import { daysUntilPlanExpiry } from "@/lib/subscription-period";
 import { formatSmsBdt } from "@/lib/sms-types";
 import { formatAutoCallBdt } from "@/lib/auto-call-store";
 
@@ -91,6 +92,7 @@ export function BillingLimitPanel() {
   const autoCall = useAutoCallAccount();
   const [user, setUser] = useState<DevUser | null>(null);
   const [renewOpen, setRenewOpen] = useState(false);
+  const [renewMode, setRenewMode] = useState<"renew" | "upgrade">("renew");
   const [smsOpen, setSmsOpen] = useState(false);
   const [autoCallOpen, setAutoCallOpen] = useState(false);
   const [entries, setEntries] = useState<PaymentHistoryEntry[]>([]);
@@ -132,6 +134,11 @@ export function BillingLimitPanel() {
     const plan = planConfig.plans.find((p) => p.id === planId);
     return renewalMonthlyPriceTaka(planId, plan?.priceLabel ?? "", user.customRenewalPriceTaka);
   }, [planConfig, user]);
+
+  const expiryDays = useMemo(
+    () => daysUntilPlanExpiry(user?.planExpiresAt),
+    [user]
+  );
 
   const completedTotal = entries
     .filter((row) => row.status === "completed")
@@ -184,6 +191,27 @@ export function BillingLimitPanel() {
               <p className="mt-1 text-xs text-slate-500">
                 Expires: {user?.planExpiresAt ?? "-"}
               </p>
+              {expiryDays !== null ? (
+                <span
+                  className={clsx(
+                    "mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-1",
+                    expiryDays < 0
+                      ? "bg-rose-50 text-rose-700 ring-rose-200"
+                      : expiryDays <= 2
+                        ? "bg-rose-50 text-rose-700 ring-rose-200"
+                        : expiryDays <= 7
+                          ? "bg-amber-50 text-amber-700 ring-amber-200"
+                          : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                  )}
+                >
+                  <CalendarClock className="h-3 w-3" />
+                  {expiryDays < 0
+                    ? `Expired ${Math.abs(expiryDays)} day${Math.abs(expiryDays) === 1 ? "" : "s"} ago`
+                    : expiryDays === 0
+                      ? "Expires today"
+                      : `${expiryDays} day${expiryDays === 1 ? "" : "s"} left`}
+                </span>
+              ) : null}
             </div>
             <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
               <CreditCard className="h-5 w-5" />
@@ -194,14 +222,30 @@ export function BillingLimitPanel() {
               <p className="text-xs font-semibold text-slate-500">Renew price/month</p>
               <p className="text-lg font-extrabold text-slate-900">{formatSmsBdt(planPrice)}</p>
             </div>
-            <button
-              type="button"
-              disabled={!user}
-              onClick={() => setRenewOpen(true)}
-              className="rounded-xl bg-[#E2136E] px-4 py-2.5 text-sm font-extrabold text-white hover:bg-[#c91062] disabled:opacity-50"
-            >
-              Renew plan
-            </button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={!user}
+                onClick={() => {
+                  setRenewMode("upgrade");
+                  setRenewOpen(true);
+                }}
+                className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-extrabold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+              >
+                Upgrade
+              </button>
+              <button
+                type="button"
+                disabled={!user}
+                onClick={() => {
+                  setRenewMode("renew");
+                  setRenewOpen(true);
+                }}
+                className="rounded-xl bg-[#E2136E] px-4 py-2.5 text-sm font-extrabold text-white hover:bg-[#c91062] disabled:opacity-50"
+              >
+                Renew plan
+              </button>
+            </div>
           </div>
         </div>
 
@@ -422,6 +466,7 @@ export function BillingLimitPanel() {
         <PlanRenewPayModal
           open={renewOpen}
           user={user}
+          mode={renewMode}
           onClose={() => setRenewOpen(false)}
           onSuccess={(next, text) => {
             setUser(next);

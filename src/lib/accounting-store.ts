@@ -1,5 +1,6 @@
 import { sessionTransactionActor } from "./accounting-actor";
 export type { TransactionActorFields } from "./accounting-actor";
+import { emitDataUpdated } from "./data-events";
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
 import { pushSellerData } from "./seller-sync";
 import type { TeamRole } from "./dev-users";
@@ -1633,7 +1634,7 @@ function saveData(data: AccountingData) {
   };
   localStorage.setItem(key, JSON.stringify(payload));
   void pushSellerData("accounting", payload);
-  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  emitDataUpdated();
 }
 
 function readStoredAccountingData(): AccountingData | null {

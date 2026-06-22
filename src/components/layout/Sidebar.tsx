@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 import { mainNav, type NavChild } from "@/lib/navigation";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
@@ -37,16 +37,18 @@ function navHrefActive(
 export function Sidebar({ mobileOpen = false }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isEnabled, hydrated } = useFeatures();
+  const { isGloballyEnabled, isLocked, hydrated } = useFeatures();
   const { processing: webProcessingCount } = useWebOrderCounts();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  // Show everything the admin allows globally — including plan-locked modules,
+  // which render with a lock icon so the user knows to upgrade.
   const filteredNav = useMemo(() => {
     if (!hydrated) return [];
 
     const filterNavChildren = (children: NavChild[]): NavChild[] =>
       children
-        .filter((c) => isEnabled(c.featureKey))
+        .filter((c) => isGloballyEnabled(c.featureKey))
         .map((c) => {
           if (!c.children?.length) return c;
           const nested = filterNavChildren(c.children);
@@ -56,7 +58,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         .filter(Boolean) as NavChild[];
 
     return mainNav
-      .filter((item) => isEnabled(item.featureKey))
+      .filter((item) => isGloballyEnabled(item.featureKey))
       .map((item) => {
         if (!item.children) return item;
         const children = filterNavChildren(item.children);
@@ -64,7 +66,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         return { ...item, children };
       })
       .filter(Boolean) as typeof mainNav;
-  }, [isEnabled, hydrated]);
+  }, [isGloballyEnabled, hydrated]);
 
   return (
     <aside
@@ -116,6 +118,9 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
                       {item.badge}
                     </span>
                   ) : null}
+                  {isLocked(item.featureKey) ? (
+                    <Lock className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                  ) : null}
                   <ChevronDown
                     className={clsx(
                       "h-4 w-4 transition",
@@ -134,6 +139,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
                         searchParams={searchParams}
                         openGroups={openGroups}
                         setOpenGroups={setOpenGroups}
+                        isLocked={isLocked}
                       />
                     ))}
                   </div>
@@ -148,6 +154,8 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
+          const locked = isLocked(item.featureKey);
+
           return (
             <Link
               key={item.href}
@@ -156,11 +164,14 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition",
                 active
                   ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-200"
-                  : "text-slate-600 hover:bg-slate-50"
+                  : locked
+                    ? "text-slate-400 hover:bg-slate-50"
+                    : "text-slate-600 hover:bg-slate-50"
               )}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <span className="flex-1 truncate">{item.label}</span>
+              {locked ? <Lock className="h-3.5 w-3.5 shrink-0 text-amber-500" /> : null}
             </Link>
           );
         })}
@@ -175,12 +186,14 @@ function SidebarNavChild({
   searchParams,
   openGroups,
   setOpenGroups,
+  isLocked,
 }: {
   child: NavChild;
   pathname: string;
   searchParams: URLSearchParams;
   openGroups: Record<string, boolean>;
   setOpenGroups: Dispatch<SetStateAction<Record<string, boolean>>>;
+  isLocked: (key: NavChild["featureKey"]) => boolean;
 }) {
   if (child.children?.length) {
     const groupActive = child.expandPath
@@ -217,6 +230,7 @@ function SidebarNavChild({
                 searchParams={searchParams}
                 openGroups={openGroups}
                 setOpenGroups={setOpenGroups}
+                isLocked={isLocked}
               />
             ))}
           </div>
@@ -228,18 +242,22 @@ function SidebarNavChild({
   if (!child.href) return null;
 
   const active = navHrefActive(pathname, child.href, searchParams, child.matchQueryTabs);
+  const locked = isLocked(child.featureKey);
 
   return (
     <Link
       href={child.href}
       className={clsx(
-        "block rounded-lg px-3 py-2 text-[13px] font-medium transition",
+        "flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition",
         active
           ? "bg-indigo-600 text-white shadow-sm"
-          : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          : locked
+            ? "text-slate-400 hover:bg-slate-100"
+            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
       )}
     >
-      {child.label}
+      <span className="flex-1 truncate">{child.label}</span>
+      {locked ? <Lock className="h-3 w-3 shrink-0 text-amber-500" /> : null}
     </Link>
   );
 }

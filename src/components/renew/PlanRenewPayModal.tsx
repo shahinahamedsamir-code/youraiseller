@@ -25,6 +25,8 @@ import type { PlanConfig, PlanId } from "@/lib/plan-config-types";
 type Props = {
   open: boolean;
   user: DevUser;
+  /** renew = keep current plan; upgrade = pick any active plan. */
+  mode?: "renew" | "upgrade";
   onClose: () => void;
   onSuccess: (user: DevUser, message: string) => void;
   onError: (message: string) => void;
@@ -33,6 +35,7 @@ type Props = {
 export function PlanRenewPayModal({
   open,
   user,
+  mode = "renew",
   onClose,
   onError,
 }: Props) {
@@ -179,7 +182,9 @@ export function PlanRenewPayModal({
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold">Renew your plan</h2>
+              <h2 className="text-lg font-extrabold">
+                {mode === "upgrade" ? "Upgrade your plan" : "Renew your plan"}
+              </h2>
               <p className="text-xs text-white/80">
                 {quote.planName} · {quote.priceLabel}
               </p>
@@ -203,11 +208,11 @@ export function PlanRenewPayModal({
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-500">
-              Plan package
+              {mode === "upgrade" ? "Choose a plan" : "Plan package"}
             </span>
             <select
               value={selectedPlanId}
-              disabled={paying || user.status === "expired"}
+              disabled={paying || mode === "renew" || user.status === "expired"}
               onChange={(e) => {
                 setSelectedPlanId(e.target.value as PlanId);
                 setAppliedCoupon(undefined);
@@ -222,6 +227,11 @@ export function PlanRenewPayModal({
                 </option>
               ))}
             </select>
+            {mode === "renew" ? (
+              <p className="mt-1 text-[11px] text-slate-400">
+                Renewing your current plan. Use Upgrade to switch to a higher plan.
+              </p>
+            ) : null}
           </label>
 
           <label className="block">

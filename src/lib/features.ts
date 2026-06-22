@@ -62,6 +62,8 @@ export type FeatureKey =
   | "settings_order_tags"
   | "settings_shipping_note"
   | "settings_advance"
+  | "settings_product_label"
+  | "settings_security"
   | "billing_limits"
   | "reports"
   | "customers"
@@ -150,6 +152,8 @@ export const FEATURE_LIST: FeatureDef[] = [
   { key: "settings_order_tags", label: "Order Tags", description: "Tags for New Order (Engraving, Scammer, etc.)", category: "extras", parent: "settings" },
   { key: "settings_shipping_note", label: "Shipping Note Template", description: "Reusable shipping note presets", category: "extras", parent: "settings" },
   { key: "settings_advance", label: "Advance Setting", description: "Required/optional order fields", category: "extras", parent: "settings" },
+  { key: "settings_product_label", label: "Product / Price Label", description: "Barcode price labels for products", category: "extras", parent: "settings" },
+  { key: "settings_security", label: "Security", description: "Password & sign-in security settings", category: "extras", parent: "settings" },
   { key: "billing_limits", label: "Billing and Limit", description: "Plan, payment and usage balances", category: "extras" },
   { key: "reports", label: "Reports", description: "Business reports", category: "extras" },
   { key: "customers", label: "Customer", description: "Customer database", category: "extras" },
@@ -294,6 +298,8 @@ export function getFeatureKeyFromPath(pathname: string): FeatureKey | null {
     ["/dashboard/settings/order-tags", "settings_order_tags"],
     ["/dashboard/settings/shipping-note", "settings_shipping_note"],
     ["/dashboard/settings/advance", "settings_advance"],
+    ["/dashboard/settings/product-label", "settings_product_label"],
+    ["/dashboard/settings/security", "settings_security"],
     ["/dashboard/settings", "settings"],
     ["/dashboard/billing-limit", "billing_limits"],
     ["/dashboard/reports", "reports"],

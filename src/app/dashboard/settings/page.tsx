@@ -85,6 +85,7 @@ const GROUPS: SettingGroup[] = [
         to: "to-teal-600",
         ring: "ring-emerald-100",
         href: "/dashboard/integration",
+        featureKey: "integrations",
       },
     ],
   },
@@ -123,7 +124,7 @@ const GROUPS: SettingGroup[] = [
         to: "to-cyan-600",
         ring: "ring-teal-100",
         href: "/dashboard/settings/product-label",
-        featureKey: "settings_sticker",
+        featureKey: "settings_product_label",
       },
       {
         key: "shipping-note",
@@ -145,6 +146,7 @@ const GROUPS: SettingGroup[] = [
         to: "to-sky-600",
         ring: "ring-cyan-100",
         href: "/dashboard/integration/sms/templates",
+        featureKey: "sms",
       },
     ],
   },
@@ -213,7 +215,14 @@ const GROUPS: SettingGroup[] = [
   },
 ];
 
-const QUICK = [
+const QUICK: {
+  key: string;
+  title: string;
+  desc: string;
+  icon: typeof Bell;
+  href?: string;
+  featureKey?: FeatureKey;
+}[] = [
   { key: "notifications", title: "Notifications", desc: "Email & in-app alerts", icon: Bell },
   { key: "appearance", title: "Appearance", desc: "Theme & branding", icon: Palette },
   {
@@ -222,6 +231,7 @@ const QUICK = [
     desc: "Password & sign-in",
     icon: ShieldCheck,
     href: "/dashboard/settings/security",
+    featureKey: "settings_security",
   },
 ];
 
@@ -378,7 +388,7 @@ export default function SettingsPage() {
             <p className="text-xs text-slate-500">Account preferences</p>
           </div>
           <div className="divide-y divide-slate-100">
-            {QUICK.map((q2) => (
+            {QUICK.filter((q2) => !q2.featureKey || isEnabled(q2.featureKey)).map((q2) => (
               <button
                 key={q2.key}
                 type="button"

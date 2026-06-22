@@ -10,10 +10,14 @@ import { CourierWebhookPullRunner } from "@/components/orders/CourierWebhookPull
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FeatureGuard } from "./FeatureGuard";
 import { DisabledBanner } from "./DisabledBanner";
+import { PlanExpiryBanner } from "./PlanExpiryBanner";
+import { HelpAssistant } from "@/components/dashboard/HelpAssistant";
+import { useFeatures } from "@/context/FeatureContext";
 import { Suspense } from "react";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isEnabled } = useFeatures();
 
   return (
     <div className="dashboard-canvas min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -36,10 +40,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Suspense fallback={null}>
             <DisabledBanner />
           </Suspense>
+          <PlanExpiryBanner />
           <Breadcrumbs />
           <FeatureGuard>{children}</FeatureGuard>
         </main>
       </div>
+
+      {isEnabled("help_assistant") ? <HelpAssistant /> : null}
 
       <WooAutoSyncRunner />
       <ShopifyOrderAutoSyncRunner />

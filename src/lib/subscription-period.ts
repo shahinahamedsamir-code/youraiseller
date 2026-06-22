@@ -69,6 +69,20 @@ export function isPlanExpiryDue(planExpiresAt: string | undefined, now = new Dat
   return startOfPlanDay(now).getTime() >= startOfPlanDay(expiry).getTime();
 }
 
+/**
+ * Whole days until the plan expires. 0 = expires today, negative = already
+ * past expiry. Returns null when there is no valid expiry date.
+ */
+export function daysUntilPlanExpiry(
+  planExpiresAt: string | undefined,
+  now = new Date()
+): number | null {
+  const expiry = parsePlanDate(planExpiresAt);
+  if (!expiry) return null;
+  const ms = startOfPlanDay(expiry).getTime() - startOfPlanDay(now).getTime();
+  return Math.round(ms / 86400000);
+}
+
 export function shouldAutoExpireUser(user: PlanLifecycleUser, now = new Date()): boolean {
   if (user.parentAccountId) return false;
   if (user.status !== "active") return false;

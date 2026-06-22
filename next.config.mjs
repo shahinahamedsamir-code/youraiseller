@@ -3,6 +3,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  /** Tree-shake big barrel packages so only used parts ship in the bundle. */
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
+  },
   /** Reduces corrupt .next cache on Windows during hot reload */
   webpack: (config, { dev }) => {
     if (dev) {

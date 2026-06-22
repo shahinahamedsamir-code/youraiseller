@@ -1,3 +1,4 @@
+import { emitDataUpdated } from "./data-events";
 import type { Product } from "./inventory-store";
 
 export type DraftLine = {
@@ -43,7 +44,7 @@ export function loadPosDraftSales(): PosDraftSaleRecord[] {
 export function savePosDraftSales(drafts: PosDraftSaleRecord[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
-  window.dispatchEvent(new Event("youraiseller-data-updated"));
+  emitDataUpdated();
 }
 
 export function savePosDraftSale(draft: PosDraftSaleRecord) {

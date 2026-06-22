@@ -43,6 +43,8 @@ data/seller/**/sms-wallet.json
 /data/platform/auto-call-control.json
 /data/platform/plan-config.json
 /data/platform/global-features.json
+/data/platform/payment-history.json
+/data/password-reset-tokens.json
 
 # typescript
 *.tsbuildinfo

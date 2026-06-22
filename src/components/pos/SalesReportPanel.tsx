@@ -445,8 +445,8 @@ export function SalesReportPanel() {
                     fontSize: 12,
                     fontWeight: 700,
                   }}
-                  formatter={(value: number, name: string) => [
-                    money(value),
+                  formatter={(value: number | string | undefined, name: string | undefined) => [
+                    money(Number(value ?? 0)),
                     name === "revenue" ? "Revenue" : "Profit",
                   ]}
                 />

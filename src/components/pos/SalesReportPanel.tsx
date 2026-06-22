@@ -445,13 +445,10 @@ export function SalesReportPanel() {
                     fontSize: 12,
                     fontWeight: 700,
                   }}
-                  formatter={(value: number | string | undefined, name: string | undefined) => [
-                    money(Number(value ?? 0)),
-                    name === "revenue" ? "Revenue" : "Profit",
-                  ]}
+                  formatter={(value) => money(Number(value ?? 0))}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="profit" fill="#10b981" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="revenue" name="Revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="profit" name="Profit" fill="#10b981" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -544,7 +541,7 @@ export function SalesReportPanel() {
                       fontSize: 12,
                       fontWeight: 700,
                     }}
-                    formatter={(value: number) => [money(value), "Amount"]}
+                    formatter={(value) => [money(Number(value ?? 0)), "Amount"]}
                   />
                 </PieChart>
               </ResponsiveContainer>

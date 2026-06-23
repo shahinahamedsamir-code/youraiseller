@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { OrderLine } from "@/lib/orders-store";
+import type { Order, OrderLine } from "@/lib/orders-store";
+import { getSellerStorageScope } from "@/lib/seller-storage";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
 import { pullOrdersFromServer } from "@/lib/seller-sync";
@@ -138,6 +139,18 @@ function OrderItemsCell({ items, total }: { items: OrderLine[]; total: number })
   );
 }
 
+const EMPTY_TAB_COUNTS: Record<WebOrderTabKey, number> = {
+  processing: 0,
+  incomplete: 0,
+  good_no_response: 0,
+  no_response: 0,
+  advance_payment: 0,
+  on_hold: 0,
+  complete: 0,
+  cancel: 0,
+  all: 0,
+};
+
 export function WebOrderTable() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -152,6 +165,14 @@ export function WebOrderTable() {
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [createdFlash, setCreatedFlash] = useState<string | null>(null);
   const [callLogTick, setCallLogTick] = useState(0);
+
+  // Server-paginated data. `useApi` flips to false (local-store fallback) on any
+  // fetch failure so the page keeps working offline / if the DB is unavailable.
+  const [useApi, setUseApi] = useState(true);
+  const [apiRows, setApiRows] = useState<Order[]>([]);
+  const [apiTotal, setApiTotal] = useState(0);
+  const [apiCounts, setApiCounts] = useState<Record<WebOrderTabKey, number> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
   const refreshCallLogs = useCallback(() => setCallLogTick((t) => t + 1), []);
@@ -239,6 +260,55 @@ export function WebOrderTable() {
     };
   }, [refreshCallLogs, refresh]);
 
+  // Debounce the search box so each keystroke doesn't fire an API request.
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 300);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const scope = useMemo(() => getSellerStorageScope(), [tick]);
+
+  // Fetch one page of orders from the server. The orders table is the source of
+  // truth for the list, so the browser only ever holds the current page instead
+  // of every order. Any failure (offline, DB down, missing scope) falls back to
+  // the local-store path below.
+  useEffect(() => {
+    if (!scope) {
+      setUseApi(false);
+      return;
+    }
+    let cancelled = false;
+    const params = new URLSearchParams({
+      scope,
+      tab: activeFilter,
+      search: debouncedSearch,
+      page: String(page),
+      limit: String(rowsPerPage),
+    });
+    fetch(`/api/orders?${params.toString()}`, {
+      credentials: "same-origin",
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => {
+        if (cancelled) return;
+        if (d?.ok && Array.isArray(d.rows)) {
+          setApiRows(d.rows as Order[]);
+          setApiTotal(Number(d.total) || 0);
+          setApiCounts(d.counts ?? null);
+          setUseApi(true);
+        } else {
+          setUseApi(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setUseApi(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scope, activeFilter, debouncedSearch, page, rowsPerPage, tick]);
+
   const storeSite = useMemo(() => {
     void tick;
     return siteLabel();
@@ -248,12 +318,17 @@ export function WebOrderTable() {
     return siteUrl();
   }, [tick]);
 
-  const orders = useMemo(() => {
-    void tick;
-    return getWebOrdersFromStore();
-  }, [tick]);
+  // Local fallback dataset — only built when the server API is unavailable, so
+  // the normal (API) path never loads every order into the browser.
+  const localOrders = useMemo(
+    () => (useApi ? null : getWebOrdersFromStore()),
+    [useApi, tick]
+  );
 
-  const counts = useMemo(() => countWebOrdersByTab(orders), [orders]);
+  const counts = useMemo<Record<WebOrderTabKey, number>>(() => {
+    if (useApi) return apiCounts ?? EMPTY_TAB_COUNTS;
+    return localOrders ? countWebOrdersByTab(localOrders) : EMPTY_TAB_COUNTS;
+  }, [useApi, apiCounts, localOrders]);
 
   const autoCallLogs = useMemo(() => {
     void callLogTick;
@@ -268,9 +343,10 @@ export function WebOrderTable() {
     });
   }, [autoCallLogs, callLogTick]);
 
-  const filtered = useMemo(() => {
-    let list = orders.filter((o) => matchesWebOrderTab(o, activeFilter));
-    const q = search.trim().toLowerCase();
+  const localFiltered = useMemo(() => {
+    if (!localOrders) return null;
+    let list = localOrders.filter((o) => matchesWebOrderTab(o, activeFilter));
+    const q = debouncedSearch.trim().toLowerCase();
     if (q) {
       list = list.filter(
         (o) =>
@@ -283,15 +359,20 @@ export function WebOrderTable() {
       );
     }
     return list;
-  }, [orders, activeFilter, search]);
+  }, [localOrders, activeFilter, debouncedSearch]);
+
+  const totalRows = useApi ? apiTotal : localFiltered?.length ?? 0;
 
   useEffect(() => {
     setPage(1);
   }, [activeFilter, search]);
 
-  const paged = useMemo(
-    () => paginateSlice(filtered, page, rowsPerPage),
-    [filtered, page, rowsPerPage]
+  const paged = useMemo<Order[]>(
+    () =>
+      useApi
+        ? apiRows
+        : paginateSlice(localFiltered ?? [], page, rowsPerPage),
+    [useApi, apiRows, localFiltered, page, rowsPerPage]
   );
 
   const toggleSelect = (id: string) => {
@@ -343,7 +424,7 @@ export function WebOrderTable() {
         <WebOrderStatusTabs
           active={activeFilter}
           counts={counts}
-          activeVisibleCount={filtered.length}
+          activeVisibleCount={totalRows}
           onChange={(tab) => {
             setActiveFilter(tab);
             router.replace(
@@ -593,7 +674,7 @@ export function WebOrderTable() {
           </div>
 
           <TablePagination
-            totalRows={filtered.length}
+            totalRows={totalRows}
             page={page}
             rowsPerPage={rowsPerPage}
             selectedCount={selected.size}

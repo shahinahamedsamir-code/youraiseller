@@ -188,11 +188,17 @@ export function WebOrderTable() {
   }, [refresh]);
 
   useEffect(() => {
+    // Poll auto-call status in the background. We only update the (cheap)
+    // auto-call cells here via refreshCallLogs(); the full table re-renders
+    // only when order data actually changes, driven by the
+    // "youraiseller-data-updated" event (pullOrdersFromServer dispatches it
+    // exclusively when the data differs). Forcing refresh() on every poll
+    // re-derived the whole order list from a large localStorage blob every
+    // few seconds, which froze the page for sellers with many web orders.
     const syncCallLogs = () => {
       void pollAutoCallStatuses().then(async () => {
         await refreshAutoCallAccount();
         refreshCallLogs();
-        refresh();
       });
     };
 
@@ -204,18 +210,18 @@ export function WebOrderTable() {
     let dataTimer: number | undefined;
     const onData = () => {
       if (dataTimer) window.clearTimeout(dataTimer);
-      dataTimer = window.setTimeout(() => void syncCallLogs(), 1500);
+      dataTimer = window.setTimeout(() => void syncCallLogs(), 3000);
     };
     window.addEventListener("youraiseller-data-updated", onData);
 
-    let interval = window.setInterval(syncCallLogs, 5000);
+    let interval = window.setInterval(syncCallLogs, 12000);
 
     const retune = () => {
       window.clearInterval(interval);
-      interval = window.setInterval(syncCallLogs, hasPendingAutoCallLogs() ? 3000 : 8000);
+      interval = window.setInterval(syncCallLogs, hasPendingAutoCallLogs() ? 8000 : 20000);
     };
     retune();
-    const retuneInterval = window.setInterval(retune, 10000);
+    const retuneInterval = window.setInterval(retune, 15000);
 
     return () => {
       window.removeEventListener("youraiseller-autocall-updated", onAutoCall);

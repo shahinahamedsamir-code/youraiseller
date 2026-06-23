@@ -1083,6 +1083,19 @@ export function createOrder(input: CreateOrderInput): Order {
   return order;
 }
 
+/**
+ * Compare two orders ignoring fields that a Woo sync always rewrites even when
+ * nothing meaningful changed (the timestamp and the appended sync activity
+ * log). Used to detect no-op syncs so we can skip the write.
+ */
+function sameOrderIgnoringSyncNoise(a: Order, b: Order): boolean {
+  const strip = (o: Order) => {
+    const { updatedAt: _u, activityLog: _a, ...rest } = o;
+    return rest;
+  };
+  return JSON.stringify(strip(a)) === JSON.stringify(strip(b));
+}
+
 export function upsertWooCommerceOrder(
   input: CreateOrderInput & { wooOrderId: number }
 ): { order: Order; created: boolean } {
@@ -1156,7 +1169,6 @@ export function upsertWooCommerceOrder(
             resolveWebStatusAfterWooSync(prev, input.webStatus)
           )
         : shouldStayInWebQueueAfterWooSync(prev, panelWebStatus),
-      updatedAt: nowLabel(),
     };
 
     // Auto-call or staff already moved this order — do not revert on Woo sync.
@@ -1168,14 +1180,24 @@ export function upsertWooCommerceOrder(
       if (prev.invoiceNumber) merged.invoiceNumber = prev.invoiceNumber;
       if (prev.tags?.length) merged.tags = prev.tags;
     }
+    // Skip the write entirely when this Woo sync did not actually change the
+    // order. Repeated syncs (on mount, every 20s, and on window focus)
+    // otherwise re-stamped updatedAt and rewrote the whole order blob every
+    // time, invalidating caches and slowing every page navigation for sellers
+    // with many orders.
+    if (sameOrderIgnoringSyncNoise(prev, merged)) {
+      return { order: prev, created: false };
+    }
+
+    const stamped: Order = { ...merged, updatedAt: nowLabel() };
     const next: Order = syncWooStatus
       ? pushActivity(
-          merged,
+          stamped,
           logForWebStoreSync(
-            getWebStorePlatform(merged) ?? getWebStorePlatform(prev) ?? "woocommerce"
+            getWebStorePlatform(stamped) ?? getWebStorePlatform(prev) ?? "woocommerce"
           )
         )
-      : merged;
+      : stamped;
     data.orders[idx] = next;
     saveRaw(data);
     return { order: next, created: false };

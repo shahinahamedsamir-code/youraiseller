@@ -713,18 +713,54 @@ function saveRaw(data: OrdersData) {
   if (typeof window === "undefined") return;
   const key = storageKey();
   if (!key) return;
+
+  // Inside a bulk sync (e.g. importing/refreshing many WooCommerce orders)
+  // do NOT re-serialize the entire order blob, re-sync every customer, and
+  // push to the server on every single upsert — that is O(orders²) and froze
+  // the Web Order List for sellers with many orders. Keep the in-memory cache
+  // live so later reads in the same batch see the updates, and defer the
+  // expensive write to a single flush when the batch finishes.
+  if (bulkOrderSyncDepth > 0) {
+    // Preserve the existing `raw` (it still matches the unwritten localStorage
+    // value) so loadRaw() keeps returning the live in-memory orders instead of
+    // re-parsing stale on-disk data.
+    const raw =
+      ordersRawCache?.key === key
+        ? ordersRawCache.raw
+        : localStorage.getItem(key) ?? "";
+    ordersRawCache = { key, raw, orders: data.orders };
+    invalidateOrdersByPhoneCache();
+    bulkSaveDirty = true;
+    return;
+  }
+
   const json = JSON.stringify(data);
   localStorage.setItem(key, json);
   ordersRawCache = { key, raw: json, orders: data.orders };
   invalidateOrdersByPhoneCache();
   syncCustomersFromOrderList(data.orders);
   pushSellerData("orders", data);
-  if (bulkOrderSyncDepth === 0) {
-    emitDataUpdated();
-  }
+  emitDataUpdated();
 }
 
 let bulkOrderSyncDepth = 0;
+let bulkSaveDirty = false;
+
+/** Write the accumulated bulk-sync changes to disk/server exactly once. */
+function flushBulkSave() {
+  if (!bulkSaveDirty) return;
+  bulkSaveDirty = false;
+  if (typeof window === "undefined") return;
+  const key = storageKey();
+  if (!key || ordersRawCache?.key !== key) return;
+  const data: OrdersData = { orders: ordersRawCache.orders };
+  const json = JSON.stringify(data);
+  localStorage.setItem(key, json);
+  ordersRawCache = { key, raw: json, orders: data.orders };
+  syncCustomersFromOrderList(data.orders);
+  pushSellerData("orders", data);
+  emitDataUpdated();
+}
 
 /** Batch many web-store upserts into one UI refresh. */
 export function runWithBulkOrderSync<T>(fn: () => T): T {
@@ -734,7 +770,7 @@ export function runWithBulkOrderSync<T>(fn: () => T): T {
   } finally {
     bulkOrderSyncDepth = Math.max(0, bulkOrderSyncDepth - 1);
     if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
-      emitDataUpdated();
+      flushBulkSave();
     }
   }
 }
@@ -746,7 +782,7 @@ export async function runWithBulkOrderSyncAsync<T>(fn: () => Promise<T>): Promis
   } finally {
     bulkOrderSyncDepth = Math.max(0, bulkOrderSyncDepth - 1);
     if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
-      emitDataUpdated();
+      flushBulkSave();
     }
   }
 }

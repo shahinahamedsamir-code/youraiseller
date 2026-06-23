@@ -68,12 +68,19 @@ export function saveStoredFeatures(
   if (typeof window === "undefined") return;
   const json = JSON.stringify(features);
   if (storageKey === SESSION_FEATURES_KEY) {
+    // Only write + emit when the value actually changed. getSessionUser() calls
+    // this on every invocation, and a FeatureContext listener reacts to the
+    // event by calling getSessionUser() again — without this guard that mutual
+    // call recursed forever (RangeError: Maximum call stack size exceeded),
+    // freezing any page that reads the session often (e.g. the Web Order List).
+    if (localStorage.getItem(SESSION_FEATURES_KEY) === json) return;
     localStorage.setItem(storageKey, json);
     if (localStorage.getItem(SESSION_USER_KEY)) {
       localStorage.setItem(SESSION_FEATURES_KEY, json);
     }
     window.dispatchEvent(new Event(SESSION_FEATURES_UPDATED));
   } else if (storageKey === GLOBAL_FEATURES_KEY) {
+    if (localStorage.getItem(GLOBAL_FEATURES_KEY) === json) return;
     localStorage.setItem(storageKey, json);
     window.dispatchEvent(new Event(GLOBAL_FEATURES_UPDATED));
   } else {

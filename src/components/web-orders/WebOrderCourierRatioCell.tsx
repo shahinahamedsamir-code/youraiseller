@@ -6,6 +6,7 @@ import { normalizePhoneForApi } from "@/lib/hoorin-courier";
 import type { CourierCheckResult } from "@/lib/hoorin-courier";
 import { fetchCourierCheck, peekCourierCheck } from "@/lib/courier-check-client";
 import { findOrdersByPhone } from "@/lib/orders-store";
+import { getCustomerOrderStats } from "@/lib/web-customer-stats";
 import { WebOrderSuccessRing } from "@/components/web-orders/WebOrderSuccessRing";
 import { CourierRatioModal } from "@/components/web-orders/CourierRatioModal";
 
@@ -27,6 +28,7 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
 
   const digits = normalizePhoneForApi(phone);
   const local = useMemo(() => localRecord(phone), [phone]);
+  const stats = useMemo(() => getCustomerOrderStats(phone), [phone]);
   const [data, setData] = useState<CourierCheckResult | null>(() =>
     digits ? peekCourierCheck(digits) : null
   );
@@ -54,8 +56,7 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
     };
   }, [digits]);
 
-  const courierRate = data?.overall.successRate;
-  const ringPercent = local.isNew ? 0 : local.successRate;
+  const ringPercent = stats.total === 0 ? 0 : stats.successPct;
   const activeCouriers = (data?.couriers ?? []).filter((c) => c.total > 0);
 
   if (!digits) {
@@ -76,36 +77,40 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
         </div>
         <div className="min-w-0 text-[10px] leading-tight text-slate-600">
           <p>
-            <span className="font-bold text-slate-800">Courier:</span>{" "}
-            {courierRate != null ? (
-              <span className={clsx("font-extrabold", rateTone(courierRate))}>
-                {courierRate}%
-              </span>
-            ) : checking ? (
-              <span className="font-semibold text-slate-400">Checking…</span>
+            <span className="font-bold text-slate-800">Success:</span>{" "}
+            {stats.total === 0 ? (
+              <span className="font-semibold text-violet-600">New</span>
             ) : (
-              <span className="font-semibold text-violet-600">Click to check</span>
+              <span className={clsx("font-extrabold", rateTone(stats.successPct))}>
+                {stats.successPct}%
+              </span>
             )}
           </p>
           <p>
-            <span className="font-bold text-slate-800">Our:</span>{" "}
-            {local.isNew ? (
-              <span className="font-semibold text-violet-600">New</span>
-            ) : (
-              <>
-                {local.delivered}/{local.total} · {local.successRate}%
-              </>
-            )}
+            <span className="font-bold text-slate-800">Order:</span>{" "}
+            {stats.success}/{stats.total}
           </p>
-          {activeCouriers.map((c) => (
-            <p key={c.name} className="truncate">
-              <span className="font-bold text-slate-800">{c.name}:</span>{" "}
-              <span className={clsx("font-semibold", rateTone(c.successRate))}>
-                {c.successRate}%
-              </span>{" "}
-              <span className="text-slate-400">({c.total})</span>
-            </p>
-          ))}
+          <p>
+            <span className="font-bold text-slate-800">Rating:</span> {stats.rating}
+          </p>
+
+          {(checking || activeCouriers.length > 0) && (
+            <div className="mt-1 space-y-0.5 border-t border-slate-100 pt-1">
+              {activeCouriers.length > 0 ? (
+                activeCouriers.map((c) => (
+                  <p key={c.name} className="truncate">
+                    <span className="font-bold text-slate-800">{c.name}:</span>{" "}
+                    <span className={clsx("font-semibold", rateTone(c.successRate))}>
+                      {c.successRate}%
+                    </span>{" "}
+                    <span className="text-slate-400">({c.total})</span>
+                  </p>
+                ))
+              ) : (
+                <p className="text-slate-400">Checking couriers…</p>
+              )}
+            </div>
+          )}
         </div>
       </button>
 

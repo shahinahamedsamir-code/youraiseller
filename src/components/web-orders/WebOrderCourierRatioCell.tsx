@@ -56,7 +56,7 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
 
   const courierRate = data?.overall.successRate;
   const ringPercent = local.isNew ? 0 : local.successRate;
-  const topCourier = data?.couriers.find((c) => c.total > 0);
+  const activeCouriers = (data?.couriers ?? []).filter((c) => c.total > 0);
 
   if (!digits) {
     return <span className="text-xs text-slate-400">—</span>;
@@ -97,12 +97,15 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
               </>
             )}
           </p>
-          {topCourier ? (
-            <p className="truncate">
-              <span className="font-bold text-slate-800">{topCourier.name}:</span>{" "}
-              {topCourier.successRate}%
+          {activeCouriers.map((c) => (
+            <p key={c.name} className="truncate">
+              <span className="font-bold text-slate-800">{c.name}:</span>{" "}
+              <span className={clsx("font-semibold", rateTone(c.successRate))}>
+                {c.successRate}%
+              </span>{" "}
+              <span className="text-slate-400">({c.total})</span>
             </p>
-          ) : null}
+          ))}
         </div>
       </button>
 

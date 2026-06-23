@@ -170,12 +170,19 @@ export function WebOrderTable() {
   }, [searchParams, router, refresh]);
 
   useEffect(() => {
+    console.log("[PERF] WebOrderTable mount — diag build 2026-06-23-A");
     // Shrink any historically-bloated order blob first so the rest of the page
     // works against slim data, then pull the latest and compact again in case
     // the server copy was still bloated.
+    const t0 = performance.now();
     compactOrderStorage();
+    console.log(`[PERF] compactOrderStorage: ${(performance.now() - t0).toFixed(0)}ms`);
+    const t1 = performance.now();
     repairWebOrdersInQueue();
+    console.log(`[PERF] repairWebOrdersInQueue: ${(performance.now() - t1).toFixed(0)}ms`);
+    const t2 = performance.now();
     void pullOrdersFromServer().finally(() => {
+      console.log(`[PERF] pullOrdersFromServer: ${(performance.now() - t2).toFixed(0)}ms`);
       compactOrderStorage();
       refresh();
     });
@@ -250,10 +257,20 @@ export function WebOrderTable() {
 
   const orders = useMemo(() => {
     void tick;
-    return getWebOrdersFromStore();
+    const t0 = performance.now();
+    const r = getWebOrdersFromStore();
+    console.log(
+      `[PERF] getWebOrdersFromStore: ${(performance.now() - t0).toFixed(0)}ms (${r.length} orders)`
+    );
+    return r;
   }, [tick]);
 
-  const counts = useMemo(() => countWebOrdersByTab(orders), [orders]);
+  const counts = useMemo(() => {
+    const t0 = performance.now();
+    const r = countWebOrdersByTab(orders);
+    console.log(`[PERF] countWebOrdersByTab: ${(performance.now() - t0).toFixed(0)}ms`);
+    return r;
+  }, [orders]);
 
   const autoCallLogs = useMemo(() => {
     void callLogTick;

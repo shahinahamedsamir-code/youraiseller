@@ -91,6 +91,14 @@ function normalizeStatus(raw: string): OrderStatus {
   return valid.includes(raw as OrderStatus) ? (raw as OrderStatus) : "pending";
 }
 
+/**
+ * Cap how many activity-log entries we keep per order. Background store syncs
+ * used to append an entry on every run, growing the order blob without bound
+ * until localStorage operations (parse/stringify) froze the page. We keep the
+ * most recent entries only.
+ */
+const MAX_ACTIVITY_LOG_ENTRIES = 80;
+
 function migrateOrder(o: Order): Order {
   const deliveryMethodId = o.deliveryMethodId
     ? resolveDeliveryMethodId(o.deliveryMethodId)
@@ -144,10 +152,12 @@ function migrateOrder(o: Order): Order {
     customOrderSource: o.customOrderSource,
     activityLog:
       o.activityLog && o.activityLog.length > 0
-        ? o.activityLog.map((entry) => ({
-            ...entry,
-            at: normalizeActivityAt(entry.at),
-          }))
+        ? o.activityLog
+            .slice(-MAX_ACTIVITY_LOG_ENTRIES)
+            .map((entry) => ({
+              ...entry,
+              at: normalizeActivityAt(entry.at),
+            }))
         : undefined,
   };
   if (!migrated.activityLog?.length) {
@@ -641,7 +651,9 @@ function staffActor(): string {
 function pushActivity(order: Order, entry: OrderActivity): Order {
   return {
     ...order,
-    activityLog: [...(order.activityLog ?? []), entry],
+    activityLog: [...(order.activityLog ?? []), entry].slice(
+      -MAX_ACTIVITY_LOG_ENTRIES
+    ),
   };
 }
 
@@ -785,6 +797,34 @@ export async function runWithBulkOrderSyncAsync<T>(fn: () => Promise<T>): Promis
       flushBulkSave();
     }
   }
+}
+
+/**
+ * One-time cleanup for accounts whose stored order blob has bloated (e.g. from
+ * unbounded activity logs written by older sync code). loadRaw() migrates +
+ * trims on parse; if the re-serialized blob is meaningfully smaller than what
+ * is on disk we persist the slimmer version locally and to the server so every
+ * later read/parse is fast. Returns true when it actually compacted.
+ */
+export function compactOrderStorage(): boolean {
+  if (typeof window === "undefined") return false;
+  if (bulkOrderSyncDepth > 0) return false;
+  const key = storageKey();
+  if (!key) return false;
+  const before = localStorage.getItem(key);
+  if (!before) return false;
+
+  const data = loadRaw(); // parses + migrates (caps activity logs)
+  const after = JSON.stringify(data);
+  // Only rewrite when we save a worthwhile chunk (>5%), to avoid churn.
+  if (after.length >= before.length * 0.95) return false;
+
+  localStorage.setItem(key, after);
+  ordersRawCache = { key, raw: after, orders: data.orders };
+  invalidateOrdersByPhoneCache();
+  pushSellerData("orders", data);
+  emitDataUpdated();
+  return true;
 }
 
 export function loadOrders(filter?: {

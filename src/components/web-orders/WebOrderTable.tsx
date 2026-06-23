@@ -6,7 +6,7 @@ import type { OrderLine } from "@/lib/orders-store";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
 import { pullOrdersFromServer } from "@/lib/seller-sync";
-import { repairWebOrdersInQueue } from "@/lib/orders-store";
+import { compactOrderStorage, repairWebOrdersInQueue } from "@/lib/orders-store";
 import { WooOrderSyncBar } from "@/components/web-orders/WooOrderSyncBar";
 import { ShopifyOrderSyncBar } from "@/components/web-orders/ShopifyOrderSyncBar";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
@@ -170,8 +170,15 @@ export function WebOrderTable() {
   }, [searchParams, router, refresh]);
 
   useEffect(() => {
+    // Shrink any historically-bloated order blob first so the rest of the page
+    // works against slim data, then pull the latest and compact again in case
+    // the server copy was still bloated.
+    compactOrderStorage();
     repairWebOrdersInQueue();
-    void pullOrdersFromServer().finally(refresh);
+    void pullOrdersFromServer().finally(() => {
+      compactOrderStorage();
+      refresh();
+    });
   }, [refresh]);
 
   useEffect(() => {

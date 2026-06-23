@@ -59,7 +59,7 @@ export function WebOrderStatusTabs({
               type="button"
               onClick={() => onChange(tab.key)}
               className={clsx(
-                "relative flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition",
+                "relative flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-xs font-semibold transition sm:gap-2 sm:px-4 sm:py-3 sm:text-sm",
                 isActive
                   ? "border-teal-500 text-teal-700"
                   : "border-transparent text-slate-600 hover:border-slate-200 hover:text-slate-900"

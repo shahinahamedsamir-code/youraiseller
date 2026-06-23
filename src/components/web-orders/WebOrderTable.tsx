@@ -378,7 +378,161 @@ export function WebOrderTable() {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* ── Mobile card view ── */}
+          <div className="space-y-3 px-3 py-3 lg:hidden">
+            {paged.length === 0 ? (
+              <p className="py-12 text-center text-sm text-slate-500">
+                No web orders in this tab.
+              </p>
+            ) : (
+              paged.map((order) => {
+                const ws = resolveWebDisplayStatus(order);
+                const wa = `88${order.phone.replace(/\D/g, "")}`;
+                const isChecked = selected.has(order.id);
+                const firstItem = order.items[0];
+                const firstImg = firstItem ? lineImage(firstItem) : undefined;
+
+                return (
+                  <div
+                    key={order.id}
+                    className={clsx(
+                      "rounded-xl border p-3 transition",
+                      isChecked
+                        ? "border-teal-300 bg-teal-50/50"
+                        : "border-slate-200 bg-white"
+                    )}
+                  >
+                    {/* Top row: checkbox + status + date + open */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleSelect(order.id)}
+                        className="rounded border-slate-300"
+                      />
+                      <span
+                        className={clsx(
+                          "rounded-full px-2 py-0.5 text-[9px] font-bold capitalize",
+                          statusColors[ws]
+                        )}
+                      >
+                        {ws.replace("_", " ")}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {order.createdAt}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/orders/web/view/${encodeURIComponent(order.id)}`
+                          )
+                        }
+                        className="ml-auto inline-flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm"
+                      >
+                        Open
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
+                    </div>
+
+                    {/* Customer */}
+                    <div className="mt-2 space-y-1 text-xs">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`tel:${order.phone}`}
+                          className="inline-flex items-center gap-1 font-bold text-teal-700"
+                        >
+                          <Phone className="h-3 w-3" />
+                          {order.phone}
+                        </a>
+                        <a
+                          href={`https://wa.me/${wa}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-emerald-600"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                      <p className="flex items-center gap-1 font-semibold text-slate-800">
+                        <User className="h-3 w-3 text-slate-400" />
+                        {order.customerName}
+                      </p>
+                      <p className="flex items-start gap-1 text-slate-500">
+                        <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
+                        <span className="line-clamp-2">
+                          {order.address}
+                          {order.district ? `, ${order.district}` : ""}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Order item + Courier ratio row */}
+                    <div className="mt-3 flex items-start gap-3 border-t border-slate-100 pt-3">
+                      {/* Product */}
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        {firstImg ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={firstImg}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-slate-200"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-500 ring-1 ring-slate-100">
+                            <Package className="h-4 w-4" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-slate-800">
+                            {firstItem?.productName ?? "—"}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {firstItem
+                              ? `${firstItem.qty}x · ৳${firstItem.total.toLocaleString("en-BD")}`
+                              : ""}
+                            {order.items.length > 1
+                              ? ` · +${order.items.length - 1}`
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Courier ratio */}
+                      <div className="shrink-0">
+                        <WebOrderCourierRatioCell phone={order.phone} />
+                      </div>
+                    </div>
+
+                    {/* Bottom: source badges + ID */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      {(() => {
+                        const { source, label } = getOrderSourceDisplay(order);
+                        return (
+                          <span className={sourceBadgeCls(source)}>{label}</span>
+                        );
+                      })()}
+                      {(() => {
+                        const wc = getWooCommerceStatus(order);
+                        return wc ? (
+                          <span className={wcStatusBadgeCls(wc)}>
+                            {formatWcStatusLabel(wc)}
+                          </span>
+                        ) : null;
+                      })()}
+                      <span className="text-slate-400">
+                        {order.id}
+                        {order.wooNumber ? ` · WC #${order.wooNumber}` : ""}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* ── Desktop table view ── */}
+          <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[1220px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/90 text-left text-[10px] font-bold uppercase tracking-wide text-slate-500">

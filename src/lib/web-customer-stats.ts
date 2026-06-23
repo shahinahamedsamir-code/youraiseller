@@ -8,6 +8,7 @@ export function normalizePhone(phone: string): string {
 export type CustomerOrderStats = {
   total: number;
   success: number;
+  cancelled: number;
   successPct: number;
   rating: number;
 };
@@ -24,7 +25,7 @@ function isCancelledOrder(o: Order): boolean {
 export function getCustomerOrderStats(phone: string): CustomerOrderStats {
   const key = normalizePhone(phone);
   if (!key) {
-    return { total: 0, success: 0, successPct: 0, rating: 0 };
+    return { total: 0, success: 0, cancelled: 0, successPct: 0, rating: 0 };
   }
 
   const related = loadOrders().filter(
@@ -32,9 +33,9 @@ export function getCustomerOrderStats(phone: string): CustomerOrderStats {
   );
   const total = related.length;
   const success = related.filter(isSuccessfulOrder).length;
-  const counted = related.filter((o) => !isCancelledOrder(o)).length;
+  const cancelled = related.filter(isCancelledOrder).length;
   const successPct =
-    counted > 0 ? Math.round((success / counted) * 100) : total > 0 ? 0 : 100;
+    total > 0 ? Math.round((success / total) * 100) : 0;
 
   const tail = parseInt(key.slice(-2), 10);
   const base = Number.isNaN(tail) ? 72 : 68 + (tail % 25);
@@ -43,5 +44,5 @@ export function getCustomerOrderStats(phone: string): CustomerOrderStats {
     Math.round(base * 0.35 + successPct * 0.65)
   );
 
-  return { total, success, successPct, rating };
+  return { total, success, cancelled, successPct, rating };
 }

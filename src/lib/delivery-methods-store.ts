@@ -159,6 +159,13 @@ function nowLabel(): string {
   });
 }
 
+// Cache the parsed + migrated methods keyed by the exact stored string. The
+// cheap localStorage.getItem still runs each call (so external writes are
+// detected), but the JSON.parse + migrate only runs when the data changed.
+// migrateOrder() resolves delivery methods for every order, so without this
+// cache loading N orders triggered ~5N localStorage parses and froze the page.
+let methodsRawCache: { key: string; raw: string; methods: DeliveryMethod[] } | null = null;
+
 function loadRaw(): DeliveryMethod[] {
   if (typeof window === "undefined") return DEFAULT_METHODS;
   const key = storageKey();
@@ -166,10 +173,19 @@ function loadRaw(): DeliveryMethod[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) {
-      localStorage.setItem(key, JSON.stringify(DEFAULT_METHODS));
-      return DEFAULT_METHODS;
+      const json = JSON.stringify(DEFAULT_METHODS);
+      localStorage.setItem(key, json);
+      methodsRawCache = { key, raw: json, methods: DEFAULT_METHODS };
+      return [...DEFAULT_METHODS];
     }
-    return (JSON.parse(raw) as DeliveryMethod[]).map(migrateMethod);
+    if (!methodsRawCache || methodsRawCache.key !== key || methodsRawCache.raw !== raw) {
+      methodsRawCache = {
+        key,
+        raw,
+        methods: (JSON.parse(raw) as DeliveryMethod[]).map(migrateMethod),
+      };
+    }
+    return [...methodsRawCache.methods];
   } catch {
     return DEFAULT_METHODS.map(migrateMethod);
   }
@@ -179,7 +195,9 @@ function saveRaw(methods: DeliveryMethod[]) {
   if (typeof window === "undefined") return;
   const key = storageKey();
   if (!key) return;
-  localStorage.setItem(key, JSON.stringify(methods));
+  const json = JSON.stringify(methods);
+  localStorage.setItem(key, json);
+  methodsRawCache = { key, raw: json, methods };
   pushSellerData("deliverymethods", methods);
   window.dispatchEvent(new Event("youraiseller-delivery-methods-updated"));
 }

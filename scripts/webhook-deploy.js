@@ -46,7 +46,7 @@ const server = http.createServer((req, res) => {
 
     try {
       execSync(
-        `cd ${REPO_DIR} && git pull origin main && npm install && npx next build && pm2 restart youraiseller`,
+        `cd ${REPO_DIR} && git fetch origin main && git reset --hard origin/main && npm install && npx next build && pm2 restart youraiseller`,
         { stdio: "inherit", timeout: 120000 }
       );
       console.log("[webhook] Deploy complete!");

@@ -6,6 +6,7 @@ import { sellerDataFile, sellerScopeDir } from "@/lib/seller-data-path";
 import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
 import { normalizeSmsAccount } from "@/lib/sms-types";
 import { getDbPool } from "@/lib/db";
+import { syncOrdersTable } from "@/lib/orders-db";
 
 /**
  * Read one (scope, kind) blob. Prefers PostgreSQL (Supabase); falls back to the
@@ -137,6 +138,21 @@ export async function POST(req: Request) {
     }
 
     await writeData(scope, kind, body.data);
+
+    // Keep the normalized `orders` table in sync so the paginated read API can
+    // serve one page without the browser ever loading every order. Failures
+    // here must not fail the seller's write (seller_data is the source of truth).
+    if (kind === "orders") {
+      const list = (body.data as { orders?: unknown })?.orders;
+      if (Array.isArray(list)) {
+        try {
+          await syncOrdersTable(scope, list);
+        } catch (e) {
+          console.error("[seller-data] orders-table sync failed", e);
+        }
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[seller-data]", e);

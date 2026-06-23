@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { normalizePhoneForApi } from "@/lib/hoorin-courier";
-import { peekCourierCheck } from "@/lib/courier-check-client";
+import type { CourierCheckResult } from "@/lib/hoorin-courier";
+import { fetchCourierCheck, peekCourierCheck } from "@/lib/courier-check-client";
 import { findOrdersByPhone } from "@/lib/orders-store";
 import { WebOrderSuccessRing } from "@/components/web-orders/WebOrderSuccessRing";
 import { CourierRatioModal } from "@/components/web-orders/CourierRatioModal";
@@ -26,7 +27,32 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
 
   const digits = normalizePhoneForApi(phone);
   const local = useMemo(() => localRecord(phone), [phone]);
-  const data = digits ? peekCourierCheck(digits) : null;
+  const [data, setData] = useState<CourierCheckResult | null>(() =>
+    digits ? peekCourierCheck(digits) : null
+  );
+  const [checking, setChecking] = useState(false);
+
+  // Auto-load the courier ratio for this row. Only the current page's rows are
+  // mounted (the table is paginated), so paging through fetches in small,
+  // throttled+cached batches (see courier-check-client) rather than all at once.
+  useEffect(() => {
+    if (!digits) return;
+    const cached = peekCourierCheck(digits);
+    if (cached) {
+      setData(cached);
+      return;
+    }
+    let cancelled = false;
+    setChecking(true);
+    void fetchCourierCheck(digits).then((res) => {
+      if (cancelled) return;
+      if (res) setData(res);
+      setChecking(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [digits]);
 
   const courierRate = data?.overall.successRate;
   const ringPercent = local.isNew ? 0 : local.successRate;
@@ -55,6 +81,8 @@ export function WebOrderCourierRatioCell({ phone }: Props) {
               <span className={clsx("font-extrabold", rateTone(courierRate))}>
                 {courierRate}%
               </span>
+            ) : checking ? (
+              <span className="font-semibold text-slate-400">Checking…</span>
             ) : (
               <span className="font-semibold text-violet-600">Click to check</span>
             )}

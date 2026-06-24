@@ -2,6 +2,7 @@ import { getDbPool } from "./db";
 import type { Order } from "./orders-store";
 import { resolveWebDisplayStatus } from "./order-edit";
 import { isWebOrderIncomplete } from "./web-order-tabs";
+import { isInWebQueue } from "./web-order-queue";
 
 /** Same web-order test the client uses in getWebOrdersFromStore(). */
 function isWebOrder(o: Order): boolean {
@@ -36,6 +37,12 @@ const COLUMNS = [
   "created_at",
   "updated_at",
   "search_text",
+  // Approved Orders (Order List / All List) columns: the raw order status, its
+  // Web-queue visibility, grand total (for sorting) and delivery method (chips).
+  "status",
+  "in_web_queue",
+  "total",
+  "delivery_method_id",
   "data",
 ] as const;
 
@@ -55,6 +62,10 @@ function rowValues(scope: string, o: Order, ord: number): unknown[] {
     o.createdAt ?? null,
     o.updatedAt ?? null,
     buildSearchText(o),
+    o.status ?? null,
+    isInWebQueue(o),
+    typeof o.total === "number" ? o.total : null,
+    o.deliveryMethodId ?? null,
     JSON.stringify(o),
   ];
 }

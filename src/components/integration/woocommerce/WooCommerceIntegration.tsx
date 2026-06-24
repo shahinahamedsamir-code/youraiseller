@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ShoppingCart,
   Package,
-  Shield,
   Link2,
   FlaskConical,
   Bug,
@@ -38,16 +37,12 @@ import { WooCommerceStockSync } from "@/components/integration/woocommerce/WooCo
 type TabId =
   | "connection"
   | "stock"
-  | "shield"
-  | "flow"
   | "api-test"
   | "debug";
 
-const TABS: { id: TabId; label: string; icon: typeof ShoppingCart; soon?: boolean }[] = [
+const TABS: { id: TabId; label: string; icon: typeof ShoppingCart }[] = [
   { id: "connection", label: "WooCommerce", icon: ShoppingCart },
   { id: "stock", label: "Stock Sync", icon: Package },
-  { id: "shield", label: "Fake Order Shield", icon: Shield, soon: true },
-  { id: "flow", label: "Order Flow", icon: Link2, soon: true },
   { id: "api-test", label: "API Test", icon: FlaskConical },
   { id: "debug", label: "Debug Logs", icon: Bug },
 ];
@@ -195,11 +190,6 @@ export function WooCommerceIntegration() {
               >
                 <Icon className="h-4 w-4" />
                 {t.label}
-                {t.soon && (
-                  <span className="rounded bg-slate-200 px-1 text-[9px] font-bold uppercase text-slate-600">
-                    Soon
-                  </span>
-                )}
                 {active && (
                   <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-teal-500" />
                 )}
@@ -225,9 +215,6 @@ export function WooCommerceIntegration() {
             />
           )}
           {tab === "stock" && <WooCommerceStockSync />}
-          {(tab === "shield" || tab === "flow") && (
-            <ComingSoonTab name={TABS.find((x) => x.id === tab)?.label ?? ""} />
-          )}
           {tab === "api-test" && (
             <ApiTestTab settings={settings} onTest={connect} testing={testing} />
           )}
@@ -610,15 +597,6 @@ function DebugTab({
           ))}
         </ul>
       )}
-    </div>
-  );
-}
-
-function ComingSoonTab({ name }: { name: string }) {
-  return (
-    <div className="py-16 text-center">
-      <Package className="mx-auto mb-3 h-12 w-12 text-slate-300" />
-      <p className="font-bold text-slate-700">{name}</p>
     </div>
   );
 }

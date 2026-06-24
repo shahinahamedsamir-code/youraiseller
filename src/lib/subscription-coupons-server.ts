@@ -23,5 +23,7 @@ export async function saveSubscriptionCoupons(
   const next = normalizeSubscriptionCoupons(coupons);
   await fs.mkdir(getPlatformDataDir(), { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), "utf-8");
+  const { mirrorFileToDb } = await import("./data-mirror");
+  await mirrorFileToDb(DATA_FILE);
   return next;
 }

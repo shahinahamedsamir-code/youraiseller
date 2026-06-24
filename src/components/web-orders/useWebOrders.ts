@@ -32,19 +32,29 @@ export type WebOrdersData = {
   total: number;
   /** Per-tab counts for the tab badges. */
   counts: Record<WebOrderTabKey, number>;
-  /** True while the first DB page is still loading. */
+  /** True while a DB page is in flight and no data is shown yet. */
   loading: boolean;
-  /** "db" when served from the paginated orders API, "local" from localStorage. */
+  /** "db" when the current view is the authoritative server page, else "local". */
   source: "db" | "local";
 };
 
+/** Identity of one query so we know whether a DB result matches the live view. */
+function viewKey(
+  tab: WebOrderTabKey,
+  search: string,
+  page: number,
+  rowsPerPage: number
+): string {
+  return `${tab}|${search}|${page}|${rowsPerPage}`;
+}
+
 /**
- * Web Order List data source. Prefers the server-paginated `/api/orders`
- * endpoint (so the browser only ever holds one page, scaling to huge datasets)
- * and transparently falls back to the legacy localStorage path when the DB is
- * not configured (e.g. local dev) or the request fails. The fallback reproduces
- * the previous client-side filter/paginate exactly, so behaviour is unchanged
- * when the API is unavailable.
+ * Web Order List data source. Paints instantly from the localStorage copy, then
+ * reconciles with the server-paginated `/api/orders` endpoint (authoritative
+ * counts + pagination, and the only source that scales to huge datasets). The
+ * DB result is only shown once it matches the live tab/search/page, so switching
+ * tabs shows that tab's local rows immediately instead of stale data. When the
+ * DB is unconfigured (local dev) or a request fails, the local view simply stays.
  */
 export function useWebOrders({
   tab,
@@ -69,22 +79,17 @@ export function useWebOrders({
   }, [search]);
 
   const [db, setDb] = useState<{
+    key: string;
     rows: Order[];
     total: number;
     counts: Record<WebOrderTabKey, number>;
   } | null>(null);
-  const [dbUnavailable, setDbUnavailable] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const currentKey = viewKey(tab, debouncedSearch, page, rowsPerPage);
 
   useEffect(() => {
-    if (!scopeResolved) return;
-    if (!scope) {
-      // Signed out / no scope yet — nothing to query; render the local (empty)
-      // state instead of spinning forever.
-      setDbUnavailable(true);
-      setLoading(false);
-      return;
-    }
+    if (!scopeResolved || !scope) return;
     let cancelled = false;
     setLoading(true);
     const qs = new URLSearchParams({
@@ -94,20 +99,20 @@ export function useWebOrders({
       page: String(page),
       limit: String(rowsPerPage),
     });
+    const key = currentKey;
     fetch(`/api/orders?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((d) => {
         if (cancelled) return;
         setDb({
+          key,
           rows: Array.isArray(d.rows) ? d.rows : [],
           total: Number(d.total ?? 0),
           counts: d.counts ?? EMPTY_COUNTS,
         });
-        setDbUnavailable(false);
       })
       .catch(() => {
-        // 503 (no DB), 5xx, or network error → fall back to localStorage.
-        if (!cancelled) setDbUnavailable(true);
+        // 503 (no DB), 5xx, or network error → the local view simply stays.
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -115,32 +120,20 @@ export function useWebOrders({
     return () => {
       cancelled = true;
     };
-  }, [scope, scopeResolved, tab, debouncedSearch, page, rowsPerPage, refreshKey]);
+  }, [scope, scopeResolved, currentKey, tab, debouncedSearch, page, rowsPerPage, refreshKey]);
 
-  // Local fallback orders are only materialised when the DB path is unavailable,
-  // so the heavy full-list read is skipped entirely in DB mode.
+  // Always read the local copy so the list paints instantly; the DB result is
+  // overlaid only when it matches the live view (see below).
   const localOrders = useMemo(() => {
-    if (!dbUnavailable) return null;
     void refreshKey;
     return getWebOrdersFromStore();
-  }, [dbUnavailable, refreshKey]);
+  }, [refreshKey]);
 
-  return useMemo<WebOrdersData>(() => {
-    if (db && !dbUnavailable) {
-      return {
-        rows: db.rows,
-        total: db.total,
-        counts: db.counts,
-        loading,
-        source: "db",
-      };
-    }
-
-    // Local mode: replicate the original client-side filter + paginate.
-    const all = localOrders ?? [];
-    const counts = countWebOrdersByTab(all);
+  // Local filter + paginate (the instant view, identical to the old behaviour).
+  const localView = useMemo(() => {
+    const counts = countWebOrdersByTab(localOrders);
     const q = debouncedSearch.trim().toLowerCase();
-    let filtered = all.filter((o) => matchesWebOrderTab(o, tab));
+    let filtered = localOrders.filter((o) => matchesWebOrderTab(o, tab));
     if (q) {
       filtered = filtered.filter(
         (o) =>
@@ -153,6 +146,27 @@ export function useWebOrders({
       );
     }
     const rows = paginateSlice(filtered, page, rowsPerPage);
-    return { rows, total: filtered.length, counts, loading: false, source: "local" };
-  }, [db, dbUnavailable, localOrders, debouncedSearch, tab, page, rowsPerPage, loading]);
+    return { rows, total: filtered.length, counts };
+  }, [localOrders, debouncedSearch, tab, page, rowsPerPage]);
+
+  return useMemo<WebOrdersData>(() => {
+    // Authoritative DB page, but only when it matches what the user is viewing.
+    if (db && db.key === currentKey) {
+      return {
+        rows: db.rows,
+        total: db.total,
+        counts: db.counts,
+        loading: false,
+        source: "db",
+      };
+    }
+    // Instant local view (first paint, tab/page switch, or DB unavailable).
+    return {
+      rows: localView.rows,
+      total: localView.total,
+      counts: localView.counts,
+      loading: loading && localView.rows.length === 0,
+      source: "local",
+    };
+  }, [db, currentKey, localView, loading]);
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { OrderLine } from "@/lib/orders-store";
 import { getProductImageForLine } from "@/lib/inventory-store";
-import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
 import { pullOrdersFromServer } from "@/lib/seller-sync";
 import { compactOrderStorage, repairWebOrdersInQueue } from "@/lib/orders-store";
 import { WooOrderSyncBar } from "@/components/web-orders/WooOrderSyncBar";
@@ -14,16 +13,14 @@ import { WebOrderCourierRatioCell } from "@/components/web-orders/WebOrderCourie
 import { resolveWebDisplayStatus } from "@/lib/order-edit";
 import { statusColors } from "@/lib/mock-web-orders";
 import {
-  countWebOrdersByTab,
   isWebOrderTabKey,
-  matchesWebOrderTab,
   type WebOrderTabKey,
 } from "@/lib/web-order-tabs";
 import { WebOrderStatusTabs } from "@/components/web-orders/WebOrderStatusTabs";
+import { useWebOrders } from "@/components/web-orders/useWebOrders";
 import {
   TablePagination,
   DEFAULT_ROWS_PER_PAGE,
-  paginateSlice,
 } from "@/components/ui/TablePagination";
 import { formatRelativeTime } from "@/lib/format-relative-time";
 import {
@@ -248,12 +245,16 @@ export function WebOrderTable() {
     return siteUrl();
   }, [tick]);
 
-  const orders = useMemo(() => {
-    void tick;
-    return getWebOrdersFromStore();
-  }, [tick]);
-
-  const counts = useMemo(() => countWebOrdersByTab(orders), [orders]);
+  // DB-paginated (with localStorage fallback). Only the current page of orders
+  // is ever held in memory in DB mode, so this scales to very large datasets.
+  const { rows: paged, total: filteredTotal, counts, loading: ordersLoading } =
+    useWebOrders({
+      tab: activeFilter,
+      search,
+      page,
+      rowsPerPage,
+      refreshKey: tick,
+    });
 
   const autoCallLogs = useMemo(() => {
     void callLogTick;
@@ -268,31 +269,9 @@ export function WebOrderTable() {
     });
   }, [autoCallLogs, callLogTick]);
 
-  const filtered = useMemo(() => {
-    let list = orders.filter((o) => matchesWebOrderTab(o, activeFilter));
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter(
-        (o) =>
-          o.id.toLowerCase().includes(q) ||
-          o.customerName.toLowerCase().includes(q) ||
-          o.phone.includes(q) ||
-          o.address.toLowerCase().includes(q) ||
-          (o.wooNumber ?? "").includes(q) ||
-          o.items.some((i) => i.productName.toLowerCase().includes(q))
-      );
-    }
-    return list;
-  }, [orders, activeFilter, search]);
-
   useEffect(() => {
     setPage(1);
   }, [activeFilter, search]);
-
-  const paged = useMemo(
-    () => paginateSlice(filtered, page, rowsPerPage),
-    [filtered, page, rowsPerPage]
-  );
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -343,7 +322,7 @@ export function WebOrderTable() {
         <WebOrderStatusTabs
           active={activeFilter}
           counts={counts}
-          activeVisibleCount={filtered.length}
+          activeVisibleCount={filteredTotal}
           onChange={(tab) => {
             setActiveFilter(tab);
             router.replace(
@@ -382,7 +361,7 @@ export function WebOrderTable() {
           <div className="space-y-3 px-3 py-3 lg:hidden">
             {paged.length === 0 ? (
               <p className="py-12 text-center text-sm text-slate-500">
-                No web orders in this tab.
+                {ordersLoading ? "Loading orders…" : "No web orders in this tab."}
               </p>
             ) : (
               paged.map((order) => {
@@ -573,7 +552,7 @@ export function WebOrderTable() {
                     colSpan={10}
                     className="px-4 py-12 text-center text-sm text-slate-500"
                   >
-                    No web orders in this tab.
+                    {ordersLoading ? "Loading orders…" : "No web orders in this tab."}
                   </td>
                 </tr>
               ) : (
@@ -747,7 +726,7 @@ export function WebOrderTable() {
           </div>
 
           <TablePagination
-            totalRows={filtered.length}
+            totalRows={filteredTotal}
             page={page}
             rowsPerPage={rowsPerPage}
             selectedCount={selected.size}

@@ -699,6 +699,8 @@ function emptyOrders(): Order[] {
  * mutations (push/filter/index-set) never touch the cached copy.
  */
 let ordersRawCache: { key: string; raw: string; orders: Order[] } | null = null;
+/** id→order index for O(1) getOrder, rebuilt only when the orders cache changes. */
+let orderByIdCache: { raw: string; map: Map<string, Order> } | null = null;
 
 function loadRaw(): OrdersData {
   if (typeof window === "undefined") return { orders: emptyOrders() };
@@ -883,7 +885,19 @@ export function loadOrders(filter?: {
 }
 
 export function getOrder(id: string): Order | undefined {
-  return loadRaw().orders.find((o) => o.id === id);
+  // Ensure the orders cache is fresh, then serve from an id-indexed Map so
+  // repeated lookups (e.g. accounting loops over hundreds of invoices) are O(1)
+  // instead of a full array scan each call.
+  loadRaw();
+  const cache = ordersRawCache;
+  if (!cache) return undefined;
+  if (orderByIdCache?.raw !== cache.raw) {
+    orderByIdCache = {
+      raw: cache.raw,
+      map: new Map(cache.orders.map((o) => [o.id, o])),
+    };
+  }
+  return orderByIdCache.map.get(id);
 }
 
 let ordersByPhoneCache: Map<string, Order[]> | null = null;

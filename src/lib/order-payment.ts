@@ -22,6 +22,7 @@ import {
   type Order,
   type PaymentMethod,
 } from "./orders-store";
+import { isInWebQueue } from "./web-order-queue";
 
 export const ORDER_PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cod: "Cash on Delivery (COD)",
@@ -240,8 +241,10 @@ export function paymentMethodLabelForItem(item: PaymentApprovalItem): string {
 
 export function loadOrdersPendingPayment(search?: string): PaymentApprovalItem[] {
   const items: PaymentApprovalItem[] = [];
+  // One pass over the orders; the "approved" subset is just those not still on
+  // the Web Order List queue (avoids a second full loadOrders scan).
   const allOrders = loadOrders({ search });
-  const approvedOrders = loadOrders({ excludeWebQueue: true, search });
+  const approvedOrders = allOrders.filter((o) => !isInWebQueue(o));
 
   for (const order of allOrders) {
     if (isAdvancePaymentPending(order)) {
@@ -266,7 +269,7 @@ export function loadOrdersPendingPayment(search?: string): PaymentApprovalItem[]
 export function loadOrdersRecordedPayment(search?: string): PaymentApprovalItem[] {
   const items: PaymentApprovalItem[] = [];
   const allOrders = loadOrders({ search });
-  const approvedOrders = loadOrders({ excludeWebQueue: true, search });
+  const approvedOrders = allOrders.filter((o) => !isInWebQueue(o));
 
   for (const order of allOrders) {
     if (order.advancePaymentCollectionStatus === "recorded" || order.advanceAccountingIncomeId) {

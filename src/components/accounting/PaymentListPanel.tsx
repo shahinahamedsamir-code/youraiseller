@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import { CheckCircle2, CreditCard, Search, X, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -36,6 +36,7 @@ const TD_NOWRAP = clsx(TD, "whitespace-nowrap");
 export function PaymentListPanel() {
   const [tab, setTab] = useState<Tab>("pending");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pending, setPending] = useState<PaymentApprovalItem[]>([]);
   const [recorded, setRecorded] = useState<PaymentApprovalItem[]>([]);
   const [approveItem, setApproveItem] = useState<PaymentApprovalItem | null>(null);
@@ -45,18 +46,25 @@ export function PaymentListPanel() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
+  // Debounce the search term so typing doesn't recompute the whole order scan on
+  // every keystroke.
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 300);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
   const refresh = useCallback(() => {
     setPending(
-      loadOrdersPendingPayment(search).filter(
+      loadOrdersPendingPayment(debouncedSearch).filter(
         (item) => item.type !== "return_delivery_expense"
       )
     );
     setRecorded(
-      loadOrdersRecordedPayment(search).filter(
+      loadOrdersRecordedPayment(debouncedSearch).filter(
         (item) => item.type !== "return_delivery_expense"
       )
     );
-  }, [search]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     refresh();

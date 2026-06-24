@@ -48,6 +48,27 @@ export function planPeriodFromNow(months = 1) {
   return planPeriodFromDate(new Date(), months);
 }
 
+/**
+ * Early renewal for a still-active plan: add the purchased months to the current
+ * expiry (or to today if it is already past), so the remaining days are kept
+ * rather than reset. The original start date is preserved.
+ */
+export function planPeriodExtended(
+  user: { planStartedAt?: string; planExpiresAt?: string },
+  months = 1,
+  now = new Date()
+) {
+  const currentExpiry = parsePlanDate(user.planExpiresAt);
+  const base =
+    currentExpiry && currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
+  const expires = addCalendarMonths(startOfPlanDay(base), months);
+  const start = parsePlanDate(user.planStartedAt) ?? startOfPlanDay(now);
+  return {
+    planStartedAt: formatPlanDate(start),
+    planExpiresAt: formatPlanDate(expires),
+  };
+}
+
 /** Sign-up or account-open date — approved first, else created. */
 export function defaultPlanStartDate(user: PlanLifecycleUser): Date | null {
   return parsePlanDate(user.approvedAt) ?? parsePlanDate(user.createdAt);

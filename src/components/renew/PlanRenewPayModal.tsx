@@ -244,7 +244,7 @@ export function PlanRenewPayModal({
               onChange={(e) => setMonths(Number(e.target.value))}
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
             >
-              {[1, 3, 6, 12].map((m) => (
+              {[1, 2, 3, 6, 12].map((m) => (
                 <option key={m} value={m}>
                   {m} month{m > 1 ? "s" : ""}
                 </option>

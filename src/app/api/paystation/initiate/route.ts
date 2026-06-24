@@ -35,9 +35,11 @@ export async function POST(req: Request) {
     if (!sessionUser || String(sessionUser.id) !== requestedUserId) {
       return NextResponse.json({ error: "Session expired. Sign in again." }, { status: 401 });
     }
-    if (sessionUser.status !== "expired" && sessionUser.status !== "inactive") {
+    // Active (early renewal / upgrade), expired and inactive accounts may
+    // self-pay. Only a brand-new account awaiting first approval is blocked.
+    if (sessionUser.status === "pending") {
       return NextResponse.json(
-        { error: "Only approved or expired accounts can pay from this page." },
+        { error: "Your account is awaiting admin approval." },
         { status: 400 }
       );
     }

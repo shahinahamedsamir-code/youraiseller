@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { formatPlanDate, planPeriodFromNow } from "@/lib/subscription-period";
+import {
+  formatPlanDate,
+  planPeriodFromNow,
+  planPeriodExtended,
+} from "@/lib/subscription-period";
 import { recordPaymentHistory } from "@/lib/payment-history-server";
 import { getPaymentHistoryByInvoice } from "@/lib/payment-history-server";
 import { loadPlanConfig } from "@/lib/plan-config-server";
@@ -123,12 +127,19 @@ export async function GET(req: Request) {
         pending.planId === "enterprise"
           ? pending.planId
           : "basic";
-      const wasExpiredRenewal = users[idx].status === "expired";
+      const prevStatus = users[idx].status;
+      const wasExpiredRenewal = prevStatus === "expired";
+      // An already-active account is doing an early renewal / upgrade: keep it
+      // active and add the purchased months on top of the current expiry so no
+      // remaining days are lost — no admin approval needed. Expired accounts get
+      // a fresh period from today. A fresh (inactive) account stays inactive and
+      // waits for admin approval after recording the payment.
+      const wasActiveRenewal = prevStatus === "active";
       users[idx] = {
         ...users[idx],
         plan: paidPlanId,
         features: planFeaturesFromConfig(config, paidPlanId),
-        status: wasExpiredRenewal ? "active" : "inactive",
+        status: wasExpiredRenewal || wasActiveRenewal ? "active" : "inactive",
         expiredAt: undefined,
         ...(wasExpiredRenewal
           ? {
@@ -137,11 +148,24 @@ export async function GET(req: Request) {
               planPaymentMonths: undefined,
               ...planPeriodFromNow(pending.months ?? 1),
             }
-          : {
-              planPaymentPaidAt: formatPlanDate(new Date()),
-              planPaymentInvoice: invoiceNumber,
-              planPaymentMonths: pending.months ?? 1,
-            }),
+          : wasActiveRenewal
+            ? {
+                planPaymentPaidAt: undefined,
+                planPaymentInvoice: undefined,
+                planPaymentMonths: undefined,
+                ...planPeriodExtended(
+                  {
+                    planStartedAt: users[idx].planStartedAt as string | undefined,
+                    planExpiresAt: users[idx].planExpiresAt as string | undefined,
+                  },
+                  pending.months ?? 1
+                ),
+              }
+            : {
+                planPaymentPaidAt: formatPlanDate(new Date()),
+                planPaymentInvoice: invoiceNumber,
+                planPaymentMonths: pending.months ?? 1,
+              }),
       };
       await writeDevUsersFile(users);
     } else if (pending.kind === "sms_recharge") {

@@ -141,8 +141,10 @@ export async function startSubscriptionRenewPayment(
   if (!sessionUser || sessionUser.id !== userId) {
     return { ok: false, error: "Session expired — sign in again." };
   }
-  if (sessionUser.status !== "expired" && sessionUser.status !== "inactive") {
-    return { ok: false, error: "Only approved or expired accounts can pay here." };
+  // Active (early renewal / upgrade), expired and inactive accounts may self-pay.
+  // Only a brand-new account still awaiting first approval is blocked here.
+  if (sessionUser.status === "pending") {
+    return { ok: false, error: "Your account is awaiting admin approval." };
   }
   if (sessionUser.status === "inactive" && sessionUser.planPaymentPaidAt) {
     return {

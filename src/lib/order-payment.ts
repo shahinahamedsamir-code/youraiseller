@@ -57,6 +57,7 @@ export function isAdvancePaymentPending(order: Order): boolean {
   const advance = order.advance ?? 0;
   if (advance <= 0) return false;
   if (["cancelled", "returned", "lost"].includes(order.status)) return false;
+  if (order.advancePaymentCollectionStatus === "declined") return false;
   const collected = order.advancePaymentCollectedAmount ?? 0;
   if (
     order.advancePaymentCollectionStatus === "recorded" &&
@@ -74,6 +75,7 @@ export function advanceAmountPending(order: Order): number {
 }
 
 export function isDeliveryPaymentPending(order: Order): boolean {
+  if (order.paymentCollectionStatus === "declined") return false;
   if (order.paymentCollectionStatus === "recorded" || order.accountingIncomeId) return false;
   if (!["delivered", "partial"].includes(order.status)) return false;
   if (["cancelled", "returned", "lost"].includes(order.status)) return false;
@@ -108,6 +110,53 @@ export function declineReturnDeliveryCharge(
   }
 
   updateOrder(orderId, { returnDeliveryExpenseStatus: "declined" });
+  return { ok: true };
+}
+
+export function declinePaymentApproval(
+  item: PaymentApprovalItem
+): { ok: true } | { ok: false; message: string } {
+  if (item.type === "return_delivery_expense") {
+    return declineReturnDeliveryCharge(item.order.id);
+  }
+
+  const order = getOrder(item.order.id);
+  if (!order) return { ok: false, message: "Order not found" };
+
+  const today = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  if (item.type === "advance") {
+    if (order.advancePaymentCollectionStatus === "recorded" || order.advanceAccountingIncomeId) {
+      return { ok: false, message: "Advance payment already recorded" };
+    }
+    if (order.advancePaymentCollectionStatus === "declined") {
+      return { ok: false, message: "Advance payment already declined" };
+    }
+    updateOrder(order.id, { advancePaymentCollectionStatus: "declined" });
+    appendOrderActivity(order.id, {
+      type: "payment",
+      title: "Advance payment declined",
+      detail: `Declined from Accounting Payment on ${today}`,
+    });
+    return { ok: true };
+  }
+
+  if (order.paymentCollectionStatus === "recorded" || order.accountingIncomeId) {
+    return { ok: false, message: "Delivery payment already recorded" };
+  }
+  if (order.paymentCollectionStatus === "declined") {
+    return { ok: false, message: "Delivery payment already declined" };
+  }
+  updateOrder(order.id, { paymentCollectionStatus: "declined" });
+  appendOrderActivity(order.id, {
+    type: "payment",
+    title: "Delivery payment declined",
+    detail: `Declined from Accounting Payment on ${today}`,
+  });
   return { ok: true };
 }
 
@@ -612,6 +661,21 @@ export function recordBulkPaymentApprovals(
       note: advanceNote,
     });
 
+    if (result.ok) ok++;
+    else failed.push({ key, label, message: result.message });
+  }
+
+  return { ok, failed };
+}
+
+export function declineBulkPaymentApprovals(items: PaymentApprovalItem[]): BulkPaymentApprovalResult {
+  const failed: BulkPaymentApprovalResult["failed"] = [];
+  let ok = 0;
+
+  for (const item of items) {
+    const key = paymentItemKey(item);
+    const label = `${item.order.invoiceNumber ?? item.order.id} · ${PAYMENT_TYPE_LABELS[item.type]}`;
+    const result = declinePaymentApproval(item);
     if (result.ok) ok++;
     else failed.push({ key, label, message: result.message });
   }

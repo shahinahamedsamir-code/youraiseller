@@ -166,14 +166,16 @@ function migrateOrder(o: Order): Order {
   if (
     (migrated.advance ?? 0) > 0 &&
     !migrated.advanceAccountingIncomeId &&
-    migrated.advancePaymentCollectionStatus !== "recorded"
+    migrated.advancePaymentCollectionStatus !== "recorded" &&
+    migrated.advancePaymentCollectionStatus !== "declined"
   ) {
     migrated.advancePaymentCollectionStatus = migrated.advancePaymentCollectionStatus ?? "pending";
   }
   if (
     ["delivered", "partial"].includes(migrated.status) &&
     !migrated.accountingIncomeId &&
-    migrated.paymentCollectionStatus !== "recorded"
+    migrated.paymentCollectionStatus !== "recorded" &&
+    migrated.paymentCollectionStatus !== "declined"
   ) {
     migrated.paymentCollectionStatus = migrated.paymentCollectionStatus ?? "pending";
   }
@@ -364,14 +366,14 @@ export type Order = {
   updatedAt: string;
   approvedAt?: string;
   /** Advance paid at order create — awaiting accounting approval */
-  advancePaymentCollectionStatus?: "pending" | "recorded";
+  advancePaymentCollectionStatus?: "pending" | "recorded" | "declined";
   advancePaymentCollectedAt?: string;
   advancePaymentCollectedAmount?: number;
   advanceCollectedViaAccountId?: string;
   advanceCollectedPaymentMethodLabel?: string;
   advanceAccountingIncomeId?: string;
   /** Delivered order awaiting payment confirmation in Accounting → Payment */
-  paymentCollectionStatus?: "pending" | "recorded";
+  paymentCollectionStatus?: "pending" | "recorded" | "declined";
   paymentCollectedAt?: string;
   paymentCollectedAmount?: number;
   /** Extra discount applied at payment approval */
@@ -1361,8 +1363,10 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
   const advanceCollected = next.advancePaymentCollectedAmount ?? 0;
   if (
     advanceAmt > 0 &&
+    next.advancePaymentCollectionStatus !== "declined" &&
     (advanceCollected < advanceAmt ||
-      (next.advancePaymentCollectionStatus !== "recorded" && !next.advanceAccountingIncomeId))
+      (next.advancePaymentCollectionStatus !== "recorded" &&
+        !next.advanceAccountingIncomeId))
   ) {
     next.advancePaymentCollectionStatus = "pending";
   }
@@ -1373,6 +1377,7 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
   if (
     (next.status === "delivered" || next.status === "partial") &&
     next.paymentCollectionStatus !== "recorded" &&
+    next.paymentCollectionStatus !== "declined" &&
     !next.accountingIncomeId
   ) {
     next.paymentCollectionStatus = next.paymentCollectionStatus ?? "pending";

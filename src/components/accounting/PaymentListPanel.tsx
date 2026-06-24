@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import clsx from "clsx";
-import { CheckCircle2, CreditCard, Search, X } from "lucide-react";
+import { CheckCircle2, CreditCard, Search, X, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatBdt } from "@/lib/accounting-store";
 import {
   loadOrdersPendingPayment,
   loadOrdersRecordedPayment,
+  declineBulkPaymentApprovals,
+  declinePaymentApproval,
   paymentItemKey,
   paymentMethodLabelForItem,
   recordedAccountLabel,
@@ -93,6 +95,43 @@ export function PaymentListPanel() {
   };
 
   const clearSelection = () => setSelected(new Set());
+
+  const declineOne = (item: PaymentApprovalItem) => {
+    const label = `${item.order.invoiceNumber ?? item.order.id} ${PAYMENT_TYPE_SHORT[item.type]}`;
+    if (!confirm(`Decline ${label} payment? It will be removed from pending approvals.`)) return;
+    const res = declinePaymentApproval(item);
+    if (!res.ok) {
+      alert(res.message);
+      return;
+    }
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(paymentItemKey(item));
+      return next;
+    });
+    refresh();
+  };
+
+  const declineSelected = () => {
+    if (selectedItems.length === 0) return;
+    if (
+      !confirm(
+        `Decline ${selectedItems.length} selected payment${selectedItems.length > 1 ? "s" : ""}? They will be removed from pending approvals.`
+      )
+    ) {
+      return;
+    }
+    const res = declineBulkPaymentApprovals(selectedItems);
+    if (res.failed.length > 0) {
+      alert(
+        `${res.ok} declined, ${res.failed.length} failed:\n${res.failed
+          .map((f) => `${f.label}: ${f.message}`)
+          .join("\n")}`
+      );
+    }
+    refresh();
+    clearSelection();
+  };
 
   const pendingTotal = useMemo(
     () => pending.reduce((s, item) => s + item.amount, 0),
@@ -192,6 +231,14 @@ export function PaymentListPanel() {
               </button>
               <button
                 type="button"
+                onClick={declineSelected}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Decline Selected ({selected.size})
+              </button>
+              <button
+                type="button"
                 onClick={() => setBulkOpen(true)}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
               >
@@ -227,7 +274,7 @@ export function PaymentListPanel() {
                 )}
                 <th className={clsx(TH, "w-[110px]")}>Status</th>
                 {tab === "pending" && (
-                  <th className={clsx(TH, "w-[90px] text-center")}>Action</th>
+                  <th className={clsx(TH, "w-[160px] text-center")}>Action</th>
                 )}
               </tr>
             </thead>
@@ -324,14 +371,24 @@ export function PaymentListPanel() {
                     </td>
                     {tab === "pending" && (
                       <td className={clsx(TD_NOWRAP, "text-center")}>
-                        <button
-                          type="button"
-                          onClick={() => setApproveItem(item)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#2563eb] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#1d4ed8]"
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                          Approve
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => declineOne(item)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-50"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            Decline
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setApproveItem(item)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-[#2563eb] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#1d4ed8]"
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            Approve
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>

@@ -1643,16 +1643,48 @@ function saveData(data: AccountingData) {
   emitDataUpdated();
 }
 
+/**
+ * Cache the parsed accounting blob by its raw string. loadAccountingData() is
+ * called hundreds of times per accounting render (getInvoiceById, getAccountById,
+ * getAccountBalance, ledger building…), so re-parsing the JSON on every call was
+ * a real drag. Any write goes through saveData(), which changes the stored
+ * string and so naturally invalidates this cache on the next read.
+ */
+let accountingRawCache: { key: string; raw: string; data: AccountingData } | null = null;
+
 function readStoredAccountingData(): AccountingData | null {
   const key = storageKey();
   if (!key) return null;
   const raw = localStorage.getItem(key);
   if (!raw) return null;
+  if (
+    accountingRawCache &&
+    accountingRawCache.key === key &&
+    accountingRawCache.raw === raw
+  ) {
+    return accountingRawCache.data;
+  }
   try {
-    return JSON.parse(raw) as AccountingData;
+    const data = JSON.parse(raw) as AccountingData;
+    accountingRawCache = { key, raw, data };
+    return data;
   } catch {
     return null;
   }
+}
+
+/**
+ * Shallow-clone every top-level array so callers can push/replace entries (the
+ * write functions do `data.income.push(...)` / `data.expenses[i] = next`) without
+ * mutating the cached canonical copy returned by readStoredAccountingData().
+ * Entry objects are always replaced immutably, so cloning the arrays is enough.
+ */
+function cloneAccountingArrays(d: AccountingData): AccountingData {
+  const out = { ...d } as Record<string, unknown>;
+  for (const k of Object.keys(out)) {
+    if (Array.isArray(out[k])) out[k] = [...(out[k] as unknown[])];
+  }
+  return out as unknown as AccountingData;
 }
 
 export function loadAccountingData(): AccountingData {
@@ -1672,7 +1704,7 @@ export function loadAccountingData(): AccountingData {
     }
 
     if ((stored.accountingSchemaVersion ?? 0) >= ACCOUNTING_SCHEMA_VERSION) {
-      return { ...stored, transfers: stored.transfers ?? [] };
+      return cloneAccountingArrays({ ...stored, transfers: stored.transfers ?? [] });
     }
 
     const { data } = migrateAccountingData(stored);

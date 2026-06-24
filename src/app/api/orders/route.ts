@@ -57,39 +57,48 @@ export async function GET(req: Request) {
     // Web Order List universe: web orders that are not preorders.
     const baseWhere = "scope = $1 and is_web and not is_preorder";
 
-    // Per-tab counts for the tab badges (single pass).
+    // Per-tab counts for the tab badges (single pass, no search filter).
     const countSelects = (Object.keys(TAB_SQL) as WebOrderTabKey[])
       .map((k) => `count(*) filter (where ${TAB_SQL[k]}) as "${k}"`)
       .join(", ");
-    const countsRes = await pool.query(
-      `select ${countSelects} from orders where ${baseWhere}`,
-      [scope]
-    );
-    const counts = countsRes.rows[0] ?? {};
-    for (const k of Object.keys(counts)) counts[k] = Number(counts[k]);
 
-    // Active tab + optional search → total and one page of full order JSON.
+    // Active tab + optional search → one page of full order JSON.
     const params: unknown[] = [scope];
     let where = `${baseWhere} and (${TAB_SQL[tab]})`;
     if (search) {
       params.push(`%${search}%`);
       where += ` and search_text like $${params.length}`;
     }
-
-    const totalRes = await pool.query(
-      `select count(*) as n from orders where ${where}`,
-      params
-    );
-    const total = Number(totalRes.rows[0]?.n ?? 0);
-
     const pageParams = [...params, limit, offset];
-    const rowsRes = await pool.query(
-      `select data from orders where ${where}
-       order by ord asc
-       limit $${pageParams.length - 1} offset $${pageParams.length}`,
-      pageParams
-    );
+
+    // Run the counts and page queries in parallel to halve round-trip latency.
+    // The total for the active tab comes for free from the counts row when there
+    // is no search; only a search needs its own filtered count.
+    const queries: Promise<unknown>[] = [
+      pool.query(`select ${countSelects} from orders where ${baseWhere}`, [scope]),
+      pool.query(
+        `select data from orders where ${where}
+         order by ord asc
+         limit $${pageParams.length - 1} offset $${pageParams.length}`,
+        pageParams
+      ),
+    ];
+    if (search) {
+      queries.push(
+        pool.query(`select count(*) as n from orders where ${where}`, params)
+      );
+    }
+
+    const [countsRes, rowsRes, totalRes] = (await Promise.all(queries)) as Array<{
+      rows: Array<Record<string, unknown>>;
+    }>;
+
+    const counts = countsRes.rows[0] ?? {};
+    for (const k of Object.keys(counts)) counts[k] = Number(counts[k]);
     const rows = rowsRes.rows.map((r) => r.data);
+    const total = search
+      ? Number(totalRes.rows[0]?.n ?? 0)
+      : Number(counts[tab] ?? 0);
 
     return NextResponse.json({ ok: true, rows, total, counts, page, limit });
   } catch (e) {

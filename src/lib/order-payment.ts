@@ -575,17 +575,26 @@ export type BulkPaymentApprovalResult = {
 };
 
 export function recordBulkPaymentApprovals(
-  items: PaymentApprovalItem[]
+  items: PaymentApprovalItem[],
+  options: { accountId?: string } = {}
 ): BulkPaymentApprovalResult {
   const accounts = loadAccountingData().accounts.filter((a) => a.active);
   const fallbackAccountId = accounts[0]?.id;
+  const selectedAccountId = options.accountId?.trim();
+  const selectedAccountExists = selectedAccountId
+    ? accounts.some((account) => account.id === selectedAccountId)
+    : true;
   const failed: BulkPaymentApprovalResult["failed"] = [];
   let ok = 0;
 
   for (const item of items) {
     const key = paymentItemKey(item);
     const label = `${item.order.invoiceNumber ?? item.order.id} · ${PAYMENT_TYPE_LABELS[item.type]}`;
-    const accountId = defaultAccountIdForPaymentItem(item) ?? fallbackAccountId;
+    const accountId = selectedAccountId || defaultAccountIdForPaymentItem(item) || fallbackAccountId;
+    if (!selectedAccountExists) {
+      failed.push({ key, label, message: "Selected account is not active" });
+      continue;
+    }
     if (!accountId) {
       failed.push({ key, label, message: "No active account — add one in Chart Of Account" });
       continue;

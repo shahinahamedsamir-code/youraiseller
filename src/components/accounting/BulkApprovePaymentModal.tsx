@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Circle, X } from "lucide-react";
 import clsx from "clsx";
-import { formatBdt } from "@/lib/accounting-store";
+import { ACCOUNT_TYPE_LABELS, formatBdt } from "@/lib/accounting-store";
 import {
   defaultAccountIdForPaymentItem,
   PAYMENT_TYPE_LABELS,
@@ -23,6 +23,8 @@ type Props = {
 export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props) {
   const { data } = useAccountingData();
   const accounts = useMemo(() => data.accounts.filter((a) => a.active), [data.accounts]);
+  const [accountId, setAccountId] = useState("");
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<ReturnType<typeof recordBulkPaymentApprovals> | null>(
     null
@@ -32,8 +34,25 @@ export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props
 
   useEffect(() => {
     if (!open) return;
+    const activeIds = new Set(accounts.map((account) => account.id));
+    const mappedIds = items
+      .map((item) => defaultAccountIdForPaymentItem(item))
+      .filter((id): id is string => {
+        return typeof id === "string" && activeIds.has(id);
+      });
+    const commonMappedId =
+      mappedIds.length === items.length && mappedIds.every((id) => id === mappedIds[0])
+        ? mappedIds[0]
+        : "";
+    const defaultReceiveId = accounts.find((account) => account.defaultPaymentReceive)?.id ?? "";
+    setAccountId(commonMappedId || defaultReceiveId);
+    setError("");
     setResult(null);
     setSaving(false);
+  }, [open, accounts, items]);
+
+  useEffect(() => {
+    if (!open) return;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !saving) onClose();
@@ -47,15 +66,22 @@ export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props
 
   if (!open || items.length === 0) return null;
 
-  const accountName = (item: PaymentApprovalItem) => {
-    const id = defaultAccountIdForPaymentItem(item) ?? accounts[0]?.id;
+  const selectedAccountName = accounts.find((a) => a.id === accountId)?.name;
+
+  const accountName = () => {
+    const id = accountId;
     return accounts.find((a) => a.id === id)?.name ?? "—";
   };
 
   const handleApprove = () => {
+    setError("");
     if (accounts.length === 0) return;
+    if (!accountId.trim()) {
+      setError("Select Payment Method / Received In first.");
+      return;
+    }
     setSaving(true);
-    const res = recordBulkPaymentApprovals(items);
+    const res = recordBulkPaymentApprovals(items, { accountId });
     setSaving(false);
     setResult(res);
     if (res.ok > 0) onSaved();
@@ -101,9 +127,62 @@ export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props
           {!done ? (
             <>
               <p className="mb-3 text-sm text-slate-600">
-                Each payment will be approved at full pending amount and saved to the matching
-                account (bKash, cash, bank, etc.) based on how the customer paid.
+                Choose the payment method / account where these selected payments were received.
               </p>
+              <div className="mb-4">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Payment Method / Received In
+                  </p>
+                  {selectedAccountName && (
+                    <p className="truncate text-xs font-semibold text-emerald-700">
+                      {selectedAccountName}
+                    </p>
+                  )}
+                </div>
+                {accounts.length === 0 ? (
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                    No accounts - add in Chart Of Account
+                  </p>
+                ) : (
+                  <div className="max-h-36 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5">
+                    {accounts.map((account) => {
+                      const selected = accountId === account.id;
+                      return (
+                        <button
+                          key={account.id}
+                          type="button"
+                          onClick={() => {
+                            setAccountId(account.id);
+                            setError("");
+                          }}
+                          className={clsx(
+                            "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition",
+                            selected
+                              ? "border-emerald-300 bg-emerald-50"
+                              : "border-slate-100 bg-white hover:bg-slate-50"
+                          )}
+                        >
+                          {selected ? (
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+                          ) : (
+                            <Circle className="h-5 w-5 shrink-0 text-slate-300" />
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold text-slate-800">
+                              {account.name}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              {ACCOUNT_TYPE_LABELS[account.type]}
+                              {account.paymentMethodKey ? " linked" : ""}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <ul className="max-h-52 space-y-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/80 p-3">
                 {items.map((item) => (
                   <li
@@ -115,7 +194,7 @@ export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props
                         {item.order.invoiceNumber ?? item.order.id}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {PAYMENT_TYPE_LABELS[item.type]} → {accountName(item)}
+                        {PAYMENT_TYPE_LABELS[item.type]} → {accountName()}
                       </p>
                     </div>
                     <span className="shrink-0 font-bold text-slate-900">
@@ -127,6 +206,11 @@ export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props
               {accounts.length === 0 && (
                 <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
                   Add at least one active account in Chart Of Account first.
+                </p>
+              )}
+              {error && (
+                <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                  {error}
                 </p>
               )}
             </>
@@ -170,7 +254,7 @@ export function BulkApprovePaymentModal({ items, open, onClose, onSaved }: Props
             <button
               type="button"
               onClick={handleApprove}
-              disabled={saving || accounts.length === 0}
+              disabled={saving || accounts.length === 0 || !accountId.trim()}
               className={clsx(
                 "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white",
                 "bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"

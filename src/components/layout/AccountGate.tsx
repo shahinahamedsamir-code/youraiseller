@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { refreshCurrentSessionUser } from "@/lib/dev-users";
 import { syncInvoicedOrderDeliveryCharges } from "@/lib/order-delivery-expense";
+import { compactOrderStorage } from "@/lib/orders-store";
 import { syncSellerDataFromServer } from "@/lib/seller-sync";
 import { BrandLoadingScreen } from "@/components/brand/BrandLoadingScreen";
 
@@ -29,7 +30,9 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
       // Pull this business's shared data (orders/products/customers) so team
       // members on any device see the same data as the owner.
       try {
+        compactOrderStorage();
         await syncSellerDataFromServer();
+        compactOrderStorage();
         syncInvoicedOrderDeliveryCharges();
       } catch {
         /* offline — fall back to local data */

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
+import { gunzipSync, gzipSync } from "zlib";
 import { isDevAdminAuthenticated } from "@/lib/dev-admin-auth-server";
 import { sellerCanAccessScope } from "@/lib/seller-auth-server";
 import { sellerDataFile, sellerScopeDir } from "@/lib/seller-data-path";
@@ -7,6 +8,10 @@ import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
 import { normalizeSmsAccount } from "@/lib/sms-types";
 import { getDbPool } from "@/lib/db";
 import { syncOrdersTable } from "@/lib/orders-db";
+import {
+  SELLER_DATA_GZIP_THRESHOLD,
+  slimOrdersBlob,
+} from "@/lib/seller-data-payload";
 
 /**
  * Read one (scope, kind) blob. Prefers PostgreSQL (Supabase); falls back to the
@@ -89,6 +94,31 @@ async function authorizeScope(scope: string): Promise<boolean> {
   return sellerCanAccessScope(scope);
 }
 
+function gzipJsonResponse(payload: unknown): NextResponse {
+  const json = JSON.stringify(payload);
+  if (json.length >= SELLER_DATA_GZIP_THRESHOLD) {
+    return new NextResponse(gzipSync(json), {
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Encoding": "gzip",
+      },
+    });
+  }
+  return NextResponse.json(payload);
+}
+
+async function readJsonBody(req: Request): Promise<unknown> {
+  const buf = Buffer.from(await req.arrayBuffer());
+  if (req.headers.get("content-encoding") === "gzip") {
+    return JSON.parse(gunzipSync(buf).toString("utf-8"));
+  }
+  return JSON.parse(buf.toString("utf-8"));
+}
+
+function normalizeKindData(kind: string, data: unknown): unknown {
+  return kind === "orders" ? slimOrdersBlob(data) : data;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -104,11 +134,12 @@ export async function GET(req: Request) {
 
     if (kind === "sms") {
       const account = await loadSmsAccount(scope);
-      return NextResponse.json({ ok: true, data: account });
+      return gzipJsonResponse({ ok: true, data: account });
     }
 
-    const data = await readData(scope, kind);
-    return NextResponse.json({ ok: true, data });
+    const raw = await readData(scope, kind);
+    const data = raw == null ? null : normalizeKindData(kind, raw);
+    return gzipJsonResponse({ ok: true, data });
   } catch {
     return NextResponse.json({ ok: true, data: null });
   }
@@ -116,7 +147,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await readJsonBody(req)) as {
+      scope?: string;
+      kind?: string;
+      data?: unknown;
+    };
     const scope = sanitize(body?.scope ?? "");
     const kind = sanitize(body?.kind ?? "");
     if (!scope || !kind || !ALLOWED_KINDS.has(kind)) {
@@ -137,13 +172,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    await writeData(scope, kind, body.data);
+    const data = normalizeKindData(kind, body.data);
+    await writeData(scope, kind, data);
 
     // Keep the normalized `orders` table in sync so the paginated read API can
     // serve one page without the browser ever loading every order. Failures
     // here must not fail the seller's write (seller_data is the source of truth).
     if (kind === "orders") {
-      const list = (body.data as { orders?: unknown })?.orders;
+      const list = (data as { orders?: unknown })?.orders;
       if (Array.isArray(list)) {
         try {
           await syncOrdersTable(scope, list);

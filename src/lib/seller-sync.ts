@@ -1,5 +1,6 @@
 import { getSellerStorageScope } from "./seller-storage";
 import { getSessionUser } from "./dev-users";
+import { SELLER_DATA_GZIP_THRESHOLD, slimOrdersBlob } from "./seller-data-payload";
 
 export type SellerKind =
   | "orders"
@@ -37,18 +38,42 @@ function localKey(kind: SellerKind, scope: string): string {
 /** Skip a server pull right after a local save to avoid clobbering edits. */
 const lastPush: Record<string, number> = {};
 
+async function gzipBody(json: string): Promise<{ body: BodyInit; headers: Record<string, string> }> {
+  if (json.length < SELLER_DATA_GZIP_THRESHOLD || typeof CompressionStream === "undefined") {
+    return {
+      body: json,
+      headers: { "Content-Type": "application/json" },
+    };
+  }
+  const stream = new Blob([json]).stream().pipeThrough(new CompressionStream("gzip"));
+  const body = await new Response(stream).arrayBuffer();
+  return {
+    body,
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Encoding": "gzip",
+    },
+  };
+}
+
 export async function pushSellerData(kind: SellerKind, data: unknown): Promise<void> {
   if (typeof window === "undefined") return;
   const scope = getSellerStorageScope();
   if (!scope) return;
   lastPush[`${scope}:${kind}`] = Date.now();
   try {
-    await fetch("/api/seller-data", {
+    const payload = kind === "orders" ? slimOrdersBlob(data) : data;
+    const json = JSON.stringify({ scope, kind, data: payload });
+    const { body, headers } = await gzipBody(json);
+    const res = await fetch("/api/seller-data", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       credentials: "same-origin",
-      body: JSON.stringify({ scope, kind, data }),
+      body,
     });
+    if (!res.ok) {
+      console.warn(`[seller-sync] push ${kind} failed: ${res.status}`);
+    }
   } catch {
     /* offline — keep local copy */
   }
@@ -63,7 +88,12 @@ export async function pullSellerData(kind: SellerKind): Promise<unknown | null> 
       `/api/seller-data?scope=${encodeURIComponent(scope)}&kind=${kind}`,
       { cache: "no-store", credentials: "same-origin" }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (res.status === 413) {
+        console.warn(`[seller-sync] pull ${kind} too large (${res.status}) — using local data`);
+      }
+      return null;
+    }
     const json = await res.json();
     return json?.data ?? null;
   } catch {

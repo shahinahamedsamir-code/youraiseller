@@ -164,6 +164,72 @@ function mapWcOrderStatus(wcStatus: string): Order["status"] {
   return "pending";
 }
 
+/**
+ * App order status → WooCommerce status, for the reverse (app → Woo) push. Only
+ * the clear, safe transitions are mapped; ambiguous ones return null so the Woo
+ * order is left untouched.
+ */
+function wooStatusForAppStatus(status: Order["status"]): string | null {
+  switch (status) {
+    case "delivered":
+      return "completed";
+    case "cancelled":
+      return "cancelled";
+    case "rts":
+    case "shipped":
+      return "processing";
+    case "returned":
+      return "refunded";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Push an order's new status back to WooCommerce. No-op unless the seller turned
+ * on pushOrderStatusToWoo, the store is connected, the order originated in Woo,
+ * and the status maps to a Woo status. Best-effort — never throws, so it can't
+ * break the local status change.
+ */
+export async function pushWooOrderStatus(order: Order): Promise<void> {
+  if (typeof window === "undefined") return;
+  const woo = loadWooCommerceSettings();
+  if (!woo.pushOrderStatusToWoo || !woo.connected) return;
+  if (order.wooOrderId == null) return;
+  const wcStatus = wooStatusForAppStatus(order.status);
+  if (!wcStatus) return;
+  try {
+    const res = await fetch("/api/woocommerce/order-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storeUrl: woo.storeUrl.trim(),
+        consumerKey: woo.consumerKey.trim(),
+        consumerSecret: woo.consumerSecret.trim(),
+        orderId: Number(order.wooOrderId),
+        status: wcStatus,
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      message?: string;
+    };
+    if (json.ok) {
+      appendWooLog("success", `Pushed ${order.id} → WooCommerce status "${wcStatus}"`);
+    } else {
+      appendWooLog(
+        "error",
+        `Woo status push failed for ${order.id}: ${json.message ?? res.status}`
+      );
+    }
+  } catch (e) {
+    appendWooLog(
+      "error",
+      `Woo status push error for ${order.id}: ${e instanceof Error ? e.message : "failed"}`
+    );
+  }
+}
+
 function lineFromWooItem(item: WooOrderRow["line_items"][0]): OrderLine {
   const product = findProductForWooLine({
     sku: item.sku,

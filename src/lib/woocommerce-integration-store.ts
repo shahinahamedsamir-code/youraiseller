@@ -53,6 +53,8 @@ export type WooCommerceSettings = {
   orderStatusOnImport: WooOrderStatusPolicy;
   syncViaPlugin: boolean;
   fetchFullOrderViaApi: boolean;
+  /** Push the order status back to WooCommerce when it changes in the app. */
+  pushOrderStatusToWoo: boolean;
   /** First sync after connect — only import orders from this window (hours). */
   initialImportHours: 12 | 24;
   businessId: string;
@@ -68,6 +70,7 @@ const DEFAULT: WooCommerceSettings = {
   orderStatusOnImport: "on-hold",
   syncViaPlugin: true,
   fetchFullOrderViaApi: false,
+  pushOrderStatusToWoo: false,
   initialImportHours: 24,
   businessId: "",
   apiKey: "",
@@ -115,6 +118,7 @@ export function loadWooCommerceSettings(): WooCommerceSettings {
         String(parsed.orderStatusOnImport ?? "on-hold")
       ),
       fetchFullOrderViaApi: parsed.fetchFullOrderViaApi === true,
+      pushOrderStatusToWoo: parsed.pushOrderStatusToWoo === true,
       initialImportHours: parsed.initialImportHours === 12 ? 12 : 24,
       businessId: parsed.businessId || genId("biz"),
       apiKey: parsed.apiKey || genId("yai"),

@@ -484,6 +484,28 @@ function ConnectionTab({
               </p>
             </div>
           </label>
+
+          <label className="flex cursor-pointer gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
+            <input
+              type="checkbox"
+              checked={settings.pushOrderStatusToWoo}
+              onChange={(e) => patch({ pushOrderStatusToWoo: e.target.checked })}
+              className="mt-1 h-4 w-4 accent-violet-600"
+            />
+            <div>
+              <p className="font-bold text-slate-800">
+                Push status back to WooCommerce
+                <span className="ml-2 text-xs font-bold text-violet-700">
+                  Two-way sync
+                </span>
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                When you change an order to Delivered / Cancelled / RTS / Shipped /
+                Returned in the app, the WooCommerce order is updated too
+                (Completed / Cancelled / Processing / Refunded).
+              </p>
+            </div>
+          </label>
         </div>
       </section>
 

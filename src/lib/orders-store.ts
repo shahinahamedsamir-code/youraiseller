@@ -1566,6 +1566,14 @@ export function updateOrderStatus(id: string, status: OrderStatus): Order | null
   const updated = updateOrder(id, patch);
   if (updated) {
     appendOrderActivity(id, logForStatusChange(order.status, status, staffActor()));
+    // Two-way sync: reflect the new status back on WooCommerce (no-op unless the
+    // seller enabled it and the order came from Woo). Dynamic import avoids a
+    // circular dependency; fire-and-forget so it never blocks the local change.
+    if (updated.wooOrderId != null) {
+      void import("./woocommerce-order-sync")
+        .then((m) => m.pushWooOrderStatus(updated))
+        .catch(() => {});
+    }
   }
   return updated;
 }

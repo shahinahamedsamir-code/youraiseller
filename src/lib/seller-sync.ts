@@ -1,6 +1,11 @@
 import { getSellerStorageScope } from "./seller-storage";
 import { getSessionUser } from "./dev-users";
-import { SELLER_DATA_GZIP_THRESHOLD, slimOrdersBlob } from "./seller-data-payload";
+import {
+  isSellerDataPushTooLarge,
+  sellerDataPayloadBytes,
+  SELLER_DATA_GZIP_THRESHOLD,
+  slimOrdersBlob,
+} from "./seller-data-payload";
 
 export type SellerKind =
   | "orders"
@@ -56,15 +61,40 @@ async function gzipBody(json: string): Promise<{ body: BodyInit; headers: Record
   };
 }
 
-export async function pushSellerData(kind: SellerKind, data: unknown): Promise<void> {
-  if (typeof window === "undefined") return;
+export async function pushSellerData(
+  kind: SellerKind,
+  data: unknown,
+  options: { allowOversized?: boolean } = {}
+): Promise<boolean> {
+  if (typeof window === "undefined") return false;
   const scope = getSellerStorageScope();
-  if (!scope) return;
+  if (!scope) return false;
+
+  const payload = kind === "orders" ? slimOrdersBlob(data) : data;
+  const envelope = { scope, kind, data: payload };
+
+  if (!options.allowOversized && isSellerDataPushTooLarge(envelope)) {
+    const mb = (sellerDataPayloadBytes(envelope) / (1024 * 1024)).toFixed(1);
+    console.warn(`[seller-sync] skip push ${kind}: payload is ${mb}MB (limit 3.5MB) — using local data only`);
+    return false;
+  }
+
   lastPush[`${scope}:${kind}`] = Date.now();
   try {
-    const payload = kind === "orders" ? slimOrdersBlob(data) : data;
-    const json = JSON.stringify({ scope, kind, data: payload });
+    const json = JSON.stringify(envelope);
     const { body, headers } = await gzipBody(json);
+    const bodyBytes =
+      typeof body === "string"
+        ? new TextEncoder().encode(body).length
+        : body instanceof ArrayBuffer
+          ? body.byteLength
+          : 0;
+
+    if (!options.allowOversized && bodyBytes > SELLER_DATA_GZIP_THRESHOLD * 80) {
+      console.warn(`[seller-sync] skip push ${kind}: compressed body still too large`);
+      return false;
+    }
+
     const res = await fetch("/api/seller-data", {
       method: "POST",
       headers,
@@ -73,9 +103,12 @@ export async function pushSellerData(kind: SellerKind, data: unknown): Promise<v
     });
     if (!res.ok) {
       console.warn(`[seller-sync] push ${kind} failed: ${res.status}`);
+      return false;
     }
+    return true;
   } catch {
     /* offline — keep local copy */
+    return false;
   }
 }
 
@@ -157,6 +190,10 @@ export async function syncSellerDataFromServer(): Promise<boolean> {
       }
     } else if (localRaw && isOwner) {
       const since = lastPush[`${scope}:${kind}`] ?? 0;
+      // Large order blobs cannot be uploaded in one POST on serverless hosts — keep local.
+      if (kind === "orders" && isSellerDataPushTooLarge({ scope, kind, data: slimOrdersBlob(local) })) {
+        continue;
+      }
       if (Date.now() - since > 2000 && local != null) {
         await pushSellerData(kind, local);
       }

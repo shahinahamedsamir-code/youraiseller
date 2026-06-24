@@ -324,11 +324,21 @@ function formatRequestDate(d = new Date()): string {
   });
 }
 
+/**
+ * Cache the fully-processed user list by its raw string. loadDevUsers() runs
+ * parse + migrate + dedupe + lifecycle (and sometimes a server push) on every
+ * call, and accounting ledger rendering calls it hundreds of times per view
+ * (resolveTransactionActor does 2 lookups per row). Any user write goes through
+ * writeLocalUsers(), which changes the stored string and invalidates this cache.
+ */
+let devUsersCache: { raw: string; users: DevUser[] } | null = null;
+
 export function loadDevUsers(): DevUser[] {
   if (typeof window === "undefined") return DEFAULT_USERS;
   try {
     const raw = localStorage.getItem(USERS_KEY);
     if (!raw) return DEFAULT_USERS;
+    if (devUsersCache && devUsersCache.raw === raw) return devUsersCache.users;
     const parsed = JSON.parse(raw) as Partial<DevUser>[];
     const users = dedupeUsersByEmail(
       parsed.map((u) => migrateUser(u as DevUser))
@@ -352,6 +362,7 @@ export function loadDevUsers(): DevUser[] {
         : undefined;
       if (sessionUser) applyUserToSession(sessionUser);
     }
+    devUsersCache = { raw, users: finalUsers };
     return finalUsers;
   } catch {
     return DEFAULT_USERS;

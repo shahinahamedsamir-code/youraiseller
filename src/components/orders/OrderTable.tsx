@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  loadOrders,
   toggleOrderPrinted,
   setOrderTracking,
   type Order,
@@ -15,6 +14,10 @@ import { ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
 import { buildOrderListChips } from "@/lib/order-list-chips";
 import { loadActiveDeliveryMethods } from "@/lib/delivery-methods-store";
 import { getProductImageForLine } from "@/lib/inventory-store";
+import {
+  useApprovedOrders,
+  type ApprovedOrdersMode,
+} from "@/components/orders/useApprovedOrders";
 import { OrderStatusTabs } from "./OrderStatusTabs";
 import { OrderDetailsModal } from "./OrderDetailsModal";
 import { OrderRowActionsMenu } from "./OrderRowActionsMenu";
@@ -36,7 +39,6 @@ import {
 import {
   TablePagination,
   DEFAULT_ROWS_PER_PAGE,
-  paginateSlice,
 } from "@/components/ui/TablePagination";
 import clsx from "clsx";
 import { OrderProductsCell } from "@/components/orders/OrderProductsCell";
@@ -65,7 +67,7 @@ function phoneScore(phone: string): number {
 
 export function OrderTable({ mode = "approved", showStatusTabs = false }: Props) {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [tick, setTick] = useState(0);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<OrderStatus>("pending");
   const [activeChip, setActiveChip] = useState<string>("all");
@@ -96,32 +98,39 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
   );
   const chipDef = orderChips.find((c) => c.id === activeChip);
 
-  const refresh = useCallback(() => {
-    const filter: Parameters<typeof loadOrders>[0] = { search };
-
-    if (showStatusTabs || mode === "approved") {
-      filter.status = activeTab;
-      if (activeTab === "pending") filter.excludeWebQueue = true;
-    } else if (mode === "preorder") {
-      filter.preorder = true;
-    }
-
-    if (chipDef?.deliveryMethodId) {
-      filter.deliveryMethodId = chipDef.deliveryMethodId;
-    }
-
-    setOrders(loadOrders(filter));
-  }, [search, activeTab, mode, showStatusTabs, chipDef]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     const onData = () => refresh();
     window.addEventListener("youraiseller-data-updated", onData);
     return () => window.removeEventListener("youraiseller-data-updated", onData);
   }, [refresh]);
+
+  // DB-paginated (with instant localStorage paint + fallback). Only the current
+  // page is held in memory in DB mode, so this scales to very large datasets.
+  const tableMode: ApprovedOrdersMode =
+    showStatusTabs || mode === "approved"
+      ? "approved"
+      : mode === "preorder"
+        ? "preorder"
+        : "all";
+  const {
+    rows: paged,
+    total: totalRows,
+    statusCounts,
+    chipCounts,
+    loading: ordersLoading,
+  } = useApprovedOrders({
+    mode: tableMode,
+    status: activeTab,
+    deliveryMethodId: chipDef?.deliveryMethodId,
+    search,
+    sortKey,
+    sortDesc,
+    page,
+    rowsPerPage,
+    refreshKey: tick,
+  });
 
   const reloadDeliveryMethods = useCallback(() => {
     const active = loadActiveDeliveryMethods();
@@ -149,44 +158,6 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
   useEffect(() => {
     setPage(1);
   }, [activeTab, activeChip, search]);
-
-  const sorted = useMemo(() => {
-    const list = [...orders];
-    list.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === "date") cmp = a.createdAt.localeCompare(b.createdAt);
-      else if (sortKey === "total") cmp = a.total - b.total;
-      else cmp = a.customerName.localeCompare(b.customerName);
-      return sortDesc ? -cmp : cmp;
-    });
-    return list;
-  }, [orders, sortKey, sortDesc]);
-
-  const paged = paginateSlice(sorted, page, rowsPerPage);
-
-  const chipCounts = useMemo(() => {
-    const base = loadOrders(
-      showStatusTabs || mode === "approved"
-        ? {
-            status: activeTab,
-            ...(activeTab === "pending" ? { excludeWebQueue: true } : {}),
-          }
-        : mode === "preorder"
-          ? { preorder: true }
-          : undefined
-    );
-    const chips = buildOrderListChips(deliveryMethods);
-    const counts: Record<string, number> = {};
-    for (const chip of chips) {
-      if (chip.id === "all") counts.all = base.length;
-      else if (chip.deliveryMethodId) {
-        counts[chip.id] = base.filter(
-          (o) => o.deliveryMethodId === chip.deliveryMethodId
-        ).length;
-      }
-    }
-    return counts;
-  }, [activeTab, mode, showStatusTabs, deliveryMethods]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -216,7 +187,11 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
   return (
     <div className="space-y-0">
       {(showStatusTabs || mode === "approved") && (
-        <OrderStatusTabs active={activeTab} onChange={setActiveTab} />
+        <OrderStatusTabs
+          active={activeTab}
+          onChange={setActiveTab}
+          counts={statusCounts}
+        />
       )}
 
       <div className="yai-panel overflow-x-hidden overflow-y-visible rounded-t-none border-t-0">
@@ -439,18 +414,24 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
 
         {paged.length === 0 && (
           <p className="p-12 text-center text-sm text-slate-500">
-            No orders in this view.{" "}
-            <Link
-              href="/dashboard/orders/approved/new"
-              className="font-semibold text-indigo-600 hover:underline"
-            >
-              Create new order
-            </Link>
+            {ordersLoading ? (
+              "Loading orders…"
+            ) : (
+              <>
+                No orders in this view.{" "}
+                <Link
+                  href="/dashboard/orders/approved/new"
+                  className="font-semibold text-indigo-600 hover:underline"
+                >
+                  Create new order
+                </Link>
+              </>
+            )}
           </p>
         )}
 
         <TablePagination
-          totalRows={sorted.length}
+          totalRows={totalRows}
           page={page}
           rowsPerPage={rowsPerPage}
           selectedCount={selected.size}

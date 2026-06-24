@@ -7,10 +7,13 @@ import { getOrderStatusCounts, type OrderStatus } from "@/lib/orders-store";
 type Props = {
   active: OrderStatus;
   onChange: (status: OrderStatus) => void;
+  /** DB-backed counts; falls back to the localStorage compute when omitted. */
+  counts?: Record<string, number>;
 };
 
-export function OrderStatusTabs({ active, onChange }: Props) {
-  const counts = getOrderStatusCounts();
+export function OrderStatusTabs({ active, onChange, counts: countsProp }: Props) {
+  // Only fall back to the (heavy) localStorage scan when no counts were passed.
+  const counts = countsProp ?? getOrderStatusCounts();
 
   return (
     <div className="overflow-x-auto rounded-t-2xl border border-b-0 border-slate-200/80 bg-white">

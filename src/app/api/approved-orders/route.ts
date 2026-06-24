@@ -79,7 +79,12 @@ export async function GET(req: Request) {
     chipCounts.all = allCount;
 
     // ── Status tab counts (approved mode only) — match getOrderStatusCounts() ──
-    let statusCounts: Record<string, number> = {};
+    const statusCounts: Record<string, number> = {};
+    // grandTotal = how many orders exist in this mode's whole universe. The
+    // client compares it to its local count to decide whether the localStorage
+    // copy is complete (then it stays on the always-fresh local view) or
+    // truncated/behind (then it defers to this DB page).
+    let grandTotal = 0;
     if (mode === "approved") {
       const sc = await pool.query(
         `select status, count(*)::int as n from orders
@@ -87,7 +92,16 @@ export async function GET(req: Request) {
          group by status`,
         [scope]
       );
-      for (const r of sc.rows) if (r.status) statusCounts[r.status] = r.n;
+      for (const r of sc.rows) {
+        if (r.status) statusCounts[r.status] = r.n;
+        grandTotal += r.n;
+      }
+    } else {
+      const gt = await pool.query(
+        `select count(*)::int as n from orders where ${base}`,
+        params
+      );
+      grandTotal = gt.rows[0]?.n ?? 0;
     }
 
     // ── Active page: base + chip + search, sorted + paginated ──
@@ -120,6 +134,7 @@ export async function GET(req: Request) {
       ok: true,
       rows,
       total,
+      grandTotal,
       chipCounts,
       statusCounts,
       page,

@@ -101,6 +101,7 @@ export function useApprovedOrders(p: Params): ApprovedOrdersData {
     key: string;
     rows: Order[];
     total: number;
+    grandTotal: number;
     statusCounts: Record<string, number>;
     chipCounts: Record<string, number>;
   } | null>(null);
@@ -132,6 +133,7 @@ export function useApprovedOrders(p: Params): ApprovedOrdersData {
           key,
           rows: Array.isArray(d.rows) ? d.rows : [],
           total: Number(d.total ?? 0),
+          grandTotal: Number(d.grandTotal ?? 0),
           statusCounts: d.statusCounts ?? {},
           chipCounts: d.chipCounts ?? {},
         });
@@ -169,7 +171,18 @@ export function useApprovedOrders(p: Params): ApprovedOrdersData {
   }, [mode, status, deliveryMethodId, debouncedSearch, sortKey, sortDesc, page, rowsPerPage, refreshKey]);
 
   return useMemo<ApprovedOrdersData>(() => {
-    if (db && db.key === currentKey) {
+    // localStorage is the source of truth and the freshest copy of the current
+    // user's own edits, so prefer the local view. Only defer to the DB page when
+    // the DB genuinely holds MORE orders than the local copy — i.e. localStorage
+    // is truncated (lakh-scale) or this browser is behind another device. This
+    // keeps in-list status changes instant (the moved order shows in its new tab
+    // immediately) while still scaling past what localStorage can hold.
+    const localGrand =
+      mode === "approved"
+        ? Object.values(localView.statusCounts).reduce((a, b) => a + b, 0)
+        : localView.chipCounts.all ?? 0;
+
+    if (db && db.key === currentKey && db.grandTotal > localGrand) {
       return {
         rows: db.rows,
         total: db.total,
@@ -187,5 +200,5 @@ export function useApprovedOrders(p: Params): ApprovedOrdersData {
       loading: loading && localView.rows.length === 0,
       source: "local",
     };
-  }, [db, currentKey, localView, loading]);
+  }, [db, currentKey, localView, loading, mode]);
 }

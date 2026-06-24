@@ -150,8 +150,14 @@ export function useWebOrders({
   }, [localOrders, debouncedSearch, tab, page, rowsPerPage]);
 
   return useMemo<WebOrdersData>(() => {
-    // Authoritative DB page, but only when it matches what the user is viewing.
-    if (db && db.key === currentKey) {
+    // localStorage is the source of truth and the freshest copy of the user's
+    // own edits, so prefer the local view. Defer to the DB page only when the DB
+    // genuinely holds MORE web orders than the local copy (the "all" tab count) —
+    // i.e. localStorage is truncated (lakh-scale) or this browser is behind.
+    // This keeps status changes instant while still scaling past localStorage.
+    const localGrand = localView.counts.all ?? 0;
+    const dbGrand = db?.counts.all ?? 0;
+    if (db && db.key === currentKey && dbGrand > localGrand) {
       return {
         rows: db.rows,
         total: db.total,

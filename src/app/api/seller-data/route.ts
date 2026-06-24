@@ -77,6 +77,7 @@ const ALLOWED_KINDS = new Set([
   "deliverymethods",
   "sms",
   "accounting",
+  "poscash",
 ]);
 
 function sanitize(part: string): string | null {

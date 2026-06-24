@@ -1,4 +1,5 @@
 import { emitDataUpdated } from "./data-events";
+import { pushSellerData } from "./seller-sync";
 
 export type CashMovementType = "cash_in" | "cash_out";
 
@@ -42,6 +43,10 @@ export function loadSessions(): CashRegisterSession[] {
 
 function saveSessions(sessions: CashRegisterSession[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+  // Mirror cash-register sessions (financial cash-drawer records) to the DB,
+  // scoped to the logged-in seller, so they survive device/localStorage loss and
+  // land in the daily backup. Best-effort — never blocks the local save.
+  void pushSellerData("poscash", sessions);
   emitDataUpdated();
 }
 

@@ -19,7 +19,8 @@ export type SellerKind =
   | "advancesettings"
   | "deliverymethods"
   | "sms"
-  | "accounting";
+  | "accounting"
+  | "poscash";
 
 const KINDS: SellerKind[] = [
   "orders",

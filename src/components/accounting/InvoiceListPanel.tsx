@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import { Eye, FileText, Printer, Search, Wallet, XCircle } from "lucide-react";
+import { Eye, FileText, MoreVertical, Printer, Search, Wallet, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
   formatBdt,
@@ -42,6 +42,8 @@ export function InvoiceListPanel() {
   const [cancelInvoice, setCancelInvoice] = useState<AccountingInvoice | null>(null);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(() => {
     if (viewInvoice) {
@@ -82,6 +84,16 @@ export function InvoiceListPanel() {
   }, [allInvoices, search, statusFilter]);
 
   useEffect(() => { setPage(1); }, [search, statusFilter]);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
 
   const pagedInvoices = paginateSlice(filtered, page, rowsPerPage);
   const totalCollected = filtered.reduce((s, inv) => s + invoiceNetCollected(inv), 0);
@@ -266,45 +278,70 @@ export function InvoiceListPanel() {
                         {INVOICE_STATUS_LABELS[inv.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <div className="inline-flex flex-wrap items-center justify-center gap-1">
-                        {inv.status !== "cancelled" && (
+                    <td className="relative px-4 py-3.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setOpenMenu(openMenu === inv.id ? null : inv.id)}
+                        className="inline-flex rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        aria-label="Invoice actions"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {openMenu === inv.id && (
+                        <div
+                          ref={menuRef}
+                          className="absolute right-4 z-20 mt-1 w-40 rounded-xl border border-slate-200 bg-white py-1 text-left shadow-xl"
+                        >
+                          {inv.status !== "cancelled" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCancelInvoice(inv);
+                                setOpenMenu(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancel
+                            </button>
+                          )}
+                          {due > 0 && canPay.ok && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPayDueInvoice(inv);
+                                setOpenMenu(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50"
+                            >
+                              <Wallet className="h-4 w-4" />
+                              Pay Due
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => setCancelInvoice(inv)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50"
+                            onClick={() => {
+                              setViewInvoice(inv);
+                              setOpenMenu(null);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                           >
-                            <XCircle className="h-3.5 w-3.5" />
-                            Cancel
+                            <Eye className="h-4 w-4" />
+                            View
                           </button>
-                        )}
-                        {due > 0 && canPay.ok && (
                           <button
                             type="button"
-                            onClick={() => setPayDueInvoice(inv)}
-                            className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-amber-600"
+                            onClick={() => {
+                              openSmartInvoicePrint(inv.orderId);
+                              setOpenMenu(null);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                           >
-                            <Wallet className="h-3.5 w-3.5" />
-                            Pay Due
+                            <Printer className="h-4 w-4" />
+                            Print
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setViewInvoice(inv)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          View
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openSmartInvoicePrint(inv.orderId)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-slate-900"
-                        >
-                          <Printer className="h-3.5 w-3.5" />
-                          Print
-                        </button>
-                      </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

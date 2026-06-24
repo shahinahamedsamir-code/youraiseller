@@ -55,6 +55,9 @@ async function readUsers(): Promise<StoredUser[]> {
 async function writeUsers(users: StoredUser[]): Promise<void> {
   await fs.mkdir(getAppDataDir(), { recursive: true });
   await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+  // Live dual-write the password change straight to Postgres (see data-mirror).
+  const { mirrorFileToDb } = await import("./data-mirror");
+  await mirrorFileToDb(USERS_FILE);
 }
 
 function normalizeEmail(email: string): string {

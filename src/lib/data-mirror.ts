@@ -53,6 +53,31 @@ async function walkJsonFiles(dir: string): Promise<string[]> {
   return out;
 }
 
+/**
+ * Live dual-write: mirror a single JSON file into app_files immediately after it
+ * is written to disk, so critical file-only state (accounts, wallet balances)
+ * reaches Postgres within seconds instead of waiting for the periodic mirror.
+ * Best-effort — never throws, so a DB hiccup can't break the caller's write.
+ */
+export async function mirrorFileToDb(absPath: string): Promise<void> {
+  const pool = getDbPool();
+  if (!pool) return;
+  try {
+    await ensureTable();
+    const raw = await fs.readFile(absPath, "utf-8");
+    const parsed = JSON.parse(raw);
+    const key = relKey(getAppDataDir(), absPath);
+    await pool.query(
+      `insert into ${TABLE} (path, data, updated_at)
+       values ($1, $2, now())
+       on conflict (path) do update set data = excluded.data, updated_at = now()`,
+      [key, JSON.stringify(parsed)]
+    );
+  } catch (e) {
+    console.error("[data-mirror] live mirror failed", absPath, e);
+  }
+}
+
 export type MirrorResult = {
   files: number;
   skipped: number;

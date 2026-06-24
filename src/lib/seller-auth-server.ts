@@ -110,6 +110,10 @@ export async function writeDevUsersFile(users: StoredUser[]): Promise<void> {
   const { mkdir } = await import("fs/promises");
   await mkdir(getAppDataDir(), { recursive: true });
   await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+  // Live dual-write: accounts are the crown jewel — push to Postgres immediately
+  // so they survive sudden VPS loss instead of waiting for the periodic mirror.
+  const { mirrorFileToDb } = await import("./data-mirror");
+  await mirrorFileToDb(USERS_FILE);
 }
 
 export function resolveDataScopeForUser(

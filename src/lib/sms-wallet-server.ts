@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import type { SmsAccount } from "./sms-types";
 import { sellerDataFile, sellerScopeDir } from "./seller-data-path";
+import { mirrorFileToDb } from "./data-mirror";
 
 const WALLET_FILE = "sms-wallet.json";
 
@@ -69,6 +70,7 @@ export async function saveSmsWalletSnapshot(
 
   await fs.mkdir(sellerScopeDir(scope), { recursive: true });
   await fs.writeFile(walletPath(scope), JSON.stringify(snapshot, null, 2), "utf-8");
+  await mirrorFileToDb(walletPath(scope));
   return snapshot;
 }
 

@@ -45,9 +45,12 @@ const server = http.createServer((req, res) => {
     res.end("Deploying...");
 
     try {
+      // Build first (the old workers keep serving), then `pm2 reload` does a
+      // rolling restart across the cluster instances so the site never returns
+      // 502 during a deploy (zero-downtime).
       execSync(
-        `cd ${REPO_DIR} && git fetch origin main && git reset --hard origin/main && npm install && npx next build && pm2 restart youraiseller`,
-        { stdio: "inherit", timeout: 120000 }
+        `cd ${REPO_DIR} && git fetch origin main && git reset --hard origin/main && npm install && npx next build && pm2 reload ecosystem.config.js`,
+        { stdio: "inherit", timeout: 180000 }
       );
       console.log("[webhook] Deploy complete!");
     } catch (e) {

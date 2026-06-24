@@ -61,6 +61,10 @@ export async function saveSmsAccount(
   });
   await fs.mkdir(sellerScopeDir(scope), { recursive: true });
   await fs.writeFile(fileFor(scope), JSON.stringify(account, null, 2), "utf-8");
+  // Live dual-write: the SMS account holds the send logs (paid actions), so push
+  // to Postgres immediately instead of waiting for the 2h mirror.
+  const { mirrorFileToDb } = await import("./data-mirror");
+  await mirrorFileToDb(fileFor(scope));
 }
 
 export async function updateSmsServiceEnabled(

@@ -143,6 +143,10 @@ export async function saveAutoCallAccount(
   });
   await fs.mkdir(sellerScopeDir(scope), { recursive: true });
   await fs.writeFile(fileFor(scope), JSON.stringify(account, null, 2), "utf-8");
+  // Live dual-write: the auto-call account holds the call logs (paid actions),
+  // so push to Postgres immediately instead of waiting for the 2h mirror.
+  const { mirrorFileToDb } = await import("./data-mirror");
+  await mirrorFileToDb(fileFor(scope));
 }
 
 export async function updateAutoCallSettings(

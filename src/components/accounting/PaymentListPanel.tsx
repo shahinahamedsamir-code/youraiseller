@@ -8,8 +8,6 @@ import { formatBdt } from "@/lib/accounting-store";
 import {
   loadOrdersPendingPayment,
   loadOrdersRecordedPayment,
-  declineBulkPaymentApprovals,
-  declinePaymentApproval,
   paymentItemKey,
   paymentMethodLabelForItem,
   recordedAccountLabel,
@@ -18,6 +16,7 @@ import {
 } from "@/lib/order-payment";
 import { RecordOrderPaymentModal } from "./RecordOrderPaymentModal";
 import { BulkApprovePaymentModal } from "./BulkApprovePaymentModal";
+import { DeclinePaymentModal } from "./DeclinePaymentModal";
 import { OrderProductsList } from "@/components/orders/OrderProductsList";
 import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
@@ -40,6 +39,7 @@ export function PaymentListPanel() {
   const [pending, setPending] = useState<PaymentApprovalItem[]>([]);
   const [recorded, setRecorded] = useState<PaymentApprovalItem[]>([]);
   const [approveItem, setApproveItem] = useState<PaymentApprovalItem | null>(null);
+  const [declineItems, setDeclineItems] = useState<PaymentApprovalItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -67,8 +67,10 @@ export function PaymentListPanel() {
   const rows = tab === "pending" ? pending : recorded;
   const pagedRows = paginateSlice(rows, page, rowsPerPage);
 
+  const selectablePageRows = tab === "pending" ? pagedRows : [];
   const allPendingSelected =
-    pending.length > 0 && pending.every((item) => selected.has(paymentItemKey(item)));
+    selectablePageRows.length > 0 &&
+    selectablePageRows.every((item) => selected.has(paymentItemKey(item)));
 
   const selectedItems = useMemo(
     () => pending.filter((item) => selected.has(paymentItemKey(item))),
@@ -90,48 +92,19 @@ export function PaymentListPanel() {
   };
 
   const toggleSelectAll = () => {
-    if (allPendingSelected) setSelected(new Set());
-    else setSelected(new Set(pending.map((item) => paymentItemKey(item))));
+    const pageKeys = selectablePageRows.map((item) => paymentItemKey(item));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allPendingSelected) {
+        pageKeys.forEach((key) => next.delete(key));
+      } else {
+        pageKeys.forEach((key) => next.add(key));
+      }
+      return next;
+    });
   };
 
   const clearSelection = () => setSelected(new Set());
-
-  const declineOne = (item: PaymentApprovalItem) => {
-    const label = `${item.order.invoiceNumber ?? item.order.id} ${PAYMENT_TYPE_SHORT[item.type]}`;
-    if (!confirm(`Decline ${label} payment? It will be removed from pending approvals.`)) return;
-    const res = declinePaymentApproval(item);
-    if (!res.ok) {
-      alert(res.message);
-      return;
-    }
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.delete(paymentItemKey(item));
-      return next;
-    });
-    refresh();
-  };
-
-  const declineSelected = () => {
-    if (selectedItems.length === 0) return;
-    if (
-      !confirm(
-        `Decline ${selectedItems.length} selected payment${selectedItems.length > 1 ? "s" : ""}? They will be removed from pending approvals.`
-      )
-    ) {
-      return;
-    }
-    const res = declineBulkPaymentApprovals(selectedItems);
-    if (res.failed.length > 0) {
-      alert(
-        `${res.ok} declined, ${res.failed.length} failed:\n${res.failed
-          .map((f) => `${f.label}: ${f.message}`)
-          .join("\n")}`
-      );
-    }
-    refresh();
-    clearSelection();
-  };
 
   const pendingTotal = useMemo(
     () => pending.reduce((s, item) => s + item.amount, 0),
@@ -231,7 +204,7 @@ export function PaymentListPanel() {
               </button>
               <button
                 type="button"
-                onClick={declineSelected}
+                onClick={() => setDeclineItems(selectedItems)}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50"
               >
                 <XCircle className="h-3.5 w-3.5" />
@@ -374,7 +347,7 @@ export function PaymentListPanel() {
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => declineOne(item)}
+                            onClick={() => setDeclineItems([item])}
                             className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-50"
                           >
                             <XCircle className="h-3 w-3" />
@@ -444,6 +417,16 @@ export function PaymentListPanel() {
           setBulkOpen(false);
           clearSelection();
         }}
+        onSaved={() => {
+          refresh();
+          clearSelection();
+        }}
+      />
+
+      <DeclinePaymentModal
+        items={declineItems}
+        open={declineItems.length > 0}
+        onClose={() => setDeclineItems([])}
         onSaved={() => {
           refresh();
           clearSelection();

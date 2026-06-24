@@ -114,7 +114,8 @@ export function declineReturnDeliveryCharge(
 }
 
 export function declinePaymentApproval(
-  item: PaymentApprovalItem
+  item: PaymentApprovalItem,
+  input: { note?: string } = {}
 ): { ok: true } | { ok: false; message: string } {
   if (item.type === "return_delivery_expense") {
     return declineReturnDeliveryCharge(item.order.id);
@@ -128,6 +129,10 @@ export function declinePaymentApproval(
     month: "short",
     year: "numeric",
   });
+  const note = input.note?.trim();
+  const detail = note
+    ? `Declined from Accounting Payment on ${today} · ${note}`
+    : `Declined from Accounting Payment on ${today}`;
 
   if (item.type === "advance") {
     if (order.advancePaymentCollectionStatus === "recorded" || order.advanceAccountingIncomeId) {
@@ -140,7 +145,7 @@ export function declinePaymentApproval(
     appendOrderActivity(order.id, {
       type: "payment",
       title: "Advance payment declined",
-      detail: `Declined from Accounting Payment on ${today}`,
+      detail,
     });
     return { ok: true };
   }
@@ -155,7 +160,7 @@ export function declinePaymentApproval(
   appendOrderActivity(order.id, {
     type: "payment",
     title: "Delivery payment declined",
-    detail: `Declined from Accounting Payment on ${today}`,
+    detail,
   });
   return { ok: true };
 }
@@ -572,6 +577,7 @@ export function recordInvoiceDuePayment(
 ): { ok: true; incomeId: string; invoiceId: string } | { ok: false; message: string } {
   const invoice = getInvoiceById(invoiceId);
   if (!invoice) return { ok: false, message: "Invoice not found" };
+  if (invoice.status === "cancelled") return { ok: false, message: "Invoice is cancelled" };
   if (invoice.dueAmount <= 0) return { ok: false, message: "This invoice has no due balance" };
 
   const order = getOrder(invoice.orderId);
@@ -593,6 +599,7 @@ export function recordInvoiceDuePayment(
 export function canPayInvoiceDue(invoiceId: string): { ok: true } | { ok: false; message: string } {
   const invoice = getInvoiceById(invoiceId);
   if (!invoice) return { ok: false, message: "Invoice not found" };
+  if (invoice.status === "cancelled") return { ok: false, message: "Invoice is cancelled" };
   if (invoice.dueAmount <= 0) return { ok: false, message: "No due balance" };
   const order = getOrder(invoice.orderId);
   if (!order) return { ok: false, message: "Order not found" };
@@ -668,14 +675,17 @@ export function recordBulkPaymentApprovals(
   return { ok, failed };
 }
 
-export function declineBulkPaymentApprovals(items: PaymentApprovalItem[]): BulkPaymentApprovalResult {
+export function declineBulkPaymentApprovals(
+  items: PaymentApprovalItem[],
+  options: { note?: string } = {}
+): BulkPaymentApprovalResult {
   const failed: BulkPaymentApprovalResult["failed"] = [];
   let ok = 0;
 
   for (const item of items) {
     const key = paymentItemKey(item);
     const label = `${item.order.invoiceNumber ?? item.order.id} · ${PAYMENT_TYPE_LABELS[item.type]}`;
-    const result = declinePaymentApproval(item);
+    const result = declinePaymentApproval(item, options);
     if (result.ok) ok++;
     else failed.push({ key, label, message: result.message });
   }

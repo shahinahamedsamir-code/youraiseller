@@ -208,7 +208,7 @@ export type AccountingIncome = {
   recordedByRole?: TeamRole;
 };
 
-export type AccountingInvoiceStatus = "paid" | "partial" | "draft";
+export type AccountingInvoiceStatus = "paid" | "partial" | "draft" | "cancelled";
 
 export type InvoicePaymentEntry = {
   type: "advance" | "delivery";
@@ -245,6 +245,8 @@ export type AccountingInvoice = {
   /** Approved courier/delivery charge deducted from this invoice */
   deliveryChargeAmount?: number;
   deliveryChargeExpenseId?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
   createdAt: string;
 };
 
@@ -252,13 +254,16 @@ export const INVOICE_STATUS_LABELS: Record<AccountingInvoiceStatus, string> = {
   paid: "Paid",
   partial: "Partial — Due",
   draft: "Draft",
+  cancelled: "Cancelled",
 };
 
 export function invoiceCollectedTotal(invoice: AccountingInvoice): number {
+  if (invoice.status === "cancelled") return 0;
   return invoice.paidAmount;
 }
 
 export function invoiceDueBalance(invoice: AccountingInvoice): number {
+  if (invoice.status === "cancelled") return 0;
   if (invoice.dueAmount != null && !Number.isNaN(invoice.dueAmount)) {
     return Math.max(0, invoice.dueAmount);
   }
@@ -271,6 +276,7 @@ export function invoiceDeliveryChargeDeducted(invoice: AccountingInvoice): numbe
 
 /** Collected cash minus approved delivery/courier charge. */
 export function invoiceNetCollected(invoice: AccountingInvoice): number {
+  if (invoice.status === "cancelled") return 0;
   return Math.max(0, invoice.paidAmount - invoiceDeliveryChargeDeducted(invoice));
 }
 

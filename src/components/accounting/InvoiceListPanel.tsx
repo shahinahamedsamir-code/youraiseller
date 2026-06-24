@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { Eye, FileText, Printer, Search, Wallet } from "lucide-react";
+import { Eye, FileText, Printer, Search, Wallet, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
   formatBdt,
@@ -20,14 +20,16 @@ import { openSmartInvoicePrint } from "@/lib/order-invoice";
 import { useAccountingData } from "./useAccountingData";
 import { SmartInvoiceModal } from "./SmartInvoiceModal";
 import { PayInvoiceDueModal } from "./PayInvoiceDueModal";
+import { CancelInvoiceModal } from "./CancelInvoiceModal";
 import { TablePagination, paginateSlice, DEFAULT_ROWS_PER_PAGE } from "@/components/ui/TablePagination";
 
-type StatusFilter = "all" | "paid" | "partial" | "due";
+type StatusFilter = "all" | "paid" | "partial" | "due" | "cancelled";
 
 function matchesStatusFilter(inv: AccountingInvoice, filter: StatusFilter): boolean {
   if (filter === "all") return true;
   if (filter === "paid") return inv.status === "paid";
   if (filter === "partial") return inv.status === "partial";
+  if (filter === "cancelled") return inv.status === "cancelled";
   return invoiceDueBalance(inv) > 0;
 }
 
@@ -37,6 +39,7 @@ export function InvoiceListPanel() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [viewInvoice, setViewInvoice] = useState<AccountingInvoice | null>(null);
   const [payDueInvoice, setPayDueInvoice] = useState<AccountingInvoice | null>(null);
+  const [cancelInvoice, setCancelInvoice] = useState<AccountingInvoice | null>(null);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
@@ -58,6 +61,7 @@ export function InvoiceListPanel() {
       paid: allInvoices.filter((inv) => inv.status === "paid").length,
       partial: allInvoices.filter((inv) => inv.status === "partial").length,
       due: allInvoices.filter((inv) => invoiceDueBalance(inv) > 0).length,
+      cancelled: allInvoices.filter((inv) => inv.status === "cancelled").length,
     }),
     [allInvoices]
   );
@@ -94,6 +98,7 @@ export function InvoiceListPanel() {
             { id: "paid" as const, label: "Paid", active: "bg-emerald-600 text-white" },
             { id: "partial" as const, label: "Partial", active: "bg-amber-500 text-white" },
             { id: "due" as const, label: "Due", active: "bg-orange-600 text-white" },
+            { id: "cancelled" as const, label: "Cancelled", active: "bg-rose-600 text-white" },
           ] as const
         ).map((tab) => (
           <button
@@ -147,7 +152,7 @@ export function InvoiceListPanel() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px]">
+          <table className="w-full min-w-[1080px]">
             <thead>
               <tr className="bg-[#2b4c7e]">
                 <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white">
@@ -189,9 +194,13 @@ export function InvoiceListPanel() {
                 return (
                   <tr
                     key={inv.id}
-                    className={clsx(
+                  className={clsx(
                       "border-b border-slate-100",
-                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"
+                      inv.status === "cancelled"
+                        ? "bg-rose-50/50"
+                        : idx % 2 === 0
+                          ? "bg-white"
+                          : "bg-slate-50/60"
                     )}
                   >
                     <td className="px-4 py-3.5 text-sm font-bold text-[#2563eb]">{inv.invoiceNumber}</td>
@@ -245,7 +254,9 @@ export function InvoiceListPanel() {
                       <span
                         className={clsx(
                           "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
-                          inv.status === "paid"
+                          inv.status === "cancelled"
+                            ? "bg-rose-100 text-rose-700"
+                            : inv.status === "paid"
                             ? "bg-emerald-100 text-emerald-700"
                             : inv.status === "partial"
                               ? "bg-amber-100 text-amber-800"
@@ -257,6 +268,16 @@ export function InvoiceListPanel() {
                     </td>
                     <td className="px-4 py-3.5 text-center">
                       <div className="inline-flex flex-wrap items-center justify-center gap-1">
+                        {inv.status !== "cancelled" && (
+                          <button
+                            type="button"
+                            onClick={() => setCancelInvoice(inv)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Cancel
+                          </button>
+                        )}
                         {due > 0 && canPay.ok && (
                           <button
                             type="button"
@@ -339,6 +360,19 @@ export function InvoiceListPanel() {
             if (fresh) setViewInvoice(fresh);
           }
           setPayDueInvoice(null);
+        }}
+      />
+
+      <CancelInvoiceModal
+        invoice={cancelInvoice}
+        open={Boolean(cancelInvoice)}
+        onClose={() => setCancelInvoice(null)}
+        onSaved={() => {
+          window.dispatchEvent(new Event("youraiseller-data-updated"));
+          if (viewInvoice) {
+            const fresh = getInvoiceById(viewInvoice.id);
+            if (fresh) setViewInvoice(fresh);
+          }
         }}
       />
     </div>

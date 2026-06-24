@@ -155,7 +155,9 @@ export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) 
                 <span
                   className={clsx(
                     "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
-                    liveInvoice.status === "paid"
+                    liveInvoice.status === "cancelled"
+                      ? "bg-rose-100 text-rose-700"
+                      : liveInvoice.status === "paid"
                       ? "bg-emerald-100 text-emerald-700"
                       : liveInvoice.status === "partial"
                         ? "bg-amber-100 text-amber-800"
@@ -168,6 +170,11 @@ export function SmartInvoiceModal({ invoice, open, onClose, onUpdated }: Props) 
               <p className="text-xs text-slate-500">
                 {liveInvoice.invoiceNumber} · {liveInvoice.customerName}
               </p>
+              {liveInvoice.status === "cancelled" && liveInvoice.cancelReason && (
+                <p className="mt-1 text-xs font-medium text-rose-700">
+                  Cancel reason: {liveInvoice.cancelReason}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {due > 0 && canPay.ok && (

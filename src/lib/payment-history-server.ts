@@ -49,6 +49,10 @@ async function writeEntries(entries: PaymentHistoryEntry[]): Promise<void> {
   const dir = platformDataFile(".");
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(entries, null, 2), "utf-8");
+  // Live dual-write: payment/transaction records are money — push straight to
+  // Postgres so they survive sudden VPS loss instead of waiting for the 2h mirror.
+  const { mirrorFileToDb } = await import("./data-mirror");
+  await mirrorFileToDb(DATA_FILE);
 }
 
 export async function recordPaymentHistory(

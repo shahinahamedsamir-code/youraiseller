@@ -19,6 +19,7 @@ import {
   updateProduct,
   type Product,
 } from "@/lib/inventory-store";
+import { checkPlanLimit, planLimitMessage } from "@/lib/plan-limits";
 import { AddInventoryNameModal } from "@/components/inventory/AddInventoryNameModal";
 
 type ModalKind = "category" | "brand" | null;
@@ -157,6 +158,8 @@ export function ProductForm({ onSuccess, editId }: Props) {
         setSuccess(`Product "${updated.name}" updated!`);
         onSuccess?.(updated);
       } else {
+        const prodLimit = checkPlanLimit("products");
+        if (!prodLimit.ok) throw new Error(planLimitMessage(prodLimit));
         const product = createProduct({
           name: form.name.trim(),
           code: form.code.trim() || `SKU-${Date.now()}`,

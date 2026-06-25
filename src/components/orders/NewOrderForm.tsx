@@ -43,6 +43,7 @@ import {
   type Order,
 } from "@/lib/orders-store";
 import type { Product } from "@/lib/inventory-store";
+import { checkPlanLimit, planLimitMessage } from "@/lib/plan-limits";
 import { hasAssignedAdvancePaymentAccounts } from "@/lib/assigned-payment-accounts";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import {
@@ -407,6 +408,14 @@ export function NewOrderForm({ orderId }: Props = {}) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Invalid advance payment");
       return;
+    }
+
+    if (!(isEdit && orderId)) {
+      const orderLimit = checkPlanLimit("orders");
+      if (!orderLimit.ok) {
+        setError(planLimitMessage(orderLimit));
+        return;
+      }
     }
 
     setSaving(true);

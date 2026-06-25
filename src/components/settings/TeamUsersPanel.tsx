@@ -49,6 +49,7 @@ import {
   type TeamRole,
   type TeamUser,
 } from "@/lib/team-users-store";
+import { checkPlanLimit, planLimitMessage } from "@/lib/plan-limits";
 
 const ROLE_STYLES: Record<TeamRole, string> = {
   FOUNDER: "bg-amber-100 text-amber-700 ring-amber-200",
@@ -787,6 +788,11 @@ function UserFormModal({
 
   const submit = async () => {
     if (busy) return;
+    const seatLimit = checkPlanLimit("users");
+    if (!seatLimit.ok) {
+      setError(planLimitMessage(seatLimit));
+      return;
+    }
     setBusy(true);
     setError("");
     const res = createTeamUser({

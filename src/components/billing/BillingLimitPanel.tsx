@@ -34,6 +34,7 @@ import {
   type PaymentHistoryKind,
 } from "@/lib/payment-history-types";
 import { fetchPublicPlanConfig, loadPlanConfigLocal } from "@/lib/plan-config-client";
+import { isWebOrder } from "@/lib/plan-limits";
 import type { PlanId } from "@/lib/plan-config-types";
 import type { PlanConfig } from "@/lib/plan-config-types";
 import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
@@ -229,6 +230,7 @@ export function BillingLimitPanel() {
     setUsage({
       activeProducts: loadProducts().filter((product) => product.active !== false).length,
       periodOrders: orders.filter((order) => {
+        if (!order.approvedAt || isWebOrder(order)) return false;
         const time = parseOrderTime(order);
         return time === null || time >= periodStart;
       }).length,

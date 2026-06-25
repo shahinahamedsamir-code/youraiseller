@@ -32,6 +32,7 @@ import {
   type WooCommerceSettings,
 } from "@/lib/woocommerce-integration-store";
 import { resetWooFirstOrderSync } from "@/lib/woocommerce-order-sync";
+import { registerWooInstantSync } from "@/lib/woocommerce-webhook-client";
 import { WooCommerceStockSync } from "@/components/integration/woocommerce/WooCommerceStockSync";
 
 type TabId =
@@ -248,6 +249,29 @@ function ConnectionTab({
   copied: string | null;
   onCopy: (key: string, text: string) => void;
 }) {
+  const [enablingWebhook, setEnablingWebhook] = useState(false);
+  const [webhookMsg, setWebhookMsg] = useState<{ ok: boolean; text: string } | null>(
+    null
+  );
+
+  const enableInstantSync = async () => {
+    setEnablingWebhook(true);
+    setWebhookMsg(null);
+    try {
+      const res = await registerWooInstantSync();
+      setWebhookMsg({
+        ok: res.ok,
+        text:
+          res.message ??
+          (res.ok ? "Instant sync enabled." : "Could not enable instant sync."),
+      });
+    } catch (e) {
+      setWebhookMsg({ ok: false, text: e instanceof Error ? e.message : "Failed." });
+    } finally {
+      setEnablingWebhook(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -444,6 +468,43 @@ function ConnectionTab({
                 );
               })}
             </div>
+          </div>
+
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-bold text-slate-800">Instant order sync (webhook)</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  New WooCommerce orders arrive in real time instead of the ~20s
+                  poll. Needs the live site — registers an order.created webhook.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={enableInstantSync}
+                disabled={!settings.connected || enablingWebhook}
+                className={clsx(
+                  "shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition",
+                  !settings.connected || enablingWebhook
+                    ? "cursor-not-allowed bg-slate-300"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                )}
+              >
+                {enablingWebhook ? "Enabling…" : "Enable instant sync"}
+              </button>
+            </div>
+            {webhookMsg && (
+              <p
+                className={clsx(
+                  "mt-3 rounded-lg px-3 py-2 text-xs font-semibold",
+                  webhookMsg.ok
+                    ? "bg-emerald-50 text-emerald-800"
+                    : "bg-rose-50 text-rose-800"
+                )}
+              >
+                {webhookMsg.text}
+              </p>
+            )}
           </div>
 
           <label className="flex cursor-pointer gap-3 rounded-xl border border-teal-100 bg-teal-50/50 p-4">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { verifyGoogleProfile } from "@/lib/google-auth-server";
 import { getPlanFeatures } from "@/lib/plan-presets";
 import { redactUserForClient } from "@/lib/dev-users-server";
 import { SELLER_AUTH_COOKIE } from "@/lib/seller-auth-cookie";
@@ -30,12 +31,29 @@ function allocateCustomerId(users: Array<{ customerId?: string }>): string {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
-    const name = typeof body?.name === "string" ? body.name.trim() : "";
-    const googleId = typeof body?.googleId === "string" ? body.googleId : "";
     const mode = body?.mode === "signup" ? "signup" : "login";
 
-    if (!email || !name) {
+    // Verify the Google sign-in server-side — never trust a client-supplied
+    // email. The session cookie below is only minted for the verified identity.
+    const accessToken = typeof body?.accessToken === "string" ? body.accessToken : undefined;
+    const credential = typeof body?.credential === "string" ? body.credential : undefined;
+    if (!accessToken && !credential) {
+      return NextResponse.json({ error: "Missing Google credential." }, { status: 400 });
+    }
+
+    let profile;
+    try {
+      profile = await verifyGoogleProfile({ accessToken, credential });
+    } catch (err) {
+      console.error("[auth/google-account] verify failed", err);
+      return NextResponse.json({ error: "Invalid Google sign-in." }, { status: 401 });
+    }
+
+    const email = profile.email.toLowerCase().trim();
+    const name = profile.name.trim() || email.split("@")[0];
+    const googleId = profile.sub;
+
+    if (!email) {
       return NextResponse.json({ error: "Invalid Google profile." }, { status: 400 });
     }
 

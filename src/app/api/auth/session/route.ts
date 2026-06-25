@@ -17,27 +17,39 @@ export async function GET() {
   return NextResponse.json({ ok: true, user: redactUserForClient(user) });
 }
 
-/** Establish a signed session after Google (or other client-verified) login. */
-export async function POST(req: Request) {
+/**
+ * Refresh-only: re-sign an existing, already-verified session so the cookie
+ * keeps rolling on each page load. This endpoint CANNOT bootstrap a session
+ * from a client-supplied userId/email — a new session is only minted by
+ * /api/auth/login (password) or /api/auth/google-account (verified Google),
+ * both of which prove the credential first. Closes the prior hole where anyone
+ * who knew a userId + email could mint that seller's session.
+ */
+export async function POST() {
   try {
-    const body = await req.json();
-    const userId = typeof body?.userId === "string" ? body.userId.trim() : "";
-    const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
-
-    if (!userId || !email) {
-      return NextResponse.json({ error: "Invalid session request." }, { status: 400 });
+    const currentId = getSellerSessionUserId();
+    if (!currentId) {
+      return NextResponse.json({ error: "No active session." }, { status: 401 });
     }
 
     const users = await readDevUsersFile();
-    const user = users.find(
-      (u) => String(u.id) === userId && String(u.email ?? "").toLowerCase().trim() === email
-    );
+    const user = users.find((u) => String(u.id) === currentId);
     if (!user) {
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
+      // Stale cookie for a deleted account — clear it.
+      const res = NextResponse.json({ error: "User not found." }, { status: 404 });
+      res.cookies.set(SELLER_AUTH_COOKIE, "", {
+        ...sellerSessionCookieOptions(),
+        maxAge: 0,
+      });
+      return res;
     }
 
     const res = NextResponse.json({ ok: true, user: redactUserForClient(user) });
-    res.cookies.set(SELLER_AUTH_COOKIE, signSellerSession(userId), sellerSessionCookieOptions());
+    res.cookies.set(
+      SELLER_AUTH_COOKIE,
+      signSellerSession(currentId),
+      sellerSessionCookieOptions()
+    );
     return res;
   } catch (e) {
     console.error("[auth/session POST]", e);
@@ -47,7 +59,6 @@ export async function POST(req: Request) {
 
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
-  const had = getSellerSessionUserId();
   res.cookies.set(SELLER_AUTH_COOKIE, "", { ...sellerSessionCookieOptions(), maxAge: 0 });
   return res;
 }

@@ -59,12 +59,9 @@ function GoogleSignInButtonInner({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({
-        email: data.email,
-        name: data.name,
-        googleId: data.sub,
-        mode: variant,
-      }),
+      // Pass the access token so the server re-verifies the identity itself —
+      // the email is never trusted from the client.
+      body: JSON.stringify({ accessToken, mode: variant }),
     });
     const account = await accountRes.json();
     if (!accountRes.ok) {

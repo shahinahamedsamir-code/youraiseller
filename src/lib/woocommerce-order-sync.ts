@@ -230,6 +230,52 @@ export async function pushWooOrderStatus(order: Order): Promise<void> {
   }
 }
 
+/**
+ * Apply the "Order Status Update" policy to a freshly imported Woo order:
+ * - On Hold  → mark the WooCommerce order on-hold (handled here, verify first).
+ * - Web / Do not update → leave the original WooCommerce status untouched.
+ * Best-effort — never throws, so it can't break the import.
+ */
+async function applyWooImportStatusPolicy(
+  creds: WooCreds,
+  order: Order
+): Promise<void> {
+  if (typeof window === "undefined") return;
+  const settings = loadWooCommerceSettings();
+  if (settings.orderStatusOnImport !== "on-hold") return;
+  if (order.wooOrderId == null) return;
+  try {
+    const res = await fetch("/api/woocommerce/order-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storeUrl: creds.storeUrl,
+        consumerKey: creds.consumerKey,
+        consumerSecret: creds.consumerSecret,
+        orderId: Number(order.wooOrderId),
+        status: "on-hold",
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      message?: string;
+    };
+    if (json.ok) {
+      appendWooLog("success", `Import: ${order.id} marked On Hold in WooCommerce`);
+    } else {
+      appendWooLog(
+        "error",
+        `Import on-hold failed for ${order.id}: ${json.message ?? res.status}`
+      );
+    }
+  } catch (e) {
+    appendWooLog(
+      "error",
+      `Import on-hold error for ${order.id}: ${e instanceof Error ? e.message : "failed"}`
+    );
+  }
+}
+
 function lineFromWooItem(item: WooOrderRow["line_items"][0]): OrderLine {
   const product = findProductForWooLine({
     sku: item.sku,
@@ -528,9 +574,14 @@ export async function syncNewOrdersFromWooCommerce(_options?: {
         }
         try {
           const enriched = await enrichWooOrderRow(creds, row);
-          const { created } = upsertWooCommerceOrder(mapWooOrder(enriched));
-          if (created) result.imported++;
-          else result.updated++;
+          const { order, created } = upsertWooCommerceOrder(mapWooOrder(enriched));
+          if (created) {
+            result.imported++;
+            // Apply the "Order Status Update" policy for newly imported orders.
+            await applyWooImportStatusPolicy(creds, order);
+          } else {
+            result.updated++;
+          }
         } catch (e) {
           result.failed++;
           if (result.errors.length < 8) {

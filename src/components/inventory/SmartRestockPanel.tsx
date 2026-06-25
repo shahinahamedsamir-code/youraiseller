@@ -111,9 +111,6 @@ export function SmartRestockPanel() {
     setSuccess("");
     try {
       if (!applySmartRestock(item.product.id, qty)) return;
-      void import("@/lib/woocommerce-stock-sync-store").then((m) =>
-        m.maybeAutoSyncProductToWoo(item.product.id)
-      );
       setSuccess(`Restocked ${item.product.name} (+${qty}).`);
       refresh();
     } finally {

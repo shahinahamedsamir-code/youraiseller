@@ -706,6 +706,13 @@ function applyStockChange(
   };
   data.movements.unshift(record);
   saveRaw(data);
+  // Single chokepoint: mirror any stock change to WooCommerce (gated by the
+  // user's auto-sync settings). Covers orders, POS, manual edits, restock, etc.
+  if (typeof window !== "undefined") {
+    void import("./woocommerce-stock-sync-store")
+      .then((m) => m.maybeAutoSyncProductToWoo(productId))
+      .catch(() => {});
+  }
   return record;
 }
 
@@ -772,11 +779,7 @@ export function quickAdjustStock(
             note: "Product list",
           });
 
-    if (result && typeof window !== "undefined") {
-      void import("./woocommerce-stock-sync-store").then((m) =>
-        m.maybeAutoSyncProductToWoo(productId)
-      );
-    }
+    // Woo auto-sync is handled centrally in applyStockChange.
     return result;
   } catch {
     return null;

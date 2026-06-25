@@ -95,9 +95,6 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
         setError("Could not update stock. Try again.");
         return;
       }
-      void import("@/lib/woocommerce-stock-sync-store").then((m) =>
-        m.maybeAutoSyncProductToWoo(product.id)
-      );
       onSuccess();
       onClose();
     } catch (e) {

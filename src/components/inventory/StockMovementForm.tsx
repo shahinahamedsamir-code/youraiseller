@@ -220,10 +220,6 @@ export function StockMovementForm({
         return;
       }
 
-      void import("@/lib/woocommerce-stock-sync-store").then((m) =>
-        m.maybeAutoSyncProductToWoo(productId)
-      );
-
       setSuccess(`${meta.title} saved successfully.`);
       refreshProducts();
       setQty(1);

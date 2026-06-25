@@ -15,6 +15,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     priceLabel: "৳1,999/mo",
     badgeClass: "bg-slate-600 text-slate-100 ring-slate-500/40",
     limits: { products: 500, orders: 500, users: 3 },
+    orderRateTaka: 2,
     sortOrder: 1,
     active: true,
     features: buildFeatures({
@@ -42,6 +43,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     priceLabel: "৳4,999/mo",
     badgeClass: "bg-violet-600 text-white ring-violet-400/40",
     limits: { products: 2000, orders: 2000, users: 5 },
+    orderRateTaka: 1.5,
     sortOrder: 2,
     active: true,
     features: buildFeatures({
@@ -58,6 +60,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     priceLabel: "৳9,999/mo",
     badgeClass: "bg-amber-500 text-slate-900 ring-amber-400/50",
     limits: { products: 10000, orders: 10000, users: 20 },
+    orderRateTaka: 1,
     sortOrder: 3,
     active: true,
     features: { ...DEFAULT_FEATURES },
@@ -102,6 +105,12 @@ function normalizePlan(raw: unknown, fallback: PlanDefinition): PlanDefinition {
   return {
     id: fallback.id,
     limits: normalizeLimits(r.limits, fallback.limits),
+    orderRateTaka:
+      typeof r.orderRateTaka === "number" &&
+      Number.isFinite(r.orderRateTaka) &&
+      r.orderRateTaka >= 0
+        ? r.orderRateTaka
+        : fallback.orderRateTaka,
     name: typeof r.name === "string" && r.name.trim() ? r.name.trim() : fallback.name,
     tagline:
       typeof r.tagline === "string" && r.tagline.trim() ? r.tagline.trim() : fallback.tagline,

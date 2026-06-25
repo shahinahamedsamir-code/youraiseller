@@ -88,6 +88,10 @@ export type DevUser = {
   planExpiresAt?: string;
   /** Optional per-customer renewal monthly price. Falls back to plan package price. */
   customRenewalPriceTaka?: number;
+  /** Extra order quota purchased on top of the plan (permanent, all months). */
+  extraOrderLimit?: number;
+  /** One-off order quota added for the current billing month only. */
+  orderBoostThisMonth?: { amount: number; cycleStart: string };
   /** Plan payment received, but dashboard still needs admin activation. */
   planPaymentPaidAt?: string;
   planPaymentInvoice?: string;
@@ -305,6 +309,21 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
     approvedAt: u.approvedAt,
     planStartedAt: u.planStartedAt,
     planExpiresAt: u.planExpiresAt,
+    extraOrderLimit:
+      typeof u.extraOrderLimit === "number" &&
+      Number.isFinite(u.extraOrderLimit) &&
+      u.extraOrderLimit > 0
+        ? Math.floor(u.extraOrderLimit)
+        : undefined,
+    orderBoostThisMonth:
+      u.orderBoostThisMonth &&
+      typeof u.orderBoostThisMonth.amount === "number" &&
+      typeof u.orderBoostThisMonth.cycleStart === "string"
+        ? {
+            amount: Math.max(0, Math.floor(u.orderBoostThisMonth.amount)),
+            cycleStart: u.orderBoostThisMonth.cycleStart,
+          }
+        : undefined,
     customRenewalPriceTaka:
       typeof u.customRenewalPriceTaka === "number" &&
       Number.isFinite(u.customRenewalPriceTaka) &&
@@ -806,6 +825,8 @@ export function updateDevUser(
       | "lastLoginAt"
       | "planStartedAt"
       | "planExpiresAt"
+      | "extraOrderLimit"
+      | "orderBoostThisMonth"
       | "customRenewalPriceTaka"
       | "planPaymentPaidAt"
       | "planPaymentInvoice"

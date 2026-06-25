@@ -50,10 +50,34 @@ export function periodStartTime(user: DevUser | null): number {
   return start.getTime();
 }
 
-/** Resolve the active plan's limits from the dev-admin plan config. */
+/** Resolve the active plan's base limits from the dev-admin plan config. */
 export function getPlanLimits(user: DevUser | null): PlanLimits {
   const config = loadPlanConfigLocal();
   return getPlanDefinition(config, user?.plan ?? "basic").limits;
+}
+
+/** Taka charged per extra order for the user's plan. */
+export function getOrderRateTaka(user: DevUser | null): number {
+  const config = loadPlanConfigLocal();
+  return getPlanDefinition(config, user?.plan ?? "basic").orderRateTaka;
+}
+
+/**
+ * Effective limit including purchased quota. For orders this is the plan base
+ * plus permanently bought orders plus any boost bought for the current month.
+ * A base of 0 means unlimited (purchases are ignored).
+ */
+export function getEffectiveLimit(kind: LimitKind, user: DevUser | null): number {
+  const base = getPlanLimits(user)[kind];
+  if (kind !== "orders" || base <= 0) return base;
+
+  const extra = Math.max(0, user?.extraOrderLimit ?? 0);
+  const boost = user?.orderBoostThisMonth;
+  const boostAmount =
+    boost && Date.parse(boost.cycleStart) >= periodStartTime(user)
+      ? Math.max(0, boost.amount)
+      : 0;
+  return base + extra + boostAmount;
 }
 
 export function countPlanUsage(user: DevUser | null): {
@@ -88,7 +112,7 @@ export type LimitCheck = {
  */
 export function checkPlanLimit(kind: LimitKind, user?: DevUser | null): LimitCheck {
   const u = user ?? getSessionUser() ?? null;
-  const limit = getPlanLimits(u)[kind];
+  const limit = getEffectiveLimit(kind, u);
   const unlimited = !limit || limit <= 0;
   const used = countPlanUsage(u)[kind];
   return { kind, ok: unlimited || used < limit, used, limit, unlimited };

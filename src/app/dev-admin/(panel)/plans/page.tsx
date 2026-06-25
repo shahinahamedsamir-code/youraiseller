@@ -280,6 +280,23 @@ export default function DevPlansPage() {
                     />
                   </div>
                 ))}
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-slate-500">
+                    ৳ / extra order
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.5"
+                    value={activePlan.orderRateTaka}
+                    onChange={(e) =>
+                      updateActivePlan({
+                        orderRateTaka: Math.max(0, Number(e.target.value) || 0),
+                      })
+                    }
+                    className={inputClass}
+                  />
+                </div>
               </div>
             </div>
           </div>

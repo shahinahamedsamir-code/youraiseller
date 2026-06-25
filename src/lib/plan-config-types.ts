@@ -24,6 +24,8 @@ export type PlanDefinition = {
   features: Record<FeatureKey, boolean>;
   /** Usage caps: max active products, monthly orders, team seats. */
   limits: PlanLimits;
+  /** Price (Taka) per extra order when a seller buys more order quota. */
+  orderRateTaka: number;
   sortOrder: number;
   active: boolean;
 };

@@ -34,7 +34,7 @@ import {
   type PaymentHistoryKind,
 } from "@/lib/payment-history-types";
 import { fetchPublicPlanConfig, loadPlanConfigLocal } from "@/lib/plan-config-client";
-import { isWebOrder } from "@/lib/plan-limits";
+import { isWebOrder, parseOrderTime, periodStartTime } from "@/lib/plan-limits";
 import type { PlanId } from "@/lib/plan-config-types";
 import type { PlanConfig } from "@/lib/plan-config-types";
 import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
@@ -131,23 +131,6 @@ function usageTone(percent: number): {
     text: "text-emerald-700",
     bg: "bg-emerald-50 ring-emerald-100",
   };
-}
-
-function parseOrderTime(order: Order): number | null {
-  const direct = Date.parse(order.createdAt);
-  if (Number.isFinite(direct)) return direct;
-  const cleaned = order.createdAt.replace(/,\s*/g, " ");
-  const fallback = Date.parse(cleaned);
-  return Number.isFinite(fallback) ? fallback : null;
-}
-
-function periodStartTime(user: DevUser | null): number {
-  const startedAt = user?.planStartedAt ? Date.parse(user.planStartedAt) : NaN;
-  if (Number.isFinite(startedAt)) return startedAt;
-  const d = new Date();
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
 }
 
 function UsageLimitCard({

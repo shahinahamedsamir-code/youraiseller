@@ -26,14 +26,28 @@ export function parseOrderTime(order: Order): number | null {
   return Number.isFinite(fallback) ? fallback : null;
 }
 
-/** Start of the current billing period (plan start, else 1st of this month). */
+/**
+ * Start of the CURRENT monthly cycle, anchored to the plan's billing day.
+ * The order limit resets every month on the same day the plan started (so a
+ * renewal, early renewal, or multi-month plan all get a fresh monthly quota).
+ * Falls back to the 1st of the month when no plan start date is known.
+ */
 export function periodStartTime(user: DevUser | null): number {
-  const startedAt = user?.planStartedAt ? Date.parse(user.planStartedAt) : NaN;
-  if (Number.isFinite(startedAt)) return startedAt;
-  const d = new Date();
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+  const now = new Date();
+  const started = user?.planStartedAt ? new Date(Date.parse(user.planStartedAt)) : null;
+  const billingDay =
+    started && !Number.isNaN(started.getTime()) ? started.getDate() : 1;
+
+  // Clamp the billing day to the current month's length (e.g. 31 → 28/30).
+  const daysThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const day = Math.min(billingDay, daysThisMonth);
+
+  const start = new Date(now.getFullYear(), now.getMonth(), day, 0, 0, 0, 0);
+  // If this month's billing day hasn't arrived yet, the cycle began last month.
+  if (start.getTime() > now.getTime()) {
+    start.setMonth(start.getMonth() - 1);
+  }
+  return start.getTime();
 }
 
 /** Resolve the active plan's limits from the dev-admin plan config. */

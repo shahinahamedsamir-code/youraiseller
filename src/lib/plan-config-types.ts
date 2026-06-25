@@ -3,6 +3,13 @@ import type { DevUser } from "./dev-users";
 
 export type PlanId = DevUser["plan"];
 
+/** Usage caps for a plan. 0 or negative = unlimited. */
+export type PlanLimits = {
+  products: number;
+  orders: number;
+  users: number;
+};
+
 export type PlanDefinition = {
   id: PlanId;
   /** Display name e.g. Starter */
@@ -15,6 +22,8 @@ export type PlanDefinition = {
   badgeClass: string;
   /** Feature defaults for this package */
   features: Record<FeatureKey, boolean>;
+  /** Usage caps: max active products, monthly orders, team seats. */
+  limits: PlanLimits;
   sortOrder: number;
   active: boolean;
 };

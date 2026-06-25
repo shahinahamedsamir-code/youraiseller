@@ -1,5 +1,5 @@
 import { DEFAULT_FEATURES, FEATURE_LIST, normalizeStoredFeatures, type FeatureKey } from "./features";
-import type { PlanConfig, PlanDefinition, PlanId } from "./plan-config-types";
+import type { PlanConfig, PlanDefinition, PlanId, PlanLimits } from "./plan-config-types";
 
 function buildFeatures(
   overrides: Partial<Record<FeatureKey, boolean>>
@@ -14,6 +14,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     tagline: "New shop — orders, web list & basic inventory",
     priceLabel: "৳1,999/mo",
     badgeClass: "bg-slate-600 text-slate-100 ring-slate-500/40",
+    limits: { products: 500, orders: 500, users: 3 },
     sortOrder: 1,
     active: true,
     features: buildFeatures({
@@ -40,6 +41,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     tagline: "Scaling brand — WooCommerce, Auto Call & integrations",
     priceLabel: "৳4,999/mo",
     badgeClass: "bg-violet-600 text-white ring-violet-400/40",
+    limits: { products: 2000, orders: 2000, users: 5 },
     sortOrder: 2,
     active: true,
     features: buildFeatures({
@@ -55,6 +57,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     tagline: "Full power — every module, founder view & automation",
     priceLabel: "৳9,999/mo",
     badgeClass: "bg-amber-500 text-slate-900 ring-amber-400/50",
+    limits: { products: 10000, orders: 10000, users: 20 },
     sortOrder: 3,
     active: true,
     features: { ...DEFAULT_FEATURES },
@@ -79,13 +82,26 @@ function normalizeFeatures(raw: unknown): Record<FeatureKey, boolean> {
   return normalizeStoredFeatures(raw);
 }
 
+function normalizeLimits(raw: unknown, fallback: PlanLimits): PlanLimits {
+  if (!raw || typeof raw !== "object") return { ...fallback };
+  const r = raw as Partial<PlanLimits>;
+  const num = (v: unknown, fb: number) =>
+    typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : fb;
+  return {
+    products: num(r.products, fallback.products),
+    orders: num(r.orders, fallback.orders),
+    users: num(r.users, fallback.users),
+  };
+}
+
 function normalizePlan(raw: unknown, fallback: PlanDefinition): PlanDefinition {
   if (!raw || typeof raw !== "object") {
-    return { ...fallback, features: { ...fallback.features } };
+    return { ...fallback, features: { ...fallback.features }, limits: { ...fallback.limits } };
   }
   const r = raw as Partial<PlanDefinition>;
   return {
     id: fallback.id,
+    limits: normalizeLimits(r.limits, fallback.limits),
     name: typeof r.name === "string" && r.name.trim() ? r.name.trim() : fallback.name,
     tagline:
       typeof r.tagline === "string" && r.tagline.trim() ? r.tagline.trim() : fallback.tagline,

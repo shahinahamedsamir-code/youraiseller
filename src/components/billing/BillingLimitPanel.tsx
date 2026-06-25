@@ -12,7 +12,10 @@ import {
   Loader2,
   MessageSquare,
   Phone,
+  Package,
   RefreshCw,
+  ShoppingBag,
+  Users,
   Wallet,
 } from "lucide-react";
 import { AutoCallRechargeModal } from "@/components/integration/auto-call/AutoCallRechargeModal";
@@ -37,9 +40,21 @@ import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
 import { daysUntilPlanExpiry } from "@/lib/subscription-period";
 import { formatSmsBdt } from "@/lib/sms-types";
 import { formatAutoCallBdt } from "@/lib/auto-call-store";
+import { loadProducts } from "@/lib/inventory-store";
+import { loadOrders, type Order } from "@/lib/orders-store";
+import { loadTeamUsers, TEAM_USERS_UPDATED } from "@/lib/team-users-store";
 
 type KindFilter = "all" | PaymentHistoryKind;
 type StatusFilter = "all" | PaymentHistoryEntry["status"];
+
+const PLAN_USAGE_LIMITS: Record<
+  PlanId,
+  { products: number; orders: number; users: number }
+> = {
+  basic: { products: 500, orders: 500, users: 3 },
+  pro: { products: 2000, orders: 2000, users: 5 },
+  enterprise: { products: 10000, orders: 10000, users: 20 },
+};
 
 const KIND_FILTERS: { id: KindFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -86,6 +101,107 @@ function paymentDetails(row: PaymentHistoryEntry): string {
   return row.note ?? "-";
 }
 
+function percentUsed(used: number, limit: number): number {
+  if (limit <= 0) return 0;
+  return Math.min(100, Math.round((used / limit) * 100));
+}
+
+function usageTone(percent: number): {
+  bar: string;
+  text: string;
+  bg: string;
+} {
+  if (percent >= 90) {
+    return {
+      bar: "from-rose-500 to-pink-500",
+      text: "text-rose-700",
+      bg: "bg-rose-50 ring-rose-100",
+    };
+  }
+  if (percent >= 70) {
+    return {
+      bar: "from-amber-500 to-orange-500",
+      text: "text-amber-700",
+      bg: "bg-amber-50 ring-amber-100",
+    };
+  }
+  return {
+    bar: "from-emerald-500 to-teal-500",
+    text: "text-emerald-700",
+    bg: "bg-emerald-50 ring-emerald-100",
+  };
+}
+
+function parseOrderTime(order: Order): number | null {
+  const direct = Date.parse(order.createdAt);
+  if (Number.isFinite(direct)) return direct;
+  const cleaned = order.createdAt.replace(/,\s*/g, " ");
+  const fallback = Date.parse(cleaned);
+  return Number.isFinite(fallback) ? fallback : null;
+}
+
+function periodStartTime(user: DevUser | null): number {
+  const startedAt = user?.planStartedAt ? Date.parse(user.planStartedAt) : NaN;
+  if (Number.isFinite(startedAt)) return startedAt;
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function UsageLimitCard({
+  title,
+  subtitle,
+  used,
+  limit,
+  icon: Icon,
+}: {
+  title: string;
+  subtitle: string;
+  used: number;
+  limit: number;
+  icon: typeof Package;
+}) {
+  const percent = percentUsed(used, limit);
+  const tone = usageTone(percent);
+  const remaining = Math.max(0, limit - used);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
+            {title}
+          </p>
+          <h2 className="mt-2 text-2xl font-extrabold text-slate-900">
+            {percent}%
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
+        </div>
+        <div className={clsx("rounded-xl p-3 ring-1", tone.bg)}>
+          <Icon className={clsx("h-5 w-5", tone.text)} />
+        </div>
+      </div>
+      <div className="mt-5">
+        <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className={clsx("h-full rounded-full bg-gradient-to-r", tone.bar)}
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold">
+          <span className="text-slate-500">
+            {used.toLocaleString("en-BD")} of {limit.toLocaleString("en-BD")} used
+          </span>
+          <span className={tone.text}>
+            {remaining.toLocaleString("en-BD")} left
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function BillingLimitPanel() {
   const { isEnabled } = useFeatures();
   const sms = useSmsAccount();
@@ -101,6 +217,24 @@ export function BillingLimitPanel() {
   const [kind, setKind] = useState<KindFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [usage, setUsage] = useState({
+    activeProducts: 0,
+    periodOrders: 0,
+    activeUsers: 0,
+  });
+
+  const refreshUsage = useCallback((currentUser: DevUser | null) => {
+    const periodStart = periodStartTime(currentUser);
+    const orders = loadOrders();
+    setUsage({
+      activeProducts: loadProducts().filter((product) => product.active !== false).length,
+      periodOrders: orders.filter((order) => {
+        const time = parseOrderTime(order);
+        return time === null || time >= periodStart;
+      }).length,
+      activeUsers: loadTeamUsers().filter((teamUser) => teamUser.status === "active").length,
+    });
+  }, []);
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -120,9 +254,26 @@ export function BillingLimitPanel() {
   }, [kind, status]);
 
   useEffect(() => {
-    refreshCurrentSessionUser().then((u) => setUser(u ?? null));
+    refreshCurrentSessionUser().then((u) => {
+      const nextUser = u ?? null;
+      setUser(nextUser);
+      refreshUsage(nextUser);
+    });
     fetchPublicPlanConfig().then(setPlanConfig);
-  }, []);
+  }, [refreshUsage]);
+
+  useEffect(() => {
+    refreshUsage(user);
+    const refresh = () => refreshUsage(user);
+    window.addEventListener("youraiseller-data-updated", refresh);
+    window.addEventListener(TEAM_USERS_UPDATED, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("youraiseller-data-updated", refresh);
+      window.removeEventListener(TEAM_USERS_UPDATED, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [refreshUsage, user]);
 
   useEffect(() => {
     loadHistory();
@@ -139,6 +290,16 @@ export function BillingLimitPanel() {
     () => daysUntilPlanExpiry(user?.planExpiresAt),
     [user]
   );
+
+  const currentPlan = useMemo(() => {
+    if (!user) return null;
+    return planConfig.plans.find((plan) => plan.id === user.plan) ?? null;
+  }, [planConfig, user]);
+
+  // Limits come from the dev-admin plan package config; fall back to the
+  // built-in defaults if the config hasn't loaded yet.
+  const usageLimits =
+    currentPlan?.limits ?? PLAN_USAGE_LIMITS[user?.plan ?? "basic"];
 
   const completedTotal = entries
     .filter((row) => row.status === "completed")
@@ -159,6 +320,7 @@ export function BillingLimitPanel() {
             sms.reload();
             autoCall.reload();
             loadHistory();
+            refreshUsage(user);
           }}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
         >
@@ -179,6 +341,52 @@ export function BillingLimitPanel() {
           {message.text}
         </div>
       ) : null}
+
+      <section>
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-extrabold text-slate-900">Usage limits</h2>
+            <p className="text-xs text-slate-500">
+              Products, monthly orders and active user seats for{" "}
+              {currentPlan?.name ?? user?.plan?.toUpperCase() ?? "your plan"}.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setRenewMode("upgrade");
+              setRenewOpen(true);
+            }}
+            disabled={!user}
+            className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-extrabold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+          >
+            Increase limit
+          </button>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-3">
+          <UsageLimitCard
+            title="Products active"
+            subtitle="Active products in inventory"
+            used={usage.activeProducts}
+            limit={usageLimits.products}
+            icon={Package}
+          />
+          <UsageLimitCard
+            title="Orders"
+            subtitle="Orders in current billing period"
+            used={usage.periodOrders}
+            limit={usageLimits.orders}
+            icon={ShoppingBag}
+          />
+          <UsageLimitCard
+            title="Users"
+            subtitle="Active team seats"
+            used={usage.activeUsers}
+            limit={usageLimits.users}
+            icon={Users}
+          />
+        </div>
+      </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

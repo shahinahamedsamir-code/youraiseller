@@ -253,6 +253,35 @@ export default function DevPlansPage() {
                 placeholder="Short description for sales"
               />
             </div>
+
+            <div className="sm:col-span-3">
+              <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">
+                Usage limits <span className="text-slate-600">(0 = unlimited)</span>
+              </label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {(["products", "orders", "users"] as const).map((key) => (
+                  <div key={key}>
+                    <label className="mb-1 block text-[11px] font-medium capitalize text-slate-500">
+                      {key === "orders" ? "Orders / month" : key}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={activePlan.limits[key]}
+                      onChange={(e) =>
+                        updateActivePlan({
+                          limits: {
+                            ...activePlan.limits,
+                            [key]: Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                          },
+                        })
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="mb-3 flex flex-wrap gap-2">

@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { ChevronDown, Lock } from "lucide-react";
 import { mainNav, type NavChild } from "@/lib/navigation";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { getSessionUser } from "@/lib/dev-users";
 import { useFeatures } from "@/context/FeatureContext";
 import { useWebOrderCounts } from "@/components/web-orders/useWebOrderCounts";
 import clsx from "clsx";
@@ -41,14 +48,26 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
   const { processing: webProcessingCount } = useWebOrderCounts();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  // Team members (sub-accounts) get locked modules HIDDEN instead of shown with
+  // a lock — a lock implies "upgrade", which only makes sense for the owner who
+  // controls billing. For them a missing module is just a permission they lack.
+  const [isTeamMember, setIsTeamMember] = useState(false);
+  useEffect(() => {
+    setIsTeamMember(!!getSessionUser()?.parentAccountId);
+  }, []);
+
   // Show everything the admin allows globally — including plan-locked modules,
-  // which render with a lock icon so the user knows to upgrade.
+  // which render with a lock icon so the owner knows to upgrade. For team
+  // members, also drop modules they have no permission for.
   const filteredNav = useMemo(() => {
     if (!hydrated) return [];
 
+    const canShow = (key: NavChild["featureKey"]) =>
+      isGloballyEnabled(key) && (!isTeamMember || !isLocked(key));
+
     const filterNavChildren = (children: NavChild[]): NavChild[] =>
       children
-        .filter((c) => isGloballyEnabled(c.featureKey))
+        .filter((c) => canShow(c.featureKey))
         .map((c) => {
           if (!c.children?.length) return c;
           const nested = filterNavChildren(c.children);
@@ -58,7 +77,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         .filter(Boolean) as NavChild[];
 
     return mainNav
-      .filter((item) => isGloballyEnabled(item.featureKey))
+      .filter((item) => canShow(item.featureKey))
       .map((item) => {
         if (!item.children) return item;
         const children = filterNavChildren(item.children);
@@ -66,7 +85,7 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
         return { ...item, children };
       })
       .filter(Boolean) as typeof mainNav;
-  }, [isGloballyEnabled, hydrated]);
+  }, [isGloballyEnabled, isLocked, isTeamMember, hydrated]);
 
   return (
     <aside

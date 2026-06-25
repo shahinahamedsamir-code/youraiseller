@@ -666,8 +666,19 @@ export function updateProduct(id: string, patch: Partial<Product>): Product | nu
   const data = loadRaw();
   const idx = data.products.findIndex((p) => p.id === id);
   if (idx === -1) return null;
+  const prevPrice = data.products[idx].sellPrice;
   data.products[idx] = { ...data.products[idx], ...patch, updatedAt: nowLabel() };
   saveRaw(data);
+  // Mirror a sell-price change to WooCommerce (gated by price-sync settings).
+  if (
+    typeof window !== "undefined" &&
+    patch.sellPrice !== undefined &&
+    patch.sellPrice !== prevPrice
+  ) {
+    void import("./woocommerce-stock-sync-store")
+      .then((m) => m.maybeSyncProductPriceToWoo(id))
+      .catch(() => {});
+  }
   return data.products[idx];
 }
 

@@ -16,6 +16,8 @@ export type WooStockSyncSettings = {
   mode: StockSyncMode;
   dailySyncEnabled: boolean;
   autoSyncOnChange: boolean;
+  /** Push sell-price changes to WooCommerce regular_price. */
+  priceSyncEnabled: boolean;
   lastSyncAt: string | null;
   lastDailySyncAt: string | null;
   successCount: number;
@@ -45,6 +47,7 @@ const DEFAULT: WooStockSyncSettings = {
   mode: "status_only",
   dailySyncEnabled: true,
   autoSyncOnChange: false,
+  priceSyncEnabled: false,
   lastSyncAt: null,
   lastDailySyncAt: null,
   successCount: 0,
@@ -282,6 +285,44 @@ export async function runWooStockDailySyncIfDue(): Promise<StockSyncRunResult | 
   if (!canApi) return null;
 
   return runWooStockSync({ scope: "full", force: true });
+}
+
+/** Push a product's sell price to WooCommerce when price sync is on. */
+export async function maybeSyncProductPriceToWoo(productId: string): Promise<void> {
+  const sync = loadWooStockSyncSettings();
+  if (!sync.enabled || !sync.priceSyncEnabled) return;
+
+  const product = loadProducts().find((p) => p.id === productId);
+  if (!product) return;
+
+  const woo = loadWooCommerceSettings();
+  const canApi = Boolean(
+    woo.storeUrl?.trim() && woo.consumerKey?.trim() && woo.consumerSecret?.trim()
+  );
+  if (!canApi) return;
+
+  try {
+    const res = await fetch("/api/woocommerce/price", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storeUrl: woo.storeUrl.trim(),
+        consumerKey: woo.consumerKey.trim(),
+        consumerSecret: woo.consumerSecret.trim(),
+        sku: product.code,
+        price: product.sellPrice,
+      }),
+    });
+    const data = (await res.json()) as { ok: boolean; message: string };
+    if (data.ok) {
+      appendWooLog("success", `Price sync: ${product.code} → ${product.sellPrice}`);
+    } else {
+      appendWooLog("error", `Price sync ${product.code}: ${data.message}`);
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Price sync failed";
+    appendWooLog("error", `Price sync ${product.code}: ${msg}`);
+  }
 }
 
 /** Call after inventory stock change when auto-sync is on */

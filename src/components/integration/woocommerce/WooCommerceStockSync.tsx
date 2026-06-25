@@ -215,6 +215,12 @@ export function WooCommerceStockSync() {
             on={sync.autoSyncOnChange}
             onChange={(v) => patch({ autoSyncOnChange: v })}
           />
+          <ToggleRow
+            label="Sync price to WooCommerce"
+            hint="When you change a product's sell price, push it to WooCommerce."
+            on={sync.priceSyncEnabled}
+            onChange={(v) => patch({ priceSyncEnabled: v })}
+          />
         </div>
 
         <button

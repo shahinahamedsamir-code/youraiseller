@@ -13,7 +13,6 @@ import {
 import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
 import { EmailPasswordAuthForm } from "@/components/auth/EmailPasswordAuthForm";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
-import { AuthSessionRedirect } from "@/components/auth/AuthSessionRedirect";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -53,7 +52,6 @@ export function AuthPageShell({
 }: Props) {
   return (
     <GoogleAuthProvider>
-      <AuthSessionRedirect />
       <div className="auth-page relative min-h-screen overflow-hidden">
         <div className="auth-page-glow auth-page-glow-a" aria-hidden />
         <div className="auth-page-glow auth-page-glow-b" aria-hidden />

@@ -8,6 +8,7 @@ import {
   loadDevUsers,
   removeTeamMember,
   updateDevUser,
+  waitForDevUsersSync,
   type DevUser,
   type TeamRole,
 } from "./dev-users";
@@ -30,6 +31,9 @@ export type TeamUser = {
   status: TeamUserStatus;
   permissions: Record<FeatureKey, boolean>;
   createdAt: string;
+  lastLoginAt?: string;
+  /** none = normal login | pending = invited, not accepted | accepted = invite done */
+  inviteState: "none" | "pending" | "accepted";
 };
 
 export const TEAM_ROLES: TeamRole[] = ["FOUNDER", "ADMIN", "USER"];
@@ -103,6 +107,12 @@ function toTeamUser(u: DevUser, isOwner: boolean): TeamUser {
     status: u.status === "active" ? "active" : "inactive",
     permissions: { ...DEFAULT_FEATURES, ...u.features },
     createdAt: u.createdAt,
+    lastLoginAt: u.lastLoginAt,
+    inviteState: u.inviteAcceptedAt
+      ? "accepted"
+      : u.invitedAt
+      ? "pending"
+      : "none",
   };
 }
 
@@ -133,6 +143,8 @@ export function createTeamUser(data: {
   customId?: string;
   businesses: string[];
   permissions?: Record<FeatureKey, boolean>;
+  /** Create as an email invite — member sets their own password, inactive until then. */
+  invite?: boolean;
 }): { ok: true; user: TeamUser } | { ok: false; error: string } {
   const owner = ownerAccount();
   if (!owner) return { ok: false, error: "Please sign in first." };
@@ -143,16 +155,48 @@ export function createTeamUser(data: {
     parentAccountId: owner.id,
     name: data.name,
     email: data.email,
-    password: data.password,
+    password: data.invite ? undefined : data.password,
     teamRole: role,
     teamLabel: data.customId,
     teamBusinesses: businesses.length > 0 ? businesses : [owner.company],
     company: owner.company,
     parentAccountEmail: owner.email,
     features: data.permissions ?? defaultPermissionsForRole(role),
+    invite: data.invite,
   });
   if (!res.ok) return res;
   return { ok: true, user: toTeamUser(res.user, false) };
+}
+
+/**
+ * Send (or resend) an email invite to a team member. Pushes the member to the
+ * server first so the accept page can find them, then calls the invite API.
+ */
+export async function sendTeamInvite(
+  email: string
+): Promise<{ ok: true; emailSent: boolean; acceptUrl?: string; message: string } | { ok: false; error: string }> {
+  try {
+    // Make sure the member row is on the server before generating the token.
+    await waitForDevUsersSync();
+    const res = await fetch("/api/team-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return { ok: false, error: data.error ?? "Could not send invite." };
+    }
+    return {
+      ok: true,
+      emailSent: Boolean(data.emailSent),
+      acceptUrl: data.acceptUrl,
+      message: data.message ?? "Invite sent.",
+    };
+  } catch {
+    return { ok: false, error: "Network error sending invite." };
+  }
 }
 
 export function updateTeamUser(

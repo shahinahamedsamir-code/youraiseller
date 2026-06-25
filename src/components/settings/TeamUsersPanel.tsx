@@ -18,6 +18,12 @@ import {
   Check,
   Building2,
   Crown,
+  Eye,
+  EyeOff,
+  CalendarDays,
+  Send,
+  Clock,
+  RefreshCw,
 } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -35,6 +41,7 @@ import {
   defaultPermissionsForRole,
   deleteTeamUser,
   loadTeamUsers,
+  sendTeamInvite,
   setTeamUserGoogleLogin,
   toggleTeamUserStatus,
   updateTeamUser,
@@ -55,6 +62,19 @@ type ActionKind =
   | "password"
   | "custom-id"
   | "permissions";
+
+type SignInMethod = "invite" | "password" | "google";
+
+const SIGN_IN_METHODS: {
+  key: SignInMethod;
+  label: string;
+  hint: string;
+  icon: typeof Mail;
+}[] = [
+  { key: "invite", label: "Email invite", hint: "They set their own password", icon: Send },
+  { key: "password", label: "Set password", hint: "You choose it now", icon: KeyRound },
+  { key: "google", label: "Google", hint: "Sign in with Google", icon: Mail },
+];
 
 export function TeamUsersPanel() {
   const [users, setUsers] = useState<TeamUser[]>([]);
@@ -112,6 +132,28 @@ export function TeamUsersPanel() {
     setToast(`${u.name} removed.`);
     setMenuFor(null);
     refresh();
+  };
+
+  const handleResendInvite = async (u: TeamUser) => {
+    setMenuFor(null);
+    setToast(`Sending invite to ${u.email}…`);
+    const res = await sendTeamInvite(u.email);
+    if (!res.ok) {
+      setToast(res.error);
+      return;
+    }
+    if (res.emailSent) {
+      setToast(`Invite re-sent to ${u.email}.`);
+      return;
+    }
+    if (res.acceptUrl) {
+      try {
+        await navigator.clipboard.writeText(res.acceptUrl);
+      } catch {
+        /* clipboard blocked */
+      }
+    }
+    setToast("SMTP off — invite link copied to clipboard.");
   };
 
   return (
@@ -172,7 +214,7 @@ export function TeamUsersPanel() {
       {/* Table */}
       <div className="yai-panel overflow-visible">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="w-full min-w-[960px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3.5">Member</th>
@@ -181,6 +223,7 @@ export function TeamUsersPanel() {
                 <th className="px-4 py-3.5">Business</th>
                 <th className="px-4 py-3.5">Login</th>
                 <th className="px-4 py-3.5">Access</th>
+                <th className="px-4 py-3.5">Activity</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
@@ -239,7 +282,12 @@ export function TeamUsersPanel() {
                     </div>
                   </td>
                   <td className="px-4 py-3.5">
-                    {u.authProvider === "google" ? (
+                    {u.inviteState === "pending" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100">
+                        <Clock className="h-3 w-3" />
+                        Invited
+                      </span>
+                    ) : u.authProvider === "google" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700 ring-1 ring-sky-100">
                         <Mail className="h-3 w-3" />
                         Google
@@ -256,6 +304,24 @@ export function TeamUsersPanel() {
                       <ShieldCheck className="h-3 w-3" />
                       {countEnabledPermissions(u.permissions)}/{FEATURE_LIST.length}
                     </span>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex flex-col gap-0.5 text-xs">
+                      <span className="inline-flex items-center gap-1 text-slate-500">
+                        <CalendarDays className="h-3 w-3 text-slate-400" />
+                        Joined {u.createdAt}
+                      </span>
+                      <span
+                        className={clsx(
+                          "font-semibold",
+                          u.lastLoginAt ? "text-slate-600" : "text-slate-400"
+                        )}
+                      >
+                        {u.lastLoginAt
+                          ? `Last login ${formatLastLogin(u.lastLoginAt)}`
+                          : "Never logged in"}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3.5">
                     <button
@@ -295,6 +361,7 @@ export function TeamUsersPanel() {
                         setMenuFor(null);
                         handleToggleStatus(u);
                       }}
+                      onResendInvite={() => handleResendInvite(u)}
                       onDelete={() => handleDelete(u)}
                     />
                   </td>
@@ -302,7 +369,7 @@ export function TeamUsersPanel() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-16 text-center">
+                  <td colSpan={9} className="px-5 py-16 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                       <Users className="h-6 w-6" />
                     </div>
@@ -396,6 +463,21 @@ export function TeamUsersPanel() {
   );
 }
 
+/** ISO login time → "today 3:42 PM", "yesterday", or "25 Jun 2026". */
+function formatLastLogin(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const wasYesterday = d.toDateString() === yesterday.toDateString();
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  if (sameDay) return `today ${time}`;
+  if (wasYesterday) return `yesterday ${time}`;
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function initials(name: string): string {
   return name
     .trim()
@@ -414,6 +496,7 @@ function ActionMenu({
   user,
   onAction,
   onToggleStatus,
+  onResendInvite,
   onDelete,
 }: {
   open: boolean;
@@ -422,6 +505,7 @@ function ActionMenu({
   user: TeamUser;
   onAction: (kind: ActionKind) => void;
   onToggleStatus: () => void;
+  onResendInvite: () => void;
   onDelete: () => void;
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -505,6 +589,19 @@ function ActionMenu({
                 {it.label}
               </button>
             ))}
+            {user.inviteState === "pending" && (
+              <>
+                <div className="my-1 border-t border-slate-100" />
+                <button
+                  type="button"
+                  onClick={onResendInvite}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
+                >
+                  <RefreshCw className="h-4 w-4 text-violet-400" />
+                  Resend invite
+                </button>
+              </>
+            )}
             {user.role !== "FOUNDER" && (
               <>
                 <div className="my-1 border-t border-slate-100" />
@@ -627,6 +724,40 @@ function ErrorText({ msg }: { msg: string }) {
   return <p className="text-sm font-semibold text-rose-600">{msg}</p>;
 }
 
+/** Password input that stays hidden by default with a show/hide toggle. */
+function PasswordField({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type={show ? "text" : "password"}
+        className={clsx(inputCls, "pr-10")}
+        placeholder={placeholder}
+        autoComplete="new-password"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        tabIndex={-1}
+        aria-label={show ? "Hide password" : "Show password"}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
 /* ------------------------------ Create form ------------------------------ */
 
 function UserFormModal({
@@ -639,6 +770,7 @@ function UserFormModal({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [method, setMethod] = useState<SignInMethod>("invite");
   const [role, setRole] = useState<TeamRole>("USER");
   const [customId, setCustomId] = useState("");
   const [businesses, setBusinesses] = useState("");
@@ -646,27 +778,56 @@ function UserFormModal({
     defaultPermissionsForRole("USER")
   );
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const onRoleChange = (r: TeamRole) => {
     setRole(r);
     setPerms(defaultPermissionsForRole(r));
   };
 
-  const submit = () => {
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError("");
     const res = createTeamUser({
       name,
       email,
-      password,
+      password: method === "password" ? password : "",
       role,
       customId,
       businesses: businesses.split(",").map((b) => b.trim()).filter(Boolean),
       permissions: perms,
+      invite: method === "invite",
     });
     if (!res.ok) {
       setError(res.error);
+      setBusy(false);
       return;
     }
-    onDone(`${res.user.name} added to your team.`);
+
+    if (method !== "invite") {
+      onDone(`${res.user.name} added to your team.`);
+      return;
+    }
+
+    // Email-invite flow: generate token + send (or copy link in dev mode).
+    const sent = await sendTeamInvite(email);
+    if (!sent.ok) {
+      onDone(`${res.user.name} added, but invite failed: ${sent.error}`);
+      return;
+    }
+    if (sent.emailSent) {
+      onDone(`Invite emailed to ${email.trim()}.`);
+      return;
+    }
+    if (sent.acceptUrl) {
+      try {
+        await navigator.clipboard.writeText(sent.acceptUrl);
+      } catch {
+        /* clipboard blocked */
+      }
+    }
+    onDone(`${res.user.name} added. SMTP off — invite link copied to clipboard.`);
   };
 
   return (
@@ -686,15 +847,6 @@ function UserFormModal({
           <div>
             <label className={labelCls}>Email</label>
             <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="name@example.com" />
-          </div>
-          <div>
-            <label className={labelCls}>Password (optional)</label>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" className={inputCls} placeholder="Leave empty for Google login" />
-            <p className="mt-1 text-xs text-slate-400">
-              {password.trim()
-                ? "Signs in with email + password."
-                : "Empty → signs in with Google using this email."}
-            </p>
           </div>
           <div>
             <label className={labelCls}>Role</label>
@@ -717,6 +869,44 @@ function UserFormModal({
         </div>
 
         <div>
+          <label className={labelCls}>How will they sign in?</label>
+          <div className="grid grid-cols-3 gap-2">
+            {SIGN_IN_METHODS.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setMethod(m.key)}
+                className={clsx(
+                  "flex flex-col items-start gap-1 rounded-xl border px-3 py-2.5 text-left transition",
+                  method === m.key
+                    ? "border-violet-300 bg-violet-50 ring-2 ring-violet-100"
+                    : "border-slate-200 hover:border-violet-200"
+                )}
+              >
+                <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
+                  <m.icon className="h-4 w-4 text-violet-600" />
+                  {m.label}
+                </span>
+                <span className="text-[11px] leading-tight text-slate-400">{m.hint}</span>
+              </button>
+            ))}
+          </div>
+          {method === "password" && (
+            <div className="mt-3">
+              <label className={labelCls}>Password</label>
+              <PasswordField value={password} onChange={setPassword} placeholder="Min 6 characters" />
+            </div>
+          )}
+          {method === "invite" && (
+            <p className="mt-2 text-xs text-slate-400">
+              We&apos;ll email them a secure link to set their own password. They
+              stay <span className="font-semibold text-slate-500">Invited</span> until
+              they accept.
+            </p>
+          )}
+        </div>
+
+        <div>
           <div className="mb-2 flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-violet-600" />
             <span className="text-sm font-bold text-slate-700">Permissions</span>
@@ -734,7 +924,7 @@ function UserFormModal({
           </button>
           <PrimaryBtn onClick={submit}>
             <UserPlus className="h-4 w-4" />
-            Create User
+            {busy ? "Working…" : method === "invite" ? "Create & send invite" : "Create User"}
           </PrimaryBtn>
         </div>
       </div>
@@ -905,11 +1095,11 @@ function PasswordModal({
         </div>
         <div>
           <label className={labelCls}>New Password</label>
-          <input value={pw} onChange={(e) => setPw(e.target.value)} type="text" className={inputCls} placeholder="Min 6 characters" />
+          <PasswordField value={pw} onChange={setPw} placeholder="Min 6 characters" />
         </div>
         <div>
           <label className={labelCls}>Confirm Password</label>
-          <input value={pw2} onChange={(e) => setPw2(e.target.value)} type="text" className={inputCls} />
+          <PasswordField value={pw2} onChange={setPw2} />
         </div>
         <ErrorText msg={error} />
         <div className="flex flex-wrap items-center justify-between gap-2">

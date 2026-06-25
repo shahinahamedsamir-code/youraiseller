@@ -75,6 +75,12 @@ export type DevUser = {
   status: UserStatus;
   features: Record<FeatureKey, boolean>;
   createdAt: string;
+  /** Last successful sign-in (ISO timestamp). */
+  lastLoginAt?: string;
+  /** Set when a team member was invited by email but has not accepted yet. */
+  invitedAt?: string;
+  /** Set when the invited member set their password and activated. */
+  inviteAcceptedAt?: string;
   approvedAt?: string;
   /** When the current paid plan period started (sign / activate / renew). */
   planStartedAt?: string;
@@ -293,6 +299,9 @@ function migrateUser(u: Partial<DevUser> & { id: string }): DevUser {
     status: normalizeStatus(u.status, authProvider),
     features: resolveUserFeatures(plan, u.features),
     createdAt: u.createdAt ?? "—",
+    lastLoginAt: u.lastLoginAt,
+    invitedAt: u.invitedAt,
+    inviteAcceptedAt: u.inviteAcceptedAt,
     approvedAt: u.approvedAt,
     planStartedAt: u.planStartedAt,
     planExpiresAt: u.planExpiresAt,
@@ -721,6 +730,8 @@ export function createTeamMember(data: {
   company: string;
   features: Record<FeatureKey, boolean>;
   parentAccountEmail?: string;
+  /** Create as an email-invite: no password yet, inactive until accepted. */
+  invite?: boolean;
 }): { ok: true; user: DevUser } | { ok: false; error: string } {
   const email = data.email.toLowerCase().trim();
   const password = data.password?.trim() ?? "";
@@ -731,11 +742,12 @@ export function createTeamMember(data: {
   if (findUserByEmail(email)) {
     return { ok: false, error: "This email already has access." };
   }
-  if (password && password.length < 6) {
+  if (!data.invite && password && password.length < 6) {
     return { ok: false, error: "Password must be at least 6 characters." };
   }
 
-  const useGoogle = password.length === 0;
+  // invite → password set later by the member; else empty password = Google login.
+  const useGoogle = !data.invite && password.length === 0;
   const users = loadDevUsers();
   const now = formatRequestDate();
   const user: DevUser = {
@@ -749,13 +761,14 @@ export function createTeamMember(data: {
     teamRole: data.teamRole,
     teamLabel: data.teamLabel?.trim() || undefined,
     teamBusinesses: data.teamBusinesses.map((b) => b.trim()).filter(Boolean),
-    passwordHash: useGoogle ? "" : hashPasswordDemo(password),
+    passwordHash: data.invite || useGoogle ? "" : hashPasswordDemo(password),
     authProvider: useGoogle ? "google" : "password",
     plan: "pro",
-    status: "active",
+    status: data.invite ? "inactive" : "active",
     features: { ...data.features },
     createdAt: now,
     approvedAt: now,
+    invitedAt: data.invite ? new Date().toISOString() : undefined,
   };
   saveDevUsers(dedupeUsersByEmail([user, ...users]));
   return { ok: true, user };
@@ -790,6 +803,7 @@ export function updateDevUser(
       | "status"
       | "features"
       | "approvedAt"
+      | "lastLoginAt"
       | "planStartedAt"
       | "planExpiresAt"
       | "customRenewalPriceTaka"
@@ -984,13 +998,14 @@ export function loginWithGoogleProfile(
     user = findUserByEmail(email) ?? user;
   }
 
-  applyUserToSession(user);
+  const stampedGoogle = markUserLogin(user.id) ?? user;
+  applyUserToSession(stampedGoogle);
 
-  if (user.status === "active") {
-    return { ok: true, user, redirect: "dashboard" };
+  if (stampedGoogle.status === "active") {
+    return { ok: true, user: stampedGoogle, redirect: "dashboard" };
   }
 
-  return { ok: true, user, redirect: "renew" };
+  return { ok: true, user: stampedGoogle, redirect: "renew" };
 }
 
 export function authenticateUser(
@@ -1087,13 +1102,14 @@ export function loginWithPasswordCredentials(
     return { ok: false, error: "Your account has expired. Contact support to renew." };
   }
 
-  applyUserToSession(user);
+  const stamped = markUserLogin(user.id) ?? user;
+  applyUserToSession(stamped);
 
-  if (user.status === "active") {
-    return { ok: true, user, redirect: "dashboard" };
+  if (stamped.status === "active") {
+    return { ok: true, user: stamped, redirect: "dashboard" };
   }
 
-  return { ok: true, user, redirect: "renew" };
+  return { ok: true, user: stamped, redirect: "renew" };
 }
 
 export function changeAccountPassword(
@@ -1291,6 +1307,11 @@ export function applyUserToSession(user: DevUser) {
   const isDemo =
     user.id === "U-001" || user.email.trim().toLowerCase() === "demo@store.com";
   ensureSellerStoresForUser(user.id, isDemo);
+}
+
+/** Stamp the last successful sign-in time. Call once per real login. */
+export function markUserLogin(id: string): DevUser | null {
+  return updateDevUser(id, { lastLoginAt: new Date().toISOString() });
 }
 
 export function clearUserSession() {

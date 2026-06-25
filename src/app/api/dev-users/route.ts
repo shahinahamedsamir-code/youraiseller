@@ -83,6 +83,10 @@ export async function POST(req: Request) {
     const merged = Array.from(byEmail.values());
     await fs.mkdir(getAppDataDir(), { recursive: true });
     await fs.writeFile(DATA_FILE, JSON.stringify(merged, null, 2), "utf-8");
+    // Live dual-write the team/seller accounts to Postgres so a Business User
+    // List change reaches the DB backup immediately (best-effort, never throws).
+    const { mirrorFileToDb } = await import("@/lib/data-mirror");
+    await mirrorFileToDb(DATA_FILE);
     return NextResponse.json({ ok: true, count: merged.length });
   } catch (e) {
     console.error("[dev-users]", e);

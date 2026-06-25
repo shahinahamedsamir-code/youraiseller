@@ -8,7 +8,7 @@ import {
 
 export type StockSyncTrigger = "every_change" | "alert_qty" | "zero_only";
 export type StockSyncMode = "exact" | "status_only";
-export type StockSyncScope = "all" | "low" | "test";
+export type StockSyncScope = "all" | "low" | "test" | "full";
 
 export type WooStockSyncSettings = {
   enabled: boolean;
@@ -117,6 +117,8 @@ export function shouldSyncProduct(
 ): boolean {
   if (!product.manageStock) return false;
   if (scope === "test") return true;
+  // Full = whole catalog reconcile (daily safety net) — ignore the trigger.
+  if (scope === "full") return true;
   if (scope === "low") {
     return product.stockQty === 0 || product.stockQty <= product.alertQty;
   }
@@ -237,7 +239,10 @@ export async function runWooStockSync(params: {
     successCount: syncSettings.successCount + synced,
     failedCount: syncSettings.failedCount + failed,
   };
-  if (params.scope === "all" && syncSettings.dailySyncEnabled) {
+  if (
+    (params.scope === "all" || params.scope === "full") &&
+    syncSettings.dailySyncEnabled
+  ) {
     next.lastDailySyncAt = next.lastSyncAt;
   }
   saveWooStockSyncSettings(next);
@@ -250,6 +255,33 @@ export async function runWooStockSync(params: {
     items,
     hint,
   };
+}
+
+const DAILY_SYNC_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Run a full-catalog reconcile to WooCommerce if the automated daily sync is on
+ * and 24h have passed since the last one. No-ops otherwise (disabled, not due,
+ * or WooCommerce not connected). Called on an interval by the dashboard runner.
+ */
+export async function runWooStockDailySyncIfDue(): Promise<StockSyncRunResult | null> {
+  const s = loadWooStockSyncSettings();
+  if (!s.enabled || !s.dailySyncEnabled) return null;
+
+  if (
+    s.lastDailySyncAt &&
+    Date.now() - new Date(s.lastDailySyncAt).getTime() < DAILY_SYNC_MS
+  ) {
+    return null; // already synced within the last 24h
+  }
+
+  const woo = loadWooCommerceSettings();
+  const canApi = Boolean(
+    woo.storeUrl?.trim() && woo.consumerKey?.trim() && woo.consumerSecret?.trim()
+  );
+  if (!canApi) return null;
+
+  return runWooStockSync({ scope: "full", force: true });
 }
 
 /** Call after inventory stock change when auto-sync is on */

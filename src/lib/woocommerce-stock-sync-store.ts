@@ -152,6 +152,9 @@ async function pushStockToWoo(
       sku: product.code,
       stockQty: product.stockQty,
       mode,
+      wooProductId: product.wooProductId,
+      wooVariationId: product.wooVariationId,
+      wooParentId: product.wooParentId,
     }),
   });
   const data = (await res.json()) as { ok: boolean; message: string };
@@ -311,6 +314,9 @@ export async function maybeSyncProductPriceToWoo(productId: string): Promise<voi
         consumerSecret: woo.consumerSecret.trim(),
         sku: product.code,
         price: product.sellPrice,
+        wooProductId: product.wooProductId,
+        wooVariationId: product.wooVariationId,
+        wooParentId: product.wooParentId,
       }),
     });
     const data = (await res.json()) as { ok: boolean; message: string };

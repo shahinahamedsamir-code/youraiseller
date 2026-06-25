@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   Circle,
   Wallet,
+  Lock,
+  Mail,
 } from "lucide-react";
 import { PlanRenewPayModal } from "@/components/renew/PlanRenewPayModal";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -130,6 +132,100 @@ function RenewContent() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f4f6fb] text-sm text-slate-500">
         Loading your account…
+      </div>
+    );
+  }
+
+  // Team members (sub-accounts) have no plan/billing of their own — when the
+  // account owner deactivates them they must NOT see the "pay for a plan" flow.
+  const isTeamMember = Boolean(user.parentAccountId);
+  if (isTeamMember) {
+    const ownerEmail = user.parentAccountEmail;
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-[#f4f6fb]">
+        <div
+          className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-slate-400/20 blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl"
+          aria-hidden
+        />
+
+        <div className="relative mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-12">
+          <div className="mb-6 flex justify-center lg:justify-start">
+            <BrandLogo size="sm" subtitle="Seller Dashboard" />
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-white/80 bg-white shadow-xl shadow-slate-200/60 ring-1 ring-slate-100">
+            <div className="bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 px-6 py-8 text-center text-white sm:px-8">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
+                <Lock className="h-8 w-8" />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Access paused</h1>
+              <p className="mt-2 text-sm text-white/85">
+                Your account owner has turned off your access.
+              </p>
+            </div>
+
+            <div className="space-y-6 p-6 sm:p-8">
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-indigo-100 text-sm font-bold text-indigo-700">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="truncate font-semibold text-slate-900">{user.name}</p>
+                  <p className="truncate text-xs text-slate-500">{user.email}</p>
+                  <p className="mt-1 text-[11px] font-medium text-slate-400">
+                    {user.company} · Team member
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm leading-relaxed text-slate-800">
+                <strong className="font-semibold">This is not a billing issue.</strong>{" "}
+                Your team access to <span className="font-semibold">{user.company}</span> is
+                currently switched off. Ask the account owner to re-enable you from{" "}
+                <span className="font-semibold">Settings → Users</span>. You&apos;ll go
+                straight into the dashboard once they do.
+              </div>
+
+              <div className="flex flex-col gap-2.5 sm:flex-row">
+                {ownerEmail ? (
+                  <a
+                    href={`mailto:${ownerEmail}?subject=${encodeURIComponent(
+                      "Please re-enable my dashboard access"
+                    )}&body=${encodeURIComponent(
+                      `Hi, my access to ${user.company} (${user.email}) is turned off. Could you re-enable it from Settings → Users? Thanks.`
+                    )}`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-200/40 transition hover:brightness-105"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email account owner
+                  </a>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleCheckAgain}
+                  disabled={checking}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                >
+                  <RefreshCw className={clsx("h-4 w-4", checking && "animate-spin")} />
+                  {checking ? "Checking…" : "Check status"}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mx-auto flex items-center gap-2 text-sm font-medium text-slate-400 transition hover:text-rose-600"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

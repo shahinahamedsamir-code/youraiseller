@@ -216,8 +216,8 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-3 py-3">
-          <div className="relative min-w-[200px] flex-1">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-2 py-3 sm:px-3">
+          <div className="relative w-full min-w-0 sm:min-w-[200px] sm:flex-1">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex w-9 items-center justify-center text-slate-400">
               <Search className="h-4 w-4 shrink-0" />
             </span>
@@ -230,20 +230,20 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
           </div>
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:flex-none"
           >
             <Filter className="h-4 w-4" /> Filters
           </button>
           <button
             type="button"
             onClick={() => setSortDesc((d) => !d)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:flex-none"
           >
             <ArrowUpDown className="h-4 w-4" />
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="bg-transparent outline-none"
+              className="min-w-0 bg-transparent outline-none"
               onClick={(e) => e.stopPropagation()}
             >
               <option value="date">Date Created</option>
@@ -252,7 +252,7 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
             </select>
             {sortDesc ? "↓" : "↑"}
           </button>
-          <div className="ml-auto flex rounded-lg border border-slate-200 p-0.5">
+          <div className="ml-auto hidden rounded-lg border border-slate-200 p-0.5 md:flex">
             <button
               type="button"
               onClick={() => setView("comfort")}
@@ -290,7 +290,7 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
 
         {/* Turume-style table — horizontal + vertical scroll, larger text */}
         {view === "compact" && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
             <div className="max-h-[min(75vh,780px)] overflow-auto overscroll-x-contain scroll-smooth">
               <table className="w-full min-w-[1400px] border-collapse text-sm">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
@@ -368,12 +368,11 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
         {/* Card view (optional) */}
         <div
           className={clsx(
-            view === "comfort" ? "space-y-2 p-3" : "hidden",
-            "overflow-visible"
+            "space-y-2 overflow-visible p-2 sm:p-3",
+            view === "comfort" ? "block" : "block md:hidden"
           )}
         >
-          {view === "comfort" &&
-            paged.map((o) => (
+          {paged.map((o) => (
             <OrderRow
               key={o.id}
               order={o}
@@ -679,7 +678,7 @@ function OrderRow({
           : "border-slate-100 bg-white hover:border-indigo-200 hover:shadow-md"
       )}
     >
-      <div className="grid gap-3 p-4 lg:grid-cols-[auto_1fr_auto]">
+      <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[auto_1fr_auto]">
         <div className="flex items-start gap-3">
           <input
             type="checkbox"
@@ -689,7 +688,7 @@ function OrderRow({
           />
           <div className="min-w-0">
             <p className="text-xs text-slate-500">{o.createdAt}</p>
-            <p className="text-lg font-extrabold tracking-tight text-indigo-700">
+            <p className="break-all text-base font-extrabold tracking-tight text-indigo-700 sm:text-lg">
               {o.id}
             </p>
             <div className="mt-1 flex items-center gap-0.5">
@@ -797,14 +796,14 @@ function OrderRow({
               <Check className={clsx("h-4 w-4", o.printed && "text-emerald-600")} />
               {o.printed ? "Printed" : "Mark printed"}
             </button>
-            <p className="text-2xl font-extrabold text-slate-900">
+            <p className="text-xl font-extrabold text-slate-900 sm:text-2xl">
               ৳{o.total.toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* Right rail */}
-        <div className="flex flex-col items-end gap-2 border-t border-slate-100 pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+        <div className="flex flex-col items-start gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:flex-wrap sm:items-center lg:flex-col lg:items-end lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
           {showPanelLink && (
             <CourierTrackingCell
               order={o}

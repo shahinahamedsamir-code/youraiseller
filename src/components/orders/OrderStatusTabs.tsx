@@ -17,7 +17,7 @@ export function OrderStatusTabs({ active, onChange, counts: countsProp }: Props)
 
   return (
     <div className="overflow-x-auto rounded-t-2xl border border-b-0 border-slate-200/80 bg-white">
-      <div className="flex min-w-max gap-0.5 px-2 pt-2">
+      <div className="flex min-w-max gap-0.5 px-1.5 pt-1.5 sm:px-2 sm:pt-2">
         {ORDER_LIST_TABS.map((tab) => {
           const isActive = active === tab.key;
           const count = counts[tab.key] ?? 0;
@@ -27,7 +27,7 @@ export function OrderStatusTabs({ active, onChange, counts: countsProp }: Props)
               type="button"
               onClick={() => onChange(tab.key)}
               className={clsx(
-                "relative shrink-0 rounded-t-xl px-4 py-2.5 text-sm font-semibold transition",
+                "relative shrink-0 rounded-t-xl px-3 py-2 text-xs font-semibold transition sm:px-4 sm:py-2.5 sm:text-sm",
                 isActive
                   ? "bg-indigo-600 text-white shadow-md"
                   : "text-slate-600 hover:bg-slate-100"

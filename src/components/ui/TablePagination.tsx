@@ -69,7 +69,7 @@ export function TablePagination({
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-gradient-to-r from-slate-50/90 to-white px-4 py-3.5">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-gradient-to-r from-slate-50/90 to-white px-3 py-3 sm:gap-4 sm:px-4 sm:py-3.5">
       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
         <span className="font-medium">
           <span className="font-bold text-slate-800">{selectedCount}</span> of{" "}
@@ -83,8 +83,8 @@ export function TablePagination({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-        <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+      <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:gap-4">
+        <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 sm:text-sm">
           <span className="whitespace-nowrap">Rows per page</span>
           <select
             value={rowsPerPage}
@@ -107,7 +107,7 @@ export function TablePagination({
 
         <span
           className={clsx(
-            "min-w-[7rem] text-center text-sm font-extrabold tabular-nums",
+            "min-w-[5.5rem] text-center text-xs font-extrabold tabular-nums sm:min-w-[7rem] sm:text-sm",
             accent.page
           )}
         >

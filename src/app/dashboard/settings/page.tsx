@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Settings as SettingsIcon,
@@ -27,6 +27,12 @@ import {
 import clsx from "clsx";
 import { useFeatures } from "@/context/FeatureContext";
 import type { FeatureKey } from "@/lib/features";
+import {
+  BUSINESS_SETTINGS_UPDATED,
+  loadBusinessSettings,
+  saveBusinessSettings,
+  type BusinessSettings,
+} from "@/lib/business-settings-store";
 
 type SettingItem = {
   key: string;
@@ -201,6 +207,7 @@ const GROUPS: SettingGroup[] = [
         from: "from-rose-500",
         to: "to-red-600",
         ring: "ring-rose-100",
+        href: "/dashboard/settings/deletion-logs",
       },
       {
         key: "device-approvals",
@@ -210,6 +217,7 @@ const GROUPS: SettingGroup[] = [
         from: "from-teal-500",
         to: "to-emerald-600",
         ring: "ring-teal-100",
+        href: "/dashboard/settings/device-approvals",
       },
     ],
   },
@@ -240,10 +248,30 @@ export default function SettingsPage() {
   const { isEnabled } = useFeatures();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState<string | null>(null);
+  const [general, setGeneral] = useState<BusinessSettings | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setGeneral(loadBusinessSettings());
+    const refresh = () => setGeneral(loadBusinessSettings());
+    window.addEventListener(BUSINESS_SETTINGS_UPDATED, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(BUSINESS_SETTINGS_UPDATED, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
 
   const openItem = (it: SettingItem) => {
     setActive(it.key);
     if (it.href) router.push(it.href);
+  };
+
+  const saveGeneral = () => {
+    if (!general) return;
+    setGeneral(saveBusinessSettings(general));
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2200);
   };
 
   const q = query.trim().toLowerCase();
@@ -358,7 +386,13 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue="YourAI Seller"
+                  value={general?.name ?? ""}
+                  onChange={(event) =>
+                    setGeneral((current) =>
+                      current ? { ...current, name: event.target.value } : current
+                    )
+                  }
+                  placeholder="YourAI Seller"
                   className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
                 />
               </div>
@@ -366,18 +400,33 @@ export default function SettingsPage() {
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
                   Currency
                 </label>
-                <select className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                  <option>BDT (৳)</option>
-                  <option>USD ($)</option>
+                <select
+                  value={general?.currency ?? "BDT"}
+                  onChange={(event) =>
+                    setGeneral((current) =>
+                      current
+                        ? {
+                            ...current,
+                            currency: event.target.value === "USD" ? "USD" : "BDT",
+                          }
+                        : current
+                    )
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                >
+                  <option value="BDT">BDT (৳)</option>
+                  <option value="USD">USD ($)</option>
                 </select>
               </div>
             </div>
             <button
               type="button"
+              onClick={saveGeneral}
+              disabled={!general}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-violet-200 transition hover:shadow-lg"
             >
               <Save className="h-4 w-4" />
-              Save Changes
+              {saved ? "Saved" : "Save Changes"}
             </button>
           </div>
         </div>

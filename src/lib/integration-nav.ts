@@ -21,12 +21,6 @@ export const integrationNav: IntegrationNavItem[] = [
     featureKey: "shopify_integration",
   },
   {
-    label: "Courier Integration",
-    href: "/dashboard/integration/courier",
-    description: "API connect Steadfast, Pathao & more",
-    featureKey: "courier_integration",
-  },
-  {
     label: "SMS Integration",
     href: "/dashboard/integration/sms",
     description: "Recharge, auto SMS & delivery log",

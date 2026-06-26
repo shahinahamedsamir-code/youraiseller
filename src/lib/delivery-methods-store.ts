@@ -10,6 +10,8 @@ import {
   DEFAULT_CARRYBEE_CONFIG,
   type CarrybeeConfig,
 } from "./carrybee-types";
+import { DEFAULT_REDX_CONFIG, type RedxConfig } from "./redx-types";
+import { DEFAULT_PAPERFLY_CONFIG, type PaperflyConfig } from "./paperfly-types";
 
 export type DeliveryMethodType =
   | "steadfast"
@@ -34,6 +36,10 @@ export type DeliveryMethod = {
   pathao?: PathaoConfig;
   /** Carrybee Courier API (when type is carrybee) */
   carrybee?: CarrybeeConfig;
+  /** RedX OpenAPI (when type is redx) */
+  redx?: RedxConfig;
+  /** Paperfly merchant API (when type is paperfly) */
+  paperfly?: PaperflyConfig;
   createdAt: string;
   updatedAt: string;
 };
@@ -41,6 +47,8 @@ export type DeliveryMethod = {
 export { type SteadfastConfig } from "./steadfast-types";
 export { type PathaoConfig } from "./pathao-types";
 export { type CarrybeeConfig } from "./carrybee-types";
+export { type RedxConfig } from "./redx-types";
+export { type PaperflyConfig } from "./paperfly-types";
 
 function migrateMethod(m: DeliveryMethod): DeliveryMethod {
   if (m.type === "steadfast") {
@@ -71,6 +79,26 @@ function migrateMethod(m: DeliveryMethod): DeliveryMethod {
         ...m.carrybee,
         baseUrl: m.carrybee?.baseUrl ?? "",
         storeId: asCarrybeeStoreId(m.carrybee?.storeId),
+      },
+    };
+  }
+  if (m.type === "redx") {
+    return {
+      ...m,
+      redx: {
+        ...DEFAULT_REDX_CONFIG,
+        ...m.redx,
+        baseUrl: m.redx?.baseUrl ?? "",
+      },
+    };
+  }
+  if (m.type === "paperfly") {
+    return {
+      ...m,
+      paperfly: {
+        ...DEFAULT_PAPERFLY_CONFIG,
+        ...m.paperfly,
+        baseUrl: m.paperfly?.baseUrl ?? "",
       },
     };
   }
@@ -282,6 +310,8 @@ export type CreateDeliveryMethodInput = {
   steadfast?: SteadfastConfig;
   pathao?: PathaoConfig;
   carrybee?: CarrybeeConfig;
+  redx?: RedxConfig;
+  paperfly?: PaperflyConfig;
 };
 
 export function createDeliveryMethod(input: CreateDeliveryMethodInput): DeliveryMethod {
@@ -304,6 +334,14 @@ export function createDeliveryMethod(input: CreateDeliveryMethodInput): Delivery
     input.type === "carrybee"
       ? { ...DEFAULT_CARRYBEE_CONFIG, ...input.carrybee }
       : undefined;
+  const redx =
+    input.type === "redx"
+      ? { ...DEFAULT_REDX_CONFIG, ...input.redx }
+      : undefined;
+  const paperfly =
+    input.type === "paperfly"
+      ? { ...DEFAULT_PAPERFLY_CONFIG, ...input.paperfly }
+      : undefined;
 
   const method: DeliveryMethod = {
     id: `dm-${Date.now()}`,
@@ -316,6 +354,8 @@ export function createDeliveryMethod(input: CreateDeliveryMethodInput): Delivery
     steadfast,
     pathao,
     carrybee,
+    redx,
+    paperfly,
     createdAt: nowLabel(),
     updatedAt: nowLabel(),
   };

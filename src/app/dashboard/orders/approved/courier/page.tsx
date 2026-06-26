@@ -14,6 +14,8 @@ import {
   getDeliveryMethod,
 } from "@/lib/delivery-methods-store";
 import { createSteadfastShipment } from "@/lib/steadfast-service";
+import { createRedxShipment } from "@/lib/redx-service";
+import { createPaperflyShipment } from "@/lib/paperfly-service";
 import { getSessionUser } from "@/lib/dev-users";
 import { Truck, Loader2, Zap } from "lucide-react";
 import clsx from "clsx";
@@ -72,6 +74,61 @@ export default function CourierManagementPage() {
           ...m,
           [orderId]: `Steadfast OK · ${result.trackingCode}`,
         }));
+      } else if (
+        method?.type === "redx" &&
+        method.redx?.accessToken &&
+        !manualTracking
+      ) {
+        const result = await createRedxShipment(order, methodId);
+        if (!result.ok) {
+          setMsg((m) => ({ ...m, [orderId]: result.message }));
+          return;
+        }
+        assignCourier(orderId, methodId, result.trackingCode);
+        appendOrderActivity(orderId, {
+          type: "tracking",
+          title: "Sent to RedX",
+          detail: `Tracking ${result.trackingCode ?? "-"} - ${result.message}`,
+          actor: getSessionUser()?.name ?? "Staff",
+        });
+        if (result.redxStatus) {
+          updateOrder(orderId, {
+            note: [order.note, `RedX: ${result.redxStatus}`].filter(Boolean).join("\n"),
+          });
+        }
+        setMsg((m) => ({
+          ...m,
+          [orderId]: `RedX OK - ${result.trackingCode}`,
+        }));
+      } else if (
+        method?.type === "paperfly" &&
+        method.paperfly?.username &&
+        method.paperfly?.paperflyKey &&
+        !manualTracking
+      ) {
+        const result = await createPaperflyShipment(order, methodId);
+        if (!result.ok) {
+          setMsg((m) => ({ ...m, [orderId]: result.message }));
+          return;
+        }
+        assignCourier(orderId, methodId, result.trackingCode);
+        appendOrderActivity(orderId, {
+          type: "tracking",
+          title: "Sent to Paperfly",
+          detail: `Tracking ${result.trackingCode ?? "-"} - ${result.message}`,
+          actor: getSessionUser()?.name ?? "Staff",
+        });
+        if (result.paperflyStatus) {
+          updateOrder(orderId, {
+            note: [order.note, `Paperfly: ${result.paperflyStatus}`]
+              .filter(Boolean)
+              .join("\n"),
+          });
+        }
+        setMsg((m) => ({
+          ...m,
+          [orderId]: `Paperfly OK - ${result.trackingCode}`,
+        }));
       } else {
         assignCourier(orderId, methodId, manualTracking || undefined);
         setMsg((m) => ({
@@ -104,6 +161,8 @@ export default function CourierManagementPage() {
             (m) => m.id === o.deliveryMethodId
           );
           const isSf = selectedMethod?.type === "steadfast";
+          const isRedx = selectedMethod?.type === "redx";
+          const isPaperfly = selectedMethod?.type === "paperfly";
           return (
             <div
               key={`${o.id}-${refresh}`}
@@ -138,7 +197,9 @@ export default function CourierManagementPage() {
                       {m.name}
                       {m.type === "steadfast" ||
                       m.type === "pathao" ||
-                      m.type === "carrybee"
+                      m.type === "carrybee" ||
+                      m.type === "redx" ||
+                      m.type === "paperfly"
                         ? " (API)"
                         : ""}
                     </option>
@@ -146,7 +207,15 @@ export default function CourierManagementPage() {
                 </select>
                 <input
                   id={`track-${o.id}`}
-                  placeholder={isSf ? "Auto from Steadfast" : "Tracking ID"}
+                  placeholder={
+                    isSf
+                      ? "Auto from Steadfast"
+                      : isRedx
+                        ? "Auto from RedX"
+                        : isPaperfly
+                          ? "Auto from Paperfly"
+                          : "Tracking ID"
+                  }
                   className="min-w-[140px] rounded-xl border border-slate-200 px-3 py-2 text-sm"
                 />
                 <button
@@ -155,17 +224,29 @@ export default function CourierManagementPage() {
                   onClick={() => send(o.id)}
                   className={clsx(
                     "flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-bold text-white",
-                    isSf ? "bg-indigo-600 hover:bg-indigo-700" : "bg-teal-500 hover:bg-teal-600"
+                    isSf
+                      ? "bg-indigo-600 hover:bg-indigo-700"
+                      : isRedx
+                        ? "bg-red-600 hover:bg-red-700"
+                        : isPaperfly
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-teal-500 hover:bg-teal-600"
                   )}
                 >
                   {busyId === o.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isSf ? (
+                  ) : isSf || isRedx || isPaperfly ? (
                     <Zap className="h-4 w-4" />
                   ) : (
                     <Truck className="h-4 w-4" />
                   )}
-                  {isSf ? "Send to Steadfast" : "Send"}
+                  {isSf
+                    ? "Send to Steadfast"
+                    : isRedx
+                      ? "Send to RedX"
+                      : isPaperfly
+                        ? "Send to Paperfly"
+                        : "Send"}
                 </button>
               </div>
             </div>

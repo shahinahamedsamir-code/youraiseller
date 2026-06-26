@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import {
+  ChevronLeft,
+  ChevronRight,
   Crown,
   RefreshCw,
   Repeat,
@@ -28,6 +30,8 @@ import { formatBdt } from "@/lib/accounting-store";
 type SortKey = "spent" | "orders" | "name";
 type FilterKey = "all" | "repeat" | "top";
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 function customerInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -46,6 +50,8 @@ export function CustomersPanel() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("spent");
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<SellerCustomer | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addName, setAddName] = useState("");
@@ -118,6 +124,22 @@ export function CustomersPanel() {
       return b.spent - a.spent || b.orders - a.orders;
     });
   }, [customers, q, filter, sort, topSpentThreshold]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const pageEnd = Math.min(safePage * pageSize, filtered.length);
+  const visibleCustomers = filtered.slice(pageStart ? pageStart - 1 : 0, pageEnd);
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, filter, sort, pageSize]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const handleSync = () => {
     setSyncing(true);
@@ -244,6 +266,20 @@ export function CustomersPanel() {
             <option value="orders">Sort: Most orders</option>
             <option value="name">Sort: Name A–Z</option>
           </select>
+          <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
+            <span>Per page</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="bg-transparent text-xs font-semibold text-slate-700 outline-none"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
@@ -269,7 +305,7 @@ export function CustomersPanel() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((c) => {
+                {visibleCustomers.map((c) => {
                   const avg = c.orders > 0 ? c.spent / c.orders : 0;
                   const isRepeat = c.orders >= 2;
                   const isTop = c.spent >= topSpentThreshold && c.spent > 0;
@@ -337,10 +373,36 @@ export function CustomersPanel() {
         )}
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">
-        Showing {filtered.length} of {customers.length} customers · Avg spent{" "}
-        {formatBdt(stats.avgSpent)} per customer
-      </p>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-slate-500">
+          Showing {pageStart}-{pageEnd} of {filtered.length} customers
+          {filtered.length !== customers.length ? ` (filtered from ${customers.length})` : ""} · Avg
+          spent {formatBdt(stats.avgSpent)} per customer
+        </p>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={safePage <= 1}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="min-w-20 text-center text-xs font-semibold text-slate-600">
+            {safePage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            disabled={safePage >= totalPages}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+            aria-label="Next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
 
       <CustomerOrderHistoryModal
         open={selected != null}

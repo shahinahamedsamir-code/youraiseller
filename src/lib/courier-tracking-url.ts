@@ -202,6 +202,10 @@ export function getCourierBrandName(
       return "Pathao";
     case "carrybee":
       return "Carrybee";
+    case "redx":
+      return "RedX";
+    case "paperfly":
+      return "Paperfly";
     default:
       return "Courier";
   }

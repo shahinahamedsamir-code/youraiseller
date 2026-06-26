@@ -14,11 +14,17 @@ import {
 import { DEFAULT_STEADFAST_CONFIG } from "@/lib/steadfast-types";
 import { DEFAULT_PATHAO_CONFIG } from "@/lib/pathao-types";
 import { DEFAULT_CARRYBEE_CONFIG } from "@/lib/carrybee-types";
+import { DEFAULT_REDX_CONFIG } from "@/lib/redx-types";
+import { DEFAULT_PAPERFLY_CONFIG } from "@/lib/paperfly-types";
 import { testSteadfastConnection } from "@/lib/steadfast-service";
 import { PathaoDeliveryFields } from "@/components/delivery/PathaoDeliveryFields";
 import { CarrybeeDeliveryFields } from "@/components/delivery/CarrybeeDeliveryFields";
+import { RedxDeliveryFields } from "@/components/delivery/RedxDeliveryFields";
+import { PaperflyDeliveryFields } from "@/components/delivery/PaperflyDeliveryFields";
 import type { PathaoConfig } from "@/lib/pathao-types";
 import type { CarrybeeConfig } from "@/lib/carrybee-types";
+import type { RedxConfig } from "@/lib/redx-types";
+import type { PaperflyConfig } from "@/lib/paperfly-types";
 import {
   generateSteadfastWebhookSecret,
   getSteadfastWebhookPublicUrl,
@@ -31,6 +37,7 @@ import {
 import { getSessionUserId } from "@/lib/dev-users";
 import {
   AlertCircle,
+  Building2,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -40,6 +47,8 @@ import {
   EyeOff,
   Link2,
   Loader2,
+  PackagePlus,
+  Settings2,
   Truck,
 } from "lucide-react";
 
@@ -47,6 +56,16 @@ const types = Object.keys(DELIVERY_TYPE_LABELS) as DeliveryMethodType[];
 
 const STEADFAST_DOC =
   "https://docs.google.com/document/d/e/2PACX-1vTi0sTyR353xu1AK0nR8E_WKe5onCkUXGEf8ch8uoJy9qxGfgGnboSIkNosjQ0OOdXkJhgGuAsWxnIh/pub";
+
+const methodTypeHelp: Record<DeliveryMethodType, string> = {
+  steadfast: "Auto consignment, status checks, balance and webhook support.",
+  pathao: "Create orders through Pathao courier API with store selection.",
+  carrybee: "Create Carrybee orders with store, address and webhook settings.",
+  redx: "Create RedX parcels with pickup store, delivery area and tracking.",
+  paperfly: "Create Paperfly orders, track reference numbers, cancel orders and receive webhooks.",
+  ecourier: "Manual eCourier method for filtering and tracking entry.",
+  others: "Manual courier, pickup or custom delivery workflow.",
+};
 
 function inputCls() {
   return "w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
@@ -79,6 +98,12 @@ export function DeliveryMethodForm() {
   const [carrybee, setCarrybee] = useState<CarrybeeConfig>(
     existing?.carrybee ?? { ...DEFAULT_CARRYBEE_CONFIG }
   );
+  const [redx, setRedx] = useState<RedxConfig>(
+    existing?.redx ?? { ...DEFAULT_REDX_CONFIG }
+  );
+  const [paperfly, setPaperfly] = useState<PaperflyConfig>(
+    existing?.paperfly ?? { ...DEFAULT_PAPERFLY_CONFIG }
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -90,6 +115,8 @@ export function DeliveryMethodForm() {
   const isSteadfast = type === "steadfast";
   const isPathao = type === "pathao";
   const isCarrybee = type === "carrybee";
+  const isRedx = type === "redx";
+  const isPaperfly = type === "paperfly";
 
   useEffect(() => {
     if (isSteadfast && !name.trim()) {
@@ -101,7 +128,13 @@ export function DeliveryMethodForm() {
     if (isCarrybee && !name.trim()) {
       setName("CARRYBEE");
     }
-  }, [isSteadfast, isPathao, isCarrybee, name]);
+    if (isRedx && !name.trim()) {
+      setName("REDX");
+    }
+    if (isPaperfly && !name.trim()) {
+      setName("PAPERFLY");
+    }
+  }, [isSteadfast, isPathao, isCarrybee, isRedx, isPaperfly, name]);
 
   useEffect(() => {
     if (isSteadfast && !sf.webhookSecret?.trim()) {
@@ -196,6 +229,30 @@ export function DeliveryMethodForm() {
         return;
       }
     }
+    if (isRedx) {
+      if (!redx.accessToken.trim()) {
+        setError("RedX API access token is required.");
+        return;
+      }
+      if (!redx.pickupStoreId) {
+        setError("RedX Pickup Store ID is required. Run Test API & load pickup stores.");
+        return;
+      }
+      if (!redx.defaultDeliveryAreaId) {
+        setError("RedX Delivery Area ID is required. Search/select an area first.");
+        return;
+      }
+    }
+    if (isPaperfly) {
+      if (!paperfly.username.trim() || !paperfly.password || !paperfly.paperflyKey.trim()) {
+        setError("Paperfly username, password and paperfly key are required.");
+        return;
+      }
+      if (!paperfly.storeName.trim()) {
+        setError("Paperfly Store Name is required.");
+        return;
+      }
+    }
 
     try {
       const steadfastPayload = isSteadfast
@@ -220,6 +277,20 @@ export function DeliveryMethodForm() {
               carrybee.webhookSignature?.trim() ||
               generateCarrybeeWebhookSignature(),
             sendProductNames: carrybee.sendProductNames,
+        }
+        : undefined;
+
+      const redxPayload = isRedx
+        ? {
+            ...redx,
+            sendProductNames: redx.sendProductNames,
+          }
+        : undefined;
+
+      const paperflyPayload = isPaperfly
+        ? {
+            ...paperfly,
+            sendProductNames: paperfly.sendProductNames,
           }
         : undefined;
 
@@ -233,6 +304,8 @@ export function DeliveryMethodForm() {
         steadfast: steadfastPayload,
         pathao: pathaoPayload,
         carrybee: carrybeePayload,
+        redx: redxPayload,
+        paperfly: paperflyPayload,
       };
 
       let methodId = editId ?? "";
@@ -278,71 +351,107 @@ export function DeliveryMethodForm() {
   };
 
   return (
-    <form onSubmit={submit} className="max-w-3xl space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-slate-600">
-          {editId ? "Edit delivery method" : "Add new delivery method"}
-        </p>
-        <a
-          href={STEADFAST_DOC}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline"
-        >
-          Steadfast API docs
-          <ExternalLink className="h-3 w-3" />
-        </a>
+    <form onSubmit={submit} className="max-w-5xl space-y-5">
+      <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-200">
+              <PackagePlus className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase text-indigo-500">
+                <Settings2 className="h-3.5 w-3.5" />
+                Courier setup
+              </p>
+              <h2 className="text-2xl font-extrabold text-slate-950">
+                {editId ? "Edit delivery method" : "Add new delivery method"}
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                Configure the method name, connected business, API credentials,
+                parcel defaults, and visibility for order workflows.
+              </p>
+            </div>
+          </div>
+          <a
+            href={STEADFAST_DOC}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 text-xs font-extrabold text-indigo-700 transition hover:bg-indigo-100"
+          >
+            API docs
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <label className="mb-1.5 block text-xs font-bold uppercase text-slate-500">
-          Delivery Method Name
-        </label>
-        <input
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. STEADFAST TURUMART"
-          className={inputCls()}
-        />
-
-        <label className="mb-1.5 mt-5 block text-xs font-bold uppercase text-slate-500">
-          Type
-        </label>
-        <select
-          value={type}
-          onChange={(e) => {
-            const t = e.target.value as DeliveryMethodType;
-            setType(t);
-            if (t === "steadfast") {
-              setSf((prev) => ({ ...DEFAULT_STEADFAST_CONFIG, ...prev }));
+        <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-4">
+          <Building2 className="h-5 w-5 text-indigo-500" />
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-600">
+            Method identity
+          </h3>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase text-slate-500">
+              Delivery Method Name
+            </label>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. REDX, PATHAO, STEADFAST TURUMART"
+              className={inputCls()}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase text-slate-500">
+              Connected Business
+            </label>
+            <input
+              value={connectedBusiness}
+              onChange={(e) => setConnectedBusiness(e.target.value)}
+              placeholder="e.g. Your Store"
+              className={inputCls()}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="mb-1.5 block text-xs font-bold uppercase text-slate-500">
+              Type
+            </label>
+            <select
+              value={type}
+              onChange={(e) => {
+                const t = e.target.value as DeliveryMethodType;
+                setType(t);
+                if (t === "steadfast") {
+                  setSf((prev) => ({ ...DEFAULT_STEADFAST_CONFIG, ...prev }));
+                }
+                if (t === "pathao") {
+                  setPathao((prev) => ({ ...DEFAULT_PATHAO_CONFIG, ...prev }));
+                }
+                if (t === "carrybee") {
+                  setCarrybee((prev) => ({ ...DEFAULT_CARRYBEE_CONFIG, ...prev }));
+                }
+            if (t === "redx") {
+              setRedx((prev) => ({ ...DEFAULT_REDX_CONFIG, ...prev }));
             }
-            if (t === "pathao") {
-              setPathao((prev) => ({ ...DEFAULT_PATHAO_CONFIG, ...prev }));
+            if (t === "paperfly") {
+              setPaperfly((prev) => ({ ...DEFAULT_PAPERFLY_CONFIG, ...prev }));
             }
-            if (t === "carrybee") {
-              setCarrybee((prev) => ({ ...DEFAULT_CARRYBEE_CONFIG, ...prev }));
-            }
-          }}
-          className={inputCls()}
-        >
-          {types.map((t) => (
-            <option key={t} value={t}>
-              {DELIVERY_TYPE_LABELS[t]}
-            </option>
-          ))}
-        </select>
-
-        <div className="mt-4">
-          <label className="mb-1.5 block text-xs font-bold uppercase text-slate-500">
-            Connected Business
-          </label>
-          <input
-            value={connectedBusiness}
-            onChange={(e) => setConnectedBusiness(e.target.value)}
-            placeholder="e.g. Your Store"
-            className={inputCls()}
-          />
+              }}
+              className={inputCls()}
+            >
+              {types.map((t) => (
+                <option key={t} value={t}>
+                  {DELIVERY_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-800">
+              {DELIVERY_TYPE_LABELS[type]} - {methodTypeHelp[type]}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -368,6 +477,32 @@ export function DeliveryMethodForm() {
           sendProductNames={pathao.sendProductNames}
           onSendProductNamesChange={(v) =>
             setPathao((p) => ({ ...p, sendProductNames: v }))
+          }
+        />
+      )}
+
+      {isRedx && (
+        <RedxDeliveryFields
+          config={redx}
+          onChange={setRedx}
+          active={active}
+          onActiveChange={setActive}
+          sendProductNames={redx.sendProductNames}
+          onSendProductNamesChange={(v) =>
+            setRedx((r) => ({ ...r, sendProductNames: v }))
+          }
+        />
+      )}
+
+      {isPaperfly && (
+        <PaperflyDeliveryFields
+          config={paperfly}
+          onChange={setPaperfly}
+          active={active}
+          onActiveChange={setActive}
+          sendProductNames={paperfly.sendProductNames}
+          onSendProductNamesChange={(v) =>
+            setPaperfly((p) => ({ ...p, sendProductNames: v }))
           }
         />
       )}
@@ -668,43 +803,65 @@ export function DeliveryMethodForm() {
         </div>
       )}
 
-      {!isSteadfast && !isPathao && !isCarrybee && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
-          <label className="flex items-center gap-2 text-sm font-semibold">
+      {!isSteadfast && !isPathao && !isCarrybee && !isRedx && !isPaperfly && (
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-1 flex items-center gap-2">
+            <Settings2 className="h-5 w-5 text-slate-500" />
+            <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-600">
+              Manual method settings
+            </h3>
+          </div>
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <div>
+              <p className="text-sm font-bold text-slate-800">Active</p>
+              <p className="text-xs text-slate-500">Show this method in order workflows</p>
+            </div>
             <input
               type="checkbox"
               checked={active}
               onChange={(e) => setActive(e.target.checked)}
+              className="h-5 w-10 accent-indigo-600"
             />
-            Active
           </label>
-          <label className="flex items-center gap-2 text-sm font-semibold">
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <div>
+              <p className="text-sm font-bold text-slate-800">Preferred default</p>
+              <p className="text-xs text-slate-500">Preselect this courier for new orders</p>
+            </div>
             <input
               type="checkbox"
               checked={preferred}
               onChange={(e) => setPreferred(e.target.checked)}
+              className="h-5 w-10 accent-indigo-600"
             />
-            Preferred default
           </label>
-          <label className="flex items-center gap-2 text-sm font-semibold">
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <div>
+              <p className="text-sm font-bold text-slate-800">COD enabled</p>
+              <p className="text-xs text-slate-500">Allow cash collection for this method</p>
+            </div>
             <input
               type="checkbox"
               checked={codEnabled}
               onChange={(e) => setCodEnabled(e.target.checked)}
+              className="h-5 w-10 accent-indigo-600"
             />
-            COD enabled
           </label>
         </div>
       )}
 
-      {(isSteadfast || isPathao || isCarrybee) && (
-        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+      {(isSteadfast || isPathao || isCarrybee || isRedx || isPaperfly) && (
+        <label className="flex items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm">
+          <div>
+            <p className="text-sm font-extrabold text-slate-800">Preferred default courier</p>
+            <p className="text-xs text-slate-500">Use this API method as the first choice in new orders</p>
+          </div>
           <input
             type="checkbox"
             checked={preferred}
             onChange={(e) => setPreferred(e.target.checked)}
+            className="h-5 w-10 accent-indigo-600"
           />
-          Preferred default courier
         </label>
       )}
 
@@ -719,17 +876,17 @@ export function DeliveryMethodForm() {
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <button
           type="button"
           onClick={() => router.push("/dashboard/delivery")}
-          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold"
+          className="h-11 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-emerald-700"
+          className="h-11 rounded-xl bg-emerald-600 px-6 text-sm font-extrabold text-white shadow-md shadow-emerald-100 transition hover:bg-emerald-700"
         >
           {editId ? "Save Changes" : "Create"}
         </button>

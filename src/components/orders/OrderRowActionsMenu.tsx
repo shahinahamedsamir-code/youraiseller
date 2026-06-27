@@ -172,6 +172,10 @@ export function OrderRowActionsMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
+  // The order table mounts both a desktop table row and a (CSS-hidden) card row
+  // that share one open id. Without this, the hidden row's portal would render a
+  // duplicate menu at the top-left. Only show the menu for the visible trigger.
+  const [triggerVisible, setTriggerVisible] = useState(true);
   const [courierBusy, setCourierBusy] = useState(false);
   const [courierMsg, setCourierMsg] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -195,7 +199,14 @@ export function OrderRowActionsMenu({
     if (!open || !btnRef.current) return;
 
     const place = () => {
-      const rect = btnRef.current!.getBoundingClientRect();
+      const btn = btnRef.current!;
+      // Hidden duplicate (responsive) trigger — don't render its menu.
+      if (btn.offsetParent === null) {
+        setTriggerVisible(false);
+        return;
+      }
+      setTriggerVisible(true);
+      const rect = btn.getBoundingClientRect();
       const gap = 6;
       let left = rect.left;
       let top = rect.bottom + gap;
@@ -494,7 +505,7 @@ export function OrderRowActionsMenu({
     </button>
   );
 
-  const menuPanel = open && mounted && (
+  const menuPanel = open && mounted && triggerVisible && (
     <>
       <div
         className="fixed inset-0 z-[100] bg-slate-900/20"

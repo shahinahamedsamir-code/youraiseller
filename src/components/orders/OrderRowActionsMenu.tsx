@@ -234,7 +234,10 @@ export function OrderRowActionsMenu({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    // Only the visible menu instance handles outside-click / Escape. The hidden
+    // responsive duplicate must not — its menuRef is null, so it would treat a
+    // click on the real menu as "outside" and close it before the action fires.
+    if (!open || !triggerVisible) return;
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
       if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return;
@@ -249,7 +252,7 @@ export function OrderRowActionsMenu({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open, triggerVisible, onClose]);
 
   const flowStep = getOrderStatusFlowAction(o.status);
   const flowBack = getOrderStatusBackAction(o.status);

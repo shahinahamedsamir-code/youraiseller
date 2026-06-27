@@ -128,6 +128,7 @@ export async function GET(req: Request) {
           ? pending.planId
           : "basic";
       const prevStatus = users[idx].status;
+      const planChanged = users[idx].plan !== paidPlanId;
       const wasExpiredRenewal = prevStatus === "expired";
       // An already-active account is doing an early renewal / upgrade: keep it
       // active and add the purchased months on top of the current expiry so no
@@ -141,6 +142,8 @@ export async function GET(req: Request) {
         features: planFeaturesFromConfig(config, paidPlanId),
         status: wasExpiredRenewal || wasActiveRenewal ? "active" : "inactive",
         expiredAt: undefined,
+        // Switching plan drops purchased order quota — new plan, new limits.
+        ...(planChanged ? { extraOrderLimit: undefined, orderBoostThisMonth: undefined } : {}),
         ...(wasExpiredRenewal
           ? {
               planPaymentPaidAt: undefined,

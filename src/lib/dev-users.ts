@@ -854,6 +854,11 @@ export function updateDevUser(
     updated.planPaymentInvoice = undefined;
     updated.planPaymentMonths = undefined;
   }
+  // Changing plan resets purchased order quota — the new plan has its own limits.
+  if (patch.plan && patch.plan !== users[idx].plan) {
+    updated.extraOrderLimit = undefined;
+    updated.orderBoostThisMonth = undefined;
+  }
   if (patch.features) updated.features = normalizeFeatures(patch.features);
   if (patch.companyAddress !== undefined) {
     updated.companyAddress = normalizeAddress(patch.companyAddress);

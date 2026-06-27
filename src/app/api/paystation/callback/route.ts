@@ -191,6 +191,40 @@ export async function GET(req: Request) {
         taka: pending.amountTaka,
         source: "self_paystation",
       });
+    } else if (pending.kind === "order_limit") {
+      const users = await readDevUsersFile();
+      const idx = users.findIndex((u) => String(u.id) === pending.userId);
+      const orders = Math.max(0, Math.floor(Number(pending.orderCount) || 0));
+      if (idx < 0 || !pending.userId || orders <= 0) {
+        const failedRedirect = payStationRedirectForPending(redirectOrigin, pending.kind, false);
+        failedRedirect.searchParams.set("reason", "invalid_order_limit");
+        return NextResponse.redirect(failedRedirect);
+      }
+      const now = new Date();
+      if (pending.orderTemporary) {
+        // Boost for the current month only — accumulate within the same month.
+        const prev = users[idx].orderBoostThisMonth as
+          | { amount?: number; cycleStart?: string }
+          | undefined;
+        const prevStart = prev?.cycleStart ? new Date(prev.cycleStart) : null;
+        const sameMonth =
+          prevStart &&
+          prevStart.getMonth() === now.getMonth() &&
+          prevStart.getFullYear() === now.getFullYear();
+        users[idx] = {
+          ...users[idx],
+          orderBoostThisMonth: {
+            amount: (sameMonth ? Number(prev?.amount) || 0 : 0) + orders,
+            cycleStart: now.toISOString(),
+          },
+        };
+      } else {
+        users[idx] = {
+          ...users[idx],
+          extraOrderLimit: (Number(users[idx].extraOrderLimit) || 0) + orders,
+        };
+      }
+      await writeDevUsersFile(users);
     }
 
     await recordPaymentHistory({
@@ -240,7 +274,7 @@ export async function GET(req: Request) {
 
 function payStationRedirectForPending(
   origin: string,
-  kind: "plan_renewal" | "sms_recharge" | "auto_call_recharge",
+  kind: "plan_renewal" | "sms_recharge" | "auto_call_recharge" | "order_limit",
   success: boolean
 ): URL {
   const path =
@@ -248,7 +282,9 @@ function payStationRedirectForPending(
       ? "/dashboard/integration/sms"
       : kind === "auto_call_recharge"
         ? "/dashboard/integration/auto-call"
-        : "/renew";
+        : kind === "order_limit"
+          ? "/dashboard/billing-limit"
+          : "/renew";
   const redirect = new URL(path, origin);
   redirect.searchParams.set("payment", success ? "success" : "failed");
   redirect.searchParams.set("kind", kind);

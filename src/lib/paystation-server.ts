@@ -4,7 +4,7 @@ import { platformDataFile } from "./platform-data-path";
 const PENDING_FILE = platformDataFile("paystation-pending-payments.json");
 
 export type PayStationPendingPayment = {
-  kind: "plan_renewal" | "sms_recharge" | "auto_call_recharge";
+  kind: "plan_renewal" | "sms_recharge" | "auto_call_recharge" | "order_limit";
   invoiceNumber: string;
   userId?: string;
   scope?: string;
@@ -16,6 +16,10 @@ export type PayStationPendingPayment = {
   months?: number;
   smsCount?: number;
   callMinutes?: number;
+  /** Extra orders being purchased (order_limit). */
+  orderCount?: number;
+  /** order_limit: true = this month only, false = permanent. */
+  orderTemporary?: boolean;
   amountTaka: number;
   couponCode?: string;
   discountTaka?: number;

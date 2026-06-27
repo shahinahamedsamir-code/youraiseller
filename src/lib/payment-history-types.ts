@@ -1,7 +1,8 @@
 export type PaymentHistoryKind =
   | "plan_renewal"
   | "sms_recharge"
-  | "auto_call_recharge";
+  | "auto_call_recharge"
+  | "order_limit";
 
 export type PaymentHistoryMethod = "bkash" | "paystation" | "admin" | "manual";
 
@@ -39,4 +40,5 @@ export const PAYMENT_KIND_LABELS: Record<PaymentHistoryKind, string> = {
   plan_renewal: "Plan renewal",
   sms_recharge: "SMS recharge",
   auto_call_recharge: "Auto Call recharge",
+  order_limit: "Order limit increase",
 };

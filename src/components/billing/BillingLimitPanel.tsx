@@ -35,6 +35,7 @@ import {
 } from "@/lib/payment-history-types";
 import { fetchPublicPlanConfig, loadPlanConfigLocal } from "@/lib/plan-config-client";
 import { isWebOrder, parseOrderTime, periodStartTime } from "@/lib/plan-limits";
+import { IncreaseOrderLimitModal } from "@/components/billing/IncreaseOrderLimitModal";
 import type { PlanId } from "@/lib/plan-config-types";
 import type { PlanConfig } from "@/lib/plan-config-types";
 import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
@@ -42,7 +43,7 @@ import { daysUntilPlanExpiry } from "@/lib/subscription-period";
 import { formatSmsBdt } from "@/lib/sms-types";
 import { formatAutoCallBdt } from "@/lib/auto-call-store";
 import { loadProducts } from "@/lib/inventory-store";
-import { loadOrders, type Order } from "@/lib/orders-store";
+import { loadOrders } from "@/lib/orders-store";
 import { loadTeamUsers, TEAM_USERS_UPDATED } from "@/lib/team-users-store";
 
 type KindFilter = "all" | PaymentHistoryKind;
@@ -206,6 +207,7 @@ export function BillingLimitPanel() {
     periodOrders: 0,
     activeUsers: 0,
   });
+  const [increaseOpen, setIncreaseOpen] = useState(false);
 
   const refreshUsage = useCallback((currentUser: DevUser | null) => {
     const periodStart = periodStartTime(currentUser);
@@ -356,13 +358,23 @@ export function BillingLimitPanel() {
             limit={usageLimits.products}
             icon={Package}
           />
-          <UsageLimitCard
-            title="Orders"
-            subtitle="Orders in current billing period"
-            used={usage.periodOrders}
-            limit={usageLimits.orders}
-            icon={ShoppingBag}
-          />
+          <div className="space-y-2">
+            <UsageLimitCard
+              title="Orders"
+              subtitle="Approved orders this month"
+              used={usage.periodOrders}
+              limit={usageLimits.orders}
+              icon={ShoppingBag}
+            />
+            <button
+              type="button"
+              onClick={() => setIncreaseOpen(true)}
+              disabled={!user}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+            >
+              + Increase order limit
+            </button>
+          </div>
           <UsageLimitCard
             title="Users"
             subtitle="Active team seats"
@@ -655,6 +667,9 @@ export function BillingLimitPanel() {
         </div>
       </section>
 
+      {increaseOpen ? (
+        <IncreaseOrderLimitModal onClose={() => setIncreaseOpen(false)} />
+      ) : null}
       {user ? (
         <PlanRenewPayModal
           open={renewOpen}

@@ -118,6 +118,35 @@ export function checkPlanLimit(kind: LimitKind, user?: DevUser | null): LimitChe
   return { kind, ok: unlimited || used < limit, used, limit, unlimited };
 }
 
+/** Start a PayStation payment to buy extra order quota. Returns a payment URL. */
+export async function increaseOrderLimitViaPayStation(
+  orders: number,
+  temporary: boolean
+): Promise<{ ok: boolean; error?: string; paymentUrl?: string; amountTaka?: number }> {
+  const user = getSessionUser();
+  if (!user) return { ok: false, error: "Sign in first." };
+  try {
+    const res = await fetch("/api/order-limit/recharge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ userId: user.id, orders, temporary }),
+    });
+    const data = (await res.json()) as {
+      ok?: boolean;
+      error?: string;
+      paymentUrl?: string;
+      amountTaka?: number;
+    };
+    if (!res.ok || !data.ok || !data.paymentUrl) {
+      return { ok: false, error: data.error ?? "Could not start payment." };
+    }
+    return { ok: true, paymentUrl: data.paymentUrl, amountTaka: data.amountTaka };
+  } catch {
+    return { ok: false, error: "Network error. Try again." };
+  }
+}
+
 export function planLimitMessage(check: LimitCheck): string {
   const label =
     check.kind === "products"

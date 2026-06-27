@@ -17,6 +17,7 @@ import {
   ShoppingBag,
   Users,
   Wallet,
+  Zap,
 } from "lucide-react";
 import { AutoCallRechargeModal } from "@/components/integration/auto-call/AutoCallRechargeModal";
 import { useAutoCallAccount } from "@/components/integration/auto-call/useAutoCallAccount";
@@ -97,7 +98,7 @@ function paymentDetails(row: PaymentHistoryEntry): string {
   if (row.kind === "plan_renewal") {
     return [row.planId, row.months ? `${row.months} month` : null, row.couponCode]
       .filter(Boolean)
-      .join(" · ") || "Plan renewal";
+      .join(" / ") || "Plan renewal";
   }
   if (row.kind === "sms_recharge") return row.smsCount ? `${row.smsCount} SMS` : "SMS recharge";
   if (row.kind === "auto_call_recharge") {
@@ -143,22 +144,26 @@ function UsageLimitCard({
   used,
   limit,
   icon: Icon,
+  actionLabel,
+  onAction,
 }: {
   title: string;
   subtitle: string;
   used: number;
   limit: number;
   icon: typeof Package;
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   const percent = percentUsed(used, limit);
   const tone = usageTone(percent);
   const remaining = Math.max(0, limit - used);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
+          <p className="text-xs font-extrabold uppercase text-slate-400">
             {title}
           </p>
           <h2 className="mt-2 text-2xl font-extrabold text-slate-900">
@@ -186,6 +191,16 @@ function UsageLimitCard({
           </span>
         </div>
       </div>
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-extrabold text-emerald-700 transition hover:bg-emerald-100"
+        >
+          <Zap className="h-3.5 w-3.5" />
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -338,13 +353,13 @@ export function BillingLimitPanel() {
         </div>
       ) : null}
 
-      <section>
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-lg font-extrabold text-slate-900">Usage limits</h2>
-            <p className="text-xs text-slate-500">
-              Products, monthly orders and active user seats for{" "}
-              {currentPlan?.name ?? user?.plan?.toUpperCase() ?? "your plan"}.
+            <p className="text-xs font-extrabold uppercase text-indigo-600">Plan capacity</p>
+            <h2 className="mt-1 text-lg font-extrabold text-slate-900">Usage limits</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Products, monthly orders and active seats included in {currentPlan?.name ?? user?.plan?.toUpperCase() ?? "your plan"}.
             </p>
           </div>
           <button
@@ -354,12 +369,13 @@ export function BillingLimitPanel() {
               setRenewOpen(true);
             }}
             disabled={!user}
-            className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-extrabold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-xs font-extrabold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
           >
-            Increase limit
+            <Zap className="h-3.5 w-3.5" />
+            Upgrade capacity
           </button>
         </div>
-        <div className="grid gap-4 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3">
           <UsageLimitCard
             title="Products active"
             subtitle="Active products in inventory"
@@ -367,23 +383,15 @@ export function BillingLimitPanel() {
             limit={usageLimits.products}
             icon={Package}
           />
-          <div className="space-y-2">
-            <UsageLimitCard
-              title="Orders"
-              subtitle="Approved orders this month"
-              used={usage.periodOrders}
-              limit={usageLimits.orders}
-              icon={ShoppingBag}
-            />
-            <button
-              type="button"
-              onClick={() => setIncreaseOpen(true)}
-              disabled={!user}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-            >
-              + Increase order limit
-            </button>
-          </div>
+          <UsageLimitCard
+            title="Orders"
+            subtitle="Approved orders this month"
+            used={usage.periodOrders}
+            limit={usageLimits.orders}
+            icon={ShoppingBag}
+            actionLabel="Increase order limit"
+            onAction={() => setIncreaseOpen(true)}
+          />
           <UsageLimitCard
             title="Users"
             subtitle="Active team seats"
@@ -394,179 +402,172 @@ export function BillingLimitPanel() {
         </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">Current plan</p>
-              <h2 className="mt-2 text-xl font-extrabold text-slate-900">
-                {user?.plan ? user.plan.toUpperCase() : "Loading"}
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Expires: {user?.planExpiresAt ?? "-"}
-              </p>
-              {expiryDays !== null ? (
-                <span
-                  className={clsx(
-                    "mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-1",
-                    expiryDays < 0
-                      ? "bg-rose-50 text-rose-700 ring-rose-200"
-                      : expiryDays <= 2
-                        ? "bg-rose-50 text-rose-700 ring-rose-200"
-                        : expiryDays <= 7
-                          ? "bg-amber-50 text-amber-700 ring-amber-200"
-                          : "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                  )}
+      <section>
+        <div className="mb-3">
+          <p className="text-xs font-extrabold uppercase text-indigo-600">Account & services</p>
+          <h2 className="mt-1 text-lg font-extrabold text-slate-900">Plan and balances</h2>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="flex min-h-[230px] flex-col overflow-hidden rounded-2xl border border-indigo-200 bg-indigo-50/60 p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-extrabold uppercase text-indigo-600">Current plan</p>
+                <h2 className="mt-2 text-2xl font-extrabold text-slate-900">
+                  {user?.plan ? user.plan.toUpperCase() : "Loading"}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">Expires: {user?.planExpiresAt ?? "-"}</p>
+              </div>
+              <div className="rounded-xl bg-white p-3 text-indigo-600 ring-1 ring-indigo-100">
+                <CreditCard className="h-5 w-5" />
+              </div>
+            </div>
+            {expiryDays !== null ? (
+              <span
+                className={clsx(
+                  "mt-3 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-1",
+                  expiryDays <= 2
+                    ? "bg-rose-50 text-rose-700 ring-rose-200"
+                    : expiryDays <= 7
+                      ? "bg-amber-50 text-amber-700 ring-amber-200"
+                      : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                )}
+              >
+                <CalendarClock className="h-3 w-3" />
+                {expiryDays < 0
+                  ? `Expired ${Math.abs(expiryDays)} day${Math.abs(expiryDays) === 1 ? "" : "s"} ago`
+                  : expiryDays === 0
+                    ? "Expires today"
+                    : `${expiryDays} day${expiryDays === 1 ? "" : "s"} left`}
+              </span>
+            ) : null}
+            <div className="mt-auto flex flex-col gap-3 border-t border-indigo-100 pt-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Renewal per month</p>
+                <p className="mt-1 text-xl font-extrabold text-slate-900">{formatSmsBdt(planPrice)}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={!user}
+                  onClick={() => {
+                    setRenewMode("upgrade");
+                    setRenewOpen(true);
+                  }}
+                  className="flex-1 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-extrabold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
                 >
-                  <CalendarClock className="h-3 w-3" />
-                  {expiryDays < 0
-                    ? `Expired ${Math.abs(expiryDays)} day${Math.abs(expiryDays) === 1 ? "" : "s"} ago`
-                    : expiryDays === 0
-                      ? "Expires today"
-                      : `${expiryDays} day${expiryDays === 1 ? "" : "s"} left`}
-                </span>
-              ) : null}
-            </div>
-            <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
-              <CreditCard className="h-5 w-5" />
+                  Upgrade
+                </button>
+                <button
+                  type="button"
+                  disabled={!user}
+                  onClick={() => {
+                    setRenewMode("renew");
+                    setRenewOpen(true);
+                  }}
+                  className="flex-1 rounded-xl bg-[#E2136E] px-4 py-2.5 text-sm font-extrabold text-white hover:bg-[#c91062] disabled:opacity-50"
+                >
+                  Renew
+                </button>
+              </div>
             </div>
           </div>
-          <div className="mt-5 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold text-slate-500">Renew price/month</p>
-              <p className="text-lg font-extrabold text-slate-900">{formatSmsBdt(planPrice)}</p>
+
+          <div className="flex min-h-[230px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-extrabold uppercase text-slate-400">SMS balance</p>
+                  <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-extrabold", sms.systemEnabled ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")}>
+                    {sms.systemEnabled ? "Active" : "Off"}
+                  </span>
+                </div>
+                <h2 className="mt-2 text-2xl font-extrabold text-slate-900">{sms.account.balance.toLocaleString("en-BD")} SMS</h2>
+                <p className="mt-1 text-xs text-slate-500">{formatSmsBdt(sms.smsPriceTaka)} per message</p>
+              </div>
+              <div className="rounded-xl bg-teal-50 p-3 text-teal-600 ring-1 ring-teal-100">
+                <MessageSquare className="h-5 w-5" />
+              </div>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <Link href="/dashboard/integration/sms" className="text-xs font-bold text-slate-500 hover:text-teal-700">
+                Manage settings
+              </Link>
               <button
                 type="button"
-                disabled={!user}
-                onClick={() => {
-                  setRenewMode("upgrade");
-                  setRenewOpen(true);
-                }}
-                className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-extrabold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                disabled={!isEnabled("sms") || !sms.selfRechargeEnabled}
+                onClick={() => setSmsOpen(true)}
+                className="rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-teal-700 disabled:opacity-50"
               >
-                Upgrade
+                Add SMS
               </button>
+            </div>
+          </div>
+
+          <div className="flex min-h-[230px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-violet-200 hover:shadow-md">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-extrabold uppercase text-slate-400">Auto Call balance</p>
+                  <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-extrabold", autoCall.systemEnabled ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")}>
+                    {autoCall.systemEnabled ? "Active" : "Off"}
+                  </span>
+                </div>
+                <h2 className="mt-2 text-2xl font-extrabold text-slate-900">{formatAutoCallBdt(autoCall.account.balanceTaka)}</h2>
+                <p className="mt-1 text-xs text-slate-500">{formatSmsBdt(autoCall.callPriceTaka)} per call</p>
+              </div>
+              <div className="rounded-xl bg-violet-50 p-3 text-violet-600 ring-1 ring-violet-100">
+                <Phone className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <Link href="/dashboard/integration/auto-call" className="text-xs font-bold text-slate-500 hover:text-violet-700">
+                Manage settings
+              </Link>
               <button
                 type="button"
-                disabled={!user}
-                onClick={() => {
-                  setRenewMode("renew");
-                  setRenewOpen(true);
-                }}
-                className="rounded-xl bg-[#E2136E] px-4 py-2.5 text-sm font-extrabold text-white hover:bg-[#c91062] disabled:opacity-50"
+                disabled={!isEnabled("auto_call_integration") || !autoCall.selfRechargeEnabled}
+                onClick={() => setAutoCallOpen(true)}
+                className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-violet-700 disabled:opacity-50"
               >
-                Renew plan
+                Add balance
               </button>
             </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">SMS limit</p>
-              <h2 className="mt-2 text-xl font-extrabold text-slate-900">
-                {sms.account.balance.toLocaleString("en-BD")} SMS
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                {formatSmsBdt(sms.smsPriceTaka)}/SMS · {sms.systemEnabled ? "Service on" : "Service off"}
-              </p>
-            </div>
-            <div className="rounded-xl bg-teal-50 p-3 text-teal-600">
-              <MessageSquare className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <Link
-              href="/dashboard/integration/sms"
-              className="text-xs font-bold text-slate-500 hover:text-teal-700"
-            >
-              SMS settings
-            </Link>
-            <button
-              type="button"
-              disabled={!isEnabled("sms") || !sms.selfRechargeEnabled}
-              onClick={() => setSmsOpen(true)}
-              className="rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-teal-700 disabled:opacity-50"
-            >
-              Add SMS
-            </button>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">Auto Call limit</p>
-              <h2 className="mt-2 text-xl font-extrabold text-slate-900">
-                {formatAutoCallBdt(autoCall.account.balanceTaka)}
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                {formatSmsBdt(autoCall.callPriceTaka)}/call · {autoCall.systemEnabled ? "Service on" : "Service off"}
-              </p>
-            </div>
-            <div className="rounded-xl bg-violet-50 p-3 text-violet-600">
-              <Phone className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <Link
-              href="/dashboard/integration/auto-call"
-              className="text-xs font-bold text-slate-500 hover:text-violet-700"
-            >
-              Auto Call settings
-            </Link>
-            <button
-              type="button"
-              disabled={!isEnabled("auto_call_integration") || !autoCall.selfRechargeEnabled}
-              onClick={() => setAutoCallOpen(true)}
-              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-violet-700 disabled:opacity-50"
-            >
-              Add call
-            </button>
           </div>
         </div>
       </section>
-
-      <section className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Wallet className="h-5 w-5 text-emerald-600" />
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid md:grid-cols-3 md:divide-x md:divide-slate-100">
+          <div className="flex items-center gap-3 p-4 sm:p-5">
+            <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-600"><Wallet className="h-5 w-5" /></div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Paid total</p>
-              <p className="text-xl font-extrabold text-slate-900">{formatSmsBdt(completedTotal)}</p>
+              <p className="text-xs font-bold uppercase text-slate-400">Paid total</p>
+              <p className="mt-0.5 text-xl font-extrabold text-slate-900">{formatSmsBdt(completedTotal)}</p>
             </div>
           </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <CalendarClock className="h-5 w-5 text-amber-600" />
+          <div className="flex items-center gap-3 border-t border-slate-100 p-4 sm:p-5 md:border-t-0">
+            <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600"><CalendarClock className="h-5 w-5" /></div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Transactions</p>
-              <p className="text-xl font-extrabold text-slate-900">{entries.length}</p>
+              <p className="text-xs font-bold uppercase text-slate-400">Transactions</p>
+              <p className="mt-0.5 text-xl font-extrabold text-slate-900">{entries.length}</p>
             </div>
           </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <BadgeDollarSign className="h-5 w-5 text-indigo-600" />
+          <div className="flex items-center gap-3 border-t border-slate-100 p-4 sm:p-5 md:border-t-0">
+            <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600"><BadgeDollarSign className="h-5 w-5" /></div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Gateway</p>
-              <p className="text-xl font-extrabold text-slate-900">PayStation</p>
+              <p className="text-xs font-bold uppercase text-slate-400">Payment gateway</p>
+              <p className="mt-0.5 text-xl font-extrabold text-slate-900">PayStation</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-lg font-extrabold text-slate-900">Transactions</h2>
             <p className="text-xs text-slate-500">Plan, SMS and Auto Call payment history</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {KIND_FILTERS.map((f) => (
               <button
                 key={f.id}
@@ -580,25 +581,71 @@ export function BillingLimitPanel() {
                 {f.label}
               </button>
             ))}
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setStatus(f.id)}
-                className={clsx(
-                  "rounded-xl px-3 py-1.5 text-xs font-bold transition",
-                  status === f.id ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as StatusFilter)}
+              aria-label="Filter transactions by status"
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none focus:border-indigo-400"
+            >
+              {STATUS_FILTERS.map((filter) => (
+                <option key={filter.id} value={filter.id}>{filter.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-slate-100 md:hidden">
+          {historyLoading ? (
+            <div className="px-4 py-12 text-center text-slate-400">
+              <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+            </div>
+          ) : entries.length === 0 ? (
+            <div className="px-4 py-12 text-center text-sm text-slate-400">No billing transactions yet.</div>
+          ) : (
+            entries.map((row) => (
+              <article key={row.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">{PAYMENT_KIND_LABELS[row.kind]}</p>
+                    <p className="mt-1 text-xs text-slate-500">{formatWhen(row.createdAt)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-extrabold text-slate-900">{formatSmsBdt(row.amountTaka)}</p>
+                    <span className={clsx("mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ring-1", statusClass(row.status))}>
+                      {row.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
+                  <p>{paymentDetails(row)}</p>
+                  {row.invoiceNumber ? <p className="mt-1 break-all font-semibold text-slate-700">{row.invoiceNumber}</p> : null}
+                </div>
+                {row.invoiceNumber ? (
+                  <div className="flex gap-2">
+                    <a
+                      href={`/api/payments/receipt?invoice=${encodeURIComponent(row.invoiceNumber)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> View
+                    </a>
+                    <a
+                      href={`/api/payments/receipt?invoice=${encodeURIComponent(row.invoiceNumber)}&download=1`}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download
+                    </a>
+                  </div>
+                ) : null}
+              </article>
+            ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Type</th>

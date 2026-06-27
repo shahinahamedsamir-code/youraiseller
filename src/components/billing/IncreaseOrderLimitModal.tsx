@@ -11,7 +11,8 @@ import {
 } from "@/lib/plan-limits";
 
 const PRESETS = [100, 200, 500, 1000];
-const MIN_ORDERS = 100;
+const MIN_ORDERS = 1;
+const DEFAULT_ORDERS = 100;
 
 export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
   const user = useMemo(() => getSessionUser() ?? null, []);
@@ -19,7 +20,7 @@ export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
   const used = useMemo(() => countPlanUsage(user).orders, [user]);
   const rate = useMemo(() => getOrderRateTaka(user), [user]);
 
-  const [orders, setOrders] = useState(MIN_ORDERS);
+  const [orders, setOrders] = useState(DEFAULT_ORDERS);
   const [temporary, setTemporary] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
@@ -90,7 +91,9 @@ export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
               onChange={(e) => setOrders(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
               className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
             />
-            <p className="mt-1 text-[11px] text-slate-400">Minimum: {MIN_ORDERS} orders</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Enter any amount, or use a preset.
+            </p>
             <div className="mt-2 grid grid-cols-4 gap-2">
               {PRESETS.map((p) => (
                 <button

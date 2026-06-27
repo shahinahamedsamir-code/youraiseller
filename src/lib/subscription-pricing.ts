@@ -40,3 +40,16 @@ export function calcSubscriptionRenewTotal(
   const m = Math.max(1, Math.floor(months) || 1);
   return Math.round(monthlyTaka * m * 100) / 100;
 }
+
+/**
+ * Recurring surcharge (Taka/month) for permanently-purchased extra orders.
+ * Added on top of the plan's base monthly fee at every renewal.
+ */
+export function extraOrderSurchargeTaka(
+  extraOrderLimit: unknown,
+  orderRateTaka: number
+): number {
+  const extra = Math.max(0, Math.floor(Number(extraOrderLimit) || 0));
+  const rate = Math.max(0, Number(orderRateTaka) || 0);
+  return Math.round(extra * rate * 100) / 100;
+}

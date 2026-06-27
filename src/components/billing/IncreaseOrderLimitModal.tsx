@@ -121,7 +121,8 @@ export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
                 Temporary boost (this month only)
               </span>
               <span className="block text-[11px] text-slate-500">
-                Leave off to add the orders permanently to every month of your plan.
+                Leave off to add these orders to your plan permanently — the cost is
+                then added to your monthly plan fee at every renewal.
               </span>
             </span>
           </label>
@@ -130,12 +131,17 @@ export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
             <p className="text-xs text-slate-400">Total Cost</p>
             <p className="text-2xl font-extrabold text-emerald-600">{cost.toLocaleString("en-BD")} TK</p>
             <p className="mt-1 text-[11px] text-slate-500">
-              {orders.toLocaleString("en-BD")} orders × {rate} TK
+              {orders.toLocaleString("en-BD")} orders × {rate} TK · pay now
             </p>
             <p className="text-[11px] text-slate-500">
               New limit: {(currentLimit + orders).toLocaleString("en-BD")} orders
-              {temporary ? " (this month)" : " (permanent)"}
+              {temporary ? " (this month only)" : " (permanent)"}
             </p>
+            {!temporary ? (
+              <p className="text-[11px] font-semibold text-emerald-700">
+                +{cost.toLocaleString("en-BD")} TK/month added to your plan fee
+              </p>
+            ) : null}
             <p className="mt-1 text-[11px] text-slate-400">PayStation hosted checkout</p>
           </div>
 

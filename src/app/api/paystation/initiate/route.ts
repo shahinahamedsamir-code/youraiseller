@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getSellerSessionUser } from "@/lib/seller-auth-server";
 import { loadPlanConfig } from "@/lib/plan-config-server";
 import { getPlanDefinition } from "@/lib/plan-config-utils";
-import { calcSubscriptionRenewTotal, renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
+import {
+  calcSubscriptionRenewTotal,
+  extraOrderSurchargeTaka,
+  renewalMonthlyPriceTaka,
+} from "@/lib/subscription-pricing";
 import { validateSubscriptionCoupon } from "@/lib/subscription-coupons";
 import { loadSubscriptionCoupons } from "@/lib/subscription-coupons-server";
 import {
@@ -69,11 +73,17 @@ export async function POST(req: Request) {
     const planId = requestedPlanId;
     const plan = getPlanDefinition(config, planId);
     const customRenewalPriceTaka = Number(sessionUser.customRenewalPriceTaka);
-    const serverMonthlyTaka = renewalMonthlyPriceTaka(
-      planId,
-      plan.priceLabel,
-      Number.isFinite(customRenewalPriceTaka) ? customRenewalPriceTaka : undefined
+    // Permanently-bought extra orders add a recurring surcharge to the monthly fee.
+    const orderSurcharge = extraOrderSurchargeTaka(
+      sessionUser.extraOrderLimit,
+      plan.orderRateTaka
     );
+    const serverMonthlyTaka =
+      renewalMonthlyPriceTaka(
+        planId,
+        plan.priceLabel,
+        Number.isFinite(customRenewalPriceTaka) ? customRenewalPriceTaka : undefined
+      ) + orderSurcharge;
     const quotedMonthlyTaka = Number(body.quotedMonthlyTaka);
     const monthlyTaka =
       Number.isFinite(quotedMonthlyTaka) && quotedMonthlyTaka > serverMonthlyTaka

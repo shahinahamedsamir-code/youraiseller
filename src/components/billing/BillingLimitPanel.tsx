@@ -38,7 +38,10 @@ import { isWebOrder, parseOrderTime, periodStartTime } from "@/lib/plan-limits";
 import { IncreaseOrderLimitModal } from "@/components/billing/IncreaseOrderLimitModal";
 import type { PlanId } from "@/lib/plan-config-types";
 import type { PlanConfig } from "@/lib/plan-config-types";
-import { renewalMonthlyPriceTaka } from "@/lib/subscription-pricing";
+import {
+  extraOrderSurchargeTaka,
+  renewalMonthlyPriceTaka,
+} from "@/lib/subscription-pricing";
 import { daysUntilPlanExpiry } from "@/lib/subscription-period";
 import { formatSmsBdt } from "@/lib/sms-types";
 import { formatAutoCallBdt } from "@/lib/auto-call-store";
@@ -270,7 +273,13 @@ export function BillingLimitPanel() {
     if (!user) return 0;
     const planId = user.plan as PlanId;
     const plan = planConfig.plans.find((p) => p.id === planId);
-    return renewalMonthlyPriceTaka(planId, plan?.priceLabel ?? "", user.customRenewalPriceTaka);
+    const base = renewalMonthlyPriceTaka(
+      planId,
+      plan?.priceLabel ?? "",
+      user.customRenewalPriceTaka
+    );
+    // Permanently-bought extra orders add a recurring monthly surcharge.
+    return base + extraOrderSurchargeTaka(user.extraOrderLimit, plan?.orderRateTaka ?? 0);
   }, [planConfig, user]);
 
   const expiryDays = useMemo(

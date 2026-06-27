@@ -10,6 +10,7 @@ import {
 } from "./subscription-coupons";
 import {
   calcSubscriptionRenewTotal,
+  extraOrderSurchargeTaka,
   renewalMonthlyPriceTaka,
 } from "./subscription-pricing";
 
@@ -35,11 +36,9 @@ export function subscriptionRenewQuote(
   planId: PlanId = user.plan
 ): SubscriptionRenewQuote {
   const plan = getPlanDefinition(config, planId);
-  const monthlyTaka = renewalMonthlyPriceTaka(
-    planId,
-    plan.priceLabel,
-    user.customRenewalPriceTaka
-  );
+  const monthlyTaka =
+    renewalMonthlyPriceTaka(planId, plan.priceLabel, user.customRenewalPriceTaka) +
+    extraOrderSurchargeTaka(user.extraOrderLimit, plan.orderRateTaka);
   const priceLabel =
     user.customRenewalPriceTaka && user.customRenewalPriceTaka > 0
       ? `BDT ${monthlyTaka.toLocaleString("en-BD")}/mo`
@@ -88,11 +87,9 @@ export function applySubscriptionCoupon(
   | { ok: true; quote: SubscriptionRenewQuote }
   | { ok: false; error: string } {
   const plan = getPlanDefinition(config, planId);
-  const monthlyTaka = renewalMonthlyPriceTaka(
-    planId,
-    plan.priceLabel,
-    user.customRenewalPriceTaka
-  );
+  const monthlyTaka =
+    renewalMonthlyPriceTaka(planId, plan.priceLabel, user.customRenewalPriceTaka) +
+    extraOrderSurchargeTaka(user.extraOrderLimit, plan.orderRateTaka);
   const priceLabel =
     user.customRenewalPriceTaka && user.customRenewalPriceTaka > 0
       ? `BDT ${monthlyTaka.toLocaleString("en-BD")}/mo`

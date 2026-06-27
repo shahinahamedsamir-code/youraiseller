@@ -136,6 +136,7 @@ export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
               New limit: {(currentLimit + orders).toLocaleString("en-BD")} orders
               {temporary ? " (this month)" : " (permanent)"}
             </p>
+            <p className="mt-1 text-[11px] text-slate-400">PayStation hosted checkout</p>
           </div>
 
           {error ? (
@@ -154,10 +155,10 @@ export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={pay}
               disabled={paying || orders < MIN_ORDERS || cost <= 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#E2136E] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#c91062] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {paying ? "Starting…" : `Pay ${cost.toLocaleString("en-BD")} TK with bKash`}
+              {paying ? "Starting…" : `Pay ${cost.toLocaleString("en-BD")} TK with PayStation`}
             </button>
           </div>
         </div>

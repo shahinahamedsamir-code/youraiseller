@@ -7,6 +7,7 @@ import {
   increaseStock,
   type Product,
 } from "@/lib/inventory-store";
+import { maybeAutoSyncProductToWoo } from "@/lib/woocommerce-stock-sync-store";
 import clsx from "clsx";
 
 type Mode = "add" | "subtract";
@@ -95,6 +96,9 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
         setError("Could not update stock. Try again.");
         return;
       }
+      // Mirror the new stock to WooCommerce when "Auto-sync on stock change"
+      // is enabled (fire-and-forget — the Woo log records the outcome).
+      void maybeAutoSyncProductToWoo(product.id);
       onSuccess();
       onClose();
     } catch (e) {

@@ -24,6 +24,7 @@ import {
   type Product,
 } from "@/lib/inventory-store";
 import { StockProductPicker } from "@/components/inventory/StockProductPicker";
+import { maybeAutoSyncProductToWoo } from "@/lib/woocommerce-stock-sync-store";
 
 type Mode = "decrease" | "increase" | "transfer";
 
@@ -219,6 +220,9 @@ export function StockMovementForm({
         setError("Could not save stock movement. Try again.");
         return;
       }
+
+      // Mirror the new stock to WooCommerce when auto-sync on change is on.
+      if (mode !== "transfer") void maybeAutoSyncProductToWoo(productId);
 
       setSuccess(`${meta.title} saved successfully.`);
       refreshProducts();

@@ -688,9 +688,13 @@ function OrderRow({
           />
           <div className="min-w-0">
             <p className="text-xs text-slate-500">{o.createdAt}</p>
-            <p className="break-all text-base font-extrabold tracking-tight text-indigo-700 sm:text-lg">
+            <button
+              type="button"
+              onClick={onViewDetails}
+              className="break-all text-left text-base font-extrabold tracking-tight text-indigo-700 hover:underline sm:text-lg"
+            >
               {o.id}
-            </p>
+            </button>
             <div className="mt-1 flex items-center gap-0.5">
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />

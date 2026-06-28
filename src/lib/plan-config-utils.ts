@@ -15,7 +15,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     priceLabel: "৳1,999/mo",
     badgeClass: "bg-slate-600 text-slate-100 ring-slate-500/40",
     limits: { products: 500, orders: 500, users: 3 },
-    orderRateTaka: 2,
+    orderRateTaka: 1,
     sortOrder: 1,
     active: true,
     features: buildFeatures({
@@ -43,7 +43,7 @@ export const DEFAULT_PLAN_DEFINITIONS: PlanDefinition[] = [
     priceLabel: "৳4,999/mo",
     badgeClass: "bg-violet-600 text-white ring-violet-400/40",
     limits: { products: 2000, orders: 2000, users: 5 },
-    orderRateTaka: 1.5,
+    orderRateTaka: 1,
     sortOrder: 2,
     active: true,
     features: buildFeatures({

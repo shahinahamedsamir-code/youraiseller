@@ -179,6 +179,8 @@ export function OrderRowActionsMenu({
   const [courierBusy, setCourierBusy] = useState(false);
   const [courierMsg, setCourierMsg] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [noteModal, setNoteModal] = useState<null | "NOTE" | "TASK">(null);
+  const [noteText, setNoteText] = useState("");
 
   const courierMethod = showCourierActions
     ? resolveCourierEntryMethod({
@@ -432,8 +434,9 @@ export function OrderRowActionsMenu({
       label: "Create task",
       icon: ListTodo,
       onClick: () => {
-        const t = window.prompt("Task for this order:", "");
-        if (t?.trim()) appendNote("TASK", t.trim());
+        onClose();
+        setNoteText("");
+        setNoteModal("TASK");
       },
       show: true,
     },
@@ -442,8 +445,9 @@ export function OrderRowActionsMenu({
       label: "Add note",
       icon: StickyNote,
       onClick: () => {
-        const n = window.prompt("Add note:", "");
-        if (n?.trim()) appendNote("NOTE", n.trim());
+        onClose();
+        setNoteText("");
+        setNoteModal("NOTE");
       },
       show: true,
     },
@@ -668,6 +672,60 @@ export function OrderRowActionsMenu({
         onClose={() => setCancelOpen(false)}
         onDone={onRefresh}
       />
+      {mounted && noteModal &&
+        createPortal(
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setNoteModal(null)}
+            />
+            <div className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="border-b border-slate-100 px-5 py-3.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
+                  {o.id}
+                </p>
+                <h3 className="font-extrabold text-slate-900">
+                  {noteModal === "TASK" ? "Create task" : "Add note"}
+                </h3>
+              </div>
+              <div className="p-5">
+                <textarea
+                  autoFocus
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  rows={3}
+                  placeholder={
+                    noteModal === "TASK" ? "Task for this order…" : "Write a note…"
+                  }
+                  className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                />
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNoteModal(null)}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!noteText.trim()}
+                    onClick={() => {
+                      const text = noteText.trim();
+                      if (!text) return;
+                      appendNote(noteModal, text);
+                      setNoteModal(null);
+                    }}
+                    className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

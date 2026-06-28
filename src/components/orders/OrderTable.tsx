@@ -252,7 +252,7 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
             </select>
             {sortDesc ? "↓" : "↑"}
           </button>
-          <div className="ml-auto hidden rounded-lg border border-slate-200 p-0.5 md:flex">
+          <div className="ml-auto hidden rounded-lg border border-slate-200 p-0.5 lg:flex">
             <button
               type="button"
               onClick={() => setView("comfort")}
@@ -290,7 +290,7 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
 
         {/* Turume-style table — horizontal + vertical scroll, larger text */}
         {view === "compact" && (
-          <div className="hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
+          <div className="hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:block">
             <div className="max-h-[min(75vh,780px)] overflow-auto overscroll-x-contain scroll-smooth">
               <table className="w-full min-w-[1400px] border-collapse text-sm">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
@@ -369,7 +369,7 @@ export function OrderTable({ mode = "approved", showStatusTabs = false }: Props)
         <div
           className={clsx(
             "space-y-2 overflow-visible p-2 sm:p-3",
-            view === "comfort" ? "block" : "block md:hidden"
+            view === "comfort" ? "block" : "block lg:hidden"
           )}
         >
           {paged.map((o) => (

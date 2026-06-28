@@ -37,10 +37,10 @@ export default function OrderListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900">
-            <ClipboardList className="h-7 w-7 text-indigo-500" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
+            <ClipboardList className="h-6 w-6 shrink-0 text-indigo-500 sm:h-7 sm:w-7" />
             Order List
           </h1>
           <p className="mt-0.5 text-sm text-slate-500">
@@ -64,7 +64,7 @@ export default function OrderListPage() {
         </div>
         <Link
           href="/dashboard/orders/approved/new"
-          className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 sm:w-auto"
         >
           <Plus className="h-4 w-4" /> New Order
         </Link>

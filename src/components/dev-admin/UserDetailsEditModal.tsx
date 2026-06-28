@@ -174,10 +174,12 @@ export function UserDetailsEditModal({ user, open, onClose, onSave }: Props) {
         .filter((c) => c.name || c.phone || c.email || c.whatsapp),
       adminNotes: adminNotes.trim(),
       plan,
+      // Send 0 (not undefined) when cleared — undefined is dropped from JSON, so
+      // the server merge would keep the old custom price. 0 means "use plan price".
       customRenewalPriceTaka:
         customRenewalPrice.trim() && Number(customRenewalPrice) > 0
           ? Math.round(Number(customRenewalPrice) * 100) / 100
-          : undefined,
+          : 0,
       planExpiresAt: fromDateInputValue(expiresAt),
       ...(applyPlanFeatures ? { features: getPlanFeatures(plan) } : {}),
     });

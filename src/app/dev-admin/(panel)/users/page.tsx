@@ -150,6 +150,11 @@ export default function DevUsersPage() {
     action: UserStatusAction;
     user: DevUser;
   } | null>(null);
+  const [planChangeConfirm, setPlanChangeConfirm] = useState<{
+    userId: string;
+    plan: DevUser["plan"];
+    planName: string;
+  } | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [form, setForm] = useState({
@@ -575,9 +580,14 @@ export default function DevUsersPage() {
                             plans={planConfig.plans}
                             selected={u.plan}
                             onSelect={(plan) => {
-                              updateDevUser(u.id, { plan, features: getPlanFeatures(plan) });
-                              setEditFeatures(getPlanFeatures(plan));
-                              refresh();
+                              if (plan === u.plan) return;
+                              setPlanChangeConfirm({
+                                userId: u.id,
+                                plan,
+                                planName:
+                                  planConfig.plans.find((p) => p.id === plan)?.name ??
+                                  String(plan),
+                              });
                             }}
                           />
                         </div>
@@ -635,6 +645,45 @@ export default function DevUsersPage() {
         onClose={() => setConfirmStatusAction(null)}
         onConfirm={handleConfirmStatusAction}
       />
+
+      {planChangeConfirm && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setPlanChangeConfirm(null)}
+          />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+            <h3 className="text-lg font-extrabold text-white">Change plan?</h3>
+            <p className="mt-2 text-sm text-slate-300">
+              Switch this customer to <b className="text-orange-300">{planChangeConfirm.planName}</b>?
+              This resets features to the plan defaults and clears any purchased
+              order-limit quota.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPlanChangeConfirm(null)}
+                className="rounded-xl border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const { userId, plan } = planChangeConfirm;
+                  updateDevUser(userId, { plan, features: getPlanFeatures(plan) });
+                  setEditFeatures(getPlanFeatures(plan));
+                  refresh();
+                  setPlanChangeConfirm(null);
+                }}
+                className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700"
+              >
+                Yes, change plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

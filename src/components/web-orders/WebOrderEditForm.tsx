@@ -34,6 +34,7 @@ import { CourierRatioPanel } from "@/components/orders/CourierRatioPanel";
 import { DeliveryMethodSelect } from "@/components/delivery/DeliveryMethodSelect";
 import { WebOrderWooSummary } from "@/components/web-orders/WebOrderWooSummary";
 import { WebOrderSummaryAside } from "@/components/web-orders/WebOrderSummaryAside";
+import { WebOrderSmsActions } from "@/components/web-orders/WebOrderSmsActions";
 import { hasAssignedAdvancePaymentAccounts } from "@/lib/assigned-payment-accounts";
 import { findPriorOrdersByPhone } from "@/lib/web-order-display";
 import {
@@ -1047,6 +1048,14 @@ export function WebOrderEditForm({ orderId }: Props) {
           <OrderActivityTimeline timeline={timeline} variant="web" />
         </section>
       )}
+      </div>
+
+      {/* Customer SMS — standalone & always visible on mobile (on desktop it
+          lives inside the right summary aside). */}
+      <div className="xl:hidden">
+        <WebOrderSmsActions
+          order={{ ...order, phone: phone.trim(), customerName: customerName.trim() }}
+        />
       </div>
 
       <WebOrderSummaryAside>

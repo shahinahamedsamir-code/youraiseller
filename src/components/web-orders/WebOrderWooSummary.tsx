@@ -123,7 +123,11 @@ export function WebOrderWooSummary({
 
   return (
     <div className="space-y-3">
-      <WebOrderSmsActions order={order} />
+      {/* Desktop only — on mobile the Customer SMS card shows standalone above
+          the collapsible summary (see WebOrderEditForm). */}
+      <div className="hidden xl:block">
+        <WebOrderSmsActions order={order} />
+      </div>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100">
         <div className="border-b border-slate-100 bg-gradient-to-r from-teal-50 to-cyan-50/60 px-4 py-3">

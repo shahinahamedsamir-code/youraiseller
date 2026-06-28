@@ -585,6 +585,37 @@ export function WebOrderEditForm({ orderId }: Props) {
     );
   }
 
+  const summaryContent = (
+    <WebOrderWooSummary
+      order={{
+        ...order,
+        phone: phone.trim(),
+        customerName: customerName.trim(),
+        total: grandTotal,
+        wooNumber: order.wooNumber,
+        wooOrderId: order.wooOrderId,
+      }}
+      wooSnapshot={order.wooSnapshot}
+      webStatus={webStatus}
+      subtotal={subtotal}
+      shippingCharge={deliveryNum}
+      discount={discountNum}
+      grandTotal={grandTotal}
+      items={lines}
+      paymentMethod={paymentMethod}
+      orderSource={orderSource}
+      customOrderSource={customOrderSource}
+      onRefreshWoo={isWooCommerceWebOrder(order) ? refreshFromWoo : undefined}
+      wooRefreshing={wooRefreshing}
+    />
+  );
+
+  const mobileSms = (
+    <WebOrderSmsActions
+      order={{ ...order, phone: phone.trim(), customerName: customerName.trim() }}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
       <div className="min-w-0 flex-1 space-y-4">
@@ -1031,6 +1062,13 @@ export function WebOrderEditForm({ orderId }: Props) {
         </div>
       </section>
 
+      {/* Mobile only — Customer SMS then Order summary, right below the
+          Create/Save button. On desktop these live in the right sidebar. */}
+      <div className="space-y-3 xl:hidden">
+        {mobileSms}
+        <WebOrderSummaryAside mode="mobile">{summaryContent}</WebOrderSummaryAside>
+      </div>
+
       {originInfo && (
         <section className="yai-panel p-4">
           <p className="text-[10px] font-bold uppercase text-teal-700">Order source</p>
@@ -1050,38 +1088,9 @@ export function WebOrderEditForm({ orderId }: Props) {
       )}
       </div>
 
-      {/* Customer SMS — standalone & always visible on mobile (on desktop it
-          lives inside the right summary aside). */}
-      <div className="xl:hidden">
-        <WebOrderSmsActions
-          order={{ ...order, phone: phone.trim(), customerName: customerName.trim() }}
-        />
-      </div>
-
-      <WebOrderSummaryAside>
-        <WebOrderWooSummary
-          order={{
-            ...order,
-            phone: phone.trim(),
-            customerName: customerName.trim(),
-            total: grandTotal,
-            wooNumber: order.wooNumber,
-            wooOrderId: order.wooOrderId,
-          }}
-          wooSnapshot={order.wooSnapshot}
-          webStatus={webStatus}
-          subtotal={subtotal}
-          shippingCharge={deliveryNum}
-          discount={discountNum}
-          grandTotal={grandTotal}
-          items={lines}
-          paymentMethod={paymentMethod}
-          orderSource={orderSource}
-          customOrderSource={customOrderSource}
-          onRefreshWoo={isWooCommerceWebOrder(order) ? refreshFromWoo : undefined}
-          wooRefreshing={wooRefreshing}
-        />
-      </WebOrderSummaryAside>
+      {/* Desktop only — right sidebar summary (mobile copy sits under the
+          Create/Save button above). */}
+      <WebOrderSummaryAside mode="desktop">{summaryContent}</WebOrderSummaryAside>
     </div>
   );
 }

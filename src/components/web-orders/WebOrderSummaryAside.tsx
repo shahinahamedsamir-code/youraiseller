@@ -6,14 +6,17 @@ import { ChevronDown, PanelRight } from "lucide-react";
 
 type Props = {
   children: ReactNode;
+  /** "both" (default) | "mobile" (collapsible only) | "desktop" (sidebar only) */
+  mode?: "both" | "mobile" | "desktop";
 };
 
 /** Right summary — sticky on desktop, collapsible tab on mobile. */
-export function WebOrderSummaryAside({ children }: Props) {
+export function WebOrderSummaryAside({ children, mode = "both" }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
+      {mode !== "desktop" && (
       <div className="xl:hidden">
         <button
           type="button"
@@ -33,10 +36,13 @@ export function WebOrderSummaryAside({ children }: Props) {
         </button>
         {mobileOpen ? <div className="mt-3">{children}</div> : null}
       </div>
+      )}
 
+      {mode !== "mobile" && (
       <aside className="hidden w-full shrink-0 xl:block xl:sticky xl:top-4 xl:w-[300px] 2xl:w-[320px]">
         {children}
       </aside>
+      )}
     </>
   );
 }

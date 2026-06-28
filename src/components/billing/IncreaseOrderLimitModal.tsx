@@ -11,7 +11,7 @@ import {
 } from "@/lib/plan-limits";
 
 const PRESETS = [100, 200, 500, 1000];
-const MIN_ORDERS = 1;
+const MIN_ORDERS = 50;
 const DEFAULT_ORDERS = 100;
 
 export function IncreaseOrderLimitModal({ onClose }: { onClose: () => void }) {

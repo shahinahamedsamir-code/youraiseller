@@ -17,7 +17,7 @@ type Body = {
   temporary?: boolean;
 };
 
-const MIN_ORDERS = 1;
+const MIN_ORDERS = 50;
 const MAX_ORDERS = 1_000_000;
 
 export async function POST(req: Request) {

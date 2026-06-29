@@ -47,12 +47,15 @@ export async function POST(req: Request) {
     const payload =
       mode === "exact"
         ? {
+            // App owns the real number — set quantity AND status.
             manage_stock: true,
             stock_quantity: stockQty,
             stock_status: stockQty > 0 ? "instock" : "outofstock",
           }
         : {
-            manage_stock: true,
+            // Status only — turn OFF WooCommerce quantity tracking so it honours
+            // the in/out status we send instead of recomputing from its own qty.
+            manage_stock: false,
             stock_status: stockQty > 0 ? "instock" : "outofstock",
           };
 

@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Minus, Plus } from "lucide-react";
+import { X, Minus, Plus, UploadCloud, Check, Loader2 } from "lucide-react";
 import {
   decreaseStock,
   increaseStock,
   type Product,
 } from "@/lib/inventory-store";
-import { maybeAutoSyncProductToWoo } from "@/lib/woocommerce-stock-sync-store";
+import { runWooStockSync } from "@/lib/woocommerce-stock-sync-store";
+import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import clsx from "clsx";
 
 type Mode = "add" | "subtract";
@@ -24,6 +25,12 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Phase 2 — after stock is committed, ask whether to push this SKU to Woo.
+  const [phase, setPhase] = useState<"adjust" | "confirm">("adjust");
+  const [newStock, setNewStock] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const isAdd = mode === "add";
   const maxSubtract = product.stockQty;
@@ -96,15 +103,54 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
         setError("Could not update stock. Try again.");
         return;
       }
-      // Mirror the new stock to WooCommerce when "Auto-sync on stock change"
-      // is enabled (fire-and-forget — the Woo log records the outcome).
-      void maybeAutoSyncProductToWoo(product.id);
-      onSuccess();
-      onClose();
+
+      const after = isAdd ? product.stockQty + qty : product.stockQty - qty;
+      onSuccess(); // refresh the list right away
+
+      const woo = loadWooCommerceSettings();
+      const connected =
+        woo.connected ||
+        Boolean(
+          woo.storeUrl?.trim() && woo.consumerKey?.trim() && woo.consumerSecret?.trim()
+        );
+      if (!connected) {
+        // WooCommerce not connected — nothing to sync, just close.
+        onClose();
+        return;
+      }
+      // WooCommerce connected — ask: Sync to WooCommerce or Skip.
+      setNewStock(after);
+      setPhase("confirm");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not update stock.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const doSync = async () => {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await runWooStockSync({
+        scope: "test",
+        testSku: product.code,
+        force: true,
+      });
+      const item = res.items[0];
+      if (res.synced > 0 && (!item || item.ok)) {
+        setSyncMsg({ ok: true, text: item?.message ?? "Synced to WooCommerce." });
+        window.setTimeout(onClose, 1100);
+      } else {
+        setSyncMsg({
+          ok: false,
+          text: item?.message ?? res.hint ?? "Sync failed.",
+        });
+      }
+    } catch (e) {
+      setSyncMsg({ ok: false, text: e instanceof Error ? e.message : "Sync failed." });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -223,7 +269,7 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
             </p>
           )}
 
-          {isAdd && qty > 0 && (
+          {phase === "adjust" && isAdd && qty > 0 && (
             <p className="text-xs text-slate-500">
               New stock after add:{" "}
               <span className="font-bold text-emerald-600">
@@ -231,7 +277,7 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
               </span>
             </p>
           )}
-          {!isAdd && qty > 0 && maxSubtract > 0 && (
+          {phase === "adjust" && !isAdd && qty > 0 && maxSubtract > 0 && (
             <p className="text-xs text-slate-500">
               New stock after remove:{" "}
               <span className="font-bold text-amber-600">
@@ -241,32 +287,81 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={saving || (!isAdd && maxSubtract === 0)}
-            className={clsx(
-              "rounded-lg px-5 py-2 text-sm font-bold text-white disabled:opacity-50",
-              isAdd
-                ? "bg-teal-600 hover:bg-teal-700"
-                : "bg-rose-600 hover:bg-rose-700"
-            )}
-          >
-            {saving
-              ? "Saving…"
-              : isAdd
-                ? "Add Stock"
-                : "Subtract Stock"}
-          </button>
-        </div>
+        {phase === "adjust" ? (
+          <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={saving || (!isAdd && maxSubtract === 0)}
+              className={clsx(
+                "rounded-lg px-5 py-2 text-sm font-bold text-white disabled:opacity-50",
+                isAdd
+                  ? "bg-teal-600 hover:bg-teal-700"
+                  : "bg-rose-600 hover:bg-rose-700"
+              )}
+            >
+              {saving
+                ? "Saving…"
+                : isAdd
+                  ? "Add Stock"
+                  : "Subtract Stock"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4">
+            <div className="min-w-0 text-sm">
+              {syncMsg ? (
+                <span
+                  className={clsx(
+                    "font-semibold",
+                    syncMsg.ok ? "text-emerald-600" : "text-rose-600"
+                  )}
+                >
+                  {syncMsg.text}
+                </span>
+              ) : (
+                <span className="text-slate-600">
+                  <span className="font-semibold text-slate-800">
+                    Stock updated to {newStock}.
+                  </span>{" "}
+                  Sync to WooCommerce?
+                </span>
+              )}
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={syncing}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                onClick={() => void doSync()}
+                disabled={syncing || (syncMsg?.ok ?? false)}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {syncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : syncMsg?.ok ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <UploadCloud className="h-4 w-4" />
+                )}
+                {syncing ? "Syncing…" : syncMsg?.ok ? "Synced" : "Sync to WooCommerce"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

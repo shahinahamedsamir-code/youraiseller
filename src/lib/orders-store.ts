@@ -27,7 +27,7 @@ import {
   normalizeActivityAt,
   type OrderActivity,
 } from "./order-activity";
-import { decreaseStock, getProduct, loadProducts } from "./inventory-store";
+import { decreaseStock, increaseStock, getProduct, loadProducts } from "./inventory-store";
 import {
   getDeliveryMethodName,
   resolveDeliveryFieldsForOrderInput,
@@ -356,7 +356,8 @@ export type Order = {
   preorderNotifiedAt?: string;
   /** Planned delivery / handover (tentative) */
   preorderDeliveryAt?: string;
-  /** Inventory deducted when order reached RTS */
+  /** True while this order is holding deducted stock (from Pending onwards);
+   *  set false again once returned/cancelled puts the stock back. */
   stockReserved?: boolean;
   /** Inventory returned on cancel */
   stockRestoredOnCancel?: boolean;
@@ -965,7 +966,9 @@ function calcTotals(
   return { subtotal, total };
 }
 
+/** Deduct stock for an order's lines — once. Safe to call repeatedly. */
 function reserveStockForOrder(order: Order) {
+  if (order.stockReserved) return; // already deducted — never double-count
   let reserved = false;
   for (const line of order.items) {
     const product = getProduct(line.productId);
@@ -986,6 +989,28 @@ function reserveStockForOrder(order: Order) {
       data.orders[idx] = { ...data.orders[idx], stockReserved: true };
       saveRaw(data);
     }
+  }
+}
+
+/** Put an order's stock back — once. Used on return / cancel. */
+function releaseStockForOrder(order: Order, reason: string) {
+  if (!order.stockReserved) return; // nothing was deducted for this order
+  for (const line of order.items) {
+    const product = getProduct(line.productId);
+    if (product?.manageStock) {
+      increaseStock({
+        productId: line.productId,
+        qty: line.qty,
+        reason,
+        note: `Order ${order.id}`,
+      });
+    }
+  }
+  const data = loadRaw();
+  const idx = data.orders.findIndex((o) => o.id === order.id);
+  if (idx >= 0) {
+    data.orders[idx] = { ...data.orders[idx], stockReserved: false };
+    saveRaw(data);
   }
 }
 
@@ -1120,7 +1145,16 @@ export function createOrder(input: CreateOrderInput): Order {
   data.orders.unshift(order);
   saveRaw(data);
 
-  if (!order.isPreorder && order.status === "rts") {
+  // Deduct stock as soon as a real order exists (Pending onwards). Preorders
+  // hold no stock yet, and web-queue leads only deduct once they're confirmed
+  // into an active status (handled in updateOrderStatus).
+  if (
+    !order.isPreorder &&
+    !order.inWebQueue &&
+    order.status !== "cancelled" &&
+    order.status !== "returned" &&
+    order.status !== "preorder"
+  ) {
     reserveStockForOrder(order);
   }
 
@@ -1524,6 +1558,10 @@ export function releaseOrderFromPreorder(
 
   const updated = updateOrder(id, { status: nextStatus, isPreorder: false });
   if (updated) {
+    // Now a real order — deduct stock unless it lands in a non-holding status.
+    if (nextStatus !== "cancelled" && nextStatus !== "returned") {
+      reserveStockForOrder(updated);
+    }
     appendOrderActivity(
       id,
       createActivityEntry({
@@ -1558,9 +1596,17 @@ export function updateOrderStatus(id: string, status: OrderStatus): Order | null
   }
   if (status === "rts" && !order.approvedAt) {
     patch.approvedAt = nowLabel();
-    if (!order.isPreorder && order.status === "pending") {
-      reserveStockForOrder(order);
-    }
+  }
+
+  // Inventory by status:
+  //  • Returned → put stock back (+).
+  //  • Any other active status → make sure stock is deducted (−), once.
+  //  • Cancelled goes through the cancel flow (keeps its restock choice); we
+  //    don't touch stock here. Preorder holds no stock.
+  if (status === "returned") {
+    releaseStockForOrder(order, "Order returned");
+  } else if (status !== "cancelled" && status !== "preorder") {
+    reserveStockForOrder(order);
   }
 
   const updated = updateOrder(id, patch);

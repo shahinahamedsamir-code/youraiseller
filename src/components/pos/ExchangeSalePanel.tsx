@@ -25,6 +25,7 @@ import {
   type AccountingAccount,
 } from "@/lib/accounting-store";
 import {
+  decreaseStock,
   getProductDisplayImage,
   increaseStock,
   loadProducts,
@@ -277,6 +278,13 @@ export function ExchangeSalePanel() {
     }
 
     const exchangeRef = `EXCH-${Date.now().toString().slice(-8)}`;
+
+    // New items handed over in the exchange leave the shop — deduct them.
+    for (const line of newCart) {
+      if (line.product.manageStock) {
+        decreaseStock({ productId: line.product.id, qty: line.qty, reason: "POS Exchange Sale", note: `Exchange ${exchangeRef}` });
+      }
+    }
 
     if (difference > 0) {
       addIncome({

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       orderId,
       page = 1,
       perPage = 50,
-      statuses = "pending,processing,on-hold,completed,cancelled,failed,refunded",
+      statuses = "pending,processing,on-hold,completed,cancelled,failed,refunded,checkout-draft",
       after,
       modified_after,
     } = body;

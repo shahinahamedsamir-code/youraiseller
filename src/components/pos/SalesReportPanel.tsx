@@ -13,6 +13,7 @@ import {
   ReceiptText,
   ShoppingBag,
   TrendingUp,
+  Undo2,
   Users,
 } from "lucide-react";
 import {
@@ -35,6 +36,30 @@ import {
 } from "./CompleteSaleReceipt";
 import { loadProducts, type Product } from "@/lib/inventory-store";
 import { ChartClientOnly } from "@/components/dashboard/ChartClientOnly";
+
+type PosReturnItem = { code: string; name: string; qty: number; unitPrice: number; lineTotal: number };
+type PosReturnRecord = {
+  reference: string;
+  date: string;
+  time: string;
+  customerName: string | null;
+  refundAccount: string;
+  refundAmount: number;
+  restock: boolean;
+  note?: string;
+  items: PosReturnItem[];
+};
+
+/** Mirrors the store written by ReturnSalePanel (key: pos_return_sales). */
+function loadReturnSales(): PosReturnRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("pos_return_sales");
+    return raw ? (JSON.parse(raw) as PosReturnRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 function money(n: number): string {
   return `BDT ${Math.max(0, n).toLocaleString("en-BD")}`;
@@ -87,7 +112,7 @@ type DateFilter = {
   rangeTo: string;
 };
 
-function filterSales(sales: CompletedSaleData[], filter: DateFilter): CompletedSaleData[] {
+function filterSales<T extends { date: string }>(sales: T[], filter: DateFilter): T[] {
   if (filter.mode === "all") return sales;
 
   if (filter.mode === "single") {
@@ -231,6 +256,7 @@ function getFilterLabel(filter: DateFilter): string {
 
 export function SalesReportPanel() {
   const [allSales, setAllSales] = useState<CompletedSaleData[]>([]);
+  const [allReturns, setAllReturns] = useState<PosReturnRecord[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [filter, setFilter] = useState<DateFilter>({
     mode: "7d",
@@ -245,6 +271,7 @@ export function SalesReportPanel() {
   useEffect(() => {
     const refresh = () => {
       setAllSales(loadCompletedSales());
+      setAllReturns(loadReturnSales());
       setProducts(loadProducts());
     };
     refresh();
@@ -261,22 +288,40 @@ export function SalesReportPanel() {
   }, [products]);
 
   const sales = useMemo(() => filterSales(allSales, filter), [allSales, filter]);
+  const returns = useMemo(() => filterSales(allReturns, filter), [allReturns, filter]);
 
   const summary = useMemo(() => {
-    const totalRevenue = sales.reduce((s: number, r: CompletedSaleData) => s + r.total, 0);
+    const grossRevenue = sales.reduce((s: number, r: CompletedSaleData) => s + r.total, 0);
     const totalDiscount = sales.reduce((s: number, r: CompletedSaleData) => s + r.discount, 0);
     const totalPaid = sales.reduce((s: number, r: CompletedSaleData) => s + r.paid, 0);
     const totalDue = sales.reduce((s: number, r: CompletedSaleData) => s + r.due, 0);
-    const totalItems = sales.reduce(
+    const grossItems = sales.reduce(
       (s: number, r: CompletedSaleData) => s + r.items.reduce((q: number, i) => q + i.qty, 0),
       0
     );
-    let totalCost = 0;
+    let grossCost = 0;
     for (const sale of sales) {
       for (const item of sale.items) {
-        totalCost += (costMap.get(item.code) ?? 0) * item.qty;
+        grossCost += (costMap.get(item.code) ?? 0) * item.qty;
       }
     }
+
+    // Returns / refunds in the same period — subtract for the net picture.
+    const totalRefunds = returns.reduce((s, r) => s + r.refundAmount, 0);
+    const returnedItems = returns.reduce(
+      (s, r) => s + r.items.reduce((q, i) => q + i.qty, 0),
+      0
+    );
+    let returnedCost = 0;
+    for (const ret of returns) {
+      for (const item of ret.items) {
+        returnedCost += (costMap.get(item.code) ?? 0) * item.qty;
+      }
+    }
+
+    const totalRevenue = grossRevenue - totalRefunds;
+    const totalItems = Math.max(0, grossItems - returnedItems);
+    const totalCost = grossCost - returnedCost;
     const totalProfit = totalRevenue - totalCost;
     const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
     const avgSaleValue = sales.length > 0 ? totalRevenue / sales.length : 0;
@@ -287,6 +332,7 @@ export function SalesReportPanel() {
     }
 
     return {
+      grossRevenue,
       totalRevenue,
       totalDiscount,
       totalPaid,
@@ -296,10 +342,13 @@ export function SalesReportPanel() {
       totalProfit,
       profitMargin,
       avgSaleValue,
+      totalRefunds,
+      returnedItems,
+      returnsCount: returns.length,
       salesCount: sales.length,
       uniqueCustomers: customerSet.size,
     };
-  }, [sales, costMap]);
+  }, [sales, returns, costMap]);
 
   const dailyData = useMemo(
     () => buildDailyData(sales, costMap, filter.mode),
@@ -378,6 +427,11 @@ export function SalesReportPanel() {
         <SummaryCard
           label="Total Revenue"
           value={money(summary.totalRevenue)}
+          sub={
+            summary.totalRefunds > 0
+              ? `Net · after ${money(summary.totalRefunds)} returns`
+              : undefined
+          }
           icon={DollarSign}
           tone="bg-indigo-50 text-indigo-600"
         />
@@ -404,7 +458,14 @@ export function SalesReportPanel() {
       </div>
 
       {/* Secondary stats */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <MiniStat
+          label="Returns / Refunds"
+          value={money(summary.totalRefunds)}
+          sub={`${summary.returnsCount} return(s) · ${summary.returnedItems} item(s)`}
+          icon={Undo2}
+          tone={summary.totalRefunds > 0 ? "text-rose-600" : undefined}
+        />
         <MiniStat label="Collected" value={money(summary.totalPaid)} icon={CreditCard} />
         <MiniStat label="Due Balance" value={money(summary.totalDue)} icon={ArrowDownRight} tone={summary.totalDue > 0 ? "text-rose-600" : undefined} />
         <MiniStat label="Discount Given" value={money(summary.totalDiscount)} icon={BadgePercent} />
@@ -617,11 +678,13 @@ function SummaryCard({
 function MiniStat({
   label,
   value,
+  sub,
   icon: Icon,
   tone,
 }: {
   label: string;
   value: string;
+  sub?: string;
   icon: ComponentType<{ className?: string }>;
   tone?: string;
 }) {
@@ -631,6 +694,7 @@ function MiniStat({
       <div className="min-w-0">
         <p className="text-[10px] font-bold uppercase text-slate-400">{label}</p>
         <p className={clsx("text-sm font-black", tone ?? "text-slate-900")}>{value}</p>
+        {sub ? <p className="text-[10px] font-semibold text-slate-400">{sub}</p> : null}
       </div>
     </div>
   );

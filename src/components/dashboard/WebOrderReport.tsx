@@ -21,10 +21,18 @@ export function WebOrderReport() {
   const [pipeline, setPipeline] = useState(() =>
     buildWebOrderPipeline({ datePreset: "today", view: "web" })
   );
+  const [counts, setCounts] = useState<{ web: number; incomplete: number }>({
+    web: 0,
+    incomplete: 0,
+  });
 
   useEffect(() => {
-    const refresh = () =>
-      setPipeline(buildWebOrderPipeline({ datePreset, view: activeTab }));
+    const refresh = () => {
+      const web = buildWebOrderPipeline({ datePreset, view: "web" });
+      const incomplete = buildWebOrderPipeline({ datePreset, view: "incomplete" });
+      setCounts({ web: web.total, incomplete: incomplete.total });
+      setPipeline(activeTab === "incomplete" ? incomplete : web);
+    };
     refresh();
     window.addEventListener("youraiseller-data-updated", refresh);
     window.addEventListener("storage", refresh);
@@ -62,13 +70,25 @@ export function WebOrderReport() {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             className={clsx(
-              "flex-1 rounded-lg px-3 py-2 text-xs font-bold transition",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition",
               activeTab === tab.id
                 ? "bg-white text-violet-700 shadow-sm ring-1 ring-violet-100"
                 : "text-slate-500 hover:text-slate-700"
             )}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            <span
+              className={clsx(
+                "inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-extrabold leading-none",
+                tab.id === "incomplete" && counts.incomplete > 0
+                  ? "bg-orange-100 text-orange-700"
+                  : activeTab === tab.id
+                    ? "bg-violet-100 text-violet-700"
+                    : "bg-slate-200 text-slate-600"
+              )}
+            >
+              {counts[tab.id]}
+            </span>
           </button>
         ))}
       </div>

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import {
+  decreaseStock,
   getProductDisplayImage,
   loadProducts,
   type Product,
@@ -246,6 +247,17 @@ export function NewSalePanel() {
       paymentAccount: selectedPaymentAccount.name,
       transactionId: transactionId || undefined,
     };
+    // Deduct sold items from inventory (a POS sale leaves the shop immediately).
+    for (const line of cart) {
+      if (line.product.manageStock) {
+        decreaseStock({
+          productId: line.product.id,
+          qty: line.qty,
+          reason: "POS Sale",
+          note: `POS ${reference}`,
+        });
+      }
+    }
     saveCompletedSale(saleData);
     if (selectedPaymentAccount.type === "cash") {
       autoRecordCashSale(total, reference, selectedCustomer?.name);

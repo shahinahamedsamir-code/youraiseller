@@ -56,6 +56,9 @@ const STATUSES_AFTER_STOCK_RESERVE: OrderStatus[] = [
 ];
 
 export function orderHadStockReserved(order: Order): boolean {
+  // Explicitly released already (returned/cancelled put the stock back) — the
+  // order no longer holds any stock, so never restock it again.
+  if (order.stockReserved === false) return false;
   if (order.stockReserved) return true;
   if (STATUSES_AFTER_STOCK_RESERVE.includes(order.status)) return true;
   return (
@@ -161,6 +164,9 @@ export function cancelApprovedOrder(params: {
     cancelReason: params.reason?.trim() || undefined,
     cancelNote: noteText || undefined,
     stockRestoredOnCancel: doRestock && restockedLines > 0,
+    // Once put back, the order no longer holds stock — keep the flag in sync so
+    // nothing double-restores it later.
+    ...(restockedLines > 0 ? { stockReserved: false } : {}),
   };
 
   if (order.source === "web" || order.wooOrderId != null) {

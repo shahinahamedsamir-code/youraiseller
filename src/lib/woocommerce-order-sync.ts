@@ -149,8 +149,17 @@ function mapWcPayment(method: string): PaymentMethod {
 function mapWcWebStatus(status: string): WebDisplayStatus {
   const s = status.toLowerCase().replace(/^wc-/, "");
   if (s === "completed" || s === "complete") return "complete";
-  if (s === "cancelled" || s === "canceled" || s === "failed" || s === "refunded") {
+  if (s === "cancelled" || s === "canceled" || s === "refunded") {
     return "cancelled";
+  }
+  // Started-but-not-finished checkouts need seller follow-up → Incomplete tab.
+  if (
+    s === "checkout-draft" ||
+    s === "checkout_draft" ||
+    s === "pending" ||
+    s === "failed"
+  ) {
+    return "incomplete";
   }
   if (s === "on-hold" || s === "onhold") return "on_hold";
   if (s === "processing") return "processing";
@@ -160,7 +169,9 @@ function mapWcWebStatus(status: string): WebDisplayStatus {
 function mapWcOrderStatus(wcStatus: string): Order["status"] {
   const s = wcStatus.toLowerCase();
   if (s === "completed" || s === "complete") return "delivered";
-  if (s === "cancelled" || s === "canceled" || s === "failed") return "cancelled";
+  if (s === "cancelled" || s === "canceled") return "cancelled";
+  // pending / failed / checkout-draft / on-hold / processing → still open (Pending),
+  // so failed-payment & abandoned checkouts stay actionable in the Incomplete tab.
   return "pending";
 }
 
@@ -429,7 +440,7 @@ export async function refreshWooOrderFromApi(wooOrderId: number): Promise<Order 
 }
 
 const SYNC_STATUSES =
-  "pending,processing,on-hold,completed,cancelled,failed,refunded";
+  "pending,processing,on-hold,completed,cancelled,failed,refunded,checkout-draft";
 const INITIAL_SYNC_MAX_PAGES = 5;
 const INCREMENTAL_MAX_PAGES = 2;
 const INCREMENTAL_PER_PAGE = 30;

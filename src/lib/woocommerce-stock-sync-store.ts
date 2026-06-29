@@ -165,9 +165,12 @@ export async function runWooStockSync(params: {
   scope: StockSyncScope;
   testSku?: string;
   force?: boolean;
+  /** Override the configured sync mode for this run (e.g. force exact qty). */
+  mode?: StockSyncMode;
 }): Promise<StockSyncRunResult> {
   const syncSettings = loadWooStockSyncSettings();
   const woo = loadWooCommerceSettings();
+  const effectiveMode: StockSyncMode = params.mode ?? syncSettings.mode;
 
   if (!params.force && !syncSettings.enabled) {
     return { synced: 0, skipped: 0, failed: 0, eligible: 0, items: [] };
@@ -204,14 +207,14 @@ export async function runWooStockSync(params: {
   for (const product of products) {
     try {
       if (canApi) {
-        await pushStockToWoo(product, woo, syncSettings.mode);
+        await pushStockToWoo(product, woo, effectiveMode);
         items.push({
           sku: product.code,
           name: product.name,
           qty: product.stockQty,
           ok: true,
           message:
-            syncSettings.mode === "exact"
+            effectiveMode === "exact"
               ? `Stock set to ${product.stockQty}`
               : product.stockQty > 0
                 ? "Marked in stock"

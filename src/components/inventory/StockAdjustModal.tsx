@@ -136,6 +136,7 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
         scope: "test",
         testSku: product.code,
         force: true,
+        mode: "exact", // push the real quantity so add & subtract both mirror
       });
       const item = res.items[0];
       if (res.synced > 0 && (!item || item.ok)) {

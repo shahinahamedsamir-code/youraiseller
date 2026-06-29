@@ -273,7 +273,10 @@ async function syncProductRows(
     }
 
     try {
-      const { created } = upsertProductByCode(mapWooToInventory(row, options?.parent));
+      const { created } = upsertProductByCode(
+        mapWooToInventory(row, options?.parent),
+        { preserveStockOnUpdate: true } // app owns stock; don't pull it back
+      );
       if (created) {
         result.created++;
         existingCodes.add(code);

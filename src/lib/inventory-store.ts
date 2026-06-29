@@ -607,7 +607,8 @@ export function createProduct(
 
 /** Create or update by SKU — used for WooCommerce product sync */
 export function upsertProductByCode(
-  input: Omit<Product, "id" | "createdAt" | "updatedAt">
+  input: Omit<Product, "id" | "createdAt" | "updatedAt">,
+  options?: { preserveStockOnUpdate?: boolean }
 ): { product: Product; created: boolean } {
   const data = loadRaw();
   const code = input.code.trim();
@@ -620,6 +621,15 @@ export function upsertProductByCode(
     data.products[idx] = {
       ...prev,
       ...input,
+      // App is the master for stock — never let a WooCommerce pull overwrite
+      // the app's stock numbers / thresholds on an existing product.
+      ...(options?.preserveStockOnUpdate
+        ? {
+            stockQty: prev.stockQty,
+            alertQty: prev.alertQty,
+            manageStock: prev.manageStock,
+          }
+        : {}),
       code,
       id: prev.id,
       createdAt: prev.createdAt,

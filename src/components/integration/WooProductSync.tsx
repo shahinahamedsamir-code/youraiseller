@@ -178,9 +178,10 @@ export function WooProductSync() {
         <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 text-sm text-indigo-900">
           <p className="font-bold">Sync products</p>
           <p className="mt-1 text-indigo-800/90">
-            Creates products if they don&apos;t exist, updates name, price, stock &amp;
-            image if SKU already in inventory. Variable products (size/color) are
-            loaded from each parent via WooCommerce variations API.
+            Creates products if they don&apos;t exist, updates name, price &amp; image
+            if SKU already in inventory. Your app stock is the master — existing
+            stock is never overwritten from WooCommerce. Variable products
+            (size/color) are loaded from each parent via WooCommerce variations API.
           </p>
           <p className="mt-2 font-bold">Sync products V2 (new only)</p>
           <p className="text-indigo-800/90">

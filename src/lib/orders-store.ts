@@ -356,6 +356,9 @@ export type Order = {
   preorderNotifiedAt?: string;
   /** Planned delivery / handover (tentative) */
   preorderDeliveryAt?: string;
+  /** Set on web orders captured from a checkout page before the order was
+   *  placed (Incomplete Order Capture) — used to upsert without duplicates. */
+  captureId?: string;
   /** True while this order is holding deducted stock (from Pending onwards);
    *  set false again once returned/cancelled puts the stock back. */
   stockReserved?: boolean;
@@ -1344,6 +1347,14 @@ export function upsertWooCommerceOrder(
     )
   );
 
+  // A real order arrived for this customer — drop any captured "incomplete"
+  // lead so the placed order doesn't show twice.
+  const placedPhone = input.phone.trim();
+  if (placedPhone) {
+    data.orders = data.orders.filter(
+      (o) => !(o.captureId && o.phone.trim() === placedPhone)
+    );
+  }
   data.orders.unshift(order);
   saveRaw(data);
 
@@ -1355,6 +1366,92 @@ export function upsertWooCommerceOrder(
   }
 
   return { order, created: true };
+}
+
+export type CapturedWebOrderInput = {
+  captureId: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  items: { name: string; sku?: string; qty: number; price?: number }[];
+};
+
+/**
+ * Upsert a web order captured from a checkout page BEFORE it was placed
+ * (Incomplete Order Capture). Keyed by captureId so the customer typing only
+ * ever produces one Incomplete entry. Intentionally does NOT fire SMS / auto
+ * call — these are unconfirmed leads, and they stay in the web queue so they
+ * never touch stock until the seller promotes them.
+ */
+export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | null {
+  const captureId = input.captureId.trim();
+  if (!captureId) return null;
+
+  const items: OrderLine[] = (input.items ?? []).map((it) => {
+    const price = Number.isFinite(Number(it.price)) ? Number(it.price) : 0;
+    const qty = Math.max(1, Math.floor(Number(it.qty) || 1));
+    return {
+      productId: "",
+      productName: it.name?.trim() || it.sku?.trim() || "Item",
+      productCode: it.sku?.trim() || "",
+      qty,
+      price,
+      total: price * qty,
+    };
+  });
+  const subtotal = items.reduce((s, i) => s + i.total, 0);
+
+  const data = loadRaw();
+  const idx = data.orders.findIndex((o) => o.captureId === captureId);
+
+  if (idx >= 0) {
+    const prev = data.orders[idx];
+    // The seller may have started working this lead — don't fight that.
+    if (prev.webStatusStaffSetAt || prev.webQueueReleased) return prev;
+    const next: Order = {
+      ...prev,
+      customerName: input.customerName.trim() || prev.customerName,
+      phone: input.phone.trim() || prev.phone,
+      address: input.address.trim() || prev.address,
+      items: items.length ? items : prev.items,
+      subtotal: items.length ? subtotal : prev.subtotal,
+      total: items.length ? subtotal : prev.total,
+      updatedAt: nowLabel(),
+    };
+    data.orders[idx] = next;
+    saveRaw(data);
+    return next;
+  }
+
+  const now = nowLabel();
+  const order: Order = {
+    id: `WO-CAP-${captureId}`.slice(0, 48),
+    customerName: input.customerName.trim(),
+    phone: input.phone.trim(),
+    address: input.address.trim(),
+    district: "",
+    paymentMethod: "cod",
+    courier: "",
+    status: "pending",
+    items,
+    subtotal,
+    shippingCharge: 0,
+    discount: 0,
+    advance: 0,
+    total: subtotal,
+    source: "web",
+    orderSource: "website",
+    webStatus: "incomplete",
+    inWebQueue: true,
+    isPreorder: false,
+    captureId,
+    tags: ["Incomplete checkout"],
+    createdAt: now,
+    updatedAt: now,
+  };
+  data.orders.unshift(order);
+  saveRaw(data);
+  return order;
 }
 
 export function updateOrder(id: string, patch: Partial<Order>): Order | null {

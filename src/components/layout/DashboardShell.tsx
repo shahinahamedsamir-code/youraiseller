@@ -6,6 +6,7 @@ import { TopBar } from "./TopBar";
 import { WooAutoSyncRunner } from "@/components/web-orders/WooAutoSyncRunner";
 import { WooStockDailySyncRunner } from "@/components/integration/woocommerce/WooStockDailySyncRunner";
 import { WooWebhookPullRunner } from "@/components/web-orders/WooWebhookPullRunner";
+import { IncompleteCaptureRunner } from "@/components/web-orders/IncompleteCaptureRunner";
 import { ShopifyOrderAutoSyncRunner } from "@/components/web-orders/ShopifyOrderAutoSyncRunner";
 import { CourierAutoSyncRunner } from "@/components/orders/CourierAutoSyncRunner";
 import { CourierWebhookPullRunner } from "@/components/orders/CourierWebhookPullRunner";
@@ -53,6 +54,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <WooAutoSyncRunner />
       <WooStockDailySyncRunner />
       <WooWebhookPullRunner />
+      <IncompleteCaptureRunner />
       <ShopifyOrderAutoSyncRunner />
       <CourierAutoSyncRunner />
       <CourierWebhookPullRunner />

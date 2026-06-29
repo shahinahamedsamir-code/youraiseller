@@ -1,0 +1,99 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
+import { upsertCapturedWebOrder } from "@/lib/orders-store";
+
+type CaptureItem = {
+  sessionId?: string;
+  name?: string;
+  phone?: string;
+  address?: string;
+  items?: { name?: string; sku?: string; qty?: number; price?: number }[];
+};
+
+const POLL_MS = 25_000;
+
+/**
+ * Registers this seller's WooCommerce businessId + apiKey so the public capture
+ * endpoint can authenticate the plugin, then polls the capture queue and turns
+ * captured checkouts into Incomplete web orders. Renders nothing.
+ */
+export function IncompleteCaptureRunner() {
+  const registered = useRef(false);
+
+  useEffect(() => {
+    let stopped = false;
+
+    async function register(): Promise<boolean> {
+      const woo = loadWooCommerceSettings();
+      if (!woo.businessId || !woo.apiKey) return false;
+      try {
+        const res = await fetch("/api/incomplete-capture/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ businessId: woo.businessId, apiKey: woo.apiKey }),
+        });
+        registered.current = res.ok;
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    async function poll() {
+      try {
+        const res = await fetch("/api/incomplete-capture/pending", {
+          credentials: "same-origin",
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { items?: CaptureItem[] };
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (!items.length) return;
+
+        let changed = false;
+        for (const it of items) {
+          const order = upsertCapturedWebOrder({
+            captureId: String(it.sessionId ?? ""),
+            customerName: String(it.name ?? ""),
+            phone: String(it.phone ?? ""),
+            address: String(it.address ?? ""),
+            items: Array.isArray(it.items)
+              ? it.items.map((p) => ({
+                  name: String(p?.name ?? ""),
+                  sku: p?.sku ? String(p.sku) : undefined,
+                  qty: Number(p?.qty) || 1,
+                  price: Number(p?.price) || 0,
+                }))
+              : [],
+          });
+          if (order) changed = true;
+        }
+        if (changed && typeof window !== "undefined") {
+          window.dispatchEvent(new Event("youraiseller-data-updated"));
+        }
+      } catch {
+        /* offline — try again next tick */
+      }
+    }
+
+    async function tick() {
+      if (stopped) return;
+      if (!registered.current) {
+        const ok = await register();
+        if (!ok) return; // no WooCommerce keys yet — nothing to poll
+      }
+      await poll();
+    }
+
+    void tick();
+    const timer = setInterval(() => void tick(), POLL_MS);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  return null;
+}

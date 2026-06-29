@@ -19,6 +19,7 @@ import {
   AlertCircle,
   RefreshCw,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -611,6 +612,31 @@ function ConnectionTab({
           <Info className="h-4 w-4 shrink-0" />
           Business ID: <code className="font-mono">{settings.businessId}</code> —
           paste URLs &amp; key into your WooCommerce plugin when ready.
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+          <h3 className="text-sm font-extrabold text-emerald-900">
+            Incomplete Order Capture (no coding)
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-emerald-800/90">
+            Catch checkouts your customers start but never finish. Install this
+            plugin on your WooCommerce store, then paste your Business ID + API Key
+            (above) into its settings — unfinished checkouts then appear in your
+            Web Orders → <strong>Incomplete</strong> tab.
+          </p>
+          <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-xs text-emerald-800/90">
+            <li>Download the plugin below.</li>
+            <li>WordPress → Plugins → Add New → Upload → choose the .zip → Install → Activate.</li>
+            <li>Settings → YourAI Capture → paste Business ID + API Key → Save.</li>
+          </ol>
+          <a
+            href="/yourai-incomplete-capture.zip"
+            download
+            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700"
+          >
+            <Download className="h-4 w-4" />
+            Download Capture Plugin (.zip)
+          </a>
         </div>
       </section>
     </div>

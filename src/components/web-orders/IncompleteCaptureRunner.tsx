@@ -5,6 +5,7 @@ import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import { upsertCapturedWebOrder, upsertWebOrderFromPlugin } from "@/lib/orders-store";
 import { setProductStockFromWoo } from "@/lib/inventory-store";
 import { loadBlockList } from "@/lib/order-block-store";
+import { loadWooStockSyncSettings } from "@/lib/woocommerce-stock-sync-store";
 
 type CaptureItem = {
   sessionId?: string;
@@ -88,10 +89,13 @@ export function IncompleteCaptureRunner() {
 
         let changed = false;
 
-        // Woo → app stock (two-way) — applied without echoing back to Woo.
-        for (const s of stock) {
-          if (setProductStockFromWoo(String(s.sku ?? ""), Number(s.stockQty))) {
-            changed = true;
+        // Woo → app stock (two-way) — only when the seller turned it on, and
+        // applied without echoing back to Woo.
+        if (stock.length && loadWooStockSyncSettings().stockFromWooEnabled) {
+          for (const s of stock) {
+            if (setProductStockFromWoo(String(s.sku ?? ""), Number(s.stockQty))) {
+              changed = true;
+            }
           }
         }
 

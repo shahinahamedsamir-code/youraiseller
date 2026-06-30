@@ -195,6 +195,33 @@ export function WooCommerceStockSync() {
 
         <div
           className={clsx(
+            "border-t border-slate-200 pt-4",
+            !sync.enabled && "pointer-events-none opacity-50"
+          )}
+        >
+          <p className="text-sm font-bold text-slate-800">Sync direction</p>
+          <p className="mb-3 text-xs text-slate-500">
+            Choose which way stock flows. App → WooCommerce keeps your store in
+            sync; turn on WooCommerce → App for two-way.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ToggleRow
+              label="App → WooCommerce"
+              hint="When app stock changes, push it to your store (recommended)."
+              on={sync.autoSyncOnChange}
+              onChange={(v) => patch({ autoSyncOnChange: v })}
+            />
+            <ToggleRow
+              label="WooCommerce → App"
+              hint="Accept stock changes from the store too. Also turn on “Stock sync (Woo → app)” in the YourAI Seller Connect plugin."
+              on={sync.stockFromWooEnabled}
+              onChange={(v) => patch({ stockFromWooEnabled: v })}
+            />
+          </div>
+        </div>
+
+        <div
+          className={clsx(
             "grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2",
             !sync.enabled && "pointer-events-none opacity-50"
           )}
@@ -204,16 +231,6 @@ export function WooCommerceStockSync() {
             hint={`Full catalog sync on schedule. Last: ${formatStockSyncTime(sync.lastDailySyncAt)}`}
             on={sync.dailySyncEnabled}
             onChange={(v) => patch({ dailySyncEnabled: v })}
-          />
-          <ToggleRow
-            label="Auto-sync on stock change"
-            hint={
-              sync.trigger === "every_change"
-                ? "Runs after +/- stock in Product List."
-                : "Best with trigger: On every stock change"
-            }
-            on={sync.autoSyncOnChange}
-            onChange={(v) => patch({ autoSyncOnChange: v })}
           />
           <ToggleRow
             label="Sync price to WooCommerce"

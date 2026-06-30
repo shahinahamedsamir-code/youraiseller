@@ -16,6 +16,8 @@ export type WooStockSyncSettings = {
   mode: StockSyncMode;
   dailySyncEnabled: boolean;
   autoSyncOnChange: boolean;
+  /** Accept stock changes pushed FROM WooCommerce (Woo → app, two-way). */
+  stockFromWooEnabled: boolean;
   /** Push sell-price changes to WooCommerce regular_price. */
   priceSyncEnabled: boolean;
   lastSyncAt: string | null;
@@ -47,6 +49,7 @@ const DEFAULT: WooStockSyncSettings = {
   mode: "status_only",
   dailySyncEnabled: true,
   autoSyncOnChange: false,
+  stockFromWooEnabled: false,
   priceSyncEnabled: false,
   lastSyncAt: null,
   lastDailySyncAt: null,

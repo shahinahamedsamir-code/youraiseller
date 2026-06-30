@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Order, OrderLine } from "@/lib/orders-store";
 import { incompleteCooldownRemainingMs } from "@/lib/incomplete-cooldown";
 import { IncompleteCooldownModal } from "@/components/web-orders/IncompleteCooldownModal";
+import {
+  buildDuplicateIndex,
+  duplicateFlags,
+  type DuplicateIndex,
+} from "@/lib/order-duplicates";
+import { getWebOrdersFromStore } from "@/lib/woocommerce-order-sync";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { pullOrdersFromServer } from "@/lib/seller-sync";
 import { compactOrderStorage, repairWebOrdersInQueue } from "@/lib/orders-store";
@@ -137,6 +143,31 @@ function OrderItemsCell({ items, total }: { items: OrderLine[]; total: number })
   );
 }
 
+function DuplicateBadge({
+  order,
+  index,
+}: {
+  order: Order;
+  index: DuplicateIndex;
+}) {
+  const dup = duplicateFlags(order, index);
+  if (!dup.byPhone && !dup.byIp) return null;
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {dup.byPhone && (
+        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+          Duplicate by phone
+        </span>
+      )}
+      {dup.byIp && (
+        <span className="inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">
+          Duplicate by IP{dup.ip ? ` · ${dup.ip}` : ""}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function WebOrderTable() {
   const router = useRouter();
   const [cooldownOrder, setCooldownOrder] = useState<Order | null>(null);
@@ -166,6 +197,13 @@ export function WebOrderTable() {
   const [callLogTick, setCallLogTick] = useState(0);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  // Index phones + IPs across all web orders to flag duplicates per row.
+  const dupIndex = useMemo<DuplicateIndex>(
+    () => buildDuplicateIndex(getWebOrdersFromStore()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tick]
+  );
   const refreshCallLogs = useCallback(() => setCallLogTick((t) => t + 1), []);
 
   useEffect(() => {
@@ -455,6 +493,7 @@ export function WebOrderTable() {
                           {order.district ? `, ${order.district}` : ""}
                         </span>
                       </p>
+                      <DuplicateBadge order={order} index={dupIndex} />
                     </div>
 
                     {/* Order item + Courier ratio row */}
@@ -682,6 +721,7 @@ export function WebOrderTable() {
                         <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-600">
                           {order.note?.trim() || "—"}
                         </p>
+                        <DuplicateBadge order={order} index={dupIndex} />
                       </td>
 
                       <td className="px-3 py-3">

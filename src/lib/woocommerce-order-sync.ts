@@ -177,6 +177,8 @@ function mapWcOrderStatus(wcStatus: string): Order["status"] {
   if (s === "return-pending") return "pending_return";
   if (s === "returned" || s === "refunded") return "returned";
   if (s === "pending-cancel") return "pending_cancel";
+  if (s === "preorder") return "preorder";
+  if (s === "lost") return "lost";
   // pending / failed / checkout-draft / on-hold / processing → still open (Pending),
   // so failed-payment & abandoned checkouts stay actionable in the Incomplete tab.
   return "pending";
@@ -207,8 +209,12 @@ function wooStatusForAppStatus(status: Order["status"]): string | null {
       return "returned";
     case "pending_cancel":
       return "pending-cancel";
+    case "preorder":
+      return "preorder";
+    case "lost":
+      return "lost";
     default:
-      return null; // pending / preorder / lost → not pushed
+      return null; // pending → not pushed (many Woo statuses map back to it)
   }
 }
 
@@ -224,7 +230,10 @@ function wooFallbackStatusForAppStatus(status: Order["status"]): string | null {
       return "refunded";
     case "pending_return":
     case "pending_cancel":
+    case "preorder":
       return "on-hold";
+    case "lost":
+      return "failed";
     default:
       return null;
   }

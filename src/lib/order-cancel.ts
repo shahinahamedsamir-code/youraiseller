@@ -179,6 +179,14 @@ export function cancelApprovedOrder(params: {
     return { ok: false, message: "Could not update order", restockedLines: 0 };
   }
 
+  // Cancel goes through updateOrder (not updateOrderStatus), so push the
+  // cancelled status to WooCommerce here too. Fire-and-forget.
+  if (updated.wooOrderId != null) {
+    void import("./woocommerce-order-sync")
+      .then((m) => m.pushWooOrderStatus(updated))
+      .catch(() => {});
+  }
+
   const stockDetail = doRestock
     ? restockedLines > 0
       ? `Inventory restocked (${restockedLines} line(s)): ${stockNotes.join(", ")}`

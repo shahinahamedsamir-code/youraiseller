@@ -69,6 +69,10 @@ export async function POST(req: Request) {
       items,
       currency: body.currency ? String(body.currency).slice(0, 8) : undefined,
       pageUrl: body.pageUrl ? String(body.pageUrl).slice(0, 300) : undefined,
+      // The customer's browser posts directly, so the request carries their IP
+      // and device — no need for the plugin to send them.
+      ip: getClientIp(req),
+      userAgent: (req.headers.get("user-agent") ?? "").slice(0, 300) || undefined,
       receivedAt: new Date().toISOString(),
     });
 

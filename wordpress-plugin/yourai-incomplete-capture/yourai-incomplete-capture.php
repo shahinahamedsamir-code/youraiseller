@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.6.0
+ * Version: 1.7.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -25,7 +25,7 @@ if (!defined('YOURAI_GUARD_ENDPOINT')) {
 if (!defined('YOURAI_ORDER_ENDPOINT')) {
     define('YOURAI_ORDER_ENDPOINT', 'https://app.youraiseller.com/api/post-web-order');
 }
-define('YOURAI_PLUGIN_VERSION', '1.6.0');
+define('YOURAI_PLUGIN_VERSION', '1.7.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -338,6 +338,8 @@ function yourai_push_order($order_id) {
             'shippingCharge' => (float) $order->get_shipping_total(),
             'discount'       => (float) $order->get_total_discount(),
             'note'           => $order->get_customer_note(),
+            'ip'             => $order->get_customer_ip_address(),
+            'userAgent'      => $order->get_customer_user_agent(),
             'items'          => $items,
         ),
     );

@@ -10,6 +10,8 @@ type CaptureItem = {
   name?: string;
   phone?: string;
   address?: string;
+  ip?: string;
+  userAgent?: string;
   items?: { name?: string; sku?: string; qty?: number; price?: number }[];
 };
 
@@ -26,6 +28,8 @@ type PushedOrder = {
   shippingCharge?: number;
   discount?: number;
   note?: string;
+  ip?: string;
+  userAgent?: string;
   items?: { name: string; sku?: string; qty: number; price?: number }[];
 };
 
@@ -95,6 +99,8 @@ export function IncompleteCaptureRunner() {
             shippingCharge: Number(o.shippingCharge) || 0,
             discount: Number(o.discount) || 0,
             note: o.note,
+            ip: o.ip,
+            userAgent: o.userAgent,
             items: Array.isArray(o.items) ? o.items : [],
           });
           if (order) changed = true;
@@ -106,6 +112,8 @@ export function IncompleteCaptureRunner() {
             customerName: String(it.name ?? ""),
             phone: String(it.phone ?? ""),
             address: String(it.address ?? ""),
+            ip: it.ip,
+            userAgent: it.userAgent,
             items: Array.isArray(it.items)
               ? it.items.map((p) => ({
                   name: String(p?.name ?? ""),

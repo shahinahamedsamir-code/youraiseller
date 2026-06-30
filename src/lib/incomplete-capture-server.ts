@@ -20,6 +20,8 @@ export type IncompleteCaptureItem = {
   items: { name: string; sku?: string; qty: number; price?: number }[];
   currency?: string;
   pageUrl?: string;
+  ip?: string;
+  userAgent?: string;
   receivedAt: string;
 };
 
@@ -151,6 +153,8 @@ export type PushedOrder = {
   shippingCharge?: number;
   discount?: number;
   note?: string;
+  ip?: string;
+  userAgent?: string;
   items: { name: string; sku?: string; qty: number; price?: number }[];
   receivedAt: string;
 };

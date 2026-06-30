@@ -1374,7 +1374,17 @@ export type CapturedWebOrderInput = {
   phone: string;
   address: string;
   items: { name: string; sku?: string; qty: number; price?: number }[];
+  ip?: string;
+  userAgent?: string;
 };
+
+function deviceLabelFromUA(ua?: string): string | undefined {
+  if (!ua?.trim()) return undefined;
+  const s = ua.toLowerCase();
+  if (/mobile|android|iphone|ipod/.test(s)) return "Mobile";
+  if (/ipad|tablet/.test(s)) return "Tablet";
+  return "Desktop";
+}
 
 /**
  * Upsert a web order captured from a checkout page BEFORE it was placed
@@ -1401,6 +1411,17 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
   });
   const subtotal = items.reduce((s, i) => s + i.total, 0);
 
+  const snapshot: WooOrderSnapshot | undefined =
+    input.ip?.trim() || input.userAgent?.trim()
+      ? {
+          wcStatus: "checkout-draft",
+          customerIp: input.ip?.trim() || undefined,
+          customerUserAgent: input.userAgent?.trim() || undefined,
+          deviceLabel: deviceLabelFromUA(input.userAgent),
+          syncedAt: new Date().toISOString(),
+        }
+      : undefined;
+
   const data = loadRaw();
   const idx = data.orders.findIndex((o) => o.captureId === captureId);
 
@@ -1416,6 +1437,7 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
       items: items.length ? items : prev.items,
       subtotal: items.length ? subtotal : prev.subtotal,
       total: items.length ? subtotal : prev.total,
+      wooSnapshot: snapshot ?? prev.wooSnapshot,
       updatedAt: nowLabel(),
     };
     data.orders[idx] = next;
@@ -1445,6 +1467,7 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
     inWebQueue: true,
     isPreorder: false,
     captureId,
+    wooSnapshot: snapshot,
     tags: ["Incomplete checkout"],
     createdAt: now,
     updatedAt: now,
@@ -1467,6 +1490,8 @@ export type PluginOrderInput = {
   shippingCharge?: number;
   discount?: number;
   note?: string;
+  ip?: string;
+  userAgent?: string;
   items: { name: string; sku?: string; qty: number; price?: number }[];
 };
 
@@ -1516,6 +1541,17 @@ export function upsertWebOrderFromPlugin(input: PluginOrderInput): Order | null 
         ? "cancelled"
         : "pending";
 
+  const snapshot: WooOrderSnapshot | undefined =
+    input.ip?.trim() || input.userAgent?.trim()
+      ? {
+          wcStatus: s,
+          customerIp: input.ip?.trim() || undefined,
+          customerUserAgent: input.userAgent?.trim() || undefined,
+          deviceLabel: deviceLabelFromUA(input.userAgent),
+          syncedAt: new Date().toISOString(),
+        }
+      : undefined;
+
   return upsertWooCommerceOrder({
     customerName: input.customerName.trim(),
     phone: input.phone.trim(),
@@ -1533,6 +1569,7 @@ export function upsertWebOrderFromPlugin(input: PluginOrderInput): Order | null 
     webStatus,
     wooOrderId: input.wooOrderId,
     wooNumber: input.wooNumber?.trim() || String(input.wooOrderId),
+    wooSnapshot: snapshot,
     tags: ["WooCommerce"],
   }).order;
 }

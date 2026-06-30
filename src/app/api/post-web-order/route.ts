@@ -70,6 +70,8 @@ export async function POST(req: Request) {
       shippingCharge: Number(o.shippingCharge) || 0,
       discount: Number(o.discount) || 0,
       note: o.note ? String(o.note).slice(0, 500) : undefined,
+      ip: o.ip ? String(o.ip).slice(0, 60) : undefined,
+      userAgent: o.userAgent ? String(o.userAgent).slice(0, 300) : undefined,
       items,
       receivedAt: new Date().toISOString(),
     };

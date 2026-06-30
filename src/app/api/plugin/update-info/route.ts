@@ -36,15 +36,18 @@ function pluginVersion(): string {
  * available" and one-click updates when this version is newer than the one a
  * seller has installed.
  */
-export function GET(req: Request) {
-  const origin = new URL(req.url).origin;
+// The distributed plugin always talks to production, so the package URL must be
+// the public origin — not the internal localhost the app sees behind nginx.
+const PUBLIC_BASE = "https://app.youraiseller.com";
+
+export function GET() {
   const version = pluginVersion();
   return NextResponse.json(
     {
       name: "YourAI Seller — Incomplete Order Capture",
       slug: "yourai-incomplete-capture",
       version,
-      download_url: `${origin}/yourai-incomplete-capture.zip`,
+      download_url: `${PUBLIC_BASE}/yourai-incomplete-capture.zip`,
       requires: "5.5",
       tested: "6.6",
       last_updated: new Date().toISOString(),

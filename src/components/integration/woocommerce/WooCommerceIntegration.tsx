@@ -639,11 +639,11 @@ function ConnectionTab({
           </ol>
           <a
             href="/yourai-incomplete-capture.zip"
-            download
+            download="YourAISeller-Connect.zip"
             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700"
           >
             <Download className="h-4 w-4" />
-            Download Capture Plugin (.zip)
+            Download Plugin (.zip)
           </a>
         </div>
       </section>

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller — Incomplete Order Capture
  * Description: Sends checkout form data (name, phone, address, cart) to YourAI Seller as the customer types, so unfinished checkouts appear in the Incomplete tab — even if they never click "Place Order".
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -18,6 +18,9 @@ if (!defined('ABSPATH')) {
  */
 if (!defined('YOURAI_CAPTURE_ENDPOINT')) {
     define('YOURAI_CAPTURE_ENDPOINT', 'https://app.youraiseller.com/api/incomplete-capture');
+}
+if (!defined('YOURAI_GUARD_ENDPOINT')) {
+    define('YOURAI_GUARD_ENDPOINT', 'https://app.youraiseller.com/api/order-guard/check');
 }
 define('YOURAI_BAKED_BUSINESS_ID', '__YOURAI_BUSINESS_ID__');
 define('YOURAI_BAKED_API_KEY', '__YOURAI_API_KEY__');
@@ -49,6 +52,7 @@ add_action('admin_menu', function () {
 add_action('admin_init', function () {
     register_setting('yourai_capture', 'yourai_business_id');
     register_setting('yourai_capture', 'yourai_api_key');
+    register_setting('yourai_capture', 'yourai_order_guard');
 });
 function yourai_capture_settings_page() {
     $businessId = esc_attr(get_option('yourai_business_id', ''));
@@ -99,7 +103,13 @@ function yourai_capture_settings_page() {
               <p class="hint">For plugin authentication.</p>
             </div>
           </div>
-          <div style="margin-top:20px">
+          <div style="margin-top:18px;display:flex;align-items:center;gap:10px;border-top:1px solid #f1f5f9;padding-top:16px">
+            <input type="checkbox" id="yourai_order_guard" name="yourai_order_guard" value="1" <?php checked(get_option('yourai_order_guard', '1'), '1'); ?> style="width:18px;height:18px" />
+            <label for="yourai_order_guard" style="font-weight:700;font-size:13px;color:#374151">
+              Order Guard — block checkout for phone/IP/email on your YourAI Order Block List
+            </label>
+          </div>
+          <div style="margin-top:18px">
             <button type="submit" class="button yai-save">Save Changes</button>
           </div>
         </div>
@@ -111,6 +121,39 @@ function yourai_capture_settings_page() {
     </div>
     <?php
 }
+
+/* ---- Order Guard: block checkout for blocked phone / IP / email -------- */
+add_action('woocommerce_checkout_process', function () {
+    if (get_option('yourai_order_guard', '1') !== '1') return;
+    $businessId = yourai_business_id();
+    $apiKey = yourai_api_key();
+    if (!$businessId || !$apiKey) return;
+
+    $phone = isset($_POST['billing_phone']) ? sanitize_text_field(wp_unslash($_POST['billing_phone'])) : '';
+    $email = isset($_POST['billing_email']) ? sanitize_email(wp_unslash($_POST['billing_email'])) : '';
+    $ip = class_exists('WC_Geolocation') ? WC_Geolocation::get_ip_address() : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '');
+
+    $res = wp_remote_post(YOURAI_GUARD_ENDPOINT, array(
+        'timeout' => 6,
+        'headers' => array('Content-Type' => 'application/json'),
+        'body'    => wp_json_encode(array(
+            'businessId' => $businessId,
+            'apiKey'     => $apiKey,
+            'phone'      => $phone,
+            'email'      => $email,
+            'ip'         => $ip,
+        )),
+    ));
+    if (is_wp_error($res)) return; // fail open — never break a real checkout
+    if ((int) wp_remote_retrieve_response_code($res) !== 200) return;
+    $data = json_decode(wp_remote_retrieve_body($res), true);
+    if (!empty($data['blocked'])) {
+        wc_add_notice(
+            __('Sorry, we could not process this order. Please contact us to complete your purchase.', 'yourai'),
+            'error'
+        );
+    }
+});
 
 /* ---- Front-end: capture script on the checkout page only --------------- */
 add_action('wp_enqueue_scripts', function () {

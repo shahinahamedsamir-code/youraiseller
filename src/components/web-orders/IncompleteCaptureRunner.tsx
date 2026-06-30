@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import { upsertCapturedWebOrder } from "@/lib/orders-store";
+import { loadBlockList } from "@/lib/order-block-store";
 
 type CaptureItem = {
   sessionId?: string;
@@ -33,7 +34,12 @@ export function IncompleteCaptureRunner() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
-          body: JSON.stringify({ businessId: woo.businessId, apiKey: woo.apiKey }),
+          body: JSON.stringify({
+            businessId: woo.businessId,
+            apiKey: woo.apiKey,
+            // Sync the Order Block List so the order-guard endpoint can use it.
+            blockList: loadBlockList().map((b) => ({ type: b.type, value: b.value })),
+          }),
         });
         registered.current = res.ok;
         return res.ok;
@@ -89,9 +95,21 @@ export function IncompleteCaptureRunner() {
 
     void tick();
     const timer = setInterval(() => void tick(), POLL_MS);
+
+    // Re-sync keys + block list to the server whenever local data changes
+    // (e.g. the seller adds/removes a block), debounced.
+    let reSync: ReturnType<typeof setTimeout> | null = null;
+    const onDataChange = () => {
+      if (reSync) clearTimeout(reSync);
+      reSync = setTimeout(() => void register(), 2000);
+    };
+    window.addEventListener("youraiseller-data-updated", onDataChange);
+
     return () => {
       stopped = true;
       clearInterval(timer);
+      if (reSync) clearTimeout(reSync);
+      window.removeEventListener("youraiseller-data-updated", onDataChange);
     };
   }, []);
 

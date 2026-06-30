@@ -23,7 +23,13 @@ export type IncompleteCaptureItem = {
   receivedAt: string;
 };
 
-type RegistryEntry = { sellerId: string; apiKey: string; updatedAt: string };
+export type BlockListItem = { type: "phone" | "ip" | "email"; value: string };
+type RegistryEntry = {
+  sellerId: string;
+  apiKey: string;
+  blockList?: BlockListItem[];
+  updatedAt: string;
+};
 
 const DATA_DIR = path.join(process.cwd(), ".data", "incomplete-capture");
 
@@ -59,12 +65,18 @@ function writeJson<T>(file: string, data: T) {
 export function registerIncompleteCapture(
   businessId: string,
   apiKey: string,
-  sellerId: string
+  sellerId: string,
+  blockList?: BlockListItem[]
 ): void {
   const id = businessId.trim();
   if (!id) return;
   const registry = readJson<Record<string, RegistryEntry>>(registryPath(), {});
-  registry[id] = { sellerId, apiKey: apiKey.trim(), updatedAt: new Date().toISOString() };
+  registry[id] = {
+    sellerId,
+    apiKey: apiKey.trim(),
+    blockList: Array.isArray(blockList) ? blockList : registry[id]?.blockList,
+    updatedAt: new Date().toISOString(),
+  };
   writeJson(registryPath(), registry);
 }
 
@@ -73,6 +85,31 @@ export function resolveSellerByBusinessId(
 ): RegistryEntry | null {
   const registry = readJson<Record<string, RegistryEntry>>(registryPath(), {});
   return registry[businessId.trim()] ?? null;
+}
+
+function normalizeGuardValue(type: string, value: string): string {
+  const v = value.trim();
+  if (type === "phone") return v.replace(/[^0-9]/g, "").replace(/^88/, "");
+  if (type === "email") return v.toLowerCase();
+  return v;
+}
+
+/** Returns the matching block entry if a checkout value is blocked. */
+export function checkOrderGuard(
+  businessId: string,
+  values: { phone?: string; ip?: string; email?: string }
+): BlockListItem | null {
+  const entry = resolveSellerByBusinessId(businessId);
+  const list = entry?.blockList ?? [];
+  for (const b of list) {
+    const target =
+      b.type === "phone" ? values.phone : b.type === "ip" ? values.ip : values.email;
+    if (!target) continue;
+    if (normalizeGuardValue(b.type, b.value) === normalizeGuardValue(b.type, target)) {
+      return b;
+    }
+  }
+  return null;
 }
 
 /** Upsert by sessionId so a customer typing produces ONE incomplete order. */

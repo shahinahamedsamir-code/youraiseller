@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { getSellerSessionUser } from "@/lib/seller-auth-server";
-import { registerIncompleteCapture } from "@/lib/incomplete-capture-server";
+import {
+  registerIncompleteCapture,
+  type BlockListItem,
+} from "@/lib/incomplete-capture-server";
 
 export const dynamic = "force-dynamic";
 
 /** Authenticated seller links their WooCommerce businessId + apiKey to their
- *  account, so the public capture endpoint can resolve & verify the plugin. */
+ *  account (and syncs their Order Block List) so the public capture and
+ *  order-guard endpoints can resolve, verify and protect the plugin. */
 export async function POST(req: Request) {
   const user = await getSellerSessionUser();
   if (!user) {
@@ -20,6 +24,21 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  registerIncompleteCapture(businessId, apiKey, String(user.id));
+
+  const rawBlocks: unknown[] = Array.isArray(body.blockList) ? (body.blockList as unknown[]) : [];
+  const blockList: BlockListItem[] = rawBlocks
+    .map((raw) => {
+      const b = (raw ?? {}) as Record<string, unknown>;
+      const type = String(b.type ?? "");
+      const value = String(b.value ?? "").trim();
+      return { type, value };
+    })
+    .filter(
+      (b): b is BlockListItem =>
+        (b.type === "phone" || b.type === "ip" || b.type === "email") && !!b.value
+    )
+    .slice(0, 5000);
+
+  registerIncompleteCapture(businessId, apiKey, String(user.id), blockList);
   return NextResponse.json({ ok: true });
 }

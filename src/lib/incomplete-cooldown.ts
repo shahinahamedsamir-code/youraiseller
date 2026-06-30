@@ -3,7 +3,7 @@ import type { Order } from "./orders-store";
 /** How long to hold off contacting a fresh incomplete lead — the customer may
  *  still be on the checkout page finishing their order. Resets on each capture
  *  ping (so it counts from the customer's last activity). */
-export const INCOMPLETE_COOLDOWN_MS = 5 * 60 * 1000;
+export const INCOMPLETE_COOLDOWN_MS = 2 * 60 * 1000;
 
 /** Milliseconds left before it's safe to contact a captured lead (0 = ready). */
 export function incompleteCooldownRemainingMs(

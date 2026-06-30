@@ -592,6 +592,14 @@ function ConnectionTab({
             onCopy={onCopy}
           />
           <CopyField
+            id="business-id"
+            label="Business ID"
+            sub="For plugin auth"
+            value={settings.businessId}
+            copied={copied}
+            onCopy={onCopy}
+          />
+          <CopyField
             id="api-key"
             label="Your AI Seller API Key"
             sub="For plugin auth"
@@ -610,8 +618,8 @@ function ConnectionTab({
 
         <div className="mt-4 flex items-start gap-2 rounded-xl bg-indigo-50 p-3 text-xs text-indigo-900">
           <Info className="h-4 w-4 shrink-0" />
-          Business ID: <code className="font-mono">{settings.businessId}</code> —
-          paste URLs &amp; key into your WooCommerce plugin when ready.
+          Copy your Business ID &amp; API Key above and paste them into the
+          WooCommerce plugin settings.
         </div>
 
         <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">

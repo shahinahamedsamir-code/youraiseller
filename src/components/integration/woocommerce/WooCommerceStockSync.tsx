@@ -369,10 +369,15 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div>
-        <p className="font-bold text-slate-800">{label}</p>
-        <p className="text-xs text-slate-500">{hint}</p>
+    <div
+      className={clsx(
+        "flex items-start justify-between gap-4 rounded-xl border p-4 transition",
+        on ? "border-teal-200 bg-teal-50/40" : "border-slate-200 bg-white"
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-slate-800">{label}</p>
+        <p className="mt-0.5 text-xs leading-5 text-slate-500">{hint}</p>
       </div>
       <button
         type="button"
@@ -380,13 +385,13 @@ function ToggleRow({
         aria-checked={on}
         onClick={() => onChange(!on)}
         className={clsx(
-          "relative h-7 w-12 shrink-0 rounded-full transition",
-          on ? "bg-teal-500" : "bg-slate-300"
+          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition",
+          on ? "bg-teal-600" : "bg-slate-300"
         )}
       >
         <span
           className={clsx(
-            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition",
+            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition",
             on ? "left-[22px]" : "left-0.5"
           )}
         />

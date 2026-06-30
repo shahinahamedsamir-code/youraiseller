@@ -543,66 +543,32 @@ function ConnectionTab({
             )}
           </div>
 
-          <label className="flex cursor-pointer gap-3 rounded-xl border border-teal-100 bg-teal-50/50 p-4">
-            <input
-              type="checkbox"
-              checked={settings.syncViaPlugin}
-              onChange={(e) => patch({ syncViaPlugin: e.target.checked })}
-              className="mt-1 h-4 w-4 accent-teal-600"
-            />
-            <div>
-              <p className="font-bold text-slate-800">
-                Auto-import new orders
-                <span className="ml-2 text-xs font-bold text-teal-700">
-                  Recommended
-                </span>
-              </p>
+          <div>
+            <p className="mb-2 text-sm font-bold text-slate-700">Sync options</p>
+            <div className="space-y-2.5">
+              <ToggleRow
+                title="Auto-import new orders"
+                badge="Recommended"
+                desc="Bring new WooCommerce orders into your dashboard automatically."
+                on={settings.syncViaPlugin}
+                onChange={(v) => patch({ syncViaPlugin: v })}
+              />
+              <ToggleRow
+                title="Fetch complete order data via REST API"
+                desc="Pull full order details on import — slightly slower, more complete. Needs Auto-import on."
+                on={settings.fetchFullOrderViaApi}
+                onChange={(v) => patch({ fetchFullOrderViaApi: v })}
+                disabled={!settings.syncViaPlugin}
+              />
+              <ToggleRow
+                title="Push status back to WooCommerce"
+                badge="Two-way"
+                desc="Change a status in the app → the WooCommerce order updates too (RTS, Shipped, Delivered, Returned, Cancelled…)."
+                on={settings.pushOrderStatusToWoo}
+                onChange={(v) => patch({ pushOrderStatusToWoo: v })}
+              />
             </div>
-          </label>
-
-          <label
-            className={clsx(
-              "ml-6 flex cursor-pointer gap-3 rounded-xl border p-4",
-              settings.syncViaPlugin
-                ? "border-slate-200 bg-white"
-                : "border-slate-100 bg-slate-50 opacity-60"
-            )}
-          >
-            <input
-              type="checkbox"
-              disabled={!settings.syncViaPlugin}
-              checked={settings.fetchFullOrderViaApi}
-              onChange={(e) => patch({ fetchFullOrderViaApi: e.target.checked })}
-              className="mt-1 h-4 w-4 accent-indigo-600"
-            />
-            <div>
-              <p className="font-bold text-slate-800">
-                Fetch complete order data via REST API
-              </p>
-            </div>
-          </label>
-
-          <label className="flex cursor-pointer gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
-            <input
-              type="checkbox"
-              checked={settings.pushOrderStatusToWoo}
-              onChange={(e) => patch({ pushOrderStatusToWoo: e.target.checked })}
-              className="mt-1 h-4 w-4 accent-violet-600"
-            />
-            <div>
-              <p className="font-bold text-slate-800">
-                Push status back to WooCommerce
-                <span className="ml-2 text-xs font-bold text-violet-700">
-                  Two-way sync
-                </span>
-              </p>
-              <p className="mt-0.5 text-xs text-slate-500">
-                When you change an order to Delivered / Cancelled / RTS / Shipped /
-                Returned in the app, the WooCommerce order is updated too
-                (Completed / Cancelled / Processing / Refunded).
-              </p>
-            </div>
-          </label>
+          </div>
         </div>
       </section>
 
@@ -735,6 +701,66 @@ function DebugTab({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function ToggleRow({
+  title,
+  desc,
+  badge,
+  on,
+  onChange,
+  disabled,
+}: {
+  title: string;
+  desc?: string;
+  badge?: string;
+  on: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className={clsx(
+        "flex items-start justify-between gap-4 rounded-xl border p-4 transition",
+        disabled
+          ? "border-slate-100 bg-slate-50 opacity-60"
+          : on
+            ? "border-teal-200 bg-teal-50/40"
+            : "border-slate-200 bg-white"
+      )}
+    >
+      <div className="min-w-0">
+        <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-800">
+          {title}
+          {badge && (
+            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-teal-700">
+              {badge}
+            </span>
+          )}
+        </p>
+        {desc && <p className="mt-0.5 text-xs leading-5 text-slate-500">{desc}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        disabled={disabled}
+        onClick={() => onChange(!on)}
+        className={clsx(
+          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition",
+          on ? "bg-teal-600" : "bg-slate-300",
+          disabled && "cursor-not-allowed"
+        )}
+      >
+        <span
+          className={clsx(
+            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition",
+            on ? "left-[22px]" : "left-0.5"
+          )}
+        />
+      </button>
     </div>
   );
 }

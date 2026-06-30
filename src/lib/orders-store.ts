@@ -359,6 +359,9 @@ export type Order = {
   /** Set on web orders captured from a checkout page before the order was
    *  placed (Incomplete Order Capture) — used to upsert without duplicates. */
   captureId?: string;
+  /** Precise time of the last capture ping (ISO) — drives the "customer still
+   *  on site" cooldown before staff contact the lead. */
+  captureAt?: string;
   /** True while this order is holding deducted stock (from Pending onwards);
    *  set false again once returned/cancelled puts the stock back. */
   stockReserved?: boolean;
@@ -1376,6 +1379,7 @@ export type CapturedWebOrderInput = {
   items: { name: string; sku?: string; qty: number; price?: number }[];
   ip?: string;
   userAgent?: string;
+  captureAt?: string;
 };
 
 function deviceLabelFromUA(ua?: string): string | undefined {
@@ -1438,6 +1442,7 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
       subtotal: items.length ? subtotal : prev.subtotal,
       total: items.length ? subtotal : prev.total,
       wooSnapshot: snapshot ?? prev.wooSnapshot,
+      captureAt: input.captureAt || new Date().toISOString(),
       updatedAt: nowLabel(),
     };
     data.orders[idx] = next;
@@ -1467,6 +1472,7 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
     inWebQueue: true,
     isPreorder: false,
     captureId,
+    captureAt: input.captureAt || new Date().toISOString(),
     wooSnapshot: snapshot,
     tags: ["Incomplete checkout"],
     createdAt: now,

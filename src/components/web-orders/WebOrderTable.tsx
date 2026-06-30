@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { OrderLine } from "@/lib/orders-store";
+import type { Order, OrderLine } from "@/lib/orders-store";
+import { incompleteCooldownRemainingMs } from "@/lib/incomplete-cooldown";
+import { IncompleteCooldownModal } from "@/components/web-orders/IncompleteCooldownModal";
 import { getProductImageForLine } from "@/lib/inventory-store";
 import { pullOrdersFromServer } from "@/lib/seller-sync";
 import { compactOrderStorage, repairWebOrdersInQueue } from "@/lib/orders-store";
@@ -137,6 +139,19 @@ function OrderItemsCell({ items, total }: { items: OrderLine[]; total: number })
 
 export function WebOrderTable() {
   const router = useRouter();
+  const [cooldownOrder, setCooldownOrder] = useState<Order | null>(null);
+
+  const viewUrl = (id: string) =>
+    `/dashboard/orders/web/view/${encodeURIComponent(id)}`;
+
+  // Opening a fresh incomplete lead first warns "customer still on site".
+  const openOrder = (order: Order) => {
+    if (incompleteCooldownRemainingMs(order) > 0) {
+      setCooldownOrder(order);
+      return;
+    }
+    router.push(viewUrl(order.id));
+  };
   const searchParams = useSearchParams();
   const [tick, setTick] = useState(0);
   const [activeFilter, setActiveFilter] = useState<WebOrderTabKey>(() => {
@@ -402,11 +417,7 @@ export function WebOrderTable() {
                       </span>
                       <button
                         type="button"
-                        onClick={() =>
-                          router.push(
-                            `/dashboard/orders/web/view/${encodeURIComponent(order.id)}`
-                          )
-                        }
+                        onClick={() => openOrder(order)}
                         className="ml-auto inline-flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm"
                       >
                         Open
@@ -584,11 +595,7 @@ export function WebOrderTable() {
                       <td className={stickyBodyCell("open", isChecked)}>
                         <button
                           type="button"
-                          onClick={() =>
-                            router.push(
-                              `/dashboard/orders/web/view/${encodeURIComponent(order.id)}`
-                            )
-                          }
+                          onClick={() => openOrder(order)}
                           className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-teal-600 px-2.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700"
                         >
                           Open
@@ -736,6 +743,18 @@ export function WebOrderTable() {
           />
         </div>
       </div>
+
+      {cooldownOrder && (
+        <IncompleteCooldownModal
+          order={cooldownOrder}
+          onCancel={() => setCooldownOrder(null)}
+          onProceed={() => {
+            const o = cooldownOrder;
+            setCooldownOrder(null);
+            router.push(viewUrl(o.id));
+          }}
+        />
+      )}
     </div>
   );
 }

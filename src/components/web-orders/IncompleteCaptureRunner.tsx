@@ -12,6 +12,7 @@ type CaptureItem = {
   address?: string;
   ip?: string;
   userAgent?: string;
+  receivedAt?: string;
   items?: { name?: string; sku?: string; qty?: number; price?: number }[];
 };
 
@@ -114,6 +115,7 @@ export function IncompleteCaptureRunner() {
             address: String(it.address ?? ""),
             ip: it.ip,
             userAgent: it.userAgent,
+            captureAt: it.receivedAt,
             items: Array.isArray(it.items)
               ? it.items.map((p) => ({
                   name: String(p?.name ?? ""),

@@ -239,12 +239,13 @@ function wooFallbackStatusForAppStatus(status: Order["status"]): string | null {
 export async function pushWooOrderStatus(order: Order): Promise<void> {
   if (typeof window === "undefined") return;
   const woo = loadWooCommerceSettings();
-  const canApi =
+  const hasRest =
     woo.connected ||
     Boolean(
       woo.storeUrl?.trim() && woo.consumerKey?.trim() && woo.consumerSecret?.trim()
     );
-  if (!woo.pushOrderStatusToWoo || !canApi) return;
+  const hasPlugin = Boolean(woo.storeUrl?.trim() && woo.apiKey?.trim());
+  if (!woo.pushOrderStatusToWoo || (!hasRest && !hasPlugin)) return;
   if (order.wooOrderId == null) return;
   const wcStatus = wooStatusForAppStatus(order.status);
   if (!wcStatus) return;
@@ -257,6 +258,7 @@ export async function pushWooOrderStatus(order: Order): Promise<void> {
         storeUrl: woo.storeUrl.trim(),
         consumerKey: woo.consumerKey.trim(),
         consumerSecret: woo.consumerSecret.trim(),
+        apiKey: woo.apiKey?.trim(),
         orderId: Number(order.wooOrderId),
         status: wcStatus,
         fallbackStatus: fallbackStatus ?? undefined,

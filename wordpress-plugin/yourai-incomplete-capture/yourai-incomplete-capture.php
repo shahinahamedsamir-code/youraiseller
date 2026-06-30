@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.9.0
+ * Version: 1.10.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -28,7 +28,7 @@ if (!defined('YOURAI_ORDER_ENDPOINT')) {
 if (!defined('YOURAI_STOCK_ENDPOINT')) {
     define('YOURAI_STOCK_ENDPOINT', 'https://app.youraiseller.com/api/stock-push');
 }
-define('YOURAI_PLUGIN_VERSION', '1.9.0');
+define('YOURAI_PLUGIN_VERSION', '1.10.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -424,6 +424,44 @@ function yourai_push_stock($product) {
             'stockQty'   => (int) $qty,
         )),
     ));
+}
+
+/* ---- App → Woo status push via the plugin (no REST consumer keys) ------ */
+add_action('rest_api_init', function () {
+    register_rest_route('yourai/v1', '/order-status', array(
+        'methods'             => 'POST',
+        'permission_callback' => '__return_true',
+        'callback'            => 'yourai_rest_set_order_status',
+    ));
+});
+function yourai_rest_set_order_status($request) {
+    $p = $request->get_json_params();
+    if (!is_array($p)) $p = $request->get_params();
+    $apiKey = isset($p['apiKey']) ? trim((string) $p['apiKey']) : '';
+    if (!$apiKey || $apiKey !== yourai_api_key()) {
+        return new WP_REST_Response(array('ok' => false, 'error' => 'invalid key'), 401);
+    }
+    $orderId  = isset($p['orderId']) ? (int) $p['orderId'] : 0;
+    $status   = isset($p['status']) ? sanitize_text_field($p['status']) : '';
+    $fallback = isset($p['fallbackStatus']) ? sanitize_text_field($p['fallbackStatus']) : '';
+    if (!$orderId || !$status) {
+        return new WP_REST_Response(array('ok' => false, 'error' => 'missing'), 400);
+    }
+    if (!function_exists('wc_get_order')) {
+        return new WP_REST_Response(array('ok' => false, 'error' => 'no woocommerce'), 400);
+    }
+    $order = wc_get_order($orderId);
+    if (!$order) {
+        return new WP_REST_Response(array('ok' => false, 'error' => 'order not found'), 404);
+    }
+
+    $valid = wc_get_order_statuses(); // keys are 'wc-...'
+    $want = 'wc-' . preg_replace('/^wc-/', '', $status);
+    if (!isset($valid[$want]) && $fallback) {
+        $want = 'wc-' . preg_replace('/^wc-/', '', $fallback);
+    }
+    $order->update_status(preg_replace('/^wc-/', '', $want), 'YourAI Seller status sync', true);
+    return new WP_REST_Response(array('ok' => true, 'status' => $order->get_status()), 200);
 }
 
 /* ---- Front-end: capture script on the checkout page only --------------- */

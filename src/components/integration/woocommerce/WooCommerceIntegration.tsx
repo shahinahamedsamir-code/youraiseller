@@ -89,6 +89,10 @@ export function WooCommerceIntegration() {
 
   const connect = async () => {
     if (!settings) return;
+    if (!settings.storeUrl.trim()) {
+      setToast({ type: "err", msg: "Store URL is required." });
+      return;
+    }
     setTesting(true);
     setToast(null);
     const result = await testWooCommerceConnection(settings);
@@ -109,6 +113,10 @@ export function WooCommerceIntegration() {
 
   const saveCredentials = () => {
     if (!settings) return;
+    if (!settings.storeUrl.trim()) {
+      setToast({ type: "err", msg: "Store URL is required — keep it even without REST keys." });
+      return;
+    }
     persist({
       ...settings,
       storeUrl: settings.storeUrl.trim(),
@@ -305,12 +313,18 @@ function ConnectionTab({
 
         <div className="space-y-4">
           <Field
-            label="Store URL"
+            label="Store URL (required)"
             icon={Link2}
             value={settings.storeUrl}
             onChange={(v) => patch({ storeUrl: v })}
             placeholder="https://yourstore.com/"
           />
+          {!settings.storeUrl.trim() && (
+            <p className="-mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
+              Store URL is required — needed for both REST API and plugin sync
+              (status push won’t work without it, even via the plugin).
+            </p>
+          )}
           <Field
             label="Consumer Key"
             icon={Key}

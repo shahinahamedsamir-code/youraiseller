@@ -624,7 +624,7 @@ function ConnectionTab({
 
         <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
           <h3 className="text-sm font-extrabold text-emerald-900">
-            YourAI Seller Connect plugin (no coding)
+            YourAI Seller Connect plugin
           </h3>
           <p className="mt-1 text-xs leading-5 text-emerald-800/90">
             Install this plugin on your WooCommerce store, then paste your Business
@@ -635,7 +635,7 @@ function ConnectionTab({
           <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-xs text-emerald-800/90">
             <li>Download the plugin below.</li>
             <li>WordPress → Plugins → Add New → Upload → choose the .zip → Install → Activate.</li>
-            <li>Settings → YourAI Capture → paste Business ID + API Key → Save.</li>
+            <li>Open the new <strong>YourAI Seller</strong> menu → paste Business ID + API Key → Save Changes.</li>
           </ol>
           <a
             href="/yourai-incomplete-capture.zip"

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller — Incomplete Order Capture
  * Description: Sends checkout form data (name, phone, address, cart) to YourAI Seller as the customer types, so unfinished checkouts appear in the Incomplete tab — even if they never click "Place Order".
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -34,42 +34,80 @@ function yourai_api_key() {
     return $baked ?: trim((string) get_option('yourai_api_key', ''));
 }
 
-/* ---- Settings page (Settings → YourAI Capture) ------------------------- */
+/* ---- Branded settings page (top-level "YourAI Seller" menu) ------------- */
 add_action('admin_menu', function () {
-    add_options_page('YourAI Capture', 'YourAI Capture', 'manage_options', 'yourai-capture', 'yourai_capture_settings_page');
+    add_menu_page(
+        'YourAI Seller',
+        'YourAI Seller',
+        'manage_options',
+        'yourai-capture',
+        'yourai_capture_settings_page',
+        'dashicons-cart',
+        58
+    );
 });
 add_action('admin_init', function () {
     register_setting('yourai_capture', 'yourai_business_id');
     register_setting('yourai_capture', 'yourai_api_key');
 });
 function yourai_capture_settings_page() {
+    $businessId = esc_attr(get_option('yourai_business_id', ''));
+    $apiKey = esc_attr(get_option('yourai_api_key', ''));
+    $connected = yourai_business_id() && yourai_api_key();
     ?>
-    <div class="wrap">
-        <h1>YourAI Seller — Incomplete Order Capture</h1>
-        <p>Copy your <strong>Business ID</strong> and <strong>API Key</strong> from the YourAI Seller
-           dashboard (Integration → WooCommerce → <em>Integration URLs &amp; Keys</em>).</p>
-        <form method="post" action="options.php">
-            <?php settings_fields('yourai_capture'); ?>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><label for="yourai_business_id">Business ID</label></th>
-                    <td><input type="text" id="yourai_business_id" name="yourai_business_id"
-                        value="<?php echo esc_attr(get_option('yourai_business_id', '')); ?>" class="regular-text" style="width:420px" placeholder="biz_xxxxxxxx" /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="yourai_api_key">API Key</label></th>
-                    <td><input type="text" id="yourai_api_key" name="yourai_api_key"
-                        value="<?php echo esc_attr(get_option('yourai_api_key', '')); ?>" class="regular-text" style="width:420px" placeholder="yai_xxxxxxxx" />
-                        <p class="description">Endpoint: <code><?php echo esc_html(YOURAI_CAPTURE_ENDPOINT); ?></code></p></td>
-                </tr>
-            </table>
-            <?php submit_button(); ?>
-        </form>
-        <p>Status:
-            <?php echo (yourai_business_id() && yourai_api_key())
-                ? '<strong style="color:#16a34a">Connected &#10003;</strong>'
-                : '<strong style="color:#dc2626">Business ID / API Key not set</strong>'; ?>
-        </p>
+    <div class="wrap" style="max-width:980px">
+      <style>
+        .yai-hero{background:linear-gradient(135deg,#6d28d9,#4f46e5);border-radius:16px;color:#fff;padding:26px 28px;margin:18px 0;position:relative;overflow:hidden}
+        .yai-hero h1{color:#fff;font-size:24px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+        .yai-hero p{margin:0;opacity:.9;font-size:13px}
+        .yai-pill{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:rgba(255,255,255,.16);padding:7px 14px;border-radius:999px;font-weight:700;font-size:12px}
+        .yai-dot{width:9px;height:9px;border-radius:999px;background:#facc15}
+        .yai-dot.on{background:#34d399}
+        .yai-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px 24px;margin-top:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+        .yai-card h2{margin:0 0 4px;font-size:16px}
+        .yai-card .sub{color:#6b7280;font-size:12px;margin:0 0 16px}
+        .yai-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        @media(max-width:782px){.yai-grid{grid-template-columns:1fr}}
+        .yai-field label{display:block;font-weight:700;font-size:12px;color:#374151;margin-bottom:6px}
+        .yai-field input{width:100%;height:42px;border:1px solid #d1d5db;border-radius:10px;padding:0 12px;font-size:14px}
+        .yai-field .hint{color:#9ca3af;font-size:11px;margin-top:5px}
+        .yai-save{background:linear-gradient(135deg,#7c3aed,#4f46e5)!important;border:0!important;border-radius:10px!important;height:42px!important;padding:0 26px!important;font-weight:700!important;color:#fff!important;cursor:pointer}
+        .yai-steps{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:14px 18px;margin-top:16px;color:#065f46;font-size:12.5px}
+        .yai-steps b{color:#064e3b}
+      </style>
+
+      <div class="yai-hero">
+        <h1><span class="dashicons dashicons-cart" style="font-size:26px;width:26px;height:26px"></span> YourAI Seller — Incomplete Capture</h1>
+        <p>Catch checkouts your customers start but never finish — they appear in your YourAI Seller <strong>Incomplete</strong> tab.</p>
+        <span class="yai-pill"><span class="yai-dot <?php echo $connected ? 'on' : ''; ?>"></span><?php echo $connected ? 'Connected' : 'Not connected — add your keys below'; ?></span>
+      </div>
+
+      <form method="post" action="options.php">
+        <?php settings_fields('yourai_capture'); ?>
+        <div class="yai-card">
+          <h2>API Keys</h2>
+          <p class="sub">Copy these from your YourAI Seller dashboard → Integration → WooCommerce → <em>Integration URLs &amp; Keys</em>.</p>
+          <div class="yai-grid">
+            <div class="yai-field">
+              <label for="yourai_business_id">Business ID</label>
+              <input type="text" id="yourai_business_id" name="yourai_business_id" value="<?php echo $businessId; ?>" placeholder="biz_xxxxxxxx" />
+              <p class="hint">Identifies your store.</p>
+            </div>
+            <div class="yai-field">
+              <label for="yourai_api_key">API Key</label>
+              <input type="text" id="yourai_api_key" name="yourai_api_key" value="<?php echo $apiKey; ?>" placeholder="yai_xxxxxxxx" />
+              <p class="hint">For plugin authentication.</p>
+            </div>
+          </div>
+          <div style="margin-top:20px">
+            <button type="submit" class="button yai-save">Save Changes</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="yai-steps">
+        <b>How it works:</b> once your keys are saved, this plugin sends the checkout name / phone / address + cart to YourAI Seller as the customer types — even if they never press “Place Order”. Endpoint: <code><?php echo esc_html(YOURAI_CAPTURE_ENDPOINT); ?></code>
+      </div>
     </div>
     <?php
 }

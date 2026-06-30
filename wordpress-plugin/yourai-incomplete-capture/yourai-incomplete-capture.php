@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller — Incomplete Order Capture
  * Description: Sends checkout form data (name, phone, address, cart) to YourAI Seller as the customer types, so unfinished checkouts appear in the Incomplete tab — even if they never click "Place Order".
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -22,6 +22,68 @@ if (!defined('YOURAI_CAPTURE_ENDPOINT')) {
 if (!defined('YOURAI_GUARD_ENDPOINT')) {
     define('YOURAI_GUARD_ENDPOINT', 'https://app.youraiseller.com/api/order-guard/check');
 }
+define('YOURAI_PLUGIN_VERSION', '1.3.0');
+define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
+if (!defined('YOURAI_UPDATE_INFO')) {
+    define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
+}
+
+/* ---- Auto-update (sellers get updates like any normal plugin) ---------- */
+function yourai_fetch_update_info() {
+    $cached = get_transient('yourai_update_info');
+    if (is_array($cached)) return $cached;
+    $res = wp_remote_get(YOURAI_UPDATE_INFO, array('timeout' => 6));
+    if (is_wp_error($res) || (int) wp_remote_retrieve_response_code($res) !== 200) return null;
+    $data = json_decode(wp_remote_retrieve_body($res), true);
+    if (!is_array($data) || empty($data['version'])) return null;
+    set_transient('yourai_update_info', $data, 6 * HOUR_IN_SECONDS);
+    return $data;
+}
+
+add_filter('pre_set_site_transient_update_plugins', function ($transient) {
+    if (!is_object($transient) || empty($transient->checked)) return $transient;
+    $info = yourai_fetch_update_info();
+    if (!$info) return $transient;
+    $basename = plugin_basename(__FILE__);
+    $current = isset($transient->checked[$basename]) ? $transient->checked[$basename] : YOURAI_PLUGIN_VERSION;
+    if (version_compare($info['version'], $current, '>')) {
+        $obj = new stdClass();
+        $obj->slug = YOURAI_PLUGIN_SLUG;
+        $obj->plugin = $basename;
+        $obj->new_version = $info['version'];
+        $obj->package = $info['download_url'];
+        $obj->url = isset($info['homepage']) ? $info['homepage'] : 'https://youraiseller.com';
+        $obj->tested = isset($info['tested']) ? $info['tested'] : '';
+        $transient->response[$basename] = $obj;
+    }
+    return $transient;
+});
+
+add_filter('plugins_api', function ($result, $action, $args) {
+    if ($action !== 'plugin_information') return $result;
+    if (!isset($args->slug) || $args->slug !== YOURAI_PLUGIN_SLUG) return $result;
+    $info = yourai_fetch_update_info();
+    if (!$info) return $result;
+    $res = new stdClass();
+    $res->name = $info['name'];
+    $res->slug = YOURAI_PLUGIN_SLUG;
+    $res->version = $info['version'];
+    $res->author = 'YourAI Seller';
+    $res->homepage = isset($info['homepage']) ? $info['homepage'] : 'https://youraiseller.com';
+    $res->download_link = $info['download_url'];
+    $res->requires = isset($info['requires']) ? $info['requires'] : '5.5';
+    $res->tested = isset($info['tested']) ? $info['tested'] : '6.6';
+    $res->last_updated = isset($info['last_updated']) ? $info['last_updated'] : '';
+    $res->sections = array('description' => isset($info['description']) ? $info['description'] : '');
+    return $res;
+}, 10, 3);
+
+// Refresh the cached manifest right after an update so the notice clears.
+add_action('upgrader_process_complete', function ($upgrader, $options) {
+    if (isset($options['action'], $options['type']) && $options['action'] === 'update' && $options['type'] === 'plugin') {
+        delete_transient('yourai_update_info');
+    }
+}, 10, 2);
 define('YOURAI_BAKED_BUSINESS_ID', '__YOURAI_BUSINESS_ID__');
 define('YOURAI_BAKED_API_KEY', '__YOURAI_API_KEY__');
 

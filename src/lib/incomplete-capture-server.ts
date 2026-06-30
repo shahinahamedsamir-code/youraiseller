@@ -135,3 +135,45 @@ export function pullIncompleteCaptureQueue(
   writeJson(file, []);
   return queue;
 }
+
+// --- Instant order push (plugin → app) ------------------------------------
+
+export type PushedOrder = {
+  wooOrderId: number;
+  wooNumber?: string;
+  customerName: string;
+  phone: string;
+  email?: string;
+  address: string;
+  district?: string;
+  paymentMethod?: string;
+  status?: string;
+  shippingCharge?: number;
+  discount?: number;
+  note?: string;
+  items: { name: string; sku?: string; qty: number; price?: number }[];
+  receivedAt: string;
+};
+
+function orderQueuePath(sellerId: string) {
+  const safe = sellerId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return path.join(DATA_DIR, `orders-${safe}.json`);
+}
+
+/** Upsert by wooOrderId so re-sends never pile up duplicates in the queue. */
+export function enqueuePushedOrder(sellerId: string, order: PushedOrder): void {
+  const file = orderQueuePath(sellerId);
+  const queue = readJson<PushedOrder[]>(file, []);
+  const idx = queue.findIndex((o) => o.wooOrderId === order.wooOrderId);
+  if (idx >= 0) queue[idx] = order;
+  else queue.push(order);
+  if (queue.length > 500) queue.splice(0, queue.length - 500);
+  writeJson(file, queue);
+}
+
+export function pullPushedOrderQueue(sellerId: string): PushedOrder[] {
+  const file = orderQueuePath(sellerId);
+  const queue = readJson<PushedOrder[]>(file, []);
+  writeJson(file, []);
+  return queue;
+}

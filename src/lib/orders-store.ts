@@ -1454,6 +1454,89 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
   return order;
 }
 
+export type PluginOrderInput = {
+  wooOrderId: number;
+  wooNumber?: string;
+  customerName: string;
+  phone: string;
+  email?: string;
+  address: string;
+  district?: string;
+  paymentMethod?: string;
+  status?: string;
+  shippingCharge?: number;
+  discount?: number;
+  note?: string;
+  items: { name: string; sku?: string; qty: number; price?: number }[];
+};
+
+/**
+ * Create/update a web order pushed instantly by the WooCommerce plugin. Dedupes
+ * on wooOrderId via upsertWooCommerceOrder, so the REST sync and the plugin can
+ * both run without ever producing a duplicate — whoever arrives first wins, the
+ * other just updates.
+ */
+export function upsertWebOrderFromPlugin(input: PluginOrderInput): Order | null {
+  if (!input.wooOrderId || !input.customerName?.trim() || !input.phone?.trim()) {
+    return null;
+  }
+  const items: OrderLine[] = (input.items ?? []).map((it) => {
+    const price = Number.isFinite(Number(it.price)) ? Number(it.price) : 0;
+    const qty = Math.max(1, Math.floor(Number(it.qty) || 1));
+    return {
+      productId: "",
+      productName: it.name?.trim() || it.sku?.trim() || "Item",
+      productCode: it.sku?.trim() || "",
+      qty,
+      price,
+      total: price * qty,
+    };
+  });
+  if (items.length === 0) return null;
+
+  const pmRaw = (input.paymentMethod ?? "").toLowerCase();
+  const paymentMethod: PaymentMethod =
+    pmRaw === "bkash" ? "bkash" : pmRaw === "nagad" ? "nagad" : pmRaw === "prepaid" ? "prepaid" : "cod";
+
+  const s = (input.status ?? "processing").toLowerCase().replace(/^wc-/, "");
+  const webStatus: WebDisplayStatus =
+    s === "completed" || s === "complete"
+      ? "complete"
+      : s === "cancelled" || s === "canceled" || s === "refunded"
+        ? "cancelled"
+        : s === "pending" || s === "failed" || s === "checkout-draft" || s === "checkout_draft"
+          ? "incomplete"
+          : s === "on-hold" || s === "onhold"
+            ? "on_hold"
+            : "processing";
+  const status: OrderStatus =
+    s === "completed" || s === "complete"
+      ? "delivered"
+      : s === "cancelled" || s === "canceled"
+        ? "cancelled"
+        : "pending";
+
+  return upsertWooCommerceOrder({
+    customerName: input.customerName.trim(),
+    phone: input.phone.trim(),
+    email: input.email?.trim(),
+    address: input.address.trim(),
+    district: input.district?.trim() ?? "",
+    paymentMethod,
+    items,
+    shippingCharge: Number(input.shippingCharge) || 0,
+    discount: Number(input.discount) || 0,
+    note: input.note?.trim(),
+    source: "web",
+    orderSource: "website",
+    status,
+    webStatus,
+    wooOrderId: input.wooOrderId,
+    wooNumber: input.wooNumber?.trim() || String(input.wooOrderId),
+    tags: ["WooCommerce"],
+  }).order;
+}
+
 export function updateOrder(id: string, patch: Partial<Order>): Order | null {
   const data = loadRaw();
   const idx = data.orders.findIndex((o) => o.id === id);

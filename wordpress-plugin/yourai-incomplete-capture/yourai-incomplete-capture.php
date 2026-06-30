@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -22,7 +22,10 @@ if (!defined('YOURAI_CAPTURE_ENDPOINT')) {
 if (!defined('YOURAI_GUARD_ENDPOINT')) {
     define('YOURAI_GUARD_ENDPOINT', 'https://app.youraiseller.com/api/order-guard/check');
 }
-define('YOURAI_PLUGIN_VERSION', '1.5.0');
+if (!defined('YOURAI_ORDER_ENDPOINT')) {
+    define('YOURAI_ORDER_ENDPOINT', 'https://app.youraiseller.com/api/post-web-order');
+}
+define('YOURAI_PLUGIN_VERSION', '1.6.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -115,12 +118,14 @@ add_action('admin_init', function () {
     register_setting('yourai_capture', 'yourai_business_id');
     register_setting('yourai_capture', 'yourai_api_key');
     register_setting('yourai_capture', 'yourai_order_guard');
+    register_setting('yourai_capture', 'yourai_order_push');
 });
 function yourai_capture_settings_page() {
     $businessId = esc_attr(get_option('yourai_business_id', ''));
     $apiKey = esc_attr(get_option('yourai_api_key', ''));
     $connected = yourai_business_id() && yourai_api_key();
     $guardOn = get_option('yourai_order_guard', '1') === '1';
+    $pushOn = get_option('yourai_order_push', '1') === '1';
     ?>
     <div class="wrap yai-wrap">
       <style>
@@ -225,6 +230,19 @@ function yourai_capture_settings_page() {
                 <p>Blocks checkout for any phone / IP / email on your YourAI Order Block List.</p>
               </div>
             </div>
+            <div class="yai-feat">
+              <span class="ic" style="background:linear-gradient(135deg,#6366f1,#4f46e5)"><span class="dashicons dashicons-update"></span></span>
+              <div style="flex:1">
+                <h3 style="justify-content:space-between">
+                  <span>Instant Order Push</span>
+                  <label class="yai-switch">
+                    <input type="checkbox" id="yourai_order_push" name="yourai_order_push" value="1" <?php checked($pushOn); ?> />
+                    <span class="yai-slider"></span>
+                  </label>
+                </h3>
+                <p>Sends each placed order to YourAI Seller the moment it’s created — no 20s wait. Safe with REST sync (deduped by order ID).</p>
+              </div>
+            </div>
           </div>
           <div style="margin-top:20px">
             <button type="submit" class="button yai-save">Save Changes</button>
@@ -271,6 +289,67 @@ add_action('woocommerce_checkout_process', function () {
         );
     }
 });
+
+/* ---- Instant order push: send each placed order to YourAI Seller ------- */
+add_action('woocommerce_checkout_order_processed', 'yourai_push_order', 20, 1);
+add_action('woocommerce_order_status_changed', function ($order_id) {
+    yourai_push_order($order_id);
+}, 20, 1);
+
+function yourai_push_order($order_id) {
+    if (get_option('yourai_order_push', '1') !== '1') return;
+    $businessId = yourai_business_id();
+    $apiKey = yourai_api_key();
+    if (!$businessId || !$apiKey) return;
+    if (!function_exists('wc_get_order')) return;
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+
+    $items = array();
+    foreach ($order->get_items() as $item) {
+        $product = $item->get_product();
+        $qty = (int) $item->get_quantity();
+        $items[] = array(
+            'name'  => $item->get_name(),
+            'sku'   => $product ? $product->get_sku() : '',
+            'qty'   => $qty,
+            'price' => $qty ? round((float) $item->get_total() / $qty, 2) : (float) $item->get_total(),
+        );
+    }
+
+    $address = trim(
+        $order->get_billing_address_1() . ' ' . $order->get_billing_address_2() . ', ' .
+        $order->get_billing_city() . ' ' . $order->get_billing_state()
+    );
+
+    $payload = array(
+        'businessId' => $businessId,
+        'apiKey'     => $apiKey,
+        'order'      => array(
+            'wooOrderId'     => (int) $order->get_id(),
+            'wooNumber'      => (string) $order->get_order_number(),
+            'customerName'   => trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()),
+            'phone'          => $order->get_billing_phone(),
+            'email'          => $order->get_billing_email(),
+            'address'        => $address,
+            'district'       => $order->get_billing_city(),
+            'paymentMethod'  => $order->get_payment_method(),
+            'status'         => $order->get_status(),
+            'shippingCharge' => (float) $order->get_shipping_total(),
+            'discount'       => (float) $order->get_total_discount(),
+            'note'           => $order->get_customer_note(),
+            'items'          => $items,
+        ),
+    );
+
+    // Fire-and-forget so checkout is never slowed down.
+    wp_remote_post(YOURAI_ORDER_ENDPOINT, array(
+        'timeout'  => 8,
+        'blocking' => false,
+        'headers'  => array('Content-Type' => 'application/json'),
+        'body'     => wp_json_encode($payload),
+    ));
+}
 
 /* ---- Front-end: capture script on the checkout page only --------------- */
 add_action('wp_enqueue_scripts', function () {

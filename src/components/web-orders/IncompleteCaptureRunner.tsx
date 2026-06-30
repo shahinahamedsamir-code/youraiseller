@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
-import { upsertCapturedWebOrder } from "@/lib/orders-store";
+import { upsertCapturedWebOrder, upsertWebOrderFromPlugin } from "@/lib/orders-store";
 import { loadBlockList } from "@/lib/order-block-store";
 
 type CaptureItem = {
@@ -11,6 +11,22 @@ type CaptureItem = {
   phone?: string;
   address?: string;
   items?: { name?: string; sku?: string; qty?: number; price?: number }[];
+};
+
+type PushedOrder = {
+  wooOrderId: number;
+  wooNumber?: string;
+  customerName?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  district?: string;
+  paymentMethod?: string;
+  status?: string;
+  shippingCharge?: number;
+  discount?: number;
+  note?: string;
+  items?: { name: string; sku?: string; qty: number; price?: number }[];
 };
 
 const POLL_MS = 25_000;
@@ -54,11 +70,36 @@ export function IncompleteCaptureRunner() {
           credentials: "same-origin",
         });
         if (!res.ok) return;
-        const data = (await res.json()) as { items?: CaptureItem[] };
+        const data = (await res.json()) as {
+          items?: CaptureItem[];
+          orders?: PushedOrder[];
+        };
         const items = Array.isArray(data.items) ? data.items : [];
-        if (!items.length) return;
+        const orders = Array.isArray(data.orders) ? data.orders : [];
+        if (!items.length && !orders.length) return;
 
         let changed = false;
+
+        // Instant-pushed placed orders (deduped on wooOrderId).
+        for (const o of orders) {
+          const order = upsertWebOrderFromPlugin({
+            wooOrderId: Number(o.wooOrderId),
+            wooNumber: o.wooNumber,
+            customerName: String(o.customerName ?? ""),
+            phone: String(o.phone ?? ""),
+            email: o.email,
+            address: String(o.address ?? ""),
+            district: o.district,
+            paymentMethod: o.paymentMethod,
+            status: o.status,
+            shippingCharge: Number(o.shippingCharge) || 0,
+            discount: Number(o.discount) || 0,
+            note: o.note,
+            items: Array.isArray(o.items) ? o.items : [],
+          });
+          if (order) changed = true;
+        }
+
         for (const it of items) {
           const order = upsertCapturedWebOrder({
             captureId: String(it.sessionId ?? ""),

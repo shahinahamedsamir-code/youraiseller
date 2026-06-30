@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -22,7 +22,7 @@ if (!defined('YOURAI_CAPTURE_ENDPOINT')) {
 if (!defined('YOURAI_GUARD_ENDPOINT')) {
     define('YOURAI_GUARD_ENDPOINT', 'https://app.youraiseller.com/api/order-guard/check');
 }
-define('YOURAI_PLUGIN_VERSION', '1.4.0');
+define('YOURAI_PLUGIN_VERSION', '1.5.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -120,36 +120,68 @@ function yourai_capture_settings_page() {
     $businessId = esc_attr(get_option('yourai_business_id', ''));
     $apiKey = esc_attr(get_option('yourai_api_key', ''));
     $connected = yourai_business_id() && yourai_api_key();
+    $guardOn = get_option('yourai_order_guard', '1') === '1';
     ?>
-    <div class="wrap" style="max-width:980px">
+    <div class="wrap yai-wrap">
       <style>
-        .yai-hero{background:linear-gradient(135deg,#6d28d9,#4f46e5);border-radius:16px;color:#fff;padding:26px 28px;margin:18px 0;position:relative;overflow:hidden}
-        .yai-hero h1{color:#fff;font-size:24px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
-        .yai-hero p{margin:0;opacity:.9;font-size:13px}
-        .yai-pill{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:rgba(255,255,255,.16);padding:7px 14px;border-radius:999px;font-weight:700;font-size:12px}
-        .yai-dot{width:9px;height:9px;border-radius:999px;background:#facc15}
-        .yai-dot.on{background:#34d399}
-        .yai-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px 24px;margin-top:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-        .yai-card h2{margin:0 0 4px;font-size:16px}
-        .yai-card .sub{color:#6b7280;font-size:12px;margin:0 0 16px}
+        .yai-wrap{max-width:920px}
+        .yai-wrap *{box-sizing:border-box}
+        .yai-hero{background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 60%,#4338ca 100%);border-radius:18px;color:#fff;padding:28px 30px;margin:18px 0 4px;position:relative;overflow:hidden}
+        .yai-hero::after{content:"";position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:rgba(255,255,255,.08);border-radius:50%}
+        .yai-hero .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;position:relative;z-index:1}
+        .yai-hero h1{color:#fff;font-size:23px;margin:0 0 6px;display:flex;align-items:center;gap:10px;font-weight:800}
+        .yai-hero p{margin:0;opacity:.92;font-size:13px;max-width:560px}
+        .yai-pill{display:inline-flex;align-items:center;gap:7px;margin-top:16px;background:rgba(255,255,255,.18);padding:7px 14px;border-radius:999px;font-weight:700;font-size:12px}
+        .yai-dot{width:9px;height:9px;border-radius:999px;background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,.25)}
+        .yai-dot.on{background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.25)}
+        .yai-dash{display:inline-flex;align-items:center;gap:7px;background:#fff;color:#4f46e5;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap}
+        .yai-dash:hover{color:#4338ca}
+        .yai-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:22px 24px;margin-top:16px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+        .yai-card h2{margin:0 0 4px;font-size:15px;font-weight:800;color:#0f172a}
+        .yai-card .sub{color:#64748b;font-size:12px;margin:0 0 16px}
         .yai-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
         @media(max-width:782px){.yai-grid{grid-template-columns:1fr}}
-        .yai-field label{display:block;font-weight:700;font-size:12px;color:#374151;margin-bottom:6px}
-        .yai-field input{width:100%;height:42px;border:1px solid #d1d5db;border-radius:10px;padding:0 12px;font-size:14px}
-        .yai-field .hint{color:#9ca3af;font-size:11px;margin-top:5px}
-        .yai-save{background:linear-gradient(135deg,#7c3aed,#4f46e5)!important;border:0!important;border-radius:10px!important;height:42px!important;padding:0 26px!important;font-weight:700!important;color:#fff!important;cursor:pointer}
-        .yai-steps{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:14px 18px;margin-top:16px;color:#065f46;font-size:12.5px}
-        .yai-steps b{color:#064e3b}
+        .yai-field label{display:block;font-weight:700;font-size:12px;color:#334155;margin-bottom:6px}
+        .yai-field input{width:100%;height:44px;border:1px solid #d1d5db;border-radius:10px;padding:0 12px;font-size:14px;font-family:ui-monospace,Menlo,monospace}
+        .yai-field input:focus{border-color:#7c3aed;outline:none;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+        .yai-field .hint{color:#94a3b8;font-size:11px;margin-top:5px}
+        .yai-feat{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1px solid #eef2f7;border-radius:12px;background:#fafbff}
+        .yai-feat .ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff}
+        .yai-feat .ic.cap{background:linear-gradient(135deg,#10b981,#059669)}
+        .yai-feat .ic.grd{background:linear-gradient(135deg,#f43f5e,#e11d48)}
+        .yai-feat .ic .dashicons{font-size:21px;width:21px;height:21px}
+        .yai-feat h3{margin:0 0 3px;font-size:13.5px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:8px}
+        .yai-feat p{margin:0;font-size:12px;color:#64748b;line-height:1.5}
+        .yai-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px}
+        .yai-badge.on{background:#dcfce7;color:#15803d}
+        .yai-badge.off{background:#fee2e2;color:#b91c1c}
+        .yai-switch{position:relative;display:inline-block;width:44px;height:24px;flex:0 0 auto;margin-top:2px}
+        .yai-switch input{opacity:0;width:0;height:0}
+        .yai-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:.2s;cursor:pointer}
+        .yai-slider::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+        .yai-switch input:checked+.yai-slider{background:#7c3aed}
+        .yai-switch input:checked+.yai-slider::before{transform:translateX(20px)}
+        .yai-save{background:linear-gradient(135deg,#7c3aed,#4f46e5)!important;border:0!important;border-radius:10px!important;height:44px!important;padding:0 28px!important;font-weight:700!important;color:#fff!important;cursor:pointer;font-size:14px!important;box-shadow:0 4px 12px rgba(124,58,237,.25)}
+        .yai-steps{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:13px 18px;margin-top:14px;color:#475569;font-size:12px}
+        .yai-steps b{color:#0f172a}
       </style>
 
       <div class="yai-hero">
-        <h1><span class="dashicons dashicons-cart" style="font-size:26px;width:26px;height:26px"></span> YourAI Seller Connect</h1>
-        <p>Capture unfinished checkouts into your <strong>Incomplete</strong> tab and block fraud orders with <strong>Order Guard</strong>.</p>
-        <span class="yai-pill"><span class="yai-dot <?php echo $connected ? 'on' : ''; ?>"></span><?php echo $connected ? 'Connected' : 'Not connected — add your keys below'; ?></span>
+        <div class="top">
+          <div>
+            <h1><span class="dashicons dashicons-cart" style="font-size:26px;width:26px;height:26px"></span> YourAI Seller Connect</h1>
+            <p>Capture unfinished checkouts into your <strong>Incomplete</strong> tab and block fraud orders with <strong>Order Guard</strong>.</p>
+            <span class="yai-pill"><span class="yai-dot <?php echo $connected ? 'on' : ''; ?>"></span><?php echo $connected ? 'Connected' : 'Not connected'; ?></span>
+          </div>
+          <a class="yai-dash" href="https://app.youraiseller.com/dashboard" target="_blank" rel="noopener">
+            <span class="dashicons dashicons-external" style="font-size:16px;width:16px;height:16px"></span> Open Dashboard
+          </a>
+        </div>
       </div>
 
       <form method="post" action="options.php">
         <?php settings_fields('yourai_capture'); ?>
+
         <div class="yai-card">
           <h2>API Keys</h2>
           <p class="sub">Copy these from your YourAI Seller dashboard → Integration → WooCommerce → <em>Integration URLs &amp; Keys</em>.</p>
@@ -165,20 +197,43 @@ function yourai_capture_settings_page() {
               <p class="hint">For plugin authentication.</p>
             </div>
           </div>
-          <div style="margin-top:18px;display:flex;align-items:center;gap:10px;border-top:1px solid #f1f5f9;padding-top:16px">
-            <input type="checkbox" id="yourai_order_guard" name="yourai_order_guard" value="1" <?php checked(get_option('yourai_order_guard', '1'), '1'); ?> style="width:18px;height:18px" />
-            <label for="yourai_order_guard" style="font-weight:700;font-size:13px;color:#374151">
-              Order Guard — block checkout for phone/IP/email on your YourAI Order Block List
-            </label>
+        </div>
+
+        <div class="yai-card">
+          <h2>Features</h2>
+          <p class="sub">What this plugin does for your store.</p>
+          <div class="yai-grid">
+            <div class="yai-feat">
+              <span class="ic cap"><span class="dashicons dashicons-cart"></span></span>
+              <div>
+                <h3>Incomplete Capture
+                  <span class="yai-badge <?php echo $connected ? 'on' : 'off'; ?>"><?php echo $connected ? 'Active' : 'Add keys'; ?></span>
+                </h3>
+                <p>Sends checkout name / phone / address + cart to your Incomplete tab as the customer types — even without “Place Order”.</p>
+              </div>
+            </div>
+            <div class="yai-feat">
+              <span class="ic grd"><span class="dashicons dashicons-shield"></span></span>
+              <div style="flex:1">
+                <h3 style="justify-content:space-between">
+                  <span>Order Guard</span>
+                  <label class="yai-switch">
+                    <input type="checkbox" id="yourai_order_guard" name="yourai_order_guard" value="1" <?php checked($guardOn); ?> />
+                    <span class="yai-slider"></span>
+                  </label>
+                </h3>
+                <p>Blocks checkout for any phone / IP / email on your YourAI Order Block List.</p>
+              </div>
+            </div>
           </div>
-          <div style="margin-top:18px">
+          <div style="margin-top:20px">
             <button type="submit" class="button yai-save">Save Changes</button>
           </div>
         </div>
       </form>
 
       <div class="yai-steps">
-        <b>How it works:</b> once your keys are saved, this plugin sends the checkout name / phone / address + cart to YourAI Seller as the customer types — even if they never press “Place Order”. Endpoint: <code><?php echo esc_html(YOURAI_CAPTURE_ENDPOINT); ?></code>
+        <b>How it works:</b> once your keys are saved everything runs automatically — no extra setup. Capture endpoint: <code><?php echo esc_html(YOURAI_CAPTURE_ENDPOINT); ?></code>
       </div>
     </div>
     <?php

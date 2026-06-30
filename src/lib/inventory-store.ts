@@ -650,6 +650,31 @@ export function upsertProductByCode(
   return { product, created: true };
 }
 
+/**
+ * Apply a stock value pushed FROM WooCommerce (Woo → app, two-way sync) WITHOUT
+ * echoing it back to Woo — that's what breaks the sync loop. Returns true when a
+ * managed product actually changed.
+ */
+export function setProductStockFromWoo(sku: string, stockQty: number): boolean {
+  if (typeof window === "undefined") return false;
+  const code = sku.trim().toLowerCase();
+  if (!code) return false;
+  const qty = Math.max(0, Math.floor(Number(stockQty) || 0));
+  const data = loadRaw();
+  const idx = data.products.findIndex(
+    (p) => p.code.trim().toLowerCase() === code
+  );
+  if (idx < 0) return false;
+  const p = data.products[idx];
+  if (!p.manageStock || p.stockQty === qty) return false;
+  data.products[idx] = { ...p, stockQty: qty, updatedAt: nowLabel() };
+  saveRaw(data);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("youraiseller-data-updated"));
+  }
+  return true;
+}
+
 export function ensureWooCommerceCategory(): string {
   const data = loadRaw();
   let cat = data.categories.find((c) => c.name === "WooCommerce");

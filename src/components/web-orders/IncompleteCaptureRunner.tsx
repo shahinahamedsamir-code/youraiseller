@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import { upsertCapturedWebOrder, upsertWebOrderFromPlugin } from "@/lib/orders-store";
+import { setProductStockFromWoo } from "@/lib/inventory-store";
 import { loadBlockList } from "@/lib/order-block-store";
 
 type CaptureItem = {
@@ -78,12 +79,21 @@ export function IncompleteCaptureRunner() {
         const data = (await res.json()) as {
           items?: CaptureItem[];
           orders?: PushedOrder[];
+          stock?: { sku?: string; stockQty?: number }[];
         };
         const items = Array.isArray(data.items) ? data.items : [];
         const orders = Array.isArray(data.orders) ? data.orders : [];
-        if (!items.length && !orders.length) return;
+        const stock = Array.isArray(data.stock) ? data.stock : [];
+        if (!items.length && !orders.length && !stock.length) return;
 
         let changed = false;
+
+        // Woo → app stock (two-way) — applied without echoing back to Woo.
+        for (const s of stock) {
+          if (setProductStockFromWoo(String(s.sku ?? ""), Number(s.stockQty))) {
+            changed = true;
+          }
+        }
 
         // Instant-pushed placed orders (deduped on wooOrderId).
         for (const o of orders) {

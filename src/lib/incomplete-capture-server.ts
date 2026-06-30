@@ -182,3 +182,32 @@ export function pullPushedOrderQueue(sellerId: string): PushedOrder[] {
   return queue;
 }
 
+// --- Instant stock sync (Woo → app, two-way) ------------------------------
+
+export type PushedStock = { sku: string; stockQty: number; receivedAt: string };
+
+function stockQueuePath(sellerId: string) {
+  const safe = sellerId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return path.join(DATA_DIR, `stock-${safe}.json`);
+}
+
+/** Upsert by SKU — keep only the latest stock value per product. */
+export function enqueuePushedStock(sellerId: string, item: PushedStock): void {
+  const file = stockQueuePath(sellerId);
+  const queue = readJson<PushedStock[]>(file, []);
+  const idx = queue.findIndex(
+    (s) => s.sku.trim().toLowerCase() === item.sku.trim().toLowerCase()
+  );
+  if (idx >= 0) queue[idx] = item;
+  else queue.push(item);
+  if (queue.length > 2000) queue.splice(0, queue.length - 2000);
+  writeJson(file, queue);
+}
+
+export function pullPushedStockQueue(sellerId: string): PushedStock[] {
+  const file = stockQueuePath(sellerId);
+  const queue = readJson<PushedStock[]>(file, []);
+  writeJson(file, []);
+  return queue;
+}
+

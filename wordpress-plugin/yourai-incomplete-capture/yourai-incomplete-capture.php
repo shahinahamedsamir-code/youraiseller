@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.7.0
+ * Version: 1.8.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -25,7 +25,10 @@ if (!defined('YOURAI_GUARD_ENDPOINT')) {
 if (!defined('YOURAI_ORDER_ENDPOINT')) {
     define('YOURAI_ORDER_ENDPOINT', 'https://app.youraiseller.com/api/post-web-order');
 }
-define('YOURAI_PLUGIN_VERSION', '1.7.0');
+if (!defined('YOURAI_STOCK_ENDPOINT')) {
+    define('YOURAI_STOCK_ENDPOINT', 'https://app.youraiseller.com/api/stock-push');
+}
+define('YOURAI_PLUGIN_VERSION', '1.8.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -119,6 +122,7 @@ add_action('admin_init', function () {
     register_setting('yourai_capture', 'yourai_api_key');
     register_setting('yourai_capture', 'yourai_order_guard');
     register_setting('yourai_capture', 'yourai_order_push');
+    register_setting('yourai_capture', 'yourai_stock_sync');
 });
 function yourai_capture_settings_page() {
     $businessId = esc_attr(get_option('yourai_business_id', ''));
@@ -126,6 +130,7 @@ function yourai_capture_settings_page() {
     $connected = yourai_business_id() && yourai_api_key();
     $guardOn = get_option('yourai_order_guard', '1') === '1';
     $pushOn = get_option('yourai_order_push', '1') === '1';
+    $stockOn = get_option('yourai_stock_sync', '0') === '1';
     ?>
     <div class="wrap yai-wrap">
       <style>
@@ -243,6 +248,19 @@ function yourai_capture_settings_page() {
                 <p>Sends each placed order to YourAI Seller the moment it’s created — no 20s wait. Safe with REST sync (deduped by order ID).</p>
               </div>
             </div>
+            <div class="yai-feat">
+              <span class="ic" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)"><span class="dashicons dashicons-archive"></span></span>
+              <div style="flex:1">
+                <h3 style="justify-content:space-between">
+                  <span>Stock sync (Woo → app)</span>
+                  <label class="yai-switch">
+                    <input type="checkbox" id="yourai_stock_sync" name="yourai_stock_sync" value="1" <?php checked($stockOn); ?> />
+                    <span class="yai-slider"></span>
+                  </label>
+                </h3>
+                <p>When WooCommerce stock changes, send it to YourAI too (two-way). Leave off if your app is the single stock master.</p>
+              </div>
+            </div>
           </div>
           <div style="margin-top:20px">
             <button type="submit" class="button yai-save">Save Changes</button>
@@ -350,6 +368,34 @@ function yourai_push_order($order_id) {
         'blocking' => false,
         'headers'  => array('Content-Type' => 'application/json'),
         'body'     => wp_json_encode($payload),
+    ));
+}
+
+/* ---- Stock sync (Woo → app): push WooCommerce stock changes to YourAI --- */
+add_action('woocommerce_product_set_stock', 'yourai_push_stock', 20, 1);
+add_action('woocommerce_variation_set_stock', 'yourai_push_stock', 20, 1);
+
+function yourai_push_stock($product) {
+    if (get_option('yourai_stock_sync', '0') !== '1') return;
+    $businessId = yourai_business_id();
+    $apiKey = yourai_api_key();
+    if (!$businessId || !$apiKey) return;
+    if (!is_object($product) || !method_exists($product, 'get_sku')) return;
+    $sku = $product->get_sku();
+    if (!$sku) return;
+    $qty = $product->get_stock_quantity();
+    if ($qty === null) return; // not tracking stock by quantity
+
+    wp_remote_post(YOURAI_STOCK_ENDPOINT, array(
+        'timeout'  => 6,
+        'blocking' => false,
+        'headers'  => array('Content-Type' => 'application/json'),
+        'body'     => wp_json_encode(array(
+            'businessId' => $businessId,
+            'apiKey'     => $apiKey,
+            'sku'        => $sku,
+            'stockQty'   => (int) $qty,
+        )),
     ));
 }
 

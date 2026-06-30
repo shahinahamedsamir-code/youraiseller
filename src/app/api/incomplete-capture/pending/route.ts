@@ -8,7 +8,7 @@ import {
 export const dynamic = "force-dynamic";
 
 /** The seller dashboard polls this, pulls captured checkouts + instant-pushed
- *  orders, and clears both queues. */
+ *  orders, and clears the queues. */
 export async function GET() {
   const user = await getSellerSessionUser();
   if (!user) return NextResponse.json({ items: [], orders: [] });

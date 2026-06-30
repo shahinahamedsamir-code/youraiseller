@@ -7,7 +7,10 @@ import {
   increaseStock,
   type Product,
 } from "@/lib/inventory-store";
-import { runWooStockSync } from "@/lib/woocommerce-stock-sync-store";
+import {
+  loadWooStockSyncSettings,
+  runWooStockSync,
+} from "@/lib/woocommerce-stock-sync-store";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import clsx from "clsx";
 
@@ -118,7 +121,13 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
         onClose();
         return;
       }
-      // WooCommerce connected — ask: Sync to WooCommerce or Skip.
+      // Fully automatic mode: the inventory stock-change chokepoint already
+      // mirrored this to WooCommerce — no popup, just close.
+      if (loadWooStockSyncSettings().autoSyncOnChange) {
+        onClose();
+        return;
+      }
+      // Otherwise ask: Sync to WooCommerce or Skip.
       setNewStock(after);
       setPhase("confirm");
     } catch (e) {

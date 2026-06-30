@@ -305,10 +305,33 @@ function ConnectionTab({
         </a>
       </div>
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+          <p className="text-sm font-extrabold text-indigo-900">
+            Option A · REST API
+          </p>
+          <p className="mt-1 text-xs leading-5 text-indigo-800/90">
+            Store URL + Consumer Key/Secret. Full sync: imports orders, pushes
+            stock &amp; status. Fill in the credentials below.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+          <p className="text-sm font-extrabold text-emerald-900">
+            Option B · Plugin only
+          </p>
+          <p className="mt-1 text-xs leading-5 text-emerald-800/90">
+            Just install the YourAI Seller Connect plugin (below) with your
+            Business ID + API Key. No Consumer Keys needed — Store URL still
+            required.
+          </p>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
         <h3 className="mb-4 flex items-center gap-2 font-bold text-slate-800">
           <Key className="h-5 w-5 text-teal-600" />
           API Credentials
+          <span className="text-xs font-medium text-slate-400">(Option A — optional if using the plugin)</span>
         </h3>
 
         <div className="space-y-4">
@@ -319,12 +342,10 @@ function ConnectionTab({
             onChange={(v) => patch({ storeUrl: v })}
             placeholder="https://yourstore.com/"
           />
-          {!settings.storeUrl.trim() && (
-            <p className="-mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
-              Store URL is required — needed for both REST API and plugin sync
-              (status push won’t work without it, even via the plugin).
-            </p>
-          )}
+          <p className="-mt-2 text-xs text-slate-500">
+            Just your store address — used for both REST API and plugin sync.
+            Keep it filled even if you connect with the plugin only.
+          </p>
           <Field
             label="Consumer Key"
             icon={Key}

@@ -592,20 +592,6 @@ function ConnectionTab({
 
         <div className="mt-4 space-y-3">
           <CopyField
-            id="order-wh"
-            label="Order Webhook URL"
-            value={webhooks.orderWebhook}
-            copied={copied}
-            onCopy={onCopy}
-          />
-          <CopyField
-            id="product-wh"
-            label="Product Sync Webhook URL"
-            value={webhooks.productWebhook}
-            copied={copied}
-            onCopy={onCopy}
-          />
-          <CopyField
             id="business-id"
             label="Business ID"
             sub="For plugin auth"

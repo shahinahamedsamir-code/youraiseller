@@ -239,7 +239,12 @@ function wooFallbackStatusForAppStatus(status: Order["status"]): string | null {
 export async function pushWooOrderStatus(order: Order): Promise<void> {
   if (typeof window === "undefined") return;
   const woo = loadWooCommerceSettings();
-  if (!woo.pushOrderStatusToWoo || !woo.connected) return;
+  const canApi =
+    woo.connected ||
+    Boolean(
+      woo.storeUrl?.trim() && woo.consumerKey?.trim() && woo.consumerSecret?.trim()
+    );
+  if (!woo.pushOrderStatusToWoo || !canApi) return;
   if (order.wooOrderId == null) return;
   const wcStatus = wooStatusForAppStatus(order.status);
   if (!wcStatus) return;

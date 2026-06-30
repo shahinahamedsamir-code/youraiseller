@@ -44,7 +44,7 @@ export function GET() {
   const version = pluginVersion();
   return NextResponse.json(
     {
-      name: "YourAI Seller — Incomplete Order Capture",
+      name: "YourAI Seller Connect",
       slug: "yourai-incomplete-capture",
       version,
       download_url: `${PUBLIC_BASE}/yourai-incomplete-capture.zip`,

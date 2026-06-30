@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: YourAI Seller — Incomplete Order Capture
- * Description: Sends checkout form data (name, phone, address, cart) to YourAI Seller as the customer types, so unfinished checkouts appear in the Incomplete tab — even if they never click "Place Order".
- * Version: 1.3.0
+ * Plugin Name: YourAI Seller Connect
+ * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
+ * Version: 1.4.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -22,7 +22,7 @@ if (!defined('YOURAI_CAPTURE_ENDPOINT')) {
 if (!defined('YOURAI_GUARD_ENDPOINT')) {
     define('YOURAI_GUARD_ENDPOINT', 'https://app.youraiseller.com/api/order-guard/check');
 }
-define('YOURAI_PLUGIN_VERSION', '1.3.0');
+define('YOURAI_PLUGIN_VERSION', '1.4.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -102,7 +102,7 @@ function yourai_api_key() {
 /* ---- Branded settings page (top-level "YourAI Seller" menu) ------------- */
 add_action('admin_menu', function () {
     add_menu_page(
-        'YourAI Seller',
+        'YourAI Seller Connect',
         'YourAI Seller',
         'manage_options',
         'yourai-capture',
@@ -143,8 +143,8 @@ function yourai_capture_settings_page() {
       </style>
 
       <div class="yai-hero">
-        <h1><span class="dashicons dashicons-cart" style="font-size:26px;width:26px;height:26px"></span> YourAI Seller — Incomplete Capture</h1>
-        <p>Catch checkouts your customers start but never finish — they appear in your YourAI Seller <strong>Incomplete</strong> tab.</p>
+        <h1><span class="dashicons dashicons-cart" style="font-size:26px;width:26px;height:26px"></span> YourAI Seller Connect</h1>
+        <p>Capture unfinished checkouts into your <strong>Incomplete</strong> tab and block fraud orders with <strong>Order Guard</strong>.</p>
         <span class="yai-pill"><span class="yai-dot <?php echo $connected ? 'on' : ''; ?>"></span><?php echo $connected ? 'Connected' : 'Not connected — add your keys below'; ?></span>
       </div>
 

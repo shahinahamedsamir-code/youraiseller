@@ -1,10 +1,11 @@
-=== YourAI Seller — Incomplete Order Capture ===
+=== YourAI Seller Connect ===
 Requires: WooCommerce
 
 WHAT IT DOES
-Sends checkout form data (name, phone, address, cart) to YourAI Seller while the
-customer is typing, so unfinished checkouts show up in your Incomplete tab — even
-if the customer never clicks "Place Order".
+Connects your WooCommerce store to YourAI Seller:
+- Captures unfinished checkouts (name/phone/address/cart) into your Incomplete tab
+  while the customer types — even if they never click "Place Order".
+- Order Guard: blocks checkout for phone / IP / email on your Order Block List.
 
 INSTALL (no coding)
 1. In your YourAI Seller dashboard open: Integration → WooCommerce → "Integration

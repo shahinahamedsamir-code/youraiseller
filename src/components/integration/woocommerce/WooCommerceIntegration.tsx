@@ -624,13 +624,13 @@ function ConnectionTab({
 
         <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
           <h3 className="text-sm font-extrabold text-emerald-900">
-            Incomplete Order Capture (no coding)
+            YourAI Seller Connect plugin (no coding)
           </h3>
           <p className="mt-1 text-xs leading-5 text-emerald-800/90">
-            Catch checkouts your customers start but never finish. Install this
-            plugin on your WooCommerce store, then paste your Business ID + API Key
-            (above) into its settings — unfinished checkouts then appear in your
-            Web Orders → <strong>Incomplete</strong> tab.
+            Install this plugin on your WooCommerce store, then paste your Business
+            ID + API Key (above) into its settings. It captures unfinished checkouts
+            into your <strong>Incomplete</strong> tab and blocks fraud orders
+            (phone/IP/email) from your Order Block List.
           </p>
           <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-xs text-emerald-800/90">
             <li>Download the plugin below.</li>

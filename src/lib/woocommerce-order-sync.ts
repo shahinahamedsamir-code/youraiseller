@@ -167,9 +167,16 @@ function mapWcWebStatus(status: string): WebDisplayStatus {
 }
 
 function mapWcOrderStatus(wcStatus: string): Order["status"] {
-  const s = wcStatus.toLowerCase();
-  if (s === "completed" || s === "complete") return "delivered";
+  const s = wcStatus.toLowerCase().replace(/^wc-/, "");
+  if (s === "completed" || s === "complete" || s === "delivered") return "delivered";
   if (s === "cancelled" || s === "canceled") return "cancelled";
+  // Custom statuses set by the plugin come back 1:1.
+  if (s === "rts") return "rts";
+  if (s === "shipped") return "shipped";
+  if (s === "partial") return "partial";
+  if (s === "return-pending") return "pending_return";
+  if (s === "returned" || s === "refunded") return "returned";
+  if (s === "pending-cancel") return "pending_cancel";
   // pending / failed / checkout-draft / on-hold / processing → still open (Pending),
   // so failed-payment & abandoned checkouts stay actionable in the Incomplete tab.
   return "pending";
@@ -180,6 +187,8 @@ function mapWcOrderStatus(wcStatus: string): Order["status"] {
  * the clear, safe transitions are mapped; ambiguous ones return null so the Woo
  * order is left untouched.
  */
+// Custom WooCommerce statuses registered by the YourAI Seller Connect plugin,
+// so each app status maps 1:1 in WooCommerce (RTS, Shipped, Partial, …).
 function wooStatusForAppStatus(status: Order["status"]): string | null {
   switch (status) {
     case "delivered":
@@ -187,10 +196,35 @@ function wooStatusForAppStatus(status: Order["status"]): string | null {
     case "cancelled":
       return "cancelled";
     case "rts":
+      return "rts";
     case "shipped":
+      return "shipped";
+    case "partial":
+      return "partial";
+    case "pending_return":
+      return "return-pending";
+    case "returned":
+      return "returned";
+    case "pending_cancel":
+      return "pending-cancel";
+    default:
+      return null; // pending / preorder / lost → not pushed
+  }
+}
+
+/** Standard Woo status to fall back to when the custom one isn't registered
+ *  (store without the plugin). */
+function wooFallbackStatusForAppStatus(status: Order["status"]): string | null {
+  switch (status) {
+    case "rts":
+    case "shipped":
+    case "partial":
       return "processing";
     case "returned":
       return "refunded";
+    case "pending_return":
+    case "pending_cancel":
+      return "on-hold";
     default:
       return null;
   }
@@ -209,6 +243,7 @@ export async function pushWooOrderStatus(order: Order): Promise<void> {
   if (order.wooOrderId == null) return;
   const wcStatus = wooStatusForAppStatus(order.status);
   if (!wcStatus) return;
+  const fallbackStatus = wooFallbackStatusForAppStatus(order.status);
   try {
     const res = await fetch("/api/woocommerce/order-status", {
       method: "POST",
@@ -219,6 +254,7 @@ export async function pushWooOrderStatus(order: Order): Promise<void> {
         consumerSecret: woo.consumerSecret.trim(),
         orderId: Number(order.wooOrderId),
         status: wcStatus,
+        fallbackStatus: fallbackStatus ?? undefined,
       }),
     });
     const json = (await res.json().catch(() => ({}))) as {

@@ -11,8 +11,9 @@ export async function POST(req: Request) {
     const body = (await req.json()) as WooCredentials & {
       orderId?: number;
       status?: string;
+      fallbackStatus?: string;
     };
-    const { storeUrl, consumerKey, consumerSecret, orderId, status } = body;
+    const { storeUrl, consumerKey, consumerSecret, orderId, status, fallbackStatus } = body;
 
     if (!storeUrl?.trim() || !consumerKey?.trim() || !consumerSecret?.trim()) {
       return NextResponse.json(
@@ -33,10 +34,20 @@ export async function POST(req: Request) {
       consumerSecret: consumerSecret.trim(),
     };
 
-    const res = await wooFetch(creds, `/wp-json/wc/v3/orders/${orderId}`, {
-      method: "PUT",
-      body: JSON.stringify({ status: status.trim() }),
-    });
+    const put = (s: string) =>
+      wooFetch(creds, `/wp-json/wc/v3/orders/${orderId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: s }),
+      });
+
+    let res = await put(status.trim());
+
+    // The custom status (e.g. "rts") only exists if the YourAI Seller Connect
+    // plugin registered it. If that PUT fails, fall back to a standard Woo
+    // status so status sync still works on stores without the plugin.
+    if (!res.ok && fallbackStatus?.trim() && fallbackStatus.trim() !== status.trim()) {
+      res = await put(fallbackStatus.trim());
+    }
 
     if (!res.ok) {
       const text = await res.text();

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.8.0
+ * Version: 1.9.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -28,7 +28,7 @@ if (!defined('YOURAI_ORDER_ENDPOINT')) {
 if (!defined('YOURAI_STOCK_ENDPOINT')) {
     define('YOURAI_STOCK_ENDPOINT', 'https://app.youraiseller.com/api/stock-push');
 }
-define('YOURAI_PLUGIN_VERSION', '1.8.0');
+define('YOURAI_PLUGIN_VERSION', '1.9.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -104,6 +104,33 @@ function yourai_api_key() {
     $baked = yourai_baked(YOURAI_BAKED_API_KEY, 'YOURAI_API_KEY');
     return $baked ?: trim((string) get_option('yourai_api_key', ''));
 }
+
+/* ---- Custom order statuses so YourAI statuses map 1:1 in WooCommerce ---- */
+function yourai_custom_statuses() {
+    return array(
+        'wc-rts'            => 'Ready to Ship',
+        'wc-shipped'        => 'Shipped',
+        'wc-partial'        => 'Partial',
+        'wc-return-pending' => 'Return Pending',
+        'wc-returned'       => 'Returned',
+        'wc-pending-cancel' => 'Pending Cancel',
+    );
+}
+add_action('init', function () {
+    foreach (yourai_custom_statuses() as $slug => $label) {
+        register_post_status($slug, array(
+            'label'                     => $label,
+            'public'                    => true,
+            'exclude_from_search'       => false,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
+            'label_count'               => _n_noop($label . ' <span class="count">(%s)</span>', $label . ' <span class="count">(%s)</span>'),
+        ));
+    }
+});
+add_filter('wc_order_statuses', function ($statuses) {
+    return array_merge($statuses, yourai_custom_statuses());
+});
 
 /* ---- Branded settings page (top-level "YourAI Seller" menu) ------------- */
 add_action('admin_menu', function () {

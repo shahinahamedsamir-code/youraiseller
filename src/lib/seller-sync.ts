@@ -213,6 +213,12 @@ export async function pullOrdersFromServer(): Promise<boolean> {
   const scope = getSellerStorageScope();
   if (!scope) return false;
 
+  // Don't clobber a fresh local edit that is still syncing — the pending push
+  // will carry it to the server. Without this, a stale server copy can "revert"
+  // an order the seller just changed (e.g. a cancel snapping back to pending).
+  const since = lastPush[`${scope}:orders`] ?? 0;
+  if (Date.now() - since < 5000) return false;
+
   const serverData = await pullSellerData("orders");
   if (serverData == null) return false;
 

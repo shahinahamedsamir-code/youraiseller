@@ -1977,17 +1977,20 @@ export function repairWebOrdersInQueue(): number {
     );
     if (promoted) {
       // A promoted order lives in Approved Orders but stays visible on the web
-      // Complete tab. webQueueReleased=true is what keeps isInWebQueue false so
-      // it shows in Approved (Cancel/Complete web statuses no longer drop it
-      // from the queue on their own).
+      // list. webQueueReleased=true is what keeps isInWebQueue false so it shows
+      // in Approved (Cancel/Complete web statuses no longer drop it from the
+      // queue on their own). Mirror a cancel so it sits on the web Cancel tab
+      // instead of snapping back to Complete.
+      const terminalWeb: WebDisplayStatus =
+        o.status === "cancelled" ? "cancelled" : "complete";
       const needs =
-        o.webStatus !== "complete" ||
+        o.webStatus !== terminalWeb ||
         !o.webQueueReleased ||
         o.inWebQueue !== false;
       if (needs) {
         data.orders[i] = {
           ...o,
-          webStatus: "complete",
+          webStatus: terminalWeb,
           webQueueReleased: true,
           inWebQueue: false,
         };

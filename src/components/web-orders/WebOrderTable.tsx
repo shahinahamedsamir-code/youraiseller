@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Order, OrderLine } from "@/lib/orders-store";
+import type { Order, OrderLine, WebDisplayStatus } from "@/lib/orders-store";
+import { getOrder, updateOrder } from "@/lib/orders-store";
+import {
+  isInWebQueue,
+  shouldStayInWebQueueAfterWooSync,
+} from "@/lib/web-order-queue";
 import { incompleteCooldownRemainingMs } from "@/lib/incomplete-cooldown";
 import { IncompleteCooldownModal } from "@/components/web-orders/IncompleteCooldownModal";
 import {
@@ -166,6 +171,21 @@ function DuplicateBadge({
       )}
     </div>
   );
+}
+
+const BULK_STATUSES: { value: WebDisplayStatus; label: string }[] = [
+  { value: "processing", label: "Processing" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "good_no_response", label: "Good but no response" },
+  { value: "no_response", label: "No response" },
+  { value: "complete", label: "Complete" },
+  { value: "cancelled", label: "Cancel" },
+];
+
+function bulkWebStatusToOrderStatus(ws: WebDisplayStatus) {
+  if (ws === "complete") return "delivered" as const;
+  if (ws === "cancelled") return "cancelled" as const;
+  return "pending" as const;
 }
 
 export function WebOrderTable() {
@@ -351,6 +371,42 @@ export function WebOrderTable() {
     }
   };
 
+  const [bulkStatus, setBulkStatus] = useState<WebDisplayStatus | "">("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState("");
+
+  const applyBulkStatus = () => {
+    if (!bulkStatus || selected.size === 0) return;
+    setBulkBusy(true);
+    const ts = new Date().toISOString();
+    let done = 0;
+    selected.forEach((id) => {
+      const before = getOrder(id);
+      if (!before) return;
+      const stillInQueue = isInWebQueue(before);
+      updateOrder(id, {
+        webStatus: bulkStatus,
+        webStatusStaffSetAt: ts,
+        status: stillInQueue ? "pending" : bulkWebStatusToOrderStatus(bulkStatus),
+        inWebQueue: shouldStayInWebQueueAfterWooSync(
+          { ...before, webStatus: bulkStatus },
+          bulkStatus
+        ),
+      });
+      done++;
+    });
+    const label = BULK_STATUSES.find((s) => s.value === bulkStatus)?.label ?? "";
+    setSelected(new Set());
+    setBulkStatus("");
+    setBulkBusy(false);
+    setBulkMsg(`${done} order${done === 1 ? "" : "s"} moved to ${label}.`);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("youraiseller-data-updated"));
+    }
+    refresh();
+    window.setTimeout(() => setBulkMsg(""), 3500);
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 lg:grid-cols-2">
@@ -409,6 +465,45 @@ export function WebOrderTable() {
               Filters
             </button>
           </div>
+
+          {/* Bulk status change — shows when rows are selected */}
+          {selected.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 border-b border-teal-100 bg-teal-50/70 px-3 py-2.5">
+              <span className="text-sm font-bold text-teal-800">
+                {selected.size} selected
+              </span>
+              <select
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value as WebDisplayStatus | "")}
+                className="rounded-lg border border-teal-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+              >
+                <option value="">Change status to…</option>
+                {BULK_STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={applyBulkStatus}
+                disabled={!bulkStatus || bulkBusy}
+                className="rounded-lg bg-teal-600 px-4 py-1.5 text-sm font-bold text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkBusy ? "Applying…" : "Apply"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelected(new Set())}
+                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
+              >
+                Clear
+              </button>
+              {bulkMsg && (
+                <span className="text-xs font-semibold text-emerald-700">{bulkMsg}</span>
+              )}
+            </div>
+          )}
 
           {/* ── Mobile card view ── */}
           <div className="space-y-3 px-3 py-3 lg:hidden">

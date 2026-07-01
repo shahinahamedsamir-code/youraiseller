@@ -30,13 +30,32 @@ export const AUTO_SMS_TABS: {
   },
 ];
 
-const DEFAULT_CONFIRM = `Dear {{name}}, thank you for your order! Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Your order is confirmed & now being processed. - {{storeName}}`;
+const DEFAULT_CONFIRM = `Dear {{name}},
+Thank you for your order!
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+Order confirmed & being processed.
+- {{storeName}}`;
 
-const DEFAULT_EDIT = `Dear {{name}}, your order has been updated. Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Please review the latest details. - {{storeName}}`;
+const DEFAULT_EDIT = `Dear {{name}},
+Your order has been updated.
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+Please review the latest details.
+- {{storeName}}`;
 
-const DEFAULT_SHIPPED = `Dear {{name}}, good news! Your order has been shipped & is on the way. Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Thank you - {{storeName}}`;
+const DEFAULT_SHIPPED = `Dear {{name}},
+Good news! Your order is shipped.
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+Thank you - {{storeName}}`;
 
-const DEFAULT_WEB_CONFIRM = `Dear {{name}}, thank you for your order! Order ID: {{orderId}}, Amount: {{grandTotal}} BDT. Received successfully, we will process it shortly. - {{storeName}}`;
+const DEFAULT_WEB_CONFIRM = `Dear {{name}},
+Thank you for your order!
+Order ID: {{orderId}}
+Amount: {{grandTotal}} BDT
+We will process it shortly.
+- {{storeName}}`;
 
 export const AUTO_SMS_SETTINGS: Record<AutoSmsTab, AutoSmsSetting[]> = {
   new_order: [
@@ -68,14 +87,24 @@ export const AUTO_SMS_SETTINGS: Record<AutoSmsTab, AutoSmsSetting[]> = {
       title: "Preorder Created SMS",
       hint: "Send SMS when customer creates a pre-order",
       enabled: false,
-      template: `Dear {{name}}, thank you for your pre-order! Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Received, we will contact you soon. - {{storeName}}`,
+      template: `Dear {{name}},
+Thank you for your pre-order!
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+We will contact you soon.
+- {{storeName}}`,
     },
     {
       id: "preorder_pending",
       title: "Preorder to Pending SMS",
       hint: "Send SMS when pre-order moves to pending",
       enabled: false,
-      template: `Dear {{name}}, your pre-order is now pending confirmation. Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Our team will verify shortly. - {{storeName}}`,
+      template: `Dear {{name}},
+Your pre-order is now pending.
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+Our team will verify shortly.
+- {{storeName}}`,
     },
   ],
   web_order: [
@@ -91,14 +120,24 @@ export const AUTO_SMS_SETTINGS: Record<AutoSmsTab, AutoSmsSetting[]> = {
       title: "Reminder SMS",
       hint: "Send reminder SMS for web orders",
       enabled: false,
-      template: `Dear {{name}}, a reminder about your web order. Order ID: {{orderId}}, Amount: {{grandTotal}} BDT. Please confirm so we can process it. - {{storeName}}`,
+      template: `Dear {{name}},
+Reminder about your web order.
+Order ID: {{orderId}}
+Amount: {{grandTotal}} BDT
+Please confirm to process.
+- {{storeName}}`,
     },
     {
       id: "web_advance",
       title: "Advance SMS",
       hint: "Send advance payment SMS for web orders",
       enabled: false,
-      template: `Dear {{name}}, advance payment is required to confirm your order. Order ID: {{orderId}}, Amount: {{grandTotal}} BDT. Please complete payment. - {{storeName}}`,
+      template: `Dear {{name}},
+Advance payment needed to confirm.
+Order ID: {{orderId}}
+Amount: {{grandTotal}} BDT
+Please complete payment.
+- {{storeName}}`,
     },
   ],
 };
@@ -127,6 +166,7 @@ Amount: {{grandTotal}} BDT
 Your order has been confirmed and is now being processed.
 
 - {{storeName}}`,
+    `Dear {{name}}, thank you for your order! Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Your order is confirmed & now being processed. - {{storeName}}`,
   ],
   new_order_edited: [
     `Dear {{name}},
@@ -145,6 +185,7 @@ Updated Amount: {{grandTotal}} BDT
 Please review the latest order details.
 
 Thank you for shopping with {{storeName}}.`,
+    `Dear {{name}}, your order has been updated. Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Please review the latest details. - {{storeName}}`,
   ],
   new_order_shipped: [
     `Dear {{name}},
@@ -162,6 +203,7 @@ Invoice: {{invoiceNumber}}
 Amount: {{grandTotal}} BDT
 
 Thank you for shopping with {{storeName}}.`,
+    `Dear {{name}}, good news! Your order has been shipped & is on the way. Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Thank you - {{storeName}}`,
   ],
   preorder_created: [
     `Dear {{name}},
@@ -180,6 +222,7 @@ Amount: {{grandTotal}} BDT
 Your pre-order has been received successfully. We will contact you soon.
 
 - {{storeName}}`,
+    `Dear {{name}}, thank you for your pre-order! Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Received, we will contact you soon. - {{storeName}}`,
   ],
   preorder_pending: [
     `Dear {{name}},
@@ -197,6 +240,7 @@ Amount: {{grandTotal}} BDT
 Our team will verify your order shortly.
 
 - {{storeName}}`,
+    `Dear {{name}}, your pre-order is now pending confirmation. Invoice: {{invoiceNumber}}, Amount: {{grandTotal}} BDT. Our team will verify shortly. - {{storeName}}`,
   ],
   web_received: [
     `Dear {{name}},
@@ -215,6 +259,7 @@ Amount: {{grandTotal}} BDT
 We have received your order successfully and will process it shortly.
 
 - {{storeName}}`,
+    `Dear {{name}}, thank you for your order! Order ID: {{orderId}}, Amount: {{grandTotal}} BDT. Received successfully, we will process it shortly. - {{storeName}}`,
   ],
   web_reminder: [
     `Dear {{name}},
@@ -231,6 +276,7 @@ Amount: {{grandTotal}} BDT
 Please confirm your order so we can process it without delay.
 
 - {{storeName}}`,
+    `Dear {{name}}, a reminder about your web order. Order ID: {{orderId}}, Amount: {{grandTotal}} BDT. Please confirm so we can process it. - {{storeName}}`,
   ],
   web_advance: [
     `Dear {{name}},
@@ -249,6 +295,7 @@ Please complete the payment to start processing your order.
 
 Thank you,
 {{storeName}}`,
+    `Dear {{name}}, advance payment is required to confirm your order. Order ID: {{orderId}}, Amount: {{grandTotal}} BDT. Please complete payment. - {{storeName}}`,
   ],
 };
 

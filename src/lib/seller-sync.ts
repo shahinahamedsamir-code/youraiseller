@@ -208,6 +208,30 @@ export async function syncSellerDataFromServer(): Promise<boolean> {
 }
 
 /** Pull latest orders from server into localStorage (e.g. after auto-call key routing). */
+/**
+ * Persist a single order to the server without uploading the whole blob. Used
+ * for individual edits (cancel, status change) so they survive even when the
+ * full orders blob is over the client push size limit. Also refreshes the
+ * pull-guard timestamp so a background pull can't revert this fresh edit.
+ */
+export async function pushSingleOrder(order: { id: string }): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const scope = getSellerStorageScope();
+  if (!scope || !order?.id) return false;
+  lastPush[`${scope}:orders`] = Date.now();
+  try {
+    const res = await fetch("/api/seller-data", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ scope, order }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function pullOrdersFromServer(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   const scope = getSellerStorageScope();

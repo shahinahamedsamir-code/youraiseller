@@ -2,7 +2,7 @@ import { emitDataUpdated } from "./data-events";
 import { getSessionUser, type TeamRole } from "./dev-users";
 import { syncCustomersFromOrderList } from "./customers-store";
 import { isDemoSellerAccount, sellerStorageKey } from "./seller-storage";
-import { pushSellerData } from "./seller-sync";
+import { pushSellerData, pushSingleOrder } from "./seller-sync";
 import {
   shouldTriggerEditOrderSms,
   shouldTriggerNewOrderSms,
@@ -1694,6 +1694,12 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
 
   data.orders[idx] = next;
   saveRaw(data);
+
+  // Persist this one order directly so the edit survives even when the full
+  // orders blob is too large to push (otherwise a later pull reverts it).
+  if (bulkOrderSyncDepth === 0 && typeof window !== "undefined") {
+    void pushSingleOrder(next);
+  }
 
   if (prev.status !== "shipped" && next.status === "shipped") {
     triggerAutoSms("new_order_shipped", next);

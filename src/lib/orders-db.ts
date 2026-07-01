@@ -129,6 +129,28 @@ export async function syncOrdersTable(scope: string, orders: Order[]): Promise<v
 }
 
 /**
+ * Upsert ONE order row without touching the rest of the table (no delete pass).
+ * Used by the per-order sync so a single edit (e.g. a cancel) persists to the
+ * server without the browser uploading the whole — possibly multi-MB — blob.
+ * Preserves the existing `ord` (page sort position) on conflict.
+ */
+export async function upsertOrderRow(scope: string, order: Order): Promise<void> {
+  const pool = getDbPool();
+  if (!pool) return;
+  const row = rowValues(scope, order, 0);
+  const updates = COLUMNS.filter((c) => c !== "scope" && c !== "id" && c !== "ord")
+    .map((c) => `${c}=excluded.${c}`)
+    .join(", ");
+  const ph = row.map((_, k) => `$${k + 1}`);
+  await pool.query(
+    `insert into orders (${COLUMNS.join(",")})
+     values (${ph.join(",")})
+     on conflict (scope, id) do update set ${updates}, synced_at=now()`,
+    row
+  );
+}
+
+/**
  * One-time backfill: read every seller's orders blob already stored in
  * seller_data and explode it into the orders table.
  */

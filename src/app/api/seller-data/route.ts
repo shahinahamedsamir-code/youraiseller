@@ -7,7 +7,8 @@ import { sellerDataFile, sellerScopeDir } from "@/lib/seller-data-path";
 import { loadSmsAccount, saveSmsAccount } from "@/lib/sms-account-server";
 import { normalizeSmsAccount } from "@/lib/sms-types";
 import { getDbPool } from "@/lib/db";
-import { syncOrdersTable } from "@/lib/orders-db";
+import { syncOrdersTable, upsertOrderRow } from "@/lib/orders-db";
+import type { Order } from "@/lib/orders-store";
 import {
   SELLER_DATA_GZIP_THRESHOLD,
   slimOrdersBlob,
@@ -194,5 +195,51 @@ export async function POST(req: Request) {
   } catch (e) {
     console.error("[seller-data]", e);
     return NextResponse.json({ error: "Save failed" }, { status: 500 });
+  }
+}
+
+/**
+ * Persist a SINGLE order without the browser uploading the whole orders blob.
+ * The server reads the current blob, patches the one order, writes it back, and
+ * upserts the normalized row. This keeps large-store edits (e.g. cancelling an
+ * order) from being dropped by the client-side payload size limit — which is why
+ * a cancel could "snap back" to pending after a later pull.
+ */
+export async function PATCH(req: Request) {
+  try {
+    const body = (await readJsonBody(req)) as { scope?: string; order?: Order };
+    const scope = sanitize(body?.scope ?? "");
+    const order = body?.order;
+    if (!scope) {
+      return NextResponse.json({ error: "Invalid scope" }, { status: 400 });
+    }
+    if (!order || typeof order !== "object" || !order.id) {
+      return NextResponse.json({ error: "Missing order" }, { status: 400 });
+    }
+    if (!(await authorizeScope(scope))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Slim the order the same way a full push would, then merge into the blob.
+    const slimList = (slimOrdersBlob({ orders: [order] }) as { orders?: Order[] })
+      .orders;
+    const slimOrder = (slimList && slimList[0]) || order;
+
+    const raw = (await readData(scope, "orders")) as { orders?: Order[] } | null;
+    const orders = Array.isArray(raw?.orders) ? [...raw!.orders] : [];
+    const idx = orders.findIndex((o) => o.id === slimOrder.id);
+    if (idx >= 0) orders[idx] = slimOrder;
+    else orders.unshift(slimOrder);
+
+    await writeData(scope, "orders", { ...(raw ?? {}), orders });
+    try {
+      await upsertOrderRow(scope, slimOrder);
+    } catch (e) {
+      console.error("[seller-data] order-row upsert failed", e);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[seller-data] patch", e);
+    return NextResponse.json({ error: "Patch failed" }, { status: 500 });
   }
 }

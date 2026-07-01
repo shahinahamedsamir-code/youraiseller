@@ -420,18 +420,23 @@ export type StockPullResult = {
   notFound: number;
   /** Total Woo rows scanned (simple + variations). */
   total: number;
+  /** A few matched rows with the raw Woo stock read (diagnostics). */
+  samples: string[];
   errors: string[];
 };
 
-/** Stock quantity a Woo row represents (mirrors mapWooToInventory). */
+/**
+ * Stock quantity a Woo row represents. Trust an explicit numeric
+ * stock_quantity even if manage_stock is off/parent-managed — some stores
+ * report the real number while leaving manage_stock false. Only fall back to
+ * in/out-of-stock status when there is genuinely no number.
+ */
 function wooRowStock(row: WooProductRow): number {
-  const qty =
-    row.manage_stock && row.stock_quantity !== null
-      ? Number(row.stock_quantity)
-      : row.stock_status === "instock"
-        ? 1
-        : 0;
-  return Math.max(0, qty);
+  const q = row.stock_quantity;
+  if (q !== null && q !== undefined && Number.isFinite(Number(q))) {
+    return Math.max(0, Math.floor(Number(q)));
+  }
+  return row.stock_status === "instock" ? 1 : 0;
 }
 
 /**
@@ -456,6 +461,7 @@ export async function pullStockFromWooCommerce(): Promise<StockPullResult> {
     updated: 0,
     notFound: 0,
     total: 0,
+    samples: [],
     errors: [],
   };
 
@@ -463,6 +469,7 @@ export async function pullStockFromWooCommerce(): Promise<StockPullResult> {
     for (const row of rows) {
       result.total++;
       const isVariation = row.type === "variation" || (row.parent_id ?? 0) > 0;
+      const qty = wooRowStock(row);
       // Match by Woo ID first (survives SKU differences), then SKU = code.
       const outcome = setProductStockByWooRef(
         {
@@ -470,13 +477,19 @@ export async function pullStockFromWooCommerce(): Promise<StockPullResult> {
           wooProductId: isVariation ? undefined : row.id,
           wooVariationId: isVariation ? row.id : undefined,
         },
-        wooRowStock(row)
+        qty
       );
       if (outcome === "notfound") {
         result.notFound++;
       } else {
         result.matched++;
         if (outcome === "updated") result.updated++;
+        if (result.samples.length < 5) {
+          const label = row.sku?.trim() || row.name || `#${row.id}`;
+          result.samples.push(
+            `${label} → ${qty} (raw:${row.stock_quantity ?? "null"}, mng:${row.manage_stock ? "y" : "n"}, ${row.stock_status})`
+          );
+        }
       }
     }
   };

@@ -133,8 +133,13 @@ export function WooCommerceStockSync() {
         ok: r.matched > 0,
         msg:
           r.matched === 0
-            ? `No matching SKUs found. Make sure your app product Code = WooCommerce SKU (scanned ${r.total} items).`
-            : `Pulled stock from WooCommerce — ${r.updated} product(s) updated, ${r.matched} matched${r.notFound ? `, ${r.notFound} unmatched` : ""}.`,
+            ? `No matching products found. Make sure the app product was imported from Woo, or its Code = WooCommerce SKU (scanned ${r.total} items).`
+            : [
+                `Pulled stock — ${r.updated} updated, ${r.matched} matched${r.notFound ? `, ${r.notFound} unmatched` : ""}.`,
+                r.samples.length ? `Sample: ${r.samples.join(" | ")}` : "",
+              ]
+                .filter(Boolean)
+                .join(" "),
       });
     } catch (e) {
       setToast({ ok: false, msg: e instanceof Error ? e.message : "Pull failed" });

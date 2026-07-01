@@ -1223,7 +1223,13 @@ export function upsertWooCommerceOrder(
   if (idx >= 0) {
     const prev = data.orders[idx];
     const syncWooStatus = isWooOrderStatusSyncEnabled();
-    const panelWebStatus = prev.webStatus ?? "processing";
+    // Heal legacy auto-imported "On Hold" web orders (no staff action) back to
+    // the incoming status (Processing). Woo on-hold is only our verify marker;
+    // a real On Hold is always staff-set (webStatusStaffSetAt).
+    const panelWebStatus =
+      prev.webStatus === "on_hold" && !prev.webStatusStaffSetAt
+        ? input.webStatus ?? "processing"
+        : prev.webStatus ?? "processing";
     const sourcePatch = resolveOrderSourceOnWooSync(
       prev,
       input.orderSource ?? "website",

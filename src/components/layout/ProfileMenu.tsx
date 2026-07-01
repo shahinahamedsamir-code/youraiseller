@@ -25,6 +25,12 @@ import {
   loadBusinessSettings,
   BUSINESS_SETTINGS_UPDATED,
 } from "@/lib/business-settings-store";
+import {
+  fetchPublicPlanConfig,
+  PLAN_CONFIG_UPDATED,
+} from "@/lib/plan-config-client";
+import { getPlanDefinition, DEFAULT_PLAN_CONFIG } from "@/lib/plan-config-utils";
+import type { PlanConfig } from "@/lib/plan-config-types";
 import clsx from "clsx";
 
 const planStyles = {
@@ -42,6 +48,21 @@ export function ProfileMenu() {
   const [enabledCount, setEnabledCount] = useState(0);
   const [logoUrl, setLogoUrl] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [planConfig, setPlanConfig] = useState<PlanConfig>(DEFAULT_PLAN_CONFIG);
+
+  useEffect(() => {
+    let active = true;
+    const load = () =>
+      fetchPublicPlanConfig()
+        .then((cfg) => active && setPlanConfig(cfg))
+        .catch(() => {});
+    void load();
+    window.addEventListener(PLAN_CONFIG_UPDATED, load);
+    return () => {
+      active = false;
+      window.removeEventListener(PLAN_CONFIG_UPDATED, load);
+    };
+  }, []);
 
   useEffect(() => {
     const sync = () => {
@@ -158,11 +179,11 @@ export function ProfileMenu() {
                 value={
                   <span
                     className={clsx(
-                      "rounded-full px-2 py-0.5 text-xs font-bold uppercase",
+                      "rounded-full px-2 py-0.5 text-xs font-bold",
                       planStyles[user.plan]
                     )}
                   >
-                    {user.plan}
+                    {getPlanDefinition(planConfig, user.plan).name}
                   </span>
                 }
               />

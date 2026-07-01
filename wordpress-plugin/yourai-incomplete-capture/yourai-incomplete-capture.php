@@ -2,7 +2,7 @@
 /**
  * Plugin Name: YourAI Seller Connect
  * Description: Connects your WooCommerce store to YourAI Seller — captures unfinished checkouts into the Incomplete tab and blocks fraud orders (phone/IP/email) via Order Guard.
- * Version: 1.11.0
+ * Version: 1.12.0
  * Author: YourAI Seller
  *
  * No coding needed: install, activate, paste your Business ID + API Key, done.
@@ -28,7 +28,7 @@ if (!defined('YOURAI_ORDER_ENDPOINT')) {
 if (!defined('YOURAI_STOCK_ENDPOINT')) {
     define('YOURAI_STOCK_ENDPOINT', 'https://app.youraiseller.com/api/stock-push');
 }
-define('YOURAI_PLUGIN_VERSION', '1.11.0');
+define('YOURAI_PLUGIN_VERSION', '1.12.0');
 define('YOURAI_PLUGIN_SLUG', 'yourai-incomplete-capture');
 if (!defined('YOURAI_UPDATE_INFO')) {
     define('YOURAI_UPDATE_INFO', 'https://app.youraiseller.com/api/plugin/update-info');
@@ -153,6 +153,7 @@ add_action('admin_init', function () {
     register_setting('yourai_capture', 'yourai_order_guard');
     register_setting('yourai_capture', 'yourai_order_push');
     register_setting('yourai_capture', 'yourai_stock_sync');
+    register_setting('yourai_capture', 'yourai_capture_on');
 });
 function yourai_capture_settings_page() {
     $businessId = esc_attr(get_option('yourai_business_id', ''));
@@ -161,6 +162,7 @@ function yourai_capture_settings_page() {
     $guardOn = get_option('yourai_order_guard', '1') === '1';
     $pushOn = get_option('yourai_order_push', '1') === '1';
     $stockOn = get_option('yourai_stock_sync', '0') === '1';
+    $captureOn = get_option('yourai_capture_on', '1') === '1';
     ?>
     <div class="wrap yai-wrap">
       <style>
@@ -245,9 +247,13 @@ function yourai_capture_settings_page() {
           <div class="yai-grid">
             <div class="yai-feat">
               <span class="ic cap"><span class="dashicons dashicons-cart"></span></span>
-              <div>
-                <h3>Incomplete Capture
-                  <span class="yai-badge <?php echo $connected ? 'on' : 'off'; ?>"><?php echo $connected ? 'Active' : 'Add keys'; ?></span>
+              <div style="flex:1">
+                <h3 style="justify-content:space-between">
+                  <span>Incomplete Capture</span>
+                  <label class="yai-switch">
+                    <input type="checkbox" id="yourai_capture_on" name="yourai_capture_on" value="1" <?php checked($captureOn); ?> />
+                    <span class="yai-slider"></span>
+                  </label>
                 </h3>
                 <p>Sends checkout name / phone / address + cart to your Incomplete tab as the customer types — even without “Place Order”.</p>
               </div>
@@ -469,6 +475,7 @@ function yourai_rest_set_order_status($request) {
 
 /* ---- Front-end: capture script on the checkout page only --------------- */
 add_action('wp_enqueue_scripts', function () {
+    if (get_option('yourai_capture_on', '1') !== '1') return;
     if (!function_exists('is_checkout') || !is_checkout()) return;
     $businessId = yourai_business_id();
     $apiKey = yourai_api_key();

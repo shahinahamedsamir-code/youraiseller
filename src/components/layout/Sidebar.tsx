@@ -9,10 +9,12 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { ChevronDown, Lock } from "lucide-react";
+import { ChevronDown, Lock, Sparkles } from "lucide-react";
 import { mainNav, type NavChild } from "@/lib/navigation";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { getSessionUser } from "@/lib/dev-users";
+import { fetchPublicPlanConfig } from "@/lib/plan-config-client";
+import { getPlanDefinition } from "@/lib/plan-config-utils";
 import { useFeatures } from "@/context/FeatureContext";
 import { useWebOrderCounts } from "@/components/web-orders/useWebOrderCounts";
 import clsx from "clsx";
@@ -52,8 +54,29 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
   // a lock — a lock implies "upgrade", which only makes sense for the owner who
   // controls billing. For them a missing module is just a permission they lack.
   const [isTeamMember, setIsTeamMember] = useState(false);
+  const [planInfo, setPlanInfo] = useState<{ plan: string; expires?: string } | null>(null);
+  const [hasUpdate, setHasUpdate] = useState(false);
   useEffect(() => {
-    setIsTeamMember(!!getSessionUser()?.parentAccountId);
+    const u = getSessionUser();
+    setIsTeamMember(!!u?.parentAccountId);
+    if (u) {
+      setPlanInfo({ plan: String(u.plan ?? ""), expires: u.planExpiresAt });
+      // Resolve the dev-panel display name (e.g. enterprise → "Business").
+      fetchPublicPlanConfig()
+        .then((cfg) =>
+          setPlanInfo({ plan: getPlanDefinition(cfg, u.plan).name, expires: u.planExpiresAt })
+        )
+        .catch(() => {});
+    }
+    fetch("/api/changelog")
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((d: { entries?: { version?: string }[] }) => {
+        const latest = d.entries?.[0]?.version ?? "";
+        if (latest && localStorage.getItem("whatsnew-seen-version") !== latest) {
+          setHasUpdate(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Show everything the admin allows globally — including plan-locked modules,
@@ -195,6 +218,29 @@ export function Sidebar({ mobileOpen = false }: SidebarProps) {
           );
         })}
       </nav>
+
+      <div className="border-t border-slate-100 px-3 py-3">
+        {planInfo && !isTeamMember && (
+          <div className="mb-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+            <p className="text-xs font-bold tracking-wide text-indigo-600">
+              {planInfo.plan || "Plan"}
+            </p>
+            {planInfo.expires && (
+              <p className="mt-0.5 text-xs font-semibold text-slate-600">
+                Expires: {planInfo.expires}
+              </p>
+            )}
+          </div>
+        )}
+        <Link
+          href="/dashboard/whats-new"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+        >
+          <Sparkles className="h-4 w-4 text-indigo-500" />
+          <span className="flex-1 truncate">What&apos;s New</span>
+          {hasUpdate && <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />}
+        </Link>
+      </div>
     </aside>
   );
 }

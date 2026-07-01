@@ -16,6 +16,7 @@ import {
   Receipt,
   BarChart3,
   Tag,
+  Sparkles,
   X,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -33,6 +34,7 @@ const devNav = [
   { label: "Auto Call Control", href: "/dev-admin/auto-call", icon: Phone },
   { label: "Payment History", href: "/dev-admin/payments", icon: Receipt },
   { label: "Business Report", href: "/dev-admin/business-report", icon: BarChart3 },
+  { label: "What's New", href: "/dev-admin/changelog", icon: Sparkles },
 ];
 
 function isNavActive(pathname: string, href: string, exact?: boolean) {

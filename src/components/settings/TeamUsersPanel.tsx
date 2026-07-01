@@ -511,7 +511,11 @@ function ActionMenu({
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; right: number } | null>(null);
+  const [coords, setCoords] = useState<{
+    top?: number;
+    bottom?: number;
+    right: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -521,10 +525,28 @@ function ActionMenu({
     const place = () => {
       const r = btnRef.current?.getBoundingClientRect();
       if (r) {
-        setCoords({ top: r.bottom + 6, right: window.innerWidth - r.right });
+        const gap = 6;
+        const viewportPadding = 12;
+        const menuHeight = menuRef.current?.offsetHeight ?? 330;
+        const spaceBelow = window.innerHeight - r.bottom - viewportPadding;
+        const spaceAbove = r.top - viewportPadding;
+        const openUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+
+        setCoords(
+          openUp
+            ? {
+                bottom: window.innerHeight - r.top + gap,
+                right: Math.max(viewportPadding, window.innerWidth - r.right),
+              }
+            : {
+                top: r.bottom + gap,
+                right: Math.max(viewportPadding, window.innerWidth - r.right),
+              }
+        );
       }
     };
     place();
+    const frame = window.requestAnimationFrame(place);
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
       if (
@@ -540,6 +562,7 @@ function ActionMenu({
     window.addEventListener("resize", place);
     window.addEventListener("scroll", onClose, true);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener("mousedown", onDoc);
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", onClose, true);
@@ -576,8 +599,14 @@ function ActionMenu({
         createPortal(
           <div
             ref={menuRef}
-            style={{ position: "fixed", top: coords.top, right: coords.right }}
-            className="z-[80] w-56 overflow-hidden rounded-xl border border-slate-100 bg-white py-1 text-left shadow-xl"
+            style={{
+              position: "fixed",
+              top: coords.top,
+              bottom: coords.bottom,
+              right: coords.right,
+              maxHeight: "calc(100vh - 24px)",
+            }}
+            className="z-[80] w-56 overflow-y-auto rounded-xl border border-slate-100 bg-white py-1 text-left shadow-xl"
           >
             {items.map((it) => (
               <button

@@ -148,7 +148,10 @@ function mapWcPayment(method: string): PaymentMethod {
 
 function mapWcWebStatus(status: string): WebDisplayStatus {
   const s = status.toLowerCase().replace(/^wc-/, "");
-  if (s === "completed" || s === "complete") return "complete";
+  // A paid / "completed" Woo order is still a fresh lead that the seller needs
+  // to process & ship in the app → Processing. The app's Complete tab is only
+  // reached when the seller marks it complete here.
+  if (s === "completed" || s === "complete") return "processing";
   if (s === "cancelled" || s === "canceled" || s === "refunded") {
     return "cancelled";
   }

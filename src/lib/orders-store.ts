@@ -1305,6 +1305,22 @@ export function upsertWooCommerceOrder(
     return { order: next, created: false };
   }
 
+  const newWebStatus = input.webStatus ?? "processing";
+  const newInWebQueue = shouldStayInWebQueueAfterWooSync(
+    {
+      inWebQueue: undefined,
+      isPreorder: input.isPreorder ?? false,
+      webStatus: newWebStatus,
+      webQueueReleased: undefined,
+    },
+    newWebStatus
+  );
+  // A fresh web-order lead stays "pending" while it sits on the Web Order List,
+  // whatever WooCommerce says — it only takes a real order status once the
+  // seller promotes it (Create Order) or works it through the pipeline. This
+  // keeps imported "completed"/"processing" Woo orders out of Approved.
+  if (newInWebQueue && !(input.isPreorder ?? false)) status = "pending";
+
   const order: Order = pushActivity(
     {
     id: `WO-${input.wooOrderId}`,
@@ -1330,7 +1346,7 @@ export function upsertWooCommerceOrder(
     wooOrderId: input.wooOrderId,
     wooNumber: input.wooNumber,
     wooSnapshot: input.wooSnapshot,
-    webStatus: input.webStatus ?? "processing",
+    webStatus: newWebStatus,
     tags: input.tags ?? ["WooCommerce"],
     printed: false,
     handledBy: isShopifyWebOrder({ tags: input.tags }) ? "Shopify" : "WooCommerce",
@@ -1340,10 +1356,7 @@ export function upsertWooCommerceOrder(
       input.orderSource ?? "website",
       input.customOrderSource
     ),
-    inWebQueue: shouldStayInWebQueueAfterWooSync(
-      { inWebQueue: undefined, isPreorder: input.isPreorder ?? false, webStatus: input.webStatus },
-      input.webStatus
-    ),
+    inWebQueue: newInWebQueue,
     createdAt: input.createdAt ?? nowLabel(),
     updatedAt: nowLabel(),
   },
@@ -1612,7 +1625,9 @@ export function updateOrder(id: string, patch: Partial<Order>): Order | null {
   }
 
   if (patch.webStatus !== undefined && isWebSourceOrder(prev)) {
-    next.inWebQueue = shouldStayInWebQueueAfterWooSync(prev, patch.webStatus);
+    // Use the merged state so an explicit webQueueReleased in the patch (e.g.
+    // Create Order → Approved) is honoured instead of recomputing from prev.
+    next.inWebQueue = shouldStayInWebQueueAfterWooSync(next, patch.webStatus);
     if (patch.webStatusStaffSetAt !== undefined) {
       next.webStatusStaffSetAt = patch.webStatusStaffSetAt;
     } else if (patch.webStatus !== prev.webStatus) {
@@ -1999,7 +2014,9 @@ export function promoteWebOrderToApproved(
     ...patch,
     invoiceNumber,
     inWebQueue: false,
-    webQueueReleased: false,
+    // Released to Approved Orders — this is the one flag that takes a web order
+    // off the list for good, regardless of its web status.
+    webQueueReleased: true,
     status: "pending",
     webStatus: "complete",
     webStatusStaffSetAt: new Date().toISOString(),

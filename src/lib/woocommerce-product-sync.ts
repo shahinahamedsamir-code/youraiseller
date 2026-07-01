@@ -3,7 +3,7 @@ import {
   ensureWooCommerceCategory,
   loadProducts,
   upsertProductByCode,
-  setProductStockFromWoo,
+  setProductStockByWooRef,
 } from "./inventory-store";
 import { loadWooCommerceSettings } from "./woocommerce-integration-store";
 import { appendWooLog } from "./woocommerce-integration-store";
@@ -451,7 +451,6 @@ export async function pullStockFromWooCommerce(): Promise<StockPullResult> {
     consumerSecret: woo.consumerSecret.trim(),
   };
 
-  const appCodes = new Set(loadProducts().map((p) => p.code.trim().toLowerCase()));
   const result: StockPullResult = {
     matched: 0,
     updated: 0,
@@ -462,15 +461,23 @@ export async function pullStockFromWooCommerce(): Promise<StockPullResult> {
 
   const apply = (rows: WooProductRow[]) => {
     for (const row of rows) {
-      const sku = row.sku?.trim();
-      if (!sku) continue;
       result.total++;
-      if (!appCodes.has(sku.toLowerCase())) {
+      const isVariation = row.type === "variation" || (row.parent_id ?? 0) > 0;
+      // Match by Woo ID first (survives SKU differences), then SKU = code.
+      const outcome = setProductStockByWooRef(
+        {
+          sku: row.sku?.trim() || undefined,
+          wooProductId: isVariation ? undefined : row.id,
+          wooVariationId: isVariation ? row.id : undefined,
+        },
+        wooRowStock(row)
+      );
+      if (outcome === "notfound") {
         result.notFound++;
-        continue;
+      } else {
+        result.matched++;
+        if (outcome === "updated") result.updated++;
       }
-      result.matched++;
-      if (setProductStockFromWoo(sku, wooRowStock(row))) result.updated++;
     }
   };
 

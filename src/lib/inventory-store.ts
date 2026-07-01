@@ -675,6 +675,53 @@ export function setProductStockFromWoo(sku: string, stockQty: number): boolean {
   return true;
 }
 
+export type StockRefMatch = {
+  sku?: string;
+  wooProductId?: number;
+  wooVariationId?: number;
+};
+export type StockRefResult = "updated" | "same" | "unmanaged" | "notfound";
+
+/**
+ * Set a product's stock from WooCommerce matching by Woo variation/product ID
+ * first, then falling back to SKU = product code. Turns on manageStock if the
+ * matched product wasn't tracking stock, so the pulled qty actually shows.
+ */
+export function setProductStockByWooRef(
+  ref: StockRefMatch,
+  stockQty: number
+): StockRefResult {
+  if (typeof window === "undefined") return "notfound";
+  const qty = Math.max(0, Math.floor(Number(stockQty) || 0));
+  const code = ref.sku?.trim().toLowerCase() || "";
+  const data = loadRaw();
+
+  const idx = data.products.findIndex((p) => {
+    if (ref.wooVariationId && p.wooVariationId === ref.wooVariationId) return true;
+    if (ref.wooProductId && p.wooProductId === ref.wooProductId) return true;
+    if (code && p.code.trim().toLowerCase() === code) return true;
+    return false;
+  });
+  if (idx < 0) return "notfound";
+
+  const p = data.products[idx];
+  // Enable stock tracking if the seller wants Woo's numbers to appear.
+  const nextManage = true;
+  if (p.manageStock && p.stockQty === qty) return "same";
+
+  data.products[idx] = {
+    ...p,
+    manageStock: nextManage,
+    stockQty: qty,
+    updatedAt: nowLabel(),
+  };
+  saveRaw(data);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("youraiseller-data-updated"));
+  }
+  return "updated";
+}
+
 export function ensureWooCommerceCategory(): string {
   const data = loadRaw();
   let cat = data.categories.find((c) => c.name === "WooCommerce");

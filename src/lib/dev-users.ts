@@ -368,9 +368,14 @@ export function loadDevUsers(): DevUser[] {
     if (!raw) return DEFAULT_USERS;
     if (devUsersCache && devUsersCache.raw === raw) return devUsersCache.users;
     const parsed = JSON.parse(raw) as Partial<DevUser>[];
-    const users = dedupeUsersByEmail(
+    const deduped = dedupeUsersByEmail(
       parsed.map((u) => migrateUser(u as DevUser))
     );
+    // Heal colliding ids (independent nextUserId() calls on two devices can mint
+    // the same U-00x for different emails). Duplicate ids make the row menu open
+    // twice and a delete-by-id remove the wrong/both members.
+    const idFix = ensureUniqueUserIds(deduped);
+    const users = idFix.users;
     const needsSave = parsed.some((row) => {
       const before = row.features ? normalizeFeatures(row.features) : null;
       const after = migrateUser(row as DevUser).features;
@@ -379,8 +384,8 @@ export function loadDevUsers(): DevUser[] {
     const withIds = withAutoCustomerIds(users, needsSave);
     const lifecycle = processSubscriptionLifecycle(withIds);
     const finalUsers = lifecycle.users;
-    if (needsSave || lifecycle.changed) {
-      if (lifecycle.changed) {
+    if (needsSave || lifecycle.changed || idFix.changed) {
+      if (lifecycle.changed || idFix.changed) {
         writeLocalUsers(finalUsers);
         void pushUsersToServer(finalUsers).catch(() => {});
       }
@@ -641,6 +646,8 @@ export async function syncDevUsersFromServer(force = false): Promise<void> {
     // Drop intentionally-removed team members so a lagging server/backup copy
     // can't resurrect them after a delete.
     merged = dropDeletedUsers(merged);
+    // Independent devices can mint the same U-00x id — keep them unique.
+    merged = ensureUniqueUserIds(merged).users;
     merged = withAutoCustomerIds(merged, false);
     const lifecycle = processSubscriptionLifecycle(merged);
     merged = lifecycle.users;
@@ -782,6 +789,33 @@ function nextUserId(users: DevUser[]): string {
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
   return `U-${String(max + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Guarantee every user has a unique id. Keeps the FIRST occurrence of an id
+ * (the owner / earliest record) and re-mints a fresh id for any later collision
+ * so the Business User List never renders two rows for the same id.
+ */
+function ensureUniqueUserIds(users: DevUser[]): { users: DevUser[]; changed: boolean } {
+  const seen = new Set<string>();
+  let max = 0;
+  for (const u of users) {
+    const m = u.id.match(/U-(\d+)/);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  let changed = false;
+  const out = users.map((u) => {
+    if (!seen.has(u.id)) {
+      seen.add(u.id);
+      return u;
+    }
+    max += 1;
+    const newId = `U-${String(max).padStart(3, "0")}`;
+    seen.add(newId);
+    changed = true;
+    return { ...u, id: newId };
+  });
+  return { users: out, changed };
 }
 
 /** All sub-accounts created under a given business owner. */

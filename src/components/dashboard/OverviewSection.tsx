@@ -14,7 +14,7 @@ import {
   type OverviewFilterOptions,
 } from "@/lib/dashboard-stats";
 
-const DATE_FIELDS: OverviewDateField[] = ["approved", "web_order", "courier"];
+const DATE_FIELDS: OverviewDateField[] = ["approved", "web_order"];
 const DATE_PRESETS: OverviewDatePreset[] = [
   "today",
   "yesterday",
@@ -121,7 +121,7 @@ export function OverviewSection() {
         <h2 className="text-lg font-bold text-slate-900">Overview</h2>
         <div className="flex flex-wrap items-center gap-2">
           <FilterDropdown
-            label="Date type"
+            label="Order type"
             icon={Filter}
             value={filters.dateField}
             options={DATE_FIELDS}

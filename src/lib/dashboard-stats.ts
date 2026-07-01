@@ -55,14 +55,14 @@ export type OverviewFilterOptions = {
 };
 
 const DATE_FIELD_LABELS: Record<OverviewDateField, string> = {
-  approved: "Approved date",
-  web_order: "Web order date",
+  approved: "Approved Order",
+  web_order: "Web Order",
   courier: "Courier date",
 };
 
 const DATE_FIELD_SHORT: Record<OverviewDateField, string> = {
-  approved: "Approved",
-  web_order: "Web order",
+  approved: "Approved Order",
+  web_order: "Web Order",
   courier: "Courier",
 };
 

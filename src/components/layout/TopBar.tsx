@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
+import { Menu, Moon, Search, Sun } from "lucide-react";
 import { quickLinks } from "@/lib/navigation";
 import { BrandMark } from "@/components/brand/BrandLogo";
 import { useFeatures } from "@/context/FeatureContext";
 import { HeaderQuickSms } from "./HeaderQuickSms";
 import { ProfileMenu } from "./ProfileMenu";
+import { NotificationCenter } from "./NotificationCenter";
 import { useTheme } from "@/context/ThemeContext";
 
 type TopBarProps = {
@@ -20,20 +21,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   const { isEnabled } = useFeatures();
   const { isDark, toggleTheme } = useTheme();
   const [query, setQuery] = useState("");
-  const [hasUnseenUpdate, setHasUnseenUpdate] = useState(false);
   const searchRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    fetch("/api/changelog")
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((d: { entries?: { version?: string }[] }) => {
-        const latest = d.entries?.[0]?.version ?? "";
-        if (latest && localStorage.getItem("whatsnew-seen-version") !== latest) {
-          setHasUnseenUpdate(true);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const links = useMemo(
     () =>
@@ -150,17 +138,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           )}
         </button>
 
-        <button
-          type="button"
-          aria-label="What's New"
-          onClick={() => router.push("/dashboard/whats-new")}
-          className="relative rounded-xl p-2.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
-        >
-          <Bell className="h-5 w-5" />
-          {hasUnseenUpdate && (
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#16141f]" />
-          )}
-        </button>
+        <NotificationCenter />
         <ProfileMenu />
       </div>
     </header>

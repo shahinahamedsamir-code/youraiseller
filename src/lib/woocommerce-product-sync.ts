@@ -3,6 +3,7 @@ import {
   ensureWooCommerceCategory,
   loadProducts,
   upsertProductByCode,
+  setProductStockFromWoo,
 } from "./inventory-store";
 import { loadWooCommerceSettings } from "./woocommerce-integration-store";
 import { appendWooLog } from "./woocommerce-integration-store";
@@ -406,6 +407,108 @@ export async function syncProductsFromWooCommerce(options?: {
       "Found variable products but WooCommerce returned 0 variations — check product has size/color variations published."
     );
   }
+
+  return result;
+}
+
+export type StockPullResult = {
+  /** Woo rows that had a SKU matching an app product. */
+  matched: number;
+  /** App products whose stock qty was actually changed. */
+  updated: number;
+  /** Woo rows whose SKU didn't match any app product. */
+  notFound: number;
+  /** Total Woo rows scanned (simple + variations). */
+  total: number;
+  errors: string[];
+};
+
+/** Stock quantity a Woo row represents (mirrors mapWooToInventory). */
+function wooRowStock(row: WooProductRow): number {
+  const qty =
+    row.manage_stock && row.stock_quantity !== null
+      ? Number(row.stock_quantity)
+      : row.stock_status === "instock"
+        ? 1
+        : 0;
+  return Math.max(0, qty);
+}
+
+/**
+ * One-time PULL of current WooCommerce stock into app inventory (WooCommerce →
+ * App). Matches by SKU = app product code and overwrites the app stock. Unlike
+ * the plugin (which only pushes on change), this reconciles existing stock.
+ */
+export async function pullStockFromWooCommerce(): Promise<StockPullResult> {
+  const woo = loadWooCommerceSettings();
+  if (!woo.storeUrl || !woo.consumerKey || !woo.consumerSecret) {
+    throw new Error("Connect WooCommerce and save API credentials first.");
+  }
+
+  const creds = {
+    storeUrl: woo.storeUrl.trim(),
+    consumerKey: woo.consumerKey.trim(),
+    consumerSecret: woo.consumerSecret.trim(),
+  };
+
+  const appCodes = new Set(loadProducts().map((p) => p.code.trim().toLowerCase()));
+  const result: StockPullResult = {
+    matched: 0,
+    updated: 0,
+    notFound: 0,
+    total: 0,
+    errors: [],
+  };
+
+  const apply = (rows: WooProductRow[]) => {
+    for (const row of rows) {
+      const sku = row.sku?.trim();
+      if (!sku) continue;
+      result.total++;
+      if (!appCodes.has(sku.toLowerCase())) {
+        result.notFound++;
+        continue;
+      }
+      result.matched++;
+      if (setProductStockFromWoo(sku, wooRowStock(row))) result.updated++;
+    }
+  };
+
+  const perPage = 100;
+  const variableParents: WooProductRow[] = [];
+
+  // 1) Simple/external products + collect variable parents.
+  let page = 1;
+  let totalPages = 1;
+  while (page <= totalPages) {
+    const { rows, totalPages: tp } = await fetchWooPage(creds, page, perPage, {
+      step: "stock pull",
+    });
+    totalPages = tp;
+    const simple: WooProductRow[] = [];
+    for (const row of rows) {
+      if (row.type === "variable") variableParents.push(row);
+      else if (row.type !== "grouped") simple.push(row);
+    }
+    apply(simple);
+    page++;
+  }
+
+  // 2) Variations per variable parent.
+  for (const parent of variableParents) {
+    try {
+      const variations = await fetchAllVariationsForParent(creds, parent, perPage);
+      apply(variations);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Variation fetch failed";
+      if (result.errors.length < 10) result.errors.push(`${parent.name}: ${msg}`);
+    }
+  }
+
+  appendWooLog(
+    "success",
+    `Stock pull (Woo → app): ${result.updated} updated, ${result.matched} matched, ${result.notFound} unmatched of ${result.total}`
+  );
 
   return result;
 }

@@ -6,8 +6,10 @@ import {
   RefreshCw,
   Info,
   BarChart3,
+  Download,
 } from "lucide-react";
 import clsx from "clsx";
+import { pullStockFromWooCommerce } from "@/lib/woocommerce-product-sync";
 import {
   loadWooStockSyncSettings,
   saveWooStockSyncSettings,
@@ -63,6 +65,7 @@ export function WooCommerceStockSync() {
   const [sync, setSync] = useState<WooStockSyncSettings | null>(null);
   const [wooConnected, setWooConnected] = useState(false);
   const [running, setRunning] = useState(false);
+  const [pulling, setPulling] = useState(false);
   const [testSku, setTestSku] = useState("");
   const [lastRun, setLastRun] = useState<StockSyncRunResult | null>(null);
   const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -117,6 +120,26 @@ export function WooCommerceStockSync() {
       });
     } finally {
       setRunning(false);
+    }
+  };
+
+  const pull = async () => {
+    setPulling(true);
+    setToast(null);
+    try {
+      const r = await pullStockFromWooCommerce();
+      refresh();
+      setToast({
+        ok: r.matched > 0,
+        msg:
+          r.matched === 0
+            ? `No matching SKUs found. Make sure your app product Code = WooCommerce SKU (scanned ${r.total} items).`
+            : `Pulled stock from WooCommerce — ${r.updated} product(s) updated, ${r.matched} matched${r.notFound ? `, ${r.notFound} unmatched` : ""}.`,
+      });
+    } catch (e) {
+      setToast({ ok: false, msg: e instanceof Error ? e.message : "Pull failed" });
+    } finally {
+      setPulling(false);
     }
   };
 
@@ -217,6 +240,29 @@ export function WooCommerceStockSync() {
               on={sync.stockFromWooEnabled}
               onChange={(v) => patch({ stockFromWooEnabled: v })}
             />
+          </div>
+
+          {/* The plugin only pushes FUTURE stock changes. Use this to pull the
+              store's CURRENT stock into the app right now (matched by SKU). */}
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-800">
+                Pull current stock from WooCommerce
+              </p>
+              <p className="text-xs text-slate-500">
+                One-time import of the store&apos;s live stock into the app (matched by
+                SKU = product Code). The plugin only syncs changes made after it&apos;s on.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={pull}
+              disabled={pulling || !wooConnected}
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download className={clsx("h-4 w-4", pulling && "animate-bounce")} />
+              {pulling ? "Pulling…" : "Pull stock now"}
+            </button>
           </div>
         </div>
 

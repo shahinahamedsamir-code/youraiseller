@@ -497,6 +497,58 @@ function parseStoredUsers(raw: string | null): DevUser[] {
 let lastLocalUsersWrite = 0;
 let pendingServerPush: Promise<void> | null = null;
 
+/**
+ * Tombstones for deleted users. The server/backup merge in
+ * syncDevUsersFromServer would otherwise resurrect an intentionally-removed team
+ * member (the browser backup still holds the pre-delete list, and the server
+ * copy may lag the delete). We remember deleted emails for a while and filter
+ * them out of every merge. A fresh invite for the same email clears its stone.
+ */
+const DELETED_USERS_KEY = "youraiseller-deleted-user-emails";
+const DELETED_USERS_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function loadDeletedEmails(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(DELETED_USERS_KEY);
+    const map = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    const now = Date.now();
+    let changed = false;
+    for (const [email, at] of Object.entries(map)) {
+      if (now - at > DELETED_USERS_TTL_MS) {
+        delete map[email];
+        changed = true;
+      }
+    }
+    if (changed) localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(map));
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+function markUserEmailDeleted(email: string) {
+  if (typeof window === "undefined") return;
+  const map = loadDeletedEmails();
+  map[email.toLowerCase().trim()] = Date.now();
+  localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(map));
+}
+
+function clearUserEmailTombstone(email: string) {
+  if (typeof window === "undefined") return;
+  const map = loadDeletedEmails();
+  if (map[email.toLowerCase().trim()] !== undefined) {
+    delete map[email.toLowerCase().trim()];
+    localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(map));
+  }
+}
+
+function dropDeletedUsers(users: DevUser[]): DevUser[] {
+  const tombstones = loadDeletedEmails();
+  if (Object.keys(tombstones).length === 0) return users;
+  return users.filter((u) => tombstones[u.email.toLowerCase().trim()] === undefined);
+}
+
 function writeLocalUsers(users: DevUser[]) {
   const prev = localStorage.getItem(USERS_KEY);
   if (prev) {
@@ -586,6 +638,9 @@ export async function syncDevUsersFromServer(force = false): Promise<void> {
     let merged = mergeUserLists(localList, serverList);
     merged = mergeUniqueByEmail(merged, backupList);
     merged = dedupeUsersByEmail(merged);
+    // Drop intentionally-removed team members so a lagging server/backup copy
+    // can't resurrect them after a delete.
+    merged = dropDeletedUsers(merged);
     merged = withAutoCustomerIds(merged, false);
     const lifecycle = processSubscriptionLifecycle(merged);
     merged = lifecycle.users;
@@ -789,6 +844,8 @@ export function createTeamMember(data: {
     approvedAt: now,
     invitedAt: data.invite ? new Date().toISOString() : undefined,
   };
+  // A deliberate re-invite of a previously removed email clears its tombstone.
+  clearUserEmailTombstone(email);
   saveDevUsers(dedupeUsersByEmail([user, ...users]));
   return { ok: true, user };
 }
@@ -801,7 +858,19 @@ export function removeTeamMember(id: string): { ok: true } | { ok: false; error:
   if (!target.parentAccountId) {
     return { ok: false, error: "Only invited team members can be removed." };
   }
+  // Tombstone the email so a lagging server/backup merge can't resurrect it.
+  markUserEmailDeleted(target.email);
   saveDevUsers(users.filter((u) => u.id !== id));
+  // Also remove server-side — the POST endpoint only merges/adds, so without an
+  // explicit delete the member would stay on the server and sync back.
+  if (typeof window !== "undefined") {
+    void fetch("/api/dev-users", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+  }
   return { ok: true };
 }
 

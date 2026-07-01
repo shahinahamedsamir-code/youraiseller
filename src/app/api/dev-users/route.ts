@@ -93,3 +93,48 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Save failed" }, { status: 500 });
   }
 }
+
+/** Permanently remove a team member so a POST merge can't resurrect them. */
+export async function DELETE(req: Request) {
+  const devAdmin = isDevAdminAuthenticated();
+  const sellerSessionId = getSellerSessionUserId();
+  if (!devAdmin && !sellerSessionId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  try {
+    const body = (await req.json().catch(() => ({}))) as { id?: unknown };
+    const id = String(body.id ?? "");
+    if (!id) {
+      return NextResponse.json({ error: "id required" }, { status: 400 });
+    }
+
+    const existing = await readUsers();
+    const target = existing.find((u) => String(u.id) === id);
+    if (!target) {
+      return NextResponse.json({ ok: true, count: existing.length });
+    }
+    // Only invited team members can be removed — never a top-level account.
+    if (!target.parentAccountId) {
+      return NextResponse.json({ error: "Cannot remove this account" }, { status: 400 });
+    }
+    // A seller may only remove members under their own scope.
+    if (!devAdmin && sellerSessionId) {
+      const allUsers = await readDevUsersFile();
+      const seller = allUsers.find((u) => String(u.id) === sellerSessionId);
+      const ownerScope = seller ? resolveDataScopeForUser(seller, allUsers) : null;
+      if (!ownerScope || String(target.parentAccountId) !== ownerScope) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    const next = existing.filter((u) => String(u.id) !== id);
+    await fs.mkdir(getAppDataDir(), { recursive: true });
+    await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), "utf-8");
+    const { mirrorFileToDb } = await import("@/lib/data-mirror");
+    await mirrorFileToDb(DATA_FILE);
+    return NextResponse.json({ ok: true, count: next.length });
+  } catch (e) {
+    console.error("[dev-users] delete", e);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+}

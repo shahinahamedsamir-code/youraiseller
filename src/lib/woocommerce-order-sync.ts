@@ -579,6 +579,8 @@ export function getWebOrdersFromStore() {
       !o.isPreorder &&
       o.status !== "preorder"
   );
+  // Note: promoted orders (webQueueReleased) intentionally REMAIN visible here
+  // (in the Complete tab) as a record, while also appearing in Approved Orders.
 }
 
 export function isWooCommerceReadyForSync(): boolean {

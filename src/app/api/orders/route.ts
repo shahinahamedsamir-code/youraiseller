@@ -54,7 +54,9 @@ export async function GET(req: Request) {
     );
     const offset = (page - 1) * limit;
 
-    // Web Order List universe: web orders that are not preorders.
+    // Web Order List universe: web orders that are not preorders. Promoted
+    // orders (webQueueReleased) stay visible here (Complete tab) as a record
+    // while also appearing in Approved Orders.
     const baseWhere = "scope = $1 and is_web and not is_preorder";
 
     // Per-tab counts for the tab badges (single pass, no search filter).

@@ -1976,15 +1976,19 @@ export function repairWebOrdersInQueue(): number {
       (a) => a.title === "Created approved order"
     );
     if (promoted) {
+      // A promoted order lives in Approved Orders but stays visible on the web
+      // Complete tab. webQueueReleased=true is what keeps isInWebQueue false so
+      // it shows in Approved (Cancel/Complete web statuses no longer drop it
+      // from the queue on their own).
       const needs =
         o.webStatus !== "complete" ||
-        o.webQueueReleased ||
+        !o.webQueueReleased ||
         o.inWebQueue !== false;
       if (needs) {
         data.orders[i] = {
           ...o,
           webStatus: "complete",
-          webQueueReleased: false,
+          webQueueReleased: true,
           inWebQueue: false,
         };
         fixed++;

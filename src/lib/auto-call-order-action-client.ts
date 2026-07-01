@@ -9,10 +9,32 @@ import {
   type Order,
 } from "./orders-store";
 
+const SETTLED_ORDER_STATUSES = [
+  "cancelled",
+  "delivered",
+  "returned",
+  "lost",
+  "shipped",
+  "partial",
+  "rts",
+];
+const SETTLED_WEB_STATUSES = [
+  "cancelled",
+  "complete",
+  "on_hold",
+  "no_response",
+  "good_no_response",
+];
+
 function orderNeedsAutoCallAction(
   order: Order,
   action: AutoCallKeyOrderAction
 ): boolean {
+  // Auto-call only acts on orders that are still in Processing. If the seller (or
+  // the pipeline) has moved an order to any other tab/status, leave it alone —
+  // re-applying was what made a cancelled call-center order snap back to pending.
+  if (SETTLED_ORDER_STATUSES.includes(order.status)) return false;
+  if (order.webStatus && SETTLED_WEB_STATUSES.includes(order.webStatus)) return false;
   switch (action) {
     case "none":
     case "stay_processing":

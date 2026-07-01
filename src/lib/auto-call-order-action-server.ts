@@ -56,7 +56,7 @@ function applyActionToOrder(
       withAutoCallTags();
       order.status = "pending";
       order.inWebQueue = false;
-      order.webQueueReleased = false;
+      order.webQueueReleased = true;
       order.webStatus = "complete";
       order.webStatusStaffSetAt = ts;
       order.updatedAt = label;
@@ -66,7 +66,7 @@ function applyActionToOrder(
       withAutoCallTags();
       order.status = "rts";
       order.inWebQueue = false;
-      order.webQueueReleased = false;
+      order.webQueueReleased = true;
       order.webStatus = "complete";
       order.webStatusStaffSetAt = ts;
       order.approvedAt = label;
@@ -171,10 +171,35 @@ export async function applyAutoCallKeyOrderActionForLog(
   return { applied: true, action };
 }
 
+const SETTLED_ORDER_STATUSES = [
+  "cancelled",
+  "delivered",
+  "returned",
+  "lost",
+  "shipped",
+  "partial",
+  "rts",
+];
+const SETTLED_WEB_STATUSES = [
+  "cancelled",
+  "complete",
+  "on_hold",
+  "no_response",
+  "good_no_response",
+];
+
 function orderNeedsAutoCallActionServer(
   order: Record<string, unknown>,
   action: AutoCallKeyOrderAction
 ): boolean {
+  // Auto-call only acts on orders still in Processing. Once the call outcome (or
+  // the seller) has moved an order to any other status/tab, the reconcile pass
+  // must leave it alone — re-applying kept resurrecting a cancelled call-center
+  // order back to pending on every poll.
+  const status = String(order.status ?? "");
+  if (SETTLED_ORDER_STATUSES.includes(status)) return false;
+  const webStatus = String(order.webStatus ?? "");
+  if (SETTLED_WEB_STATUSES.includes(webStatus)) return false;
   switch (action) {
     case "none":
     case "stay_processing":

@@ -532,7 +532,7 @@ function OrderTableRow({
             onClick={onViewDetails}
             className="text-base font-bold text-indigo-700 hover:underline"
           >
-            {o.id}
+            {o.invoiceNumber?.trim() || o.id}
           </button>
           <OrderRowActionsMenu
             order={o}
@@ -693,7 +693,7 @@ function OrderRow({
               onClick={onViewDetails}
               className="break-all text-left text-base font-extrabold tracking-tight text-indigo-700 hover:underline sm:text-lg"
             >
-              {o.id}
+              {o.invoiceNumber?.trim() || o.id}
             </button>
             <div className="mt-1 flex items-center gap-0.5">
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">

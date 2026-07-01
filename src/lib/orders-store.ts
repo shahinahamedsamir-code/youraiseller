@@ -2023,8 +2023,12 @@ export function promoteWebOrderToApproved(
   const prev = getOrder(id);
   if (!prev) return null;
   const invoiceNumber = prev.invoiceNumber?.trim() || nextOrderId();
+  // Attribute the approved order to whoever clicked Create Order, so the
+  // Order List "User" column shows the team member instead of "WooCommerce".
+  const creator = sessionCreatorFields();
   const updated = updateOrder(id, {
     ...patch,
+    ...(creator.handledBy && creator.handledBy !== "Staff" ? creator : {}),
     invoiceNumber,
     inWebQueue: false,
     // Released to Approved Orders — this is the one flag that takes a web order

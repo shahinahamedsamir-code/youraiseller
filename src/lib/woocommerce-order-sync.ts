@@ -161,7 +161,12 @@ function mapWcWebStatus(status: string): WebDisplayStatus {
   ) {
     return "incomplete";
   }
-  if (s === "on-hold" || s === "onhold") return "on_hold";
+  // On-hold in WooCommerce is our own "imported, verify before ship" marker
+  // (the import policy sets fresh orders on-hold). In the app these are new
+  // orders the seller still needs to work → land them in Processing, not the
+  // seller-controlled On Hold tab. Manual/staff holds are preserved separately
+  // via webStatusStaffSetAt.
+  if (s === "on-hold" || s === "onhold") return "processing";
   if (s === "processing") return "processing";
   return "pending";
 }

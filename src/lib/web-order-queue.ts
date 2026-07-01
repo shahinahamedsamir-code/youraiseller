@@ -36,7 +36,11 @@ export function isApprovedPendingVisible(o: Order): boolean {
 
 /** Panel statuses that WooCommerce live sync must not overwrite */
 export const WOO_SYNC_IMMUNE_WEB_STATUSES: WebDisplayStatus[] = [
-  "on_hold",
+  // NOTE: "on_hold" is intentionally NOT immune. Fresh Woo imports no longer map
+  // to on_hold (they land in Processing); a real On Hold is only ever set by
+  // staff/auto-call, already protected via webStatusStaffSetAt. Keeping on_hold
+  // out of this list lets legacy auto-imported on_hold orders heal back to
+  // Processing on the next Woo sync.
   "good_no_response",
   "no_response",
   "incomplete",

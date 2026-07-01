@@ -1,5 +1,9 @@
 import type { AutoSmsTab, AutoSmsSetting, SmsQuickTemplate } from "./sms-integration-mock";
-import { AUTO_SMS_SETTINGS, DEFAULT_SMS_QUICK_TEMPLATES } from "./sms-integration-mock";
+import {
+  AUTO_SMS_SETTINGS,
+  DEFAULT_SMS_QUICK_TEMPLATES,
+  isLegacySmsTemplate,
+} from "./sms-integration-mock";
 
 export type { SmsQuickTemplate } from "./sms-integration-mock";
 
@@ -17,13 +21,18 @@ function mergeAutoSettings(
     base[tab] = defaults.map((def) => {
       const row = saved.find((s) => s.id === def.id);
       if (!row) return def;
+      const savedTemplate =
+        typeof row.template === "string" && row.template.trim()
+          ? row.template
+          : def.template;
       return {
         ...def,
         enabled: typeof row.enabled === "boolean" ? row.enabled : def.enabled,
-        template:
-          typeof row.template === "string" && row.template.trim()
-            ? row.template
-            : def.template,
+        // Silently upgrade an untouched old default to the newest wording;
+        // keep any template the seller actually customised.
+        template: isLegacySmsTemplate(def.id, savedTemplate)
+          ? def.template
+          : savedTemplate,
       };
     });
   }

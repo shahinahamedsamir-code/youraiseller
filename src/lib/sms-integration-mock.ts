@@ -32,30 +32,47 @@ export const AUTO_SMS_TABS: {
 
 const DEFAULT_CONFIRM = `Dear {{name}},
 
-Your order has been confirmed.
-Invoice: {{invoiceNumber}}.
-Amount: {{grandTotal}} BDT.
-Thank you for shopping with {{storeName}}.`;
+Thank you for your order!
+
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+
+Your order has been confirmed and is now being processed.
+
+- {{storeName}}`;
 
 const DEFAULT_EDIT = `Dear {{name}},
 
 Your order has been updated.
-Invoice: {{invoiceNumber}}.
-Updated Amount: {{grandTotal}} BDT.
+
+Invoice: {{invoiceNumber}}
+Updated Amount: {{grandTotal}} BDT
+
+Please review the latest order details.
+
 Thank you for shopping with {{storeName}}.`;
 
 const DEFAULT_SHIPPED = `Dear {{name}},
 
-Your order {{invoiceNumber}} is on the way.
-Amount: {{grandTotal}} BDT.
-Thank you — {{storeName}}.`;
+Good news!
+
+Your order has been shipped and is on the way.
+
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+
+Thank you for shopping with {{storeName}}.`;
 
 const DEFAULT_WEB_CONFIRM = `Dear {{name}},
 
-Your order has been confirmed.
-Order ID: {{orderId}}.
-Amount: {{grandTotal}} BDT.
-Thank you for shopping with {{storeName}}.`;
+Thank you for your order!
+
+Order ID: {{orderId}}
+Amount: {{grandTotal}} BDT
+
+We have received your order successfully and will process it shortly.
+
+- {{storeName}}`;
 
 export const AUTO_SMS_SETTINGS: Record<AutoSmsTab, AutoSmsSetting[]> = {
   new_order: [
@@ -89,10 +106,14 @@ export const AUTO_SMS_SETTINGS: Record<AutoSmsTab, AutoSmsSetting[]> = {
       enabled: false,
       template: `Dear {{name}},
 
-Your pre-order is received.
-Invoice: {{invoiceNumber}}.
-Amount: {{grandTotal}} BDT.
-We will contact you soon — {{storeName}}.`,
+Thank you for your pre-order!
+
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+
+Your pre-order has been received successfully. We will contact you soon.
+
+- {{storeName}}`,
     },
     {
       id: "preorder_pending",
@@ -101,9 +122,14 @@ We will contact you soon — {{storeName}}.`,
       enabled: false,
       template: `Dear {{name}},
 
-Your pre-order {{invoiceNumber}} is now pending confirmation.
-Amount: {{grandTotal}} BDT.
-{{storeName}}`,
+Your pre-order is now pending confirmation.
+
+Invoice: {{invoiceNumber}}
+Amount: {{grandTotal}} BDT
+
+Our team will verify your order shortly.
+
+- {{storeName}}`,
     },
   ],
   web_order: [
@@ -121,8 +147,14 @@ Amount: {{grandTotal}} BDT.
       enabled: false,
       template: `Dear {{name}},
 
-Reminder: order {{orderId}} ({{grandTotal}} BDT) is waiting.
-Please confirm — {{storeName}}.`,
+This is a friendly reminder regarding your web order.
+
+Order ID: {{orderId}}
+Amount: {{grandTotal}} BDT
+
+Please confirm your order so we can process it without delay.
+
+- {{storeName}}`,
     },
     {
       id: "web_advance",
@@ -131,12 +163,101 @@ Please confirm — {{storeName}}.`,
       enabled: false,
       template: `Dear {{name}},
 
-Advance payment received for order {{orderId}}.
-Amount: {{grandTotal}} BDT.
-Thank you — {{storeName}}.`,
+Advance payment is required to confirm your order.
+
+Order ID: {{orderId}}
+Amount: {{grandTotal}} BDT
+
+Please complete the payment to start processing your order.
+
+Thank you,
+{{storeName}}`,
     },
   ],
 };
+
+/**
+ * Older built-in default templates, kept so we can silently upgrade a seller's
+ * saved copy to the newest wording — but ONLY when their saved template still
+ * exactly matches one of these old defaults (i.e. they never customised it).
+ * Hand-written templates are left untouched.
+ */
+export const LEGACY_AUTO_SMS_TEMPLATES: Record<string, string[]> = {
+  new_order_created: [
+    `Dear {{name}},
+
+Your order has been confirmed.
+Invoice: {{invoiceNumber}}.
+Amount: {{grandTotal}} BDT.
+Thank you for shopping with {{storeName}}.`,
+  ],
+  new_order_edited: [
+    `Dear {{name}},
+
+Your order has been updated.
+Invoice: {{invoiceNumber}}.
+Updated Amount: {{grandTotal}} BDT.
+Thank you for shopping with {{storeName}}.`,
+  ],
+  new_order_shipped: [
+    `Dear {{name}},
+
+Your order {{invoiceNumber}} is on the way.
+Amount: {{grandTotal}} BDT.
+Thank you — {{storeName}}.`,
+  ],
+  preorder_created: [
+    `Dear {{name}},
+
+Your pre-order is received.
+Invoice: {{invoiceNumber}}.
+Amount: {{grandTotal}} BDT.
+We will contact you soon — {{storeName}}.`,
+  ],
+  preorder_pending: [
+    `Dear {{name}},
+
+Your pre-order {{invoiceNumber}} is now pending confirmation.
+Amount: {{grandTotal}} BDT.
+{{storeName}}`,
+  ],
+  web_received: [
+    `Dear {{name}},
+
+Your order has been confirmed.
+Order ID: {{orderId}}.
+Amount: {{grandTotal}} BDT.
+Thank you for shopping with {{storeName}}.`,
+  ],
+  web_reminder: [
+    `Dear {{name}},
+
+Reminder: order {{orderId}} ({{grandTotal}} BDT) is waiting.
+Please confirm — {{storeName}}.`,
+  ],
+  web_advance: [
+    `Dear {{name}},
+
+Advance payment received for order {{orderId}}.
+Amount: {{grandTotal}} BDT.
+Thank you — {{storeName}}.`,
+  ],
+};
+
+/** True when a saved template is just an untouched old default (safe to upgrade). */
+export function isLegacySmsTemplate(id: string, template: string): boolean {
+  const t = template.trim();
+  return (LEGACY_AUTO_SMS_TEMPLATES[id] ?? []).some((old) => old.trim() === t);
+}
+
+/** The built-in default template for a rule id (used by "Reset to default"). */
+export function defaultSmsTemplate(id: string): string | null {
+  for (const rules of Object.values(AUTO_SMS_SETTINGS)) {
+    const found = rules.find((r) => r.id === id);
+    if (found) return found.template;
+  }
+  return null;
+}
 
 export type SmsQuickTemplate = {
   id: string;

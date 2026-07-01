@@ -2,8 +2,11 @@
 
 import { useMemo } from "react";
 import clsx from "clsx";
-import { Info } from "lucide-react";
-import type { AutoSmsSetting } from "@/lib/sms-integration-mock";
+import { Info, RotateCcw } from "lucide-react";
+import {
+  defaultSmsTemplate,
+  type AutoSmsSetting,
+} from "@/lib/sms-integration-mock";
 import {
   SMS_TEMPLATE_PLACEHOLDERS,
   analyzeSmsTemplate,
@@ -30,6 +33,10 @@ export function SmsAutoRuleEditor({
   );
 
   const showEditor = templatesOnly || rule.enabled;
+
+  const builtInDefault = defaultSmsTemplate(rule.id);
+  const canReset =
+    builtInDefault !== null && builtInDefault.trim() !== rule.template.trim();
 
   return (
     <div
@@ -75,13 +82,25 @@ export function SmsAutoRuleEditor({
 
       {showEditor ? (
         <div className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
-          <textarea
-            rows={5}
-            value={rule.template}
-            onChange={(e) => onTemplateChange(e.target.value)}
-            className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3 text-sm leading-relaxed text-slate-800 outline-none focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
-            spellCheck={false}
-          />
+          <div className="relative">
+            <textarea
+              rows={5}
+              value={rule.template}
+              onChange={(e) => onTemplateChange(e.target.value)}
+              className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3 text-sm leading-relaxed text-slate-800 outline-none focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
+              spellCheck={false}
+            />
+            {canReset && builtInDefault !== null ? (
+              <button
+                type="button"
+                onClick={() => onTemplateChange(builtInDefault)}
+                title="Replace with the latest default template"
+                className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-500 shadow-sm transition hover:border-teal-300 hover:text-teal-600"
+              >
+                <RotateCcw className="h-3 w-3" /> Reset to default
+              </button>
+            ) : null}
+          </div>
 
           {previewParts.length > 0 ? (
             <p className="text-sm leading-relaxed text-slate-600">

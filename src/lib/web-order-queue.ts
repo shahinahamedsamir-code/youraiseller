@@ -14,10 +14,14 @@ export function shouldStayInWebQueueAfterWooSync(
   >,
   nextWebStatus?: WebDisplayStatus
 ): boolean {
+  // A web order only leaves the Web Order List when it is explicitly promoted to
+  // Approved ("Create Order" sets webQueueReleased) or turned into a preorder.
+  // Web status changes — including Cancel and Complete — keep it on the list so
+  // it just moves to the matching tab (Cancel / Complete) instead of jumping to
+  // Approved Orders.
   if (prev.webQueueReleased) return false;
   if (prev.isPreorder) return false;
-  const ws = nextWebStatus ?? prev.webStatus ?? "pending";
-  if (ws === "complete" || ws === "cancelled") return false;
+  void nextWebStatus;
   return true;
 }
 

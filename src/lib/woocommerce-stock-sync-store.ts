@@ -342,10 +342,12 @@ export async function maybeSyncProductPriceToWoo(productId: string): Promise<voi
 
 /**
  * Realtime app → WooCommerce stock push. Called from the single stock-change
- * chokepoint, so EVERY change (order sale, POS, manual edit, restock) pushes the
- * changed product's EXACT quantity to Woo immediately. App is the single source
- * of truth for inventory — there is no Woo → app sync. Respects only the master
- * "enabled" switch and needs Woo connected (checked inside runWooStockSync).
+ * chokepoint (order sale, POS, manual edit, restock). Fires as soon as a change
+ * meets the seller's chosen Trigger — Every change (true realtime), Alert qty
+ * (stock ≤ alert), or Zero only (stock hits 0) — and pushes in the chosen Mode
+ * (exact quantity or in/out status). App is the single source of truth; there is
+ * no Woo → app sync. The daily full reconcile is the safety net for triggers that
+ * skip intermediate changes (e.g. a restock under Zero only).
  */
 export async function maybeAutoSyncProductToWoo(productId: string): Promise<void> {
   const sync = loadWooStockSyncSettings();
@@ -354,7 +356,9 @@ export async function maybeAutoSyncProductToWoo(productId: string): Promise<void
   const product = loadProducts().find((p) => p.id === productId);
   if (!product || !product.manageStock) return;
 
-  // Push in whichever mode the seller chose — exact quantity or in/out status.
+  // Only push when this change satisfies the chosen trigger condition.
+  if (!matchesSyncTrigger(product, sync.trigger)) return;
+
   await runWooStockSync({
     scope: "test",
     testSku: product.code,

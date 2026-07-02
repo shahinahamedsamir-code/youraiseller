@@ -29,7 +29,8 @@ const TRIGGERS: {
   {
     value: "every_change",
     label: "On every stock change",
-    hint: "Sync whenever inventory stock changes. Turn on Auto-Sync on Stock Change below.",
+    hint: "Push to WooCommerce the moment inventory stock changes (true realtime).",
+    recommended: true,
   },
   {
     value: "alert_qty",
@@ -40,7 +41,6 @@ const TRIGGERS: {
     value: "zero_only",
     label: "When stock reaches zero",
     hint: "Only sync out-of-stock — fewer API calls. Best for high-volume stores.",
-    recommended: true,
   },
 ];
 

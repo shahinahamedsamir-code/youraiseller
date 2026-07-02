@@ -1,5 +1,5 @@
 import { parseActivityDate } from "@/lib/order-activity";
-import type { Order } from "@/lib/orders-store";
+import { orderGrossTotal, type Order } from "@/lib/orders-store";
 import type { DateRange, PeriodBounds } from "./report-types";
 
 export function webStatusLabel(status: string): string {
@@ -129,7 +129,7 @@ export function isWithinBounds(date: Date | null, bounds: PeriodBounds | null): 
 export function summarizeOrderMetrics(orders: Order[]) {
   const grossSales = orders
     .filter((o) => !["cancelled", "returned", "lost"].includes(o.status))
-    .reduce((sum, o) => sum + o.total, 0);
+    .reduce((sum, o) => sum + orderGrossTotal(o), 0);
   const delivered = orders.filter(
     (o) => o.status === "delivered" || o.status === "partial"
   ).length;

@@ -1,5 +1,5 @@
 import { mockBlocked } from "@/lib/mock-web-orders";
-import type { Order } from "@/lib/orders-store";
+import { orderGrossTotal, type Order } from "@/lib/orders-store";
 import { normalizePhone } from "@/lib/web-customer-stats";
 
 export type WebSourceMix = "woocommerce" | "manual_web" | "other_web";
@@ -30,7 +30,7 @@ export function buildWebSourceMix(orders: Order[]): WebSourceMixRow[] {
     const row = map.get(key) ?? { count: 0, revenue: 0 };
     row.count += 1;
     if (!["cancelled", "returned", "lost"].includes(order.status)) {
-      row.revenue += order.total;
+      row.revenue += orderGrossTotal(order);
     }
     map.set(key, row);
   }

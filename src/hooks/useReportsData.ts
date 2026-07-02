@@ -71,7 +71,7 @@ import {
   getOrderSourceLabel,
   inferOrderSourceFromOrder,
 } from "@/lib/order-source";
-import { loadOrders, type Order, type OrderStatus } from "@/lib/orders-store";
+import { loadOrders, orderGrossTotal, type Order, type OrderStatus } from "@/lib/orders-store";
 import { loadTeamUsers } from "@/lib/team-users-store";
 import { normalizePhone } from "@/lib/web-customer-stats";
 import { isInWebQueue, isWebSourceOrder } from "@/lib/web-order-queue";
@@ -218,7 +218,7 @@ export function useReportsData() {
     () =>
       filteredOrders
         .filter((o) => !["cancelled", "returned", "lost"].includes(o.status))
-        .reduce((sum, o) => sum + o.total, 0),
+        .reduce((sum, o) => sum + orderGrossTotal(o), 0),
     [filteredOrders]
   );
 
@@ -264,7 +264,7 @@ export function useReportsData() {
         const advance = o.advancePaymentCollectedAmount ?? 0;
         const delivery = o.paymentCollectedAmount ?? 0;
         const payDiscount = o.paymentCollectionDiscount ?? 0;
-        const due = Math.max(0, o.total - advance - delivery - payDiscount);
+        const due = Math.max(0, orderGrossTotal(o) - advance - delivery - payDiscount);
         acc.advance += advance;
         acc.delivery += delivery;
         acc.due += due;
@@ -309,7 +309,7 @@ export function useReportsData() {
       if (["cancelled", "returned", "lost"].includes(o.status)) continue;
       const date = parseOrderDate(o);
       const key = date ? toInputDate(date) : "Unknown";
-      map.set(key, (map.get(key) ?? 0) + o.total);
+      map.set(key, (map.get(key) ?? 0) + orderGrossTotal(o));
     }
     return [...map.entries()]
       .map(([date, amount]) => ({ date, amount }))
@@ -379,7 +379,7 @@ export function useReportsData() {
       row.total += 1;
       if (o.status === "delivered" || o.status === "partial") {
         row.delivered += 1;
-        row.revenue += o.total;
+        row.revenue += orderGrossTotal(o);
       } else if (o.status === "returned") {
         row.returned += 1;
       }
@@ -415,7 +415,7 @@ export function useReportsData() {
       const advance = o.advancePaymentCollectedAmount ?? 0;
       const delivery = o.paymentCollectedAmount ?? 0;
       const payDiscount = o.paymentCollectionDiscount ?? 0;
-      const due = Math.max(0, o.total - advance - delivery - payDiscount);
+      const due = Math.max(0, orderGrossTotal(o) - advance - delivery - payDiscount);
       if (due <= 0) continue;
       const d = parseOrderDate(o);
       if (!d) continue;
@@ -569,7 +569,7 @@ export function useReportsData() {
     const rows = list.map((o) => {
       const reason = getPreorderReasonLabel(o.preorderReason as PreorderReason | undefined);
       reasonMap.set(reason, (reasonMap.get(reason) ?? 0) + 1);
-      totalValue += o.total;
+      totalValue += orderGrossTotal(o);
 
       const deliveryAt = parseDateLabel(o.preorderDeliveryAt);
       let deliveryState: "overdue" | "due_soon" | "scheduled" | "none" = "none";
@@ -839,7 +839,7 @@ export function useReportsData() {
       if (!phone) continue;
       periodPhones.add(phone);
       if (!["cancelled", "returned", "lost"].includes(o.status)) {
-        periodRevenue += o.total;
+        periodRevenue += orderGrossTotal(o);
       }
     }
 
@@ -865,7 +865,7 @@ export function useReportsData() {
         if (inRange.length === 0) return null;
         const spent = inRange
           .filter((o) => !["cancelled", "returned", "lost"].includes(o.status))
-          .reduce((sum, o) => sum + o.total, 0);
+          .reduce((sum, o) => sum + orderGrossTotal(o), 0);
         return {
           phone,
           name: inRange[0]?.customerName ?? "—",
@@ -908,13 +908,13 @@ export function useReportsData() {
       );
       const sourceRow = sourceMap.get(sourceLabel) ?? { orders: 0, amount: 0 };
       sourceRow.orders += 1;
-      sourceRow.amount += o.total;
+      sourceRow.amount += orderGrossTotal(o);
       sourceMap.set(sourceLabel, sourceRow);
 
       const channelLabel = CHANNEL_LABELS[o.source] ?? o.source;
       const channelRow = channelMap.get(channelLabel) ?? { orders: 0, amount: 0 };
       channelRow.orders += 1;
-      channelRow.amount += o.total;
+      channelRow.amount += orderGrossTotal(o);
       channelMap.set(channelLabel, channelRow);
     }
 
@@ -1183,7 +1183,7 @@ export function useReportsData() {
     );
     const revenue = attributedOrders
       .filter((o) => !["cancelled", "returned", "lost"].includes(o.status))
-      .reduce((sum, o) => sum + o.total, 0);
+      .reduce((sum, o) => sum + orderGrossTotal(o), 0);
     const roas = adSpend > 0 ? revenue / adSpend : 0;
     const costPerOrder = attributedOrders.length > 0 ? adSpend / attributedOrders.length : 0;
 
@@ -1196,7 +1196,7 @@ export function useReportsData() {
       const row = sourceMap.get(label) ?? { orders: 0, revenue: 0 };
       row.orders += 1;
       if (!["cancelled", "returned", "lost"].includes(o.status)) {
-        row.revenue += o.total;
+        row.revenue += orderGrossTotal(o);
       }
       sourceMap.set(label, row);
     }
@@ -1215,7 +1215,7 @@ export function useReportsData() {
       const key = d ? toInputDate(d) : "Unknown";
       const row = dailyMap.get(key) ?? { spend: 0, revenue: 0 };
       if (!["cancelled", "returned", "lost"].includes(o.status)) {
-        row.revenue += o.total;
+        row.revenue += orderGrossTotal(o);
       }
       dailyMap.set(key, row);
     }
@@ -1401,7 +1401,7 @@ export function useReportsData() {
     const prevMetaRevenue = prevCustomers
       .filter((o) => META_ORDER_SOURCES.has(inferOrderSourceFromOrder(o)))
       .filter((o) => !["cancelled", "returned", "lost"].includes(o.status))
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + orderGrossTotal(o), 0);
 
     let prevNetStock = 0;
     for (const m of loadMovements()) {

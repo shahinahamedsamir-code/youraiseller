@@ -21,6 +21,7 @@ type OrderLike = {
   district?: string;
   status: string;
   total: number;
+  advance?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -84,7 +85,8 @@ function buildFromOrders(orders: OrderLike[]): SellerCustomer[] {
     };
     prev.orders += 1;
     if (!["cancelled", "returned", "lost"].includes(o.status)) {
-      prev.spent += o.total;
+      // order.total is net of advance — add it back for the true amount spent.
+      prev.spent += o.total + (o.advance ?? 0);
     }
     if (o.email) prev.email = o.email;
     map.set(phone, prev);

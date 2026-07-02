@@ -1,4 +1,4 @@
-import { loadOrders, type Order } from "./orders-store";
+import { loadOrders, orderGrossTotal, type Order } from "./orders-store";
 import { getWebOrdersFromStore } from "./woocommerce-order-sync";
 import { isInWebQueue } from "./web-order-queue";
 import { countWebOrdersByTab, matchesWebOrderTab, WEB_ORDER_TABS, type WebOrderTabKey } from "./web-order-tabs";
@@ -223,7 +223,7 @@ function orderCost(order: Order, costMap: Map<string, number>): number {
 
 function orderProfit(order: Order, costMap: Map<string, number>): number {
   if (!isCountableOrder(order)) return 0;
-  return order.total - orderCost(order, costMap);
+  return orderGrossTotal(order) - orderCost(order, costMap);
 }
 
 function pctChange(current: number, previous: number): number | null {
@@ -255,7 +255,7 @@ function metricsForPeriod(
     orders: inPeriod.length,
     sales: inPeriod
       .filter(isCountableOrder)
-      .reduce((sum, o) => sum + o.total, 0),
+      .reduce((sum, o) => sum + orderGrossTotal(o), 0),
     profit: inPeriod.reduce((sum, o) => sum + orderProfit(o, costMap), 0),
   };
 }
@@ -276,7 +276,7 @@ export function buildOverviewStats(
     const countable = orders.filter(isCountableOrder);
     current = {
       orders: orders.length,
-      sales: countable.reduce((sum, o) => sum + o.total, 0),
+      sales: countable.reduce((sum, o) => sum + orderGrossTotal(o), 0),
       profit: orders.reduce((sum, o) => sum + orderProfit(o, costMap), 0),
     };
   } else {
@@ -401,7 +401,7 @@ export function buildOrdersBySource(options?: {
     const label = getOrderSourceLabel(sourceKey, o.customOrderSource);
     const prev = map.get(label) ?? { orders: 0, amount: 0, sourceKey };
     prev.orders += 1;
-    prev.amount += o.total;
+    prev.amount += orderGrossTotal(o);
     map.set(label, prev);
   }
 
@@ -679,7 +679,7 @@ export function buildFounderOverview(
 
   return {
     totalOrders: orders.length,
-    totalOrderValue: countable.reduce((sum, o) => sum + o.total, 0),
+    totalOrderValue: countable.reduce((sum, o) => sum + orderGrossTotal(o), 0),
     totalProductsInStock: loadProducts().reduce((sum, p) => sum + p.stockQty, 0),
     totalProfit: orders.reduce((sum, o) => sum + orderProfit(o, costMap), 0),
     dateLabel: getFounderDateFilterSummary(filter),

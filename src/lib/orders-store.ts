@@ -983,6 +983,16 @@ function calcTotals(
   return { subtotal, total };
 }
 
+/**
+ * Full order value (gross) — what the sale is actually worth. order.total is
+ * stored NET of the advance (calcTotals does subtotal + shipping − discount −
+ * advance), so revenue / sales / profit must add the advance back to reflect the
+ * real sale amount. Amounts still to collect (due / COD) keep using order.total.
+ */
+export function orderGrossTotal(order: Pick<Order, "total" | "advance">): number {
+  return (order.total ?? 0) + (order.advance ?? 0);
+}
+
 /** Deduct stock for an order's lines — once. Safe to call repeatedly. */
 function reserveStockForOrder(order: Order) {
   if (order.stockReserved) return; // already deducted — never double-count
@@ -2146,7 +2156,7 @@ export function getOrderStats() {
     preorders: counts.preorder,
     revenue: orders
       .filter((o) => !["cancelled", "returned", "lost"].includes(o.status))
-      .reduce((s, o) => s + o.total, 0),
+      .reduce((s, o) => s + orderGrossTotal(o), 0),
   };
 }
 

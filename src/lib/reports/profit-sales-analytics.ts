@@ -8,7 +8,7 @@ import {
   parseDateLabel,
   parseOrderDate,
 } from "@/lib/reports/report-utils";
-import type { Order } from "@/lib/orders-store";
+import { orderGrossTotal, type Order } from "@/lib/orders-store";
 import {
   isApprovedDeliveryAndReturnChargeExpense,
   isOrderDeliveryChargeExpense,
@@ -160,7 +160,7 @@ export function buildProfitSalesReport(
     const w = orderWeight(order.status, confirmationRate / 100);
     if (w <= 0) continue;
 
-    const sales = order.total * w;
+    const sales = orderGrossTotal(order) * w;
     const cogs = orderCogs(order) * w;
     const shipping = order.shippingCharge * w;
 
@@ -207,8 +207,9 @@ export function buildProfitSalesReport(
     if (!refOrderId) continue;
     const order = orderById.get(normalizeOrderId(refOrderId) ?? "");
     if (!order) continue;
-    if (order.total <= 0) continue;
-    const ratio = Math.max(0, row.amount / order.total);
+    const grossTotal = orderGrossTotal(order);
+    if (grossTotal <= 0) continue;
+    const ratio = Math.max(0, row.amount / grossTotal);
     const prev = cogsByOrderIncomeRatios.get(order.id) ?? 0;
     cogsByOrderIncomeRatios.set(order.id, Math.min(1, prev + ratio));
   }

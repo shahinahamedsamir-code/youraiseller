@@ -15,7 +15,7 @@ import {
   syncInvoiceDeliveryChargeDeductions,
 } from "./order-delivery-expense";
 import { orderAmountDue } from "./order-payment";
-import { getOrder, updateOrder, type Order } from "./orders-store";
+import { getOrder, orderGrossTotal, updateOrder, type Order } from "./orders-store";
 
 export function allocateInvoiceNumber(): string {
   const settings = loadBusinessSettings();
@@ -94,7 +94,8 @@ export function generateInvoiceOnAdvance(
     incomeId: input.incomeId,
   };
 
-  const dueAmount = Math.max(0, order.total - input.paidAmount);
+  // order.total is net of advance — the invoice amount/due are the GROSS value.
+  const dueAmount = Math.max(0, orderGrossTotal(order) - input.paidAmount);
 
   if (existing) {
     const payments = [...(existing.payments ?? []).filter((p) => p.type !== "advance"), advanceEntry];
@@ -121,7 +122,7 @@ export function generateInvoiceOnAdvance(
     orderId: order.id,
     customerName: order.customerName,
     customerPhone: order.phone,
-    amount: order.total,
+    amount: orderGrossTotal(order),
     paidAmount: input.paidAmount,
     advanceAmount: input.paidAmount,
     dueAmount,
@@ -168,7 +169,9 @@ export function finalizeInvoiceOnDelivery(
     0;
   const totalPaid = advancePaid + input.paidAmount;
   const totalDiscount = (existing?.discount ?? 0) + discount;
-  const dueAmount = Math.max(0, order.total - totalPaid - totalDiscount);
+  // order.total is net of advance — use the gross value so partial collections
+  // report the right outstanding due.
+  const dueAmount = Math.max(0, orderGrossTotal(order) - totalPaid - totalDiscount);
 
   if (existing) {
     const payments = [
@@ -212,7 +215,7 @@ export function finalizeInvoiceOnDelivery(
     orderId: order.id,
     customerName: order.customerName,
     customerPhone: order.phone,
-    amount: order.total,
+    amount: orderGrossTotal(order),
     paidAmount: totalPaid,
     advanceAmount: advancePaid > 0 ? advancePaid : undefined,
     dueAmount,

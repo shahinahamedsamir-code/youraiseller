@@ -10,7 +10,7 @@ import {
   type AccountingLiability,
 } from "@/lib/accounting-store";
 import { getProduct } from "@/lib/inventory-store";
-import type { Order } from "@/lib/orders-store";
+import { orderGrossTotal, type Order } from "@/lib/orders-store";
 import type { DateRange } from "./report-types";
 import { isWithinRange, parseDateLabel, parseOrderDate } from "./report-utils";
 
@@ -42,7 +42,7 @@ export function buildPeriodGrossProfit(
     if (!isWithinRange(parseOrderDate(order), range, from, to)) continue;
     if (!isCountableOrder(order)) continue;
     orderCount += 1;
-    revenue += order.total;
+    revenue += orderGrossTotal(order);
     cogs += orderCogs(order);
   }
 

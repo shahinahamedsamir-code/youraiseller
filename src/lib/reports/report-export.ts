@@ -1,6 +1,6 @@
 import { formatBdt } from "@/lib/accounting-store";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
-import type { Order } from "@/lib/orders-store";
+import { orderGrossTotal, type Order } from "@/lib/orders-store";
 import { exportCsv } from "./report-utils";
 import type { ReportTab } from "./report-types";
 
@@ -390,7 +390,7 @@ export function exportTabCsv(tab: ReportTab, data: ReportsExportPayload): void {
       const advance = o.advancePaymentCollectedAmount ?? 0;
       const delivery = o.paymentCollectedAmount ?? 0;
       const payDiscount = o.paymentCollectionDiscount ?? 0;
-      const due = Math.max(0, o.total - advance - delivery - payDiscount);
+      const due = Math.max(0, orderGrossTotal(o) - advance - delivery - payDiscount);
       return [o.id, advance, delivery, payDiscount, due];
     })
   );
@@ -556,7 +556,7 @@ export function buildTabPdfOptions(
         const advance = o.advancePaymentCollectedAmount ?? 0;
         const delivery = o.paymentCollectedAmount ?? 0;
         const payDiscount = o.paymentCollectionDiscount ?? 0;
-        const due = Math.max(0, o.total - advance - delivery - payDiscount);
+        const due = Math.max(0, orderGrossTotal(o) - advance - delivery - payDiscount);
         return [o.id, formatBdt(advance), formatBdt(delivery), formatBdt(due)];
       }),
     };

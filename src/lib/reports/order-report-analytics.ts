@@ -1,4 +1,4 @@
-import type { Order } from "@/lib/orders-store";
+import { orderGrossTotal, type Order } from "@/lib/orders-store";
 import { isInWebQueue, isWebSourceOrder } from "@/lib/web-order-queue";
 
 export type OrderReportBucket = "approved" | "web" | "preorder";
@@ -45,7 +45,7 @@ export function buildOrderAllReport(orders: Order[]): OrderAllReport {
     if (o.status === "delivered" || o.status === "partial") delivered += 1;
     if (["pending", "preorder", "rts", "shipped"].includes(o.status)) pending += 1;
     if (!["cancelled", "lost", "returned"].includes(o.status)) {
-      totalValue += o.total;
+      totalValue += orderGrossTotal(o);
     }
   }
 

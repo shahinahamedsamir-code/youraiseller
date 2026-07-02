@@ -20,6 +20,7 @@ import { fetchCarrybeeOrderStatus } from "./carrybee-service";
 import { fetchSteadfastDeliveryStatus } from "./steadfast-service";
 import { fetchPathaoOrderStatus } from "./pathao-service";
 import { getSessionUser } from "./dev-users";
+import { isInWebQueue } from "./web-order-queue";
 
 export type CourierSyncOneResult = {
   orderId: string;
@@ -84,6 +85,28 @@ export function applyCourierDeliveryStatus(
     courierSyncedAt: nowIso(),
     ...riderPatch,
   });
+
+  // Approved orders are seller-owned: record the courier status for reference,
+  // but NEVER let it change the panel status. The seller moves an Approved order
+  // through the pipeline by hand. (Only web-queue leads may be courier-driven.)
+  if (!isInWebQueue(order)) {
+    if (deliveryStatus !== prevCourier && !opts?.silent) {
+      appendOrderActivity(orderId, {
+        type: "tracking",
+        title: "Courier status updated",
+        detail: deliveryStatus,
+        actor: actorName(),
+      });
+    }
+    return {
+      orderId,
+      ok: true,
+      message: deliveryStatus,
+      courierStatus: deliveryStatus,
+      panelStatus: prevStatus,
+      statusChanged: false,
+    };
+  }
 
   let statusChanged = false;
 

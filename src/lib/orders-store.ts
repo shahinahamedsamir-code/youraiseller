@@ -1227,6 +1227,14 @@ export function upsertWooCommerceOrder(
 
   if (idx >= 0) {
     const prev = data.orders[idx];
+    // An order promoted to Approved Orders (webQueueReleased) is out of the web
+    // queue and is now fully seller-owned. WooCommerce must NEVER re-touch it —
+    // not items, status, totals, nor anything else. Otherwise a background Woo
+    // re-sync (every ~12–45s) would overwrite the seller's manual edits, e.g.
+    // newly added products would vanish a few seconds after Save.
+    if (prev.webQueueReleased) {
+      return { order: prev, created: false };
+    }
     const syncWooStatus = isWooOrderStatusSyncEnabled();
     // Advance (and its payment record) is seller-managed — WooCommerce never
     // sends it, so preserve the seller's value instead of wiping it to 0 on

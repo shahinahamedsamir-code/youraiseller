@@ -317,9 +317,12 @@ export function OrderRowActionsMenu({
   };
 
   const appendNote = (prefix: string, text: string) => {
-    const chunk = `[${prefix} ${new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}] ${text}`;
-    const next = o.note?.trim() ? `${o.note.trim()}\n${chunk}` : chunk;
-    updateOrder(o.id, { note: next });
+    // Team notes/tasks are private — append to the internal note so they are
+    // saved & shown in the Note column, without polluting the printed shipping
+    // note. Plain text only (no date/time prefix).
+    const base = o.internalNote?.trim();
+    const next = base ? `${base}\n${text.trim()}` : text.trim();
+    updateOrder(o.id, { internalNote: next });
     appendOrderActivity(o.id, {
       type: "note",
       title: prefix === "TASK" ? "Task added" : "Note added",

@@ -105,6 +105,9 @@ function migrateMethod(m: DeliveryMethod): DeliveryMethod {
   return m;
 }
 
+// A fresh seller starts with just one generic manual method so they can place
+// orders immediately. Couriers (Steadfast/Pathao/etc.) are added by each seller
+// themselves via "Add Method" — no demo/sample data with other stores' names.
 const DEFAULT_METHODS: DeliveryMethod[] = [
   {
     id: "dm-manual",
@@ -112,68 +115,26 @@ const DEFAULT_METHODS: DeliveryMethod[] = [
     type: "others",
     connectedBusiness: "Your Store",
     active: true,
-    preferred: false,
-    codEnabled: true,
-    createdAt: "01 May 2026",
-    updatedAt: "01 May 2026",
-  },
-  {
-    id: "dm-custom",
-    name: "Custom Delivery",
-    type: "others",
-    connectedBusiness: "Your Store",
-    active: true,
-    preferred: false,
-    codEnabled: true,
-    createdAt: "01 May 2026",
-    updatedAt: "01 May 2026",
-  },
-  {
-    id: "dm-steadfast",
-    name: "STEADFAST",
-    type: "steadfast",
-    connectedBusiness: "Turu Mart",
-    active: true,
     preferred: true,
     codEnabled: true,
-    steadfast: { ...DEFAULT_STEADFAST_CONFIG },
-    createdAt: "01 May 2026",
-    updatedAt: "01 May 2026",
-  },
-  {
-    id: "dm-pathao",
-    name: "Pathao",
-    type: "pathao",
-    connectedBusiness: "Your Store",
-    active: true,
-    preferred: false,
-    codEnabled: true,
-    createdAt: "01 May 2026",
-    updatedAt: "01 May 2026",
-  },
-  {
-    id: "dm-instant",
-    name: "Instant Delivery",
-    type: "others",
-    connectedBusiness: "Your Store",
-    active: false,
-    preferred: false,
-    codEnabled: false,
-    createdAt: "01 May 2026",
-    updatedAt: "01 May 2026",
-  },
-  {
-    id: "dm-pickup",
-    name: "Store Pick-up",
-    type: "others",
-    connectedBusiness: "Showroom",
-    active: true,
-    preferred: false,
-    codEnabled: false,
     createdAt: "01 May 2026",
     updatedAt: "01 May 2026",
   },
 ];
+
+/**
+ * Old demo methods that used to be seeded for everyone (with sample store names
+ * like "Turu Mart"/"Showroom"). We remove these from existing sellers as long as
+ * they were never touched — a configured/edited one (updatedAt changed) is kept.
+ */
+const LEGACY_DEMO_METHOD_IDS = new Set([
+  "dm-custom",
+  "dm-steadfast",
+  "dm-pathao",
+  "dm-instant",
+  "dm-pickup",
+]);
+const LEGACY_DEMO_STAMP = "01 May 2026";
 
 function storageKey(): string | null {
   return sellerStorageKey("delivery-methods");
@@ -207,11 +168,21 @@ function loadRaw(): DeliveryMethod[] {
       return [...DEFAULT_METHODS];
     }
     if (!methodsRawCache || methodsRawCache.key !== key || methodsRawCache.raw !== raw) {
-      methodsRawCache = {
-        key,
-        raw,
-        methods: (JSON.parse(raw) as DeliveryMethod[]).map(migrateMethod),
-      };
+      let methods = (JSON.parse(raw) as DeliveryMethod[]).map(migrateMethod);
+      // One-time cleanup: drop old demo methods (other stores' sample data) that
+      // the seller never touched.
+      const cleaned = methods.filter(
+        (m) => !(LEGACY_DEMO_METHOD_IDS.has(m.id) && m.updatedAt === LEGACY_DEMO_STAMP)
+      );
+      if (cleaned.length !== methods.length) {
+        methods = cleaned;
+        const json = JSON.stringify(methods);
+        localStorage.setItem(key, json);
+        methodsRawCache = { key, raw: json, methods };
+        pushSellerData("deliverymethods", methods);
+        return [...methods];
+      }
+      methodsRawCache = { key, raw, methods };
     }
     return [...methodsRawCache.methods];
   } catch {

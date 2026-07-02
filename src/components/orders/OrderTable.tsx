@@ -559,13 +559,13 @@ function OrderTableRow({
         </p>
       </td>
       <td className={TD}>
-        {o.internalNote?.trim() ? (
+        {(o.internalNote?.trim() || o.note?.trim()) ? (
           <button
             type="button"
-            onClick={() => onNoteClick(o.internalNote!.trim())}
+            onClick={() => onNoteClick((o.internalNote?.trim() || o.note?.trim())!)}
             className="line-clamp-3 w-full text-left text-sm leading-relaxed text-slate-700 transition hover:text-violet-700 hover:underline"
           >
-            {o.internalNote}
+            {o.internalNote?.trim() || o.note?.trim()}
           </button>
         ) : (
           <span className="text-sm text-slate-400">—</span>
@@ -756,13 +756,13 @@ function OrderRow({
           {/* Note */}
           <div className="min-w-0 rounded-lg border border-dashed border-amber-200 bg-amber-50/50 p-3">
             <p className="text-[10px] font-bold uppercase text-amber-700">Note</p>
-            {o.internalNote?.trim() ? (
+            {(o.internalNote?.trim() || o.note?.trim()) ? (
               <button
                 type="button"
-                onClick={() => onNoteClick(o.internalNote!.trim())}
+                onClick={() => onNoteClick((o.internalNote?.trim() || o.note?.trim())!)}
                 className="mt-1 line-clamp-4 w-full text-left text-xs leading-relaxed text-slate-700 hover:text-violet-700 hover:underline"
               >
-                {o.internalNote}
+                {o.internalNote?.trim() || o.note?.trim()}
               </button>
             ) : (
               <p className="mt-1 text-xs text-slate-400">—</p>

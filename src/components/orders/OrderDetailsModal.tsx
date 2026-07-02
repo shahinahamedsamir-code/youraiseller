@@ -47,7 +47,7 @@ import {
   getCourierPanelTrackingUrl,
   getCourierTrackingDisplayId,
 } from "@/lib/courier-tracking-url";
-import { formatAdvancePaymentSummary } from "@/lib/orders-store";
+import { formatAdvancePaymentSummary, ADVANCE_PAYMENT_LABELS } from "@/lib/orders-store";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status-tabs";
 import { statusColors } from "@/lib/mock-web-orders";
 import { resolveWebDisplayStatus } from "@/lib/order-edit";
@@ -206,12 +206,16 @@ export function OrderDetailsModal({
           <p className="text-xs font-bold uppercase tracking-widest text-white/80">
             Order details
           </p>
-          <h2 className="mt-1 text-3xl font-extrabold tracking-tight">{order.id}</h2>
-          {order.wooNumber && (
+          <h2 className="mt-1 text-3xl font-extrabold tracking-tight">
+            {order.invoiceNumber?.trim() || order.id}
+          </h2>
+          {order.wooNumber ? (
             <p className="text-sm text-white/80">
               {getWebStorePlatformLabel(order)} #{order.wooNumber}
             </p>
-          )}
+          ) : order.invoiceNumber?.trim() ? (
+            <p className="text-sm text-white/80">{order.id}</p>
+          ) : null}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span
               className={clsx(
@@ -328,8 +332,89 @@ export function OrderDetailsModal({
                       Discount −৳{order.discount.toLocaleString()}
                     </p>
                   )}
+                  <p className="flex justify-between border-t border-slate-100 pt-1 font-bold text-slate-800">
+                    <span>Total</span>
+                    <span>৳{order.total.toLocaleString()}</span>
+                  </p>
                 </div>
               </div>
+
+              {/* Payment history — advance + collected payments */}
+              {((order.advance ?? 0) > 0 ||
+                order.advancePaymentCollectedAt ||
+                order.paymentCollectedAt ||
+                order.paymentCollectionStatus) && (
+                <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
+                    <CreditCard className="h-4 w-4" /> Payment history
+                  </p>
+                  <div className="space-y-2 text-xs">
+                    {(order.advance ?? 0) > 0 && (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800">
+                            Advance
+                            {order.advancePayment
+                              ? ` · ${ADVANCE_PAYMENT_LABELS[order.advancePayment.method]}`
+                              : order.advanceCollectedPaymentMethodLabel
+                                ? ` · ${order.advanceCollectedPaymentMethodLabel}`
+                                : ""}
+                          </p>
+                          {order.advancePayment?.transactionId?.trim() && (
+                            <p className="text-slate-500">
+                              Transaction ID:{" "}
+                              <span className="font-mono font-semibold text-slate-700">
+                                {order.advancePayment.transactionId.trim()}
+                              </span>
+                            </p>
+                          )}
+                          {order.advancePayment?.method === "hand_cash" &&
+                            (order.advancePayment.cashReceiverName ||
+                              order.advancePayment.cashReference) && (
+                              <p className="text-slate-500">
+                                {order.advancePayment.cashReceiverName
+                                  ? `Received by ${order.advancePayment.cashReceiverName}`
+                                  : ""}
+                                {order.advancePayment.cashReference
+                                  ? ` · Ref: ${order.advancePayment.cashReference}`
+                                  : ""}
+                              </p>
+                            )}
+                          <p className="text-slate-400">
+                            {order.advancePaymentCollectedAt ?? "Awaiting confirmation"}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="font-bold text-slate-800">
+                            ৳{(order.advancePaymentCollectedAmount ?? order.advance).toLocaleString()}
+                          </p>
+                          <PaymentStatusBadge status={order.advancePaymentCollectionStatus} />
+                        </div>
+                      </div>
+                    )}
+                    {(order.paymentCollectedAt || order.paymentCollectionStatus) && (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800">Payment received</p>
+                          <p className="text-slate-400">
+                            {order.paymentCollectedAt ?? "Awaiting confirmation"}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="font-bold text-slate-800">
+                            ৳{due.toLocaleString()}
+                          </p>
+                          <PaymentStatusBadge status={order.paymentCollectionStatus} />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900">
+                      <span>Due</span>
+                      <span>৳{due.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                 <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase text-slate-400">
                   <Truck className="h-4 w-4" /> Delivery
@@ -688,5 +773,24 @@ export function OrderDetailsModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function PaymentStatusBadge({
+  status,
+}: {
+  status?: "pending" | "recorded" | "declined";
+}) {
+  if (!status) return null;
+  const map = {
+    recorded: { label: "Received", cls: "bg-emerald-100 text-emerald-700" },
+    pending: { label: "Pending", cls: "bg-amber-100 text-amber-700" },
+    declined: { label: "Declined", cls: "bg-rose-100 text-rose-700" },
+  } as const;
+  const s = map[status];
+  return (
+    <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${s.cls}`}>
+      {s.label}
+    </span>
   );
 }

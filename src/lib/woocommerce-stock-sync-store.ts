@@ -45,10 +45,12 @@ export type StockSyncRunResult = {
 
 const DEFAULT: WooStockSyncSettings = {
   enabled: true,
-  trigger: "zero_only",
-  mode: "status_only",
+  trigger: "every_change",
+  mode: "exact",
   dailySyncEnabled: true,
-  autoSyncOnChange: false,
+  autoSyncOnChange: true,
+  // Woo → app inventory sync is removed — the app is the single source of truth
+  // and only pushes to Woo (realtime + daily). Kept false so nothing pulls back.
   stockFromWooEnabled: false,
   priceSyncEnabled: false,
   lastSyncAt: null,
@@ -293,7 +295,8 @@ export async function runWooStockDailySyncIfDue(): Promise<StockSyncRunResult | 
   );
   if (!canApi) return null;
 
-  return runWooStockSync({ scope: "full", force: true });
+  // Daily safety-net reconcile — push every managed product's exact quantity.
+  return runWooStockSync({ scope: "full", force: true, mode: "exact" });
 }
 
 /** Push a product's sell price to WooCommerce when price sync is on. */
@@ -337,13 +340,24 @@ export async function maybeSyncProductPriceToWoo(productId: string): Promise<voi
   }
 }
 
-/** Call after inventory stock change when auto-sync is on */
+/**
+ * Realtime app → WooCommerce stock push. Called from the single stock-change
+ * chokepoint, so EVERY change (order sale, POS, manual edit, restock) pushes the
+ * changed product's EXACT quantity to Woo immediately. App is the single source
+ * of truth for inventory — there is no Woo → app sync. Respects only the master
+ * "enabled" switch and needs Woo connected (checked inside runWooStockSync).
+ */
 export async function maybeAutoSyncProductToWoo(productId: string): Promise<void> {
   const sync = loadWooStockSyncSettings();
-  if (!sync.enabled || !sync.autoSyncOnChange) return;
+  if (!sync.enabled) return;
 
   const product = loadProducts().find((p) => p.id === productId);
-  if (!product || !matchesSyncTrigger(product, sync.trigger)) return;
+  if (!product || !product.manageStock) return;
 
-  await runWooStockSync({ scope: "test", testSku: product.code, force: true });
+  await runWooStockSync({
+    scope: "test",
+    testSku: product.code,
+    force: true,
+    mode: "exact",
+  });
 }

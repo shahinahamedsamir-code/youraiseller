@@ -6,10 +6,8 @@ import {
   RefreshCw,
   Info,
   BarChart3,
-  Download,
 } from "lucide-react";
 import clsx from "clsx";
-import { pullStockFromWooCommerce } from "@/lib/woocommerce-product-sync";
 import {
   loadWooStockSyncSettings,
   saveWooStockSyncSettings,
@@ -17,7 +15,6 @@ import {
   formatStockSyncTime,
   type WooStockSyncSettings,
   type StockSyncTrigger,
-  type StockSyncMode,
   type StockSyncRunResult,
 } from "@/lib/woocommerce-stock-sync-store";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
@@ -46,26 +43,11 @@ const TRIGGERS: {
   },
 ];
 
-const MODES: { value: StockSyncMode; label: string; hint: string; recommended?: boolean }[] =
-  [
-    {
-      value: "exact",
-      label: "Sync exact quantity",
-      hint: "Updates real stock numbers in WooCommerce.",
-    },
-    {
-      value: "status_only",
-      label: "Sync status only",
-      hint: "In stock / out of stock only — faster & lighter API usage.",
-      recommended: true,
-    },
-  ];
 
 export function WooCommerceStockSync() {
   const [sync, setSync] = useState<WooStockSyncSettings | null>(null);
   const [wooConnected, setWooConnected] = useState(false);
   const [running, setRunning] = useState(false);
-  const [pulling, setPulling] = useState(false);
   const [testSku, setTestSku] = useState("");
   const [lastRun, setLastRun] = useState<StockSyncRunResult | null>(null);
   const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -120,31 +102,6 @@ export function WooCommerceStockSync() {
       });
     } finally {
       setRunning(false);
-    }
-  };
-
-  const pull = async () => {
-    setPulling(true);
-    setToast(null);
-    try {
-      const r = await pullStockFromWooCommerce();
-      refresh();
-      setToast({
-        ok: r.matched > 0,
-        msg:
-          r.matched === 0
-            ? `No matching products found. Make sure the app product was imported from Woo, or its Code = WooCommerce SKU (scanned ${r.total} items).`
-            : [
-                `Pulled stock — ${r.updated} updated, ${r.matched} matched${r.notFound ? `, ${r.notFound} unmatched` : ""}.`,
-                r.samples.length ? `Sample: ${r.samples.join(" | ")}` : "",
-              ]
-                .filter(Boolean)
-                .join(" "),
-      });
-    } catch (e) {
-      setToast({ ok: false, msg: e instanceof Error ? e.message : "Pull failed" });
-    } finally {
-      setPulling(false);
     }
   };
 
@@ -205,22 +162,6 @@ export function WooCommerceStockSync() {
           </div>
         </div>
 
-        <div className={clsx(!sync.enabled && "pointer-events-none opacity-50")}>
-          <p className="mb-2 text-sm font-bold text-slate-800">Sync mode</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {MODES.map((m) => (
-              <RadioCard
-                key={m.value}
-                selected={sync.mode === m.value}
-                label={m.label}
-                hint={m.hint}
-                recommended={m.recommended}
-                onSelect={() => patch({ mode: m.value })}
-              />
-            ))}
-          </div>
-        </div>
-
         <div
           className={clsx(
             "border-t border-slate-200 pt-4",
@@ -229,45 +170,19 @@ export function WooCommerceStockSync() {
         >
           <p className="text-sm font-bold text-slate-800">Sync direction</p>
           <p className="mb-3 text-xs text-slate-500">
-            Choose which way stock flows. App → WooCommerce keeps your store in
-            sync; turn on WooCommerce → App for two-way.
+            One-way: App → WooCommerce. The app is your single source of truth for
+            inventory.
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ToggleRow
-              label="App → WooCommerce"
-              hint="When app stock changes, push it to your store (recommended)."
-              on={sync.autoSyncOnChange}
-              onChange={(v) => patch({ autoSyncOnChange: v })}
-            />
-            <ToggleRow
-              label="WooCommerce → App"
-              hint="Accept stock changes from the store too. Also turn on “Stock sync (Woo → app)” in the YourAI Seller Connect plugin."
-              on={sync.stockFromWooEnabled}
-              onChange={(v) => patch({ stockFromWooEnabled: v })}
-            />
-          </div>
-
-          {/* The plugin only pushes FUTURE stock changes. Use this to pull the
-              store's CURRENT stock into the app right now (matched by SKU). */}
-          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-800">
-                Pull current stock from WooCommerce
-              </p>
-              <p className="text-xs text-slate-500">
-                One-time import of the store&apos;s live stock into the app (matched by
-                SKU = product Code). The plugin only syncs changes made after it&apos;s on.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={pull}
-              disabled={pulling || !wooConnected}
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download className={clsx("h-4 w-4", pulling && "animate-bounce")} />
-              {pulling ? "Pulling…" : "Pull stock now"}
-            </button>
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5">
+            <p className="text-sm font-bold text-slate-800">
+              App → WooCommerce (realtime)
+            </p>
+            <p className="text-xs text-slate-500">
+              Every stock change (order sale, POS, manual edit, restock) instantly
+              pushes that product&apos;s exact quantity to your store, matched by SKU
+              = product Code. A daily full reconcile is the safety net. WooCommerce
+              → App is off, so the two directions can never fight each other.
+            </p>
           </div>
         </div>
 

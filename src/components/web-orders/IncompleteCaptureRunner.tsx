@@ -3,9 +3,7 @@
 import { useEffect, useRef } from "react";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import { upsertCapturedWebOrder, upsertWebOrderFromPlugin } from "@/lib/orders-store";
-import { setProductStockFromWoo } from "@/lib/inventory-store";
 import { loadBlockList } from "@/lib/order-block-store";
-import { loadWooStockSyncSettings } from "@/lib/woocommerce-stock-sync-store";
 
 type CaptureItem = {
   sessionId?: string;
@@ -89,15 +87,11 @@ export function IncompleteCaptureRunner() {
 
         let changed = false;
 
-        // Woo → app stock (two-way) — only when the seller turned it on, and
-        // applied without echoing back to Woo.
-        if (stock.length && loadWooStockSyncSettings().stockFromWooEnabled) {
-          for (const s of stock) {
-            if (setProductStockFromWoo(String(s.sku ?? ""), Number(s.stockQty))) {
-              changed = true;
-            }
-          }
-        }
+        // Woo → app inventory sync is intentionally REMOVED. The app is the
+        // single source of truth for stock and only pushes app → Woo (realtime +
+        // daily). Any stock the plugin sends is ignored so the two directions
+        // can't fight each other.
+        void stock;
 
         // Instant-pushed placed orders (deduped on wooOrderId).
         for (const o of orders) {

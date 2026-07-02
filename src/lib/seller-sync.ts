@@ -8,7 +8,7 @@ import {
   slimOrdersBlob,
 } from "./seller-data-payload";
 
-type OrderLike = { id?: string; updatedAt?: string };
+type OrderLike = { id?: string; updatedAt?: string; advance?: number };
 
 /**
  * Merge a server orders blob into the local one, keeping whichever copy of each
@@ -36,9 +36,13 @@ function mergeOrderBlobs(local: unknown, server: unknown): unknown {
       byId.set(lo.id, lo);
       continue;
     }
-    // Local strictly-newer edit wins so an unsynced change isn't clobbered.
-    if (parseActivityDate(String(lo.updatedAt ?? "")) >
-        parseActivityDate(String(so.updatedAt ?? ""))) {
+    const localNewer =
+      parseActivityDate(String(lo.updatedAt ?? "")) >
+      parseActivityDate(String(so.updatedAt ?? ""));
+    // Protect a seller-entered advance from being wiped by a stale/equal server
+    // copy (updatedAt is minute-granular, so a same-minute edit can tie).
+    const advanceProtect = (lo.advance ?? 0) > 0 && !(so.advance ?? 0);
+    if (localNewer || advanceProtect) {
       byId.set(lo.id, lo);
     }
   }

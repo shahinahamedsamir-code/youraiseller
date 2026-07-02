@@ -208,8 +208,23 @@ function saveRaw(methods: DeliveryMethod[]) {
   window.dispatchEvent(new Event("youraiseller-delivery-methods-updated"));
 }
 
+let ownerMethodsPushed = false;
+
 export function loadDeliveryMethods(): DeliveryMethod[] {
-  return loadRaw();
+  const methods = loadRaw();
+  // Ensure the owner's couriers are on the server (once per session) so team
+  // members reliably pull them — covers methods added before sync existed or a
+  // push that never landed.
+  if (
+    !ownerMethodsPushed &&
+    typeof window !== "undefined" &&
+    methods.length > 0 &&
+    !getSessionUser()?.parentAccountId
+  ) {
+    ownerMethodsPushed = true;
+    pushSellerData("deliverymethods", methods);
+  }
+  return methods;
 }
 
 export function loadActiveDeliveryMethods(): DeliveryMethod[] {

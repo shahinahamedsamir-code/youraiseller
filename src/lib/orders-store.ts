@@ -121,7 +121,13 @@ function migrateOrder(o: Order): Order {
   if (promotedFromWeb && webStatus !== "complete" && webStatus !== "cancelled") {
     webStatus = "complete";
   }
-  const webQueueReleased = promotedFromWeb ? false : (o.webQueueReleased ?? false);
+  // A promoted order ("Created approved order") is released to Approved Orders,
+  // so webQueueReleased must be TRUE (matches repairWebOrdersInQueue). It used to
+  // be forced false here, which fought the repair pass — the flag then oscillated
+  // on every load/sync, and while it was false the Woo-sync + server guards (both
+  // keyed on webQueueReleased) went dark, letting a re-sync wipe manual edits and
+  // bounce the order between Approved and the Web list.
+  const webQueueReleased = promotedFromWeb ? true : (o.webQueueReleased ?? false);
   const inWebQueue = isWeb
     ? webQueueReleased
       ? false

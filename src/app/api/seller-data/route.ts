@@ -146,7 +146,61 @@ function parseUpdatedAt(s: unknown): number {
   return new Date(parseInt(m[3], 10), mon, parseInt(m[1], 10), hh, mm).getTime();
 }
 
-type ServerOrder = { id?: string; updatedAt?: string; advance?: number };
+type ServerOrder = {
+  id?: string;
+  updatedAt?: string;
+  advance?: number;
+  webQueueReleased?: boolean;
+  items?: unknown[];
+  subtotal?: number;
+  total?: number;
+  activityLog?: { at?: string }[];
+};
+
+/**
+ * Newest activity-log timestamp for an order (ISO). Every real seller edit
+ * appends an activity entry, but a background Woo re-sync of a promoted order
+ * does NOT — it only re-stamps updatedAt. So the activity tip, not updatedAt,
+ * tells a genuine edit apart from a stale tab's Woo rewrite. Falls back to
+ * updatedAt when there is no activity log.
+ */
+function activityTipMs(o: ServerOrder | undefined): number {
+  const log = o?.activityLog;
+  let max = 0;
+  if (Array.isArray(log)) {
+    for (const a of log) {
+      const t = Date.parse(String(a?.at ?? ""));
+      if (!Number.isNaN(t) && t > max) max = t;
+    }
+  }
+  return max || parseUpdatedAt(o?.updatedAt);
+}
+
+function itemsDiffer(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
+}
+
+/**
+ * A promoted (webQueueReleased) order is seller-owned — WooCommerce must never
+ * change it. If an incoming write to such an order changes its line items but
+ * carries NO newer activity than the copy we already have, it is a stale rewrite
+ * (typically an old browser tab still running the pre-fix Woo sync). Keep the
+ * existing items/totals so a manually added product can't be wiped a few
+ * seconds/minutes after Save. Returns the items/totals to persist.
+ */
+function protectPromotedItems(
+  incoming: ServerOrder,
+  existing: ServerOrder | undefined
+): Pick<ServerOrder, "items" | "subtotal" | "total"> | null {
+  if (!existing?.webQueueReleased || !Array.isArray(existing.items)) return null;
+  if (!itemsDiffer(incoming.items, existing.items)) return null;
+  if (activityTipMs(incoming) > activityTipMs(existing)) return null; // genuine edit
+  return {
+    items: existing.items,
+    subtotal: existing.subtotal,
+    total: existing.total,
+  };
+}
 
 /**
  * Merge an incoming orders blob into what the server already has, keeping the
@@ -172,7 +226,14 @@ function mergeServerOrders(incoming: unknown, existing: unknown): unknown {
     const existingNewer =
       parseUpdatedAt(eo.updatedAt) > parseUpdatedAt(io.updatedAt);
     const advanceProtect = (eo.advance ?? 0) > 0 && !(io.advance ?? 0);
-    if (existingNewer || advanceProtect) byId.set(eo.id, eo);
+    if (existingNewer || advanceProtect) {
+      byId.set(eo.id, eo);
+      continue;
+    }
+    // Keep a promoted order's items when the incoming copy is a stale Woo
+    // rewrite (changed items but no newer activity than what we already have).
+    const keepItems = protectPromotedItems(io, eo);
+    if (keepItems) byId.set(eo.id, { ...io, ...keepItems });
   }
   return { ...(incoming as object), orders: [...byId.values()] };
 }
@@ -290,7 +351,29 @@ export async function PATCH(req: Request) {
     // Slim the order the same way a full push would.
     const slimList = (slimOrdersBlob({ orders: [order] }) as { orders?: Order[] })
       .orders;
-    const slimOrder = (slimList && slimList[0]) || order;
+    let slimOrder = (slimList && slimList[0]) || order;
+
+    // Read the current blob up front so we can (a) guard a promoted order's items
+    // against a stale Woo rewrite and (b) patch the blob below — one read, reused.
+    let raw: { orders?: Order[] } | null = null;
+    try {
+      raw = (await readData(scope, "orders")) as { orders?: Order[] } | null;
+    } catch (e) {
+      console.error("[seller-data] blob read failed", e);
+    }
+    const existingOrders = Array.isArray(raw?.orders) ? raw!.orders : [];
+    const existingOrder = existingOrders.find((o) => o.id === slimOrder.id);
+
+    // A promoted (seller-owned) order's items must not be wiped by an incoming
+    // write that carries no newer activity — that's a stale tab's Woo re-sync,
+    // not a real edit. Keep the items/totals we already have in that case.
+    const keepItems = protectPromotedItems(
+      slimOrder as ServerOrder,
+      existingOrder as ServerOrder | undefined
+    );
+    if (keepItems) {
+      slimOrder = { ...slimOrder, ...keepItems } as Order;
+    }
 
     // Update the normalized row FIRST — the paginated read API (the source large
     // stores display from) serves this, and it's a tiny single-row write that
@@ -304,8 +387,7 @@ export async function PATCH(req: Request) {
     // Best-effort: also patch the full blob (used by the local-storage pull).
     // Never fail the request over this — it can be heavy on very large stores.
     try {
-      const raw = (await readData(scope, "orders")) as { orders?: Order[] } | null;
-      const orders = Array.isArray(raw?.orders) ? [...raw!.orders] : [];
+      const orders = existingOrders.length ? [...existingOrders] : [];
       const idx = orders.findIndex((o) => o.id === slimOrder.id);
       if (idx >= 0) orders[idx] = slimOrder;
       else orders.unshift(slimOrder);

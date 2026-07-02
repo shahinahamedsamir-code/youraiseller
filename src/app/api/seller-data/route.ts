@@ -150,12 +150,22 @@ type ServerOrder = {
   id?: string;
   updatedAt?: string;
   advance?: number;
+  status?: string;
   webQueueReleased?: boolean;
   items?: unknown[];
   subtotal?: number;
   total?: number;
   activityLog?: { at?: string }[];
 };
+
+// Terminal statuses a seller sets by hand — a background/stale write must never
+// silently move an order OUT of one of these (e.g. cancelled → pending).
+const SETTLED_STATUSES = new Set([
+  "cancelled",
+  "returned",
+  "lost",
+  "delivered",
+]);
 
 /**
  * Newest activity-log timestamp for an order (ISO). Every real seller edit
@@ -203,6 +213,37 @@ function protectPromotedItems(
 }
 
 /**
+ * Guard an existing order against a stale rewrite. A real change always appends
+ * a newer activity entry; a stale full-blob push (e.g. an old tab that never got
+ * the seller's cancel) does not. So when an incoming copy would move an order OUT
+ * of a settled status (cancelled/returned/lost/delivered) but carries no newer
+ * activity, keep the settled status — this is what stopped a cancelled Approved
+ * order from snapping back to pending. Also preserves promoted-order items.
+ * Returns the fields to keep from `existing`, or null when nothing needs guarding.
+ */
+function protectStaleOrderRewrite(
+  incoming: ServerOrder,
+  existing: ServerOrder | undefined
+): Partial<ServerOrder> | null {
+  if (!existing) return null;
+  const preserve: Partial<ServerOrder> = {};
+
+  const items = protectPromotedItems(incoming, existing);
+  if (items) Object.assign(preserve, items);
+
+  const es = String(existing.status ?? "");
+  if (
+    SETTLED_STATUSES.has(es) &&
+    String(incoming.status ?? "") !== es &&
+    activityTipMs(incoming) <= activityTipMs(existing)
+  ) {
+    preserve.status = existing.status;
+  }
+
+  return Object.keys(preserve).length ? preserve : null;
+}
+
+/**
  * Merge an incoming orders blob into what the server already has, keeping the
  * newest copy of each order (and never wiping a seller advance the server has
  * but the push lacks). This stops a stale full-blob push from one tab/device
@@ -230,10 +271,10 @@ function mergeServerOrders(incoming: unknown, existing: unknown): unknown {
       byId.set(eo.id, eo);
       continue;
     }
-    // Keep a promoted order's items when the incoming copy is a stale Woo
-    // rewrite (changed items but no newer activity than what we already have).
-    const keepItems = protectPromotedItems(io, eo);
-    if (keepItems) byId.set(eo.id, { ...io, ...keepItems });
+    // Keep a settled status / promoted-order items when the incoming copy is a
+    // stale rewrite (changed them but carries no newer activity than we have).
+    const keep = protectStaleOrderRewrite(io, eo);
+    if (keep) byId.set(eo.id, { ...io, ...keep });
   }
   return { ...(incoming as object), orders: [...byId.values()] };
 }
@@ -364,15 +405,15 @@ export async function PATCH(req: Request) {
     const existingOrders = Array.isArray(raw?.orders) ? raw!.orders : [];
     const existingOrder = existingOrders.find((o) => o.id === slimOrder.id);
 
-    // A promoted (seller-owned) order's items must not be wiped by an incoming
-    // write that carries no newer activity — that's a stale tab's Woo re-sync,
-    // not a real edit. Keep the items/totals we already have in that case.
-    const keepItems = protectPromotedItems(
+    // A stale write (an old tab that never got the seller's cancel/edit) must not
+    // revert a settled status or wipe a promoted order's items. When the incoming
+    // copy carries no newer activity, keep those fields from what we already have.
+    const keep = protectStaleOrderRewrite(
       slimOrder as ServerOrder,
       existingOrder as ServerOrder | undefined
     );
-    if (keepItems) {
-      slimOrder = { ...slimOrder, ...keepItems } as Order;
+    if (keep) {
+      slimOrder = { ...slimOrder, ...keep } as Order;
     }
 
     // Update the normalized row FIRST — the paginated read API (the source large

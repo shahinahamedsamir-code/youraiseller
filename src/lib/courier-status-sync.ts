@@ -87,9 +87,13 @@ export function applyCourierDeliveryStatus(
 
   let statusChanged = false;
 
-  // If staff already marked an order as returned, do not let courier polling
-  // move it back to an in-progress state (e.g. partial/shipped).
-  if (prevStatus === "returned" && mapped && mapped !== "returned") {
+  // Never let courier polling override a seller's terminal decision. A
+  // cancelled / returned / lost / delivered order stays put (e.g. a cancelled
+  // order with a courier consignment must not snap back to RTS/Shipped when the
+  // courier still reports it as in-review). Only the raw courierStatus above is
+  // updated for reference.
+  const SETTLED: OrderStatus[] = ["cancelled", "returned", "lost"];
+  if (SETTLED.includes(prevStatus) && mapped && mapped !== prevStatus) {
     return {
       orderId,
       ok: true,
@@ -116,6 +120,45 @@ export function applyCourierDeliveryStatus(
     PIPELINE_RANK[prevStatus] !== undefined &&
     PIPELINE_RANK[mapped] < PIPELINE_RANK[prevStatus]
   ) {
+    return {
+      orderId,
+      ok: true,
+      message: deliveryStatus,
+      courierStatus: deliveryStatus,
+      panelStatus: prevStatus,
+      statusChanged: false,
+    };
+  }
+
+  // Courier polling may ONLY drive the parcel-in-transit / delivery-outcome
+  // statuses (Shipped, Delivered, Return Pending, Partial). Every other panel
+  // status — RTS, Pending, Cancelled, Returned, Lost, Preorder, Pending Cancel —
+  // is a seller/warehouse decision the courier must not set automatically. So a
+  // still-"in review" parcel that maps to rts/pending is ignored (raw
+  // courierStatus above is still recorded); manual "Refresh status" is unaffected.
+  const COURIER_DRIVABLE: OrderStatus[] = [
+    "shipped",
+    "delivered",
+    "pending_return",
+    "partial",
+  ];
+  if (mapped && mapped !== prevStatus && !COURIER_DRIVABLE.includes(mapped)) {
+    return {
+      orderId,
+      ok: true,
+      message: deliveryStatus,
+      courierStatus: deliveryStatus,
+      panelStatus: prevStatus,
+      statusChanged: false,
+    };
+  }
+
+  // Only act on a GENUINE courier change. If the courier still reports the same
+  // raw status it did at the last sync, don't re-assert the mapped panel status —
+  // otherwise a manual move away from it (e.g. seller set Partial while the
+  // courier keeps saying "delivered") would be dragged back on every poll. A new,
+  // different courier status ("onno status") still applies and moves it forward.
+  if (mapped && mapped !== prevStatus && deliveryStatus === prevCourier) {
     return {
       orderId,
       ok: true,

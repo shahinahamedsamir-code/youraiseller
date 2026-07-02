@@ -75,8 +75,17 @@ const KINDS: SellerKind[] = [
   "accounting",
 ];
 
+// A few stores use a localStorage prefix that differs from the sync kind. Map
+// them so the sync reads/writes the SAME key the store does — otherwise a team
+// member pulls the owner's data into a key the store never reads (e.g. delivery
+// methods synced to "deliverymethods-*" but read from "delivery-methods-*").
+const KIND_TO_LOCAL_PREFIX: Partial<Record<SellerKind, string>> = {
+  deliverymethods: "delivery-methods",
+};
+
 function localKey(kind: SellerKind, scope: string): string {
-  return `youraiseller-${kind}-${scope}`;
+  const prefix = KIND_TO_LOCAL_PREFIX[kind] ?? kind;
+  return `youraiseller-${prefix}-${scope}`;
 }
 
 /** Skip a server pull right after a local save to avoid clobbering edits. */

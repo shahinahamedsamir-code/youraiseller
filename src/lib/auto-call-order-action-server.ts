@@ -150,6 +150,21 @@ export async function applyAutoCallKeyOrderActionForLog(
   const idx = file.orders.findIndex((o) => String(o.id) === log.orderId);
   if (idx === -1) return { applied: false, action };
 
+  // Never apply routing to an order the seller already settled (cancel/deliver/
+  // etc.) — this is what let a call outcome revert a cancelled order to pending.
+  if (!orderNeedsAutoCallActionServer(file.orders[idx], action)) {
+    log.orderActionApplied = true;
+    log.providerMessage = [
+      log.providerMessage,
+      `Key ${digit} → ${autoCallKeyOrderActionLabel(action)} (skipped — order already ${String(
+        file.orders[idx].status ?? ""
+      )})`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return { applied: true, action };
+  }
+
   const changed = applyActionToOrder(file.orders[idx], action, digit);
   if (changed) {
     if (action === "approve_pending" || action === "approve_rts") {

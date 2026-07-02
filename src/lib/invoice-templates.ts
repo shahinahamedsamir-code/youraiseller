@@ -20,6 +20,11 @@ function esc(v: unknown): string {
     .replace(/>/g, "&gt;");
 }
 
+/** Human invoice number for display (falls back to the order id). */
+function invoiceNo(order: Order): string {
+  return order.invoiceNumber?.trim() || order.id;
+}
+
 function currencySymbol(biz: BusinessSettings): string {
   return biz.currency === "USD" ? "$" : "৳";
 }
@@ -106,7 +111,7 @@ function fancyBody(order: Order, biz: BusinessSettings): string {
         </div>
         <div style="text-align:right">
           <div style="font-size:30px;font-weight:800;letter-spacing:3px;opacity:.95">INVOICE</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:2px">${esc(order.id)}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:2px">${esc(invoiceNo(order))}</div>
         </div>
       </div>
     </div>
@@ -184,7 +189,7 @@ function minimalBody(order: Order, biz: BusinessSettings): string {
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
         <div style="font-family:${SERIF};font-size:34px;font-weight:700;letter-spacing:-.5px">Invoice</div>
-        <div style="font-size:12px;color:#999;letter-spacing:3px;margin-top:2px">${esc(order.id)}</div>
+        <div style="font-size:12px;color:#999;letter-spacing:3px;margin-top:2px">${esc(invoiceNo(order))}</div>
       </div>
       <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         ${logoMark(biz, 36, "#111")}
@@ -260,7 +265,7 @@ function elegantBody(order: Order, biz: BusinessSettings): string {
       </div>
       <div style="text-align:right">
         <div style="font-family:${SERIF};font-size:26px;letter-spacing:4px;color:${GOLD}">INVOICE</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${esc(order.id)}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${esc(invoiceNo(order))}</div>
       </div>
     </div>
 
@@ -352,7 +357,7 @@ function posBody(order: Order, biz: BusinessSettings, template: InvoiceTemplate)
       ${biz.mobile ? `<div style="color:#666;font-size:11px">${esc(biz.mobile)}</div>` : ""}
     </div>
     <div style="border-top:2px solid ${accent};margin:10px 0 8px"></div>
-    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span style="font-weight:700">${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span style="font-weight:700">${esc(invoiceNo(order))}</span></div>
     <div style="display:flex;justify-content:space-between"><span>Date</span><span>${esc(order.createdAt)}</span></div>
     ${dash}
     <div style="font-weight:700">${esc(order.customerName)}</div>
@@ -387,7 +392,7 @@ function posMinimalBody(
       <div style="font-size:11px;color:#111">${esc(fullAddress(biz))}</div>
     </div>
     <div style="border-top:1px solid #111;margin:8px 0"></div>
-    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span>${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span>${esc(invoiceNo(order))}</span></div>
     <div style="display:flex;justify-content:space-between"><span>Date</span><span>${esc(order.createdAt)}</span></div>
     ${dash}
     <div style="font-weight:700">${esc(order.customerName)}</div>
@@ -418,7 +423,7 @@ function posElegantBody(
       <div style="font-size:11px;color:#fff">${esc(biz.tagline || biz.invoiceFooter || "")}</div>
     </div>
     <div style="border-top:1px solid ${accent};margin:8px 0"></div>
-    <div style="display:flex;justify-content:space-between;color:#fff"><span>Invoice</span><span>${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between;color:#fff"><span>Invoice</span><span>${esc(invoiceNo(order))}</span></div>
     <div style="display:flex;justify-content:space-between;color:#fff"><span>Date</span><span>${esc(order.createdAt)}</span></div>
     ${dash}
     <div style="font-weight:800">${esc(order.customerName)}</div>
@@ -451,7 +456,7 @@ function posStudioBody(
       </div>
       <div style="text-align:right">
         <div style="font-size:18px;font-weight:900;letter-spacing:1px">INV</div>
-        <div style="font-size:11px;color:#111">${esc(order.id)}</div>
+        <div style="font-size:11px;color:#111">${esc(invoiceNo(order))}</div>
       </div>
     </div>
     <div style="border-top:2px solid #111;margin:8px 0"></div>
@@ -494,7 +499,7 @@ function posLedgerBody(
       </div>
       <div style="text-align:right">
         <div style="font-size:11px;color:#111">${esc(order.createdAt)}</div>
-        <div style="font-weight:800">${esc(order.id)}</div>
+        <div style="font-weight:800">${esc(invoiceNo(order))}</div>
       </div>
     </div>
     <div style="border-top:1px solid #111;margin:8px 0"></div>
@@ -529,7 +534,7 @@ function posReceiptBody(
       <div style="font-size:11px;color:#111">${esc(fullAddress(biz))}</div>
     </div>
     <div style="border-top:2px solid ${accent};margin:8px 0"></div>
-    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span>${esc(order.id)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Invoice</span><span>${esc(invoiceNo(order))}</span></div>
     <div style="display:flex;justify-content:space-between"><span>Date</span><span>${esc(order.createdAt)}</span></div>
     ${dash}
     <div style="font-weight:700">${esc(order.customerName)}</div>
@@ -576,7 +581,7 @@ function studioBody(order: Order, biz: BusinessSettings): string {
       <div style="padding:32px 34px;border-left:1px solid #e5e7eb;background:#f8fafc;display:flex;flex-direction:column;justify-content:space-between">
         <div style="text-align:right">
           <div style="font-size:36px;font-weight:900;letter-spacing:2px;color:#0f172a">INVOICE</div>
-          <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(order.id)}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(invoiceNo(order))}</div>
         </div>
         <div>
           <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:#64748b;text-transform:uppercase">Billed To</div>
@@ -645,7 +650,7 @@ function ledgerBody(order: Order, biz: BusinessSettings): string {
       </div>
       <div style="text-align:right">
         <div style="font-size:12px;color:#6b7280;letter-spacing:2px;text-transform:uppercase">Invoice</div>
-        <div style="font-size:28px;font-weight:800;letter-spacing:1px">${esc(order.id)}</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:1px">${esc(invoiceNo(order))}</div>
         <div style="margin-top:8px">${barcode(order.id)}</div>
       </div>
     </div>
@@ -724,7 +729,7 @@ function receiptBody(order: Order, biz: BusinessSettings): string {
       </div>
       <div style="text-align:right">
         <div style="font-size:13px;color:#6b7280">Invoice</div>
-        <div style="font-size:26px;font-weight:900">${esc(order.id)}</div>
+        <div style="font-size:26px;font-weight:900">${esc(invoiceNo(order))}</div>
         <div style="margin-top:8px">${barcode(order.id)}</div>
       </div>
     </div>
@@ -795,7 +800,7 @@ export function renderInvoiceDoc(
     paper === "pos"
       ? "@page{size:80mm auto;margin:0}body{width:80mm}"
       : "@page{size:A4;margin:12mm}";
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(order.id)}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(invoiceNo(order))}</title>
 <style>*{box-sizing:border-box}${pageCss}body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${body}${printScript}</body></html>`;
 }
 

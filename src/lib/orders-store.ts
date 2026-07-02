@@ -1228,6 +1228,16 @@ export function upsertWooCommerceOrder(
   if (idx >= 0) {
     const prev = data.orders[idx];
     const syncWooStatus = isWooOrderStatusSyncEnabled();
+    // Advance (and its payment record) is seller-managed — WooCommerce never
+    // sends it, so preserve the seller's value instead of wiping it to 0 on
+    // re-sync. Recompute the total (due) with the preserved advance.
+    const nextAdvance = prev.advance ?? advance;
+    const wooTotals = calcTotals(
+      input.items,
+      input.shippingCharge,
+      input.discount,
+      nextAdvance
+    );
     // Heal legacy auto-imported "On Hold" web orders (no staff action) back to
     // the incoming status (Processing). Woo on-hold is only our verify marker;
     // a real On Hold is always staff-set (webStatusStaffSetAt).
@@ -1252,12 +1262,12 @@ export function upsertWooCommerceOrder(
       courier,
       status: syncWooStatus ? status : prev.status,
       items: input.items,
-      subtotal,
+      subtotal: wooTotals.subtotal,
       shippingCharge: input.shippingCharge,
       discount: input.discount,
-      advance,
+      advance: nextAdvance,
       advancePayment: input.advancePayment ?? prev.advancePayment,
-      total,
+      total: wooTotals.total,
       note: input.note?.trim() ?? prev.note,
       source: "web",
       wooOrderId: input.wooOrderId,

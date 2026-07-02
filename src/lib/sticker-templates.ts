@@ -42,6 +42,11 @@ function parcelId(order: Order): string {
   );
 }
 
+/** Human invoice number for display (falls back to the order id). */
+function invoiceNo(order: Order): string {
+  return order.invoiceNumber?.trim() || order.id;
+}
+
 /** Code-128-ish faux barcode (visual only). */
 function barcode(text: string, opts: { h?: number; w?: string; light?: boolean } = {}): string {
   const h = opts.h ?? 44;
@@ -141,7 +146,7 @@ function classicBody(order: Order, biz: BusinessSettings, size: StickerSize): st
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:6px">
       <div>${logoOrName(biz, narrow ? 16 : 24)}<div style="font-size:.85em;color:#111">${esc(biz.mobile)}</div></div>
       <div style="text-align:right;font-size:.85em">
-        <div>IV No: <b>${esc(order.id)}</b></div>
+        <div>IV No: <b>${esc(invoiceNo(order))}</b></div>
         <div>${esc(order.createdAt)}</div>
       </div>
     </div>
@@ -180,7 +185,7 @@ function boldBody(order: Order, biz: BusinessSettings, size: StickerSize): strin
           <div style="font-size:.8em;color:#111">SHIP TO</div>
           ${recipient(order)}
         </div>
-        <div style="text-align:right;font-size:.85em">IV No: <b>${esc(order.id)}</b><br>Parcel ID:<br><b>${esc(parcelId(order))}</b></div>
+        <div style="text-align:right;font-size:.85em">IV No: <b>${esc(invoiceNo(order))}</b><br>Parcel ID:<br><b>${esc(parcelId(order))}</b></div>
       </div>
       <div style="margin-top:8px">${barcode(parcelId(order), { h: compact ? 32 : 50 })}</div>
       ${productTable(order, biz, compact)}
@@ -202,7 +207,7 @@ function barcodeBody(order: Order, biz: BusinessSettings, size: StickerSize): st
   return `<div style="width:${d.w}px;min-height:${d.minH}px;box-sizing:border-box;padding:${d.pad}px;font-family:'Segoe UI',system-ui,sans-serif;font-size:${d.base}px;color:#111;border:1px solid #111;background:#fff;display:flex;flex-direction:column">
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #111;padding-bottom:6px">
       <div>${logoOrName(biz, compact ? 14 : 20)}</div>
-      <div style="font-size:.85em;text-align:right">IV ${esc(order.id)}<br>${esc(order.createdAt)}</div>
+      <div style="font-size:.85em;text-align:right">IV ${esc(invoiceNo(order))}<br>${esc(order.createdAt)}</div>
     </div>
     <div style="margin-top:8px">
       <div style="font-size:.8em;color:#111">NAME / PHONE</div>
@@ -273,7 +278,7 @@ function neoBody(order: Order, biz: BusinessSettings, size: StickerSize): string
       </div>
       <div style="border:1px solid #111;border-radius:12px;padding:8px;background:#fff">
         <div style="font-size:.75em;color:#111;letter-spacing:1px;font-weight:800;text-transform:uppercase">Order</div>
-        <div style="font-weight:800;margin-top:6px">IV ${esc(order.id)}</div>
+        <div style="font-weight:800;margin-top:6px">IV ${esc(invoiceNo(order))}</div>
         <div style="margin-top:3px">Courier: ${esc(courierName(order))}</div>
         <div style="margin-top:8px">${barcode(parcelId(order), { h: compact ? 28 : 40, w: "100%" })}</div>
       </div>
@@ -369,7 +374,7 @@ function expressBody(order: Order, biz: BusinessSettings, size: StickerSize): st
       </div>
       <div style="text-align:right;font-size:.82em">
         <div>${esc(order.createdAt)}</div>
-        <div>IV ${esc(order.id)}</div>
+        <div>IV ${esc(invoiceNo(order))}</div>
       </div>
     </div>
     <div style="margin-top:8px;font-size:.86em">

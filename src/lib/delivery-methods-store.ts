@@ -206,7 +206,11 @@ export function loadDeliveryMethods(): DeliveryMethod[] {
 }
 
 export function loadActiveDeliveryMethods(): DeliveryMethod[] {
-  return loadRaw().filter((m) => m.active);
+  // Preferred (default-marked) method first so every "first active" fallback and
+  // dropdown resolves to the seller's chosen default courier.
+  return loadRaw()
+    .filter((m) => m.active)
+    .sort((a, b) => (a.preferred ? 0 : 1) - (b.preferred ? 0 : 1));
 }
 
 /** Active method marked default (Preferred eye) in Delivery Method List */

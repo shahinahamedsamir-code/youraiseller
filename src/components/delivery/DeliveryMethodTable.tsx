@@ -15,8 +15,7 @@ import {
   Boxes,
   CheckCircle2,
   CircleSlash,
-  Eye,
-  EyeOff,
+  Star,
   Pencil,
   PlugZap,
   Search,
@@ -250,18 +249,20 @@ export function DeliveryMethodTable() {
                     type="button"
                     onClick={() => togglePreferred(m)}
                     className={clsx(
-                      "inline-flex h-9 w-9 items-center justify-center rounded-xl border transition",
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition",
                       m.preferred
-                        ? "border-indigo-200 bg-indigo-50 text-indigo-600"
-                        : "border-slate-200 bg-white text-slate-400 hover:border-indigo-200 hover:text-indigo-600"
+                        ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-600"
                     )}
                     title={m.preferred ? "Default courier for new orders" : "Set as default"}
                   >
-                    {m.preferred ? (
-                      <Eye className="h-4 w-4" />
-                    ) : (
-                      <EyeOff className="h-4 w-4" />
-                    )}
+                    <Star
+                      className={clsx(
+                        "h-3.5 w-3.5",
+                        m.preferred && "fill-indigo-500 text-indigo-500"
+                      )}
+                    />
+                    {m.preferred ? "Default" : "Set default"}
                   </button>
                 </td>
                 <td className="px-4 py-3">

@@ -913,6 +913,11 @@ function invalidateOrdersByPhoneCache() {
   ordersByPhoneCache = null;
 }
 
+/** Digits-only, last 11 — matches phones even when formatting differs. */
+function normalizePhoneKey(phone: string | undefined): string {
+  return (phone ?? "").replace(/\D/g, "").slice(-11);
+}
+
 function buildOrdersByPhoneCache(orders: Order[]): Map<string, Order[]> {
   const map = new Map<string, Order[]>();
   for (const order of orders) {
@@ -1370,11 +1375,12 @@ export function upsertWooCommerceOrder(
   );
 
   // A real order arrived for this customer — drop any captured "incomplete"
-  // lead so the placed order doesn't show twice.
-  const placedPhone = input.phone.trim();
+  // lead so the placed order doesn't show twice (match on normalized phone so
+  // formatting differences don't leave a stale Incomplete row behind).
+  const placedPhone = normalizePhoneKey(input.phone);
   if (placedPhone) {
     data.orders = data.orders.filter(
-      (o) => !(o.captureId && o.phone.trim() === placedPhone)
+      (o) => !(o.captureId && normalizePhoneKey(o.phone) === placedPhone)
     );
   }
   data.orders.unshift(order);
@@ -1446,6 +1452,29 @@ export function upsertCapturedWebOrder(input: CapturedWebOrderInput): Order | nu
       : undefined;
 
   const data = loadRaw();
+
+  // If the customer already placed a REAL order (same phone), the abandoned
+  // checkout is superseded — never (re)create an incomplete lead for them, and
+  // clean up any stale capture row. This stops an order showing in BOTH
+  // Processing and Incomplete when a capture ping lands after the order.
+  const capPhone = normalizePhoneKey(input.phone);
+  if (capPhone) {
+    const placed = data.orders.find(
+      (o) =>
+        !o.captureId &&
+        o.wooOrderId != null &&
+        normalizePhoneKey(o.phone) === capPhone
+    );
+    if (placed) {
+      const stale = data.orders.findIndex((o) => o.captureId === captureId);
+      if (stale >= 0) {
+        data.orders.splice(stale, 1);
+        saveRaw(data);
+      }
+      return null;
+    }
+  }
+
   const idx = data.orders.findIndex((o) => o.captureId === captureId);
 
   if (idx >= 0) {
@@ -1974,6 +2003,24 @@ export function getOrderStatusCounts(): Record<OrderStatus, number> {
 export function repairWebOrdersInQueue(): number {
   const data = loadRaw();
   let fixed = 0;
+
+  // Drop incomplete captures already superseded by a real placed order (same
+  // phone) — clears leftover duplicates that show in BOTH Processing/Approved
+  // and the Incomplete tab.
+  const placedPhones = new Set(
+    data.orders
+      .filter((o) => !o.captureId && o.wooOrderId != null)
+      .map((o) => normalizePhoneKey(o.phone))
+      .filter((p) => p.length === 11)
+  );
+  if (placedPhones.size > 0) {
+    const before = data.orders.length;
+    data.orders = data.orders.filter(
+      (o) => !(o.captureId && placedPhones.has(normalizePhoneKey(o.phone)))
+    );
+    fixed += before - data.orders.length;
+  }
+
   for (let i = 0; i < data.orders.length; i++) {
     const o = data.orders[i];
     if (!isWebSourceOrder(o) || o.isPreorder) continue;

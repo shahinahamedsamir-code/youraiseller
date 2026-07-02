@@ -295,8 +295,8 @@ export async function runWooStockDailySyncIfDue(): Promise<StockSyncRunResult | 
   );
   if (!canApi) return null;
 
-  // Daily safety-net reconcile — push every managed product's exact quantity.
-  return runWooStockSync({ scope: "full", force: true, mode: "exact" });
+  // Daily safety-net reconcile — push every managed product in the chosen mode.
+  return runWooStockSync({ scope: "full", force: true });
 }
 
 /** Push a product's sell price to WooCommerce when price sync is on. */
@@ -354,10 +354,11 @@ export async function maybeAutoSyncProductToWoo(productId: string): Promise<void
   const product = loadProducts().find((p) => p.id === productId);
   if (!product || !product.manageStock) return;
 
+  // Push in whichever mode the seller chose — exact quantity or in/out status.
   await runWooStockSync({
     scope: "test",
     testSku: product.code,
     force: true,
-    mode: "exact",
+    mode: sync.mode,
   });
 }

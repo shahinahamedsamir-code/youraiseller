@@ -15,6 +15,7 @@ import {
   formatStockSyncTime,
   type WooStockSyncSettings,
   type StockSyncTrigger,
+  type StockSyncMode,
   type StockSyncRunResult,
 } from "@/lib/woocommerce-stock-sync-store";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
@@ -42,6 +43,21 @@ const TRIGGERS: {
     recommended: true,
   },
 ];
+
+const MODES: { value: StockSyncMode; label: string; hint: string; recommended?: boolean }[] =
+  [
+    {
+      value: "exact",
+      label: "Sync exact quantity",
+      hint: "Updates the real stock number in WooCommerce (e.g. 7).",
+      recommended: true,
+    },
+    {
+      value: "status_only",
+      label: "Sync status only",
+      hint: "In stock / out of stock only — no number, lighter API usage.",
+    },
+  ];
 
 
 export function WooCommerceStockSync() {
@@ -168,6 +184,27 @@ export function WooCommerceStockSync() {
             !sync.enabled && "pointer-events-none opacity-50"
           )}
         >
+          <p className="mb-2 text-sm font-bold text-slate-800">Sync mode</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {MODES.map((m) => (
+              <RadioCard
+                key={m.value}
+                selected={sync.mode === m.value}
+                label={m.label}
+                hint={m.hint}
+                recommended={m.recommended}
+                onSelect={() => patch({ mode: m.value })}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div
+          className={clsx(
+            "border-t border-slate-200 pt-4",
+            !sync.enabled && "pointer-events-none opacity-50"
+          )}
+        >
           <p className="text-sm font-bold text-slate-800">Sync direction</p>
           <p className="mb-3 text-xs text-slate-500">
             One-way: App → WooCommerce. The app is your single source of truth for
@@ -179,9 +216,9 @@ export function WooCommerceStockSync() {
             </p>
             <p className="text-xs text-slate-500">
               Every stock change (order sale, POS, manual edit, restock) instantly
-              pushes that product&apos;s exact quantity to your store, matched by SKU
-              = product Code. A daily full reconcile is the safety net. WooCommerce
-              → App is off, so the two directions can never fight each other.
+              pushes that product to your store in the mode chosen above, matched by
+              SKU = product Code. A daily full reconcile is the safety net.
+              WooCommerce → App is off, so the two directions can never fight.
             </p>
           </div>
         </div>

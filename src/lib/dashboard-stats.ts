@@ -196,7 +196,11 @@ function ordersForOverviewType(
   orders: Order[],
   field: OverviewDateField
 ): Order[] {
-  if (field === "web_order") return orders.filter((o) => isInWebQueue(o));
+  // Web Order → the exact set the Web Order List shows (all web-source orders,
+  // incl. promoted ones on the Complete tab). Using isInWebQueue here under-
+  // counted, dropping promoted/complete web orders.
+  if (field === "web_order") return getWebOrdersFromStore();
+  // Approved / courier → real Approved Orders only, never web-queue leads.
   return orders.filter((o) => !isInWebQueue(o));
 }
 

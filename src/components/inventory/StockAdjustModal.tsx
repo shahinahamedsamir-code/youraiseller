@@ -7,10 +7,7 @@ import {
   increaseStock,
   type Product,
 } from "@/lib/inventory-store";
-import {
-  loadWooStockSyncSettings,
-  runWooStockSync,
-} from "@/lib/woocommerce-stock-sync-store";
+import { runWooStockSync } from "@/lib/woocommerce-stock-sync-store";
 import { loadWooCommerceSettings } from "@/lib/woocommerce-integration-store";
 import clsx from "clsx";
 
@@ -121,15 +118,12 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
         onClose();
         return;
       }
-      // Fully automatic mode: the inventory stock-change chokepoint already
-      // mirrored this to WooCommerce — no popup, just close.
-      if (loadWooStockSyncSettings().autoSyncOnChange) {
-        onClose();
-        return;
-      }
-      // Otherwise ask: Sync to WooCommerce or Skip.
+      // Mirror this manual +/- to WooCommerce right away and show the result
+      // (in the chosen Sync mode — exact quantity or in/out status). Auto-runs so
+      // the seller always gets confirmation without an extra click.
       setNewStock(after);
       setPhase("confirm");
+      void doSync();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not update stock.");
     } finally {
@@ -341,7 +335,7 @@ export function StockAdjustModal({ product, mode, onClose, onSuccess }: Props) {
                   <span className="font-semibold text-slate-800">
                     Stock updated to {newStock}.
                   </span>{" "}
-                  Sync to WooCommerce?
+                  Syncing to WooCommerce…
                 </span>
               )}
             </div>

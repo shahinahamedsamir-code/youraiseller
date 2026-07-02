@@ -2086,6 +2086,16 @@ export function promoteWebOrderToApproved(
     webStatusStaffSetAt: new Date().toISOString(),
   });
   if (updated) {
+    // Now a real Approved order (Pending) — deduct stock immediately, like a
+    // manually created order. Web-queue leads held no stock until this point.
+    if (
+      !updated.isPreorder &&
+      updated.status !== "cancelled" &&
+      updated.status !== "returned" &&
+      updated.status !== "preorder"
+    ) {
+      reserveStockForOrder(updated);
+    }
     appendOrderActivity(
       id,
       createActivityEntry({

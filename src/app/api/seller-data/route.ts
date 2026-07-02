@@ -220,22 +220,31 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Slim the order the same way a full push would, then merge into the blob.
+    // Slim the order the same way a full push would.
     const slimList = (slimOrdersBlob({ orders: [order] }) as { orders?: Order[] })
       .orders;
     const slimOrder = (slimList && slimList[0]) || order;
 
-    const raw = (await readData(scope, "orders")) as { orders?: Order[] } | null;
-    const orders = Array.isArray(raw?.orders) ? [...raw!.orders] : [];
-    const idx = orders.findIndex((o) => o.id === slimOrder.id);
-    if (idx >= 0) orders[idx] = slimOrder;
-    else orders.unshift(slimOrder);
-
-    await writeData(scope, "orders", { ...(raw ?? {}), orders });
+    // Update the normalized row FIRST — the paginated read API (the source large
+    // stores display from) serves this, and it's a tiny single-row write that
+    // won't fail like a multi-MB blob rewrite might.
     try {
       await upsertOrderRow(scope, slimOrder);
     } catch (e) {
       console.error("[seller-data] order-row upsert failed", e);
+    }
+
+    // Best-effort: also patch the full blob (used by the local-storage pull).
+    // Never fail the request over this — it can be heavy on very large stores.
+    try {
+      const raw = (await readData(scope, "orders")) as { orders?: Order[] } | null;
+      const orders = Array.isArray(raw?.orders) ? [...raw!.orders] : [];
+      const idx = orders.findIndex((o) => o.id === slimOrder.id);
+      if (idx >= 0) orders[idx] = slimOrder;
+      else orders.unshift(slimOrder);
+      await writeData(scope, "orders", { ...(raw ?? {}), orders });
+    } catch (e) {
+      console.error("[seller-data] blob patch failed (row still saved)", e);
     }
     return NextResponse.json({ ok: true });
   } catch (e) {

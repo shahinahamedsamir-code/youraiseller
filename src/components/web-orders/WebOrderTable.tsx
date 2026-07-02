@@ -814,7 +814,7 @@ export function WebOrderTable() {
                           </a>
                         ) : null}
                         <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-600">
-                          {order.note?.trim() || "—"}
+                          {order.internalNote?.trim() || order.note?.trim() || "—"}
                         </p>
                         <DuplicateBadge order={order} index={dupIndex} />
                       </td>

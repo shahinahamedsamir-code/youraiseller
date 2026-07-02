@@ -85,42 +85,13 @@ export function detectOrderSourceFromWooRow(
   const referrer = metaValue(meta, ["_wc_order_attribution_referrer"])?.toLowerCase() ?? "";
   const blob = `${raw} ${referrer}`.trim();
 
-  if (!blob) {
-    return { orderSource: "website" };
-  }
-
-  if (/instagram|\big\b|ig\.me|instagr/.test(blob)) {
-    return { orderSource: "instagram", rawAttribution: blob };
-  }
-  if (/facebook|\bfb\b|fb\.com|fbclid|meta\.com|messenger/.test(blob)) {
-    if (/messenger/.test(blob)) {
-      return { orderSource: "messenger", rawAttribution: blob };
-    }
-    return { orderSource: "facebook", rawAttribution: blob };
-  }
-  if (/tiktok|tt\.com/.test(blob)) {
-    return { orderSource: "tiktok", rawAttribution: blob };
-  }
-  if (/whatsapp|wa\.me|whats app/.test(blob)) {
-    return { orderSource: "whatsapp", rawAttribution: blob };
-  }
-  if (/google|gclid|youtube|bing|yahoo|duckduckgo/.test(blob)) {
-    return { orderSource: "direct", rawAttribution: blob };
-  }
-  if (/organic|referral|typein|admin|mobile_app|web|checkout|site/.test(blob)) {
-    return { orderSource: "website", rawAttribution: blob };
-  }
-
-  const label = raw.split(/[,|]/)[0]?.trim().slice(0, 80);
-  if (label) {
-    return {
-      orderSource: "custom",
-      customOrderSource: label,
-      rawAttribution: blob,
-    };
-  }
-
-  return { orderSource: "website", rawAttribution: blob };
+  // An order placed on the store is a Website order — that's its Order Source.
+  // The ad/traffic channel (Facebook, Instagram, …) is kept as rawAttribution
+  // for reference/analytics, but we don't override the source with it. Sellers
+  // tag other channels (Facebook DM, WhatsApp, …) on manual orders instead.
+  return blob
+    ? { orderSource: "website", rawAttribution: blob }
+    : { orderSource: "website" };
 }
 
 export type WooOrderApiRow = {

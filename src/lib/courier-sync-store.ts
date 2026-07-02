@@ -2,7 +2,17 @@ import { sellerStorageKey } from "./seller-storage";
 
 const KEY_SUFFIX = "courier-auto-sync";
 
+/**
+ * Master switch — background courier status auto-sync is OFF for everyone. The
+ * CourierAutoSyncRunner no longer polls couriers to change order statuses on its
+ * own. Manual "Refresh status" from an order still works (and still respects the
+ * selective / settled-status rules in applyCourierDeliveryStatus). Flip to true
+ * to re-enable the per-seller auto-sync setting below.
+ */
+const COURIER_AUTO_SYNC_MASTER_ENABLED = false;
+
 export function isCourierAutoSyncEnabled(): boolean {
+  if (!COURIER_AUTO_SYNC_MASTER_ENABLED) return false;
   if (typeof window === "undefined") return true;
   const key = sellerStorageKey(KEY_SUFFIX);
   if (!key) return true;

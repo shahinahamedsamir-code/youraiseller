@@ -1,11 +1,49 @@
 import { getSellerStorageScope } from "./seller-storage";
 import { getSessionUser } from "./dev-users";
+import { parseActivityDate } from "./order-activity";
 import {
   isSellerDataPushTooLarge,
   sellerDataPayloadBytes,
   SELLER_DATA_GZIP_THRESHOLD,
   slimOrdersBlob,
 } from "./seller-data-payload";
+
+type OrderLike = { id?: string; updatedAt?: string };
+
+/**
+ * Merge a server orders blob into the local one, keeping whichever copy of each
+ * order was edited most recently (by updatedAt). This prevents a pull from
+ * reverting a fresh local edit — e.g. a just-added note — that hasn't finished
+ * syncing to the server yet, while still adopting genuinely newer server orders.
+ */
+function mergeOrderBlobs(local: unknown, server: unknown): unknown {
+  const s = (server && typeof server === "object" ? server : {}) as {
+    orders?: OrderLike[];
+  };
+  const l = (local && typeof local === "object" ? local : {}) as {
+    orders?: OrderLike[];
+  };
+  const serverOrders = Array.isArray(s.orders) ? s.orders : [];
+  const localOrders = Array.isArray(l.orders) ? l.orders : [];
+  if (localOrders.length === 0) return server;
+
+  const byId = new Map<string, OrderLike>();
+  for (const o of serverOrders) if (o?.id) byId.set(o.id, o);
+  for (const lo of localOrders) {
+    if (!lo?.id) continue;
+    const so = byId.get(lo.id);
+    if (!so) {
+      byId.set(lo.id, lo);
+      continue;
+    }
+    // Local strictly-newer edit wins so an unsynced change isn't clobbered.
+    if (parseActivityDate(String(lo.updatedAt ?? "")) >
+        parseActivityDate(String(so.updatedAt ?? ""))) {
+      byId.set(lo.id, lo);
+    }
+  }
+  return { ...s, orders: [...byId.values()] };
+}
 
 export type SellerKind =
   | "orders"
@@ -186,6 +224,10 @@ export async function syncSellerDataFromServer(): Promise<boolean> {
       const since = lastPush[`${scope}:${kind}`] ?? 0;
       if (Date.now() - since < 5000 && localRaw && isOwner) {
         await pushSellerData(kind, local);
+      } else if (kind === "orders") {
+        // Keep the newest copy of each order so a fresh local edit (e.g. a note)
+        // isn't reverted by a slightly-behind server blob.
+        adopt(key, mergeOrderBlobs(local, serverData));
       } else {
         adopt(key, serverData);
       }
@@ -247,8 +289,12 @@ export async function pullOrdersFromServer(): Promise<boolean> {
   if (serverData == null) return false;
 
   const key = localKey("orders", scope);
-  const next = JSON.stringify(serverData);
-  if (localStorage.getItem(key) === next) return false;
+  const localRaw = localStorage.getItem(key);
+  // Merge so a fresh local edit (e.g. a note) isn't reverted by a stale server
+  // copy that hasn't received the per-order push yet.
+  const merged = mergeOrderBlobs(localRaw ? safeParse(localRaw) : null, serverData);
+  const next = JSON.stringify(merged);
+  if (localRaw === next) return false;
 
   localStorage.setItem(key, next);
   window.dispatchEvent(new Event("youraiseller-data-updated"));

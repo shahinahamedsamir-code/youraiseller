@@ -17,7 +17,8 @@ export function buildSteadfastCreatePayload(
   order: Order,
   config: SteadfastConfig
 ): SteadfastCreateOrderPayload {
-  const due = Math.max(0, order.total - (order.advance ?? 0));
+  // order.total is already net of advance — the COD to collect IS the total.
+  const due = Math.max(0, order.total);
   const cod = order.paymentMethod === "cod" ? due : 0;
 
   const itemDescription = config.sendProductNames

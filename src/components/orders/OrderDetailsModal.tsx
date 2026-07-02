@@ -152,10 +152,9 @@ export function OrderDetailsModal({
       : canEditOrder(order.status)
     : false;
 
-  const due = useMemo(
-    () => (order ? Math.max(0, order.total - (order.advance ?? 0)) : 0),
-    [order]
-  );
+  // order.total is already net of advance (calcTotals subtracts it) — using it
+  // directly avoids double-counting the advance in the Due figure.
+  const due = useMemo(() => order?.total ?? 0, [order]);
 
   const orderTags = useMemo(() => {
     void dataTick;

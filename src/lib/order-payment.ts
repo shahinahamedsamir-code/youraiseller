@@ -49,9 +49,14 @@ export function paymentItemKey(item: PaymentApprovalItem): string {
   return `${item.order.id}:${item.type}`;
 }
 
-/** Amount still to collect on delivery (after advance). */
+/**
+ * Amount still to collect on delivery (after advance). order.total is ALREADY
+ * net of the advance (calcTotals does subtotal + shipping − discount − advance),
+ * so the due is simply order.total — subtracting advance again would short the
+ * figure (and the courier COD) by the advance amount.
+ */
 export function orderAmountDue(order: Order): number {
-  return Math.max(0, order.total - (order.advance ?? 0));
+  return Math.max(0, order.total);
 }
 
 export function isAdvancePaymentPending(order: Order): boolean {

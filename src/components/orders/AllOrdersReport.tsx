@@ -767,7 +767,8 @@ function ReportRow({
 }) {
   const first = o.items[0];
   const more = o.items.length - 1;
-  const due = Math.max(0, o.total - (o.advance ?? 0));
+  // o.total is already net of advance — don't subtract it again (double count).
+  const due = Math.max(0, o.total);
   const unpaid = due > 0;
   const panelUrl = getCourierPanelTrackingUrl(o);
 

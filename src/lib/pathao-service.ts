@@ -26,7 +26,8 @@ export function buildPathaoCreatePayload(
   order: Order,
   config: PathaoConfig
 ): PathaoCreateOrderPayload {
-  const due = Math.max(0, order.total - (order.advance ?? 0));
+  // order.total is already net of advance — the COD to collect IS the total.
+  const due = Math.max(0, order.total);
   const cod = order.paymentMethod === "cod" ? Math.round(due) : 0;
 
   const noteParts = [

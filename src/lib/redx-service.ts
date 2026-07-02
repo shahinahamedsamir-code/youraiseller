@@ -33,7 +33,8 @@ export function buildRedxCreatePayload(
   order: Order,
   config: RedxConfig
 ): RedxCreateParcelPayload {
-  const due = Math.max(0, order.total - (order.advance ?? 0));
+  // order.total is already net of advance — the COD to collect IS the total.
+  const due = Math.max(0, order.total);
   const cod = order.paymentMethod === "cod" ? Math.round(due) : 0;
   const totalQty = order.items.reduce((s, i) => s + i.qty, 0) || 1;
   const totalWeight = Math.min(

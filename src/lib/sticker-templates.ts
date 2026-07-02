@@ -29,7 +29,9 @@ function money(s: string, n: number): string {
 }
 
 function dueAmount(order: Order): number {
-  return Math.max(0, order.total - (order.advance ?? 0));
+  // order.total is already net of advance (calcTotals subtracts it); don't
+  // subtract advance again or the due prints short by the advance amount.
+  return order.total;
 }
 
 /** Courier's parcel / consignment ID (same value the order list shows). */

@@ -159,7 +159,7 @@ function fancyBody(order: Order, biz: BusinessSettings): string {
         ${order.discount ? `<div style="display:flex;justify-content:space-between;padding:5px 0;color:#6b7280"><span>Discount</span><span style="color:#ef4444">-${money(sym, order.discount)}</span></div>` : ""}
         <div style="display:flex;justify-content:space-between;padding:5px 0;color:#6b7280"><span>Delivery</span><span style="color:#374151">${money(sym, order.shippingCharge)}</span></div>
         ${(order.advance ?? 0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:5px 0;color:#6b7280"><span>Advance Paid</span><span style="color:#16a34a">-${money(sym, order.advance ?? 0)}</span></div>` : ""}
-        <div style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#6d28d9,#4f46e5);color:#fff;font-weight:800;padding:12px 16px;margin-top:8px;border-radius:12px;font-size:15px"><span>TOTAL DUE</span><span>${money(sym, Math.max(0, order.total - (order.advance ?? 0)))}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#6d28d9,#4f46e5);color:#fff;font-weight:800;padding:12px 16px;margin-top:8px;border-radius:12px;font-size:15px"><span>TOTAL DUE</span><span>${money(sym, order.total)}</span></div>
       </div>
     </div>
 
@@ -370,7 +370,7 @@ function posBody(order: Order, biz: BusinessSettings, template: InvoiceTemplate)
     ${order.discount ? totalRow("Discount", `-${money(sym, order.discount)}`) : ""}
     ${totalRow("Delivery", money(sym, order.shippingCharge))}
     ${(order.advance ?? 0) > 0 ? totalRow("Advance", `-${money(sym, order.advance ?? 0)}`) : ""}
-    ${totalRow("TOTAL", money(sym, Math.max(0, order.total - (order.advance ?? 0))), true)}
+    ${totalRow("TOTAL", money(sym, order.total), true)}
     <div style="border-top:2px solid ${accent};margin:10px 0 8px"></div>
     <div style="text-align:center;color:#333;font-weight:600">${esc(biz.invoiceFooter || "Thank you!")}</div>
     <div style="text-align:center;margin-top:8px">${barcode(order.id)}</div>
@@ -385,7 +385,7 @@ function posMinimalBody(
   rows: string,
   dash: string
 ): string {
-  const due = Math.max(0, order.total - (order.advance ?? 0));
+  const due = order.total;
   return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#111;width:280px;margin:0 auto;padding:12px 10px;font-size:12px">
     <div style="text-align:center">
       <div style="font-size:18px;font-weight:900;letter-spacing:1px">${esc(biz.name || "RECEIPT")}</div>
@@ -416,7 +416,7 @@ function posElegantBody(
   dash: string,
   accent: string
 ): string {
-  const due = Math.max(0, order.total - (order.advance ?? 0));
+  const due = order.total;
   return `<div style="font-family:'Segoe UI',system-ui,monospace;color:#fff;width:280px;margin:0 auto;padding:12px 10px;font-size:12px;background:#111;border-radius:12px">
     <div style="text-align:center">
       <div style="font-size:18px;font-weight:900;letter-spacing:1px">${esc(biz.name || "RECEIPT")}</div>
@@ -476,7 +476,7 @@ function posStudioBody(
       <div style="min-width:106px;border:1px solid #111;padding:8px 10px;text-align:right">
         ${totalRow("Sub", money(sym, order.subtotal))}
         ${totalRow("Del", money(sym, order.shippingCharge))}
-        <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:5px;padding-top:5px"><span>Due</span><span>${money(sym, Math.max(0, order.total - (order.advance ?? 0)))}</span></div>
+        <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:5px;padding-top:5px"><span>Due</span><span>${money(sym, order.total)}</span></div>
       </div>
     </div>
   </div>`;
@@ -514,7 +514,7 @@ function posLedgerBody(
     ${dash}
     <div style="display:flex;justify-content:space-between;font-size:12px"><span>Subtotal</span><span>${money(sym, order.subtotal)}</span></div>
     <div style="display:flex;justify-content:space-between;font-size:12px"><span>Delivery</span><span>${money(sym, order.shippingCharge)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:6px;padding-top:6px"><span>Total</span><span>${money(sym, Math.max(0, order.total - (order.advance ?? 0)))}</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:900;border-top:1px solid #111;margin-top:6px;padding-top:6px"><span>Total</span><span>${money(sym, order.total)}</span></div>
     <div style="margin-top:8px;text-align:center;color:#111">${esc(biz.invoiceFooter || "Thank you!")}</div>
   </div>`;
 }
@@ -543,14 +543,14 @@ function posReceiptBody(
     ${dash}
     ${rows}
     ${dash}
-    ${totalRow("TOTAL", money(sym, Math.max(0, order.total - (order.advance ?? 0))), true)}
+    ${totalRow("TOTAL", money(sym, order.total), true)}
     <div style="margin-top:8px;text-align:center">${barcode(order.id)}</div>
   </div>`;
 }
 
 function studioBody(order: Order, biz: BusinessSettings): string {
   const sym = currencySymbol(biz);
-  const totalDue = Math.max(0, order.total - (order.advance ?? 0));
+  const totalDue = order.total;
   const rows = order.items
     .map(
       (i, idx) => `<tr style="background:${idx % 2 ? "#f8fafc" : "#fff"}">
@@ -626,7 +626,7 @@ function studioBody(order: Order, biz: BusinessSettings): string {
 /* =========================== Ledger â€” Structured Light =========================== */
 function ledgerBody(order: Order, biz: BusinessSettings): string {
   const sym = currencySymbol(biz);
-  const totalDue = Math.max(0, order.total - (order.advance ?? 0));
+  const totalDue = order.total;
   const rows = order.items
     .map(
       (i) => `<tr>
@@ -706,7 +706,7 @@ function ledgerBody(order: Order, biz: BusinessSettings): string {
 /* =========================== Receipt â€” Compact Print =========================== */
 function receiptBody(order: Order, biz: BusinessSettings): string {
   const sym = currencySymbol(biz);
-  const totalDue = Math.max(0, order.total - (order.advance ?? 0));
+  const totalDue = order.total;
   const rows = order.items
     .map(
       (i) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed #e5e7eb">

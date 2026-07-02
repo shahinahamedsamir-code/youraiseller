@@ -60,7 +60,8 @@ export function buildCarrybeeCreatePayload(
   config: CarrybeeConfig,
   location: { city_id: number; zone_id: number; area_id?: number }
 ): CarrybeeCreateOrderPayload {
-  const due = Math.max(0, order.total - (order.advance ?? 0));
+  // order.total is already net of advance — the COD to collect IS the total.
+  const due = Math.max(0, order.total);
   const cod = order.paymentMethod === "cod" ? Math.round(due) : 0;
   const totalQty = order.items.reduce((s, i) => s + i.qty, 0) || 1;
   const weight = Math.min(

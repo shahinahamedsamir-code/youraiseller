@@ -666,7 +666,8 @@ function OrderRow({
 }) {
   const firstItem = o.items[0];
   const productImg = firstItem ? getProductImageForLine(firstItem) : undefined;
-  const due = Math.max(0, o.total - (o.advance ?? 0));
+  // o.total is already net of advance — don't subtract it again (double count).
+  const due = Math.max(0, o.total);
   const score = phoneScore;
 
   return (

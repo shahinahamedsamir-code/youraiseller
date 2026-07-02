@@ -124,6 +124,14 @@ function actorName(): string {
   return getSessionUser()?.name ?? "Staff";
 }
 
+/**
+ * Courier entry (e.g. "Entry to Steadfast") currently does NOT auto-move the
+ * panel status (Pending → RTS). Entry only records the tracking / consignment and
+ * raw courier status; the seller advances the order to RTS by hand. Flip to true
+ * to re-enable auto-advance on courier entry.
+ */
+const COURIER_ENTRY_AUTO_STATUS_ENABLED = false;
+
 export function markCourierUploaded(
   orderId: string,
   methodId: string,
@@ -136,7 +144,6 @@ export function markCourierUploaded(
   if (!order) return;
 
   const deliveryMethodId = resolveDeliveryMethodId(methodId);
-  const nextStatus = statusAfterCourierPush(order.status);
   const courierRaw = initialCourierStatus ?? "in_review";
 
   updateOrder(orderId, {
@@ -151,24 +158,28 @@ export function markCourierUploaded(
     courierSyncedAt: new Date().toISOString(),
   });
 
-  if (order.status !== nextStatus) {
-    updateOrderStatus(orderId, nextStatus);
+  // Auto status-advance on courier entry is OFF — keep the panel status as-is so
+  // the seller moves it to RTS manually. Entry only saves tracking + raw status.
+  if (COURIER_ENTRY_AUTO_STATUS_ENABLED) {
+    const nextStatus = statusAfterCourierPush(order.status);
+    if (order.status !== nextStatus) {
+      updateOrderStatus(orderId, nextStatus);
+    }
+    const method = getDeliveryMethod(methodId);
+    const mapped = method
+      ? mapCourierStatusToOrderStatus(method.type, courierRaw)
+      : null;
+    if (mapped && mapped !== nextStatus) {
+      updateOrderStatus(orderId, mapped);
+    }
   }
 
   appendOrderActivity(orderId, {
     type: "tracking",
     title: "Courier entry",
-    detail: detail ?? `Tracking ${trackingCode} · Panel: ${nextStatus.toUpperCase()}`,
+    detail: detail ?? `Tracking ${trackingCode}`,
     actor: actorName(),
   });
-
-  const method = getDeliveryMethod(methodId);
-  const mapped = method
-    ? mapCourierStatusToOrderStatus(method.type, courierRaw)
-    : null;
-  if (mapped && mapped !== nextStatus) {
-    updateOrderStatus(orderId, mapped);
-  }
 }
 
 async function pushOneToSteadfast(

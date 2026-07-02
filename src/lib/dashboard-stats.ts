@@ -1,4 +1,4 @@
-import { getOrderStats, loadOrders, type Order } from "./orders-store";
+import { loadOrders, type Order } from "./orders-store";
 import { getWebOrdersFromStore } from "./woocommerce-order-sync";
 import { isInWebQueue } from "./web-order-queue";
 import { countWebOrdersByTab, matchesWebOrderTab, WEB_ORDER_TABS, type WebOrderTabKey } from "./web-order-tabs";
@@ -187,6 +187,20 @@ function isCountableOrder(order: Order): boolean {
 }
 
 /**
+ * Restrict the overview to the chosen order type so "Approved Order" numbers
+ * come only from real Approved Orders and "Web Order" numbers only from orders
+ * still on the Web Order List. Without this, the date field switched but the set
+ * didn't, so each total double-counted the other type's orders.
+ */
+function ordersForOverviewType(
+  orders: Order[],
+  field: OverviewDateField
+): Order[] {
+  if (field === "web_order") return orders.filter((o) => isInWebQueue(o));
+  return orders.filter((o) => !isInWebQueue(o));
+}
+
+/**
  * Product id → cost price, built once per stats computation. Avoids calling
  * getProduct() (a full localStorage parse) for every order line.
  */
@@ -245,7 +259,7 @@ function metricsForPeriod(
 export function buildOverviewStats(
   filters: OverviewFilterOptions = { dateField: "approved", datePreset: "today" }
 ) {
-  const orders = loadOrders();
+  const orders = ordersForOverviewType(loadOrders(), filters.dateField);
   const costMap = buildProductCostMap();
   const webPending = countWebOrdersByTab(getWebOrdersFromStore()).processing;
   const range = resolveOverviewDateRange(filters.datePreset);
@@ -254,12 +268,12 @@ export function buildOverviewStats(
   let previous: PeriodMetrics | null = null;
 
   if (!range) {
-    const stats = getOrderStats();
-    const allProfit = orders.reduce((sum, o) => sum + orderProfit(o, costMap), 0);
+    // All-time totals for the selected order type (Approved vs Web Order).
+    const countable = orders.filter(isCountableOrder);
     current = {
-      orders: stats.total,
-      sales: stats.revenue,
-      profit: allProfit,
+      orders: orders.length,
+      sales: countable.reduce((sum, o) => sum + o.total, 0),
+      profit: orders.reduce((sum, o) => sum + orderProfit(o, costMap), 0),
     };
   } else {
     current = metricsForPeriod(

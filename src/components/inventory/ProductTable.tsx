@@ -13,6 +13,7 @@ import {
   type StockMovement,
 } from "@/lib/inventory-store";
 import { loadOrders } from "@/lib/orders-store";
+import { runWooStockSync } from "@/lib/woocommerce-stock-sync-store";
 import { StockAdjustModal } from "@/components/inventory/StockAdjustModal";
 import {
   Search,
@@ -28,6 +29,7 @@ import {
   Copy,
   BarChart3,
   History,
+  UploadCloud,
   X,
   ChevronsLeft,
   ChevronLeft,
@@ -74,6 +76,7 @@ export function ProductTable() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [flash, setFlash] = useState("");
+  const [syncingWoo, setSyncingWoo] = useState<string | null>(null);
   const [stockModal, setStockModal] = useState<{
     product: Product;
     mode: "add" | "subtract";
@@ -198,6 +201,32 @@ export function ProductTable() {
   const toggleActive = (p: Product) => {
     updateProduct(p.id, { active: !p.active });
     refresh();
+  };
+
+  // Manual per-product push to WooCommerce, in the mode chosen in Stock Sync
+  // settings (exact quantity → sends the number; status only → in/out), matched
+  // by this product's SKU (= Code).
+  const syncOneToWoo = async (p: Product) => {
+    setOpenMenu(null);
+    setSyncingWoo(p.id);
+    setFlash("");
+    try {
+      const res = await runWooStockSync({
+        scope: "test",
+        testSku: p.code,
+        force: true,
+      });
+      const item = res.items[0];
+      setFlash(
+        item?.ok
+          ? `WooCommerce: ${item.message}`
+          : item?.message ?? `Could not sync "${p.code}" to WooCommerce.`
+      );
+    } catch (e) {
+      setFlash(e instanceof Error ? e.message : "WooCommerce sync failed.");
+    } finally {
+      setSyncingWoo(null);
+    }
   };
 
   const bulkDelete = () => {
@@ -555,6 +584,15 @@ export function ProductTable() {
                           }}
                         >
                           <Copy className="h-3.5 w-3.5" /> Copy SKU
+                        </button>
+                        <button
+                          type="button"
+                          disabled={syncingWoo === p.id}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 disabled:opacity-60"
+                          onClick={() => void syncOneToWoo(p)}
+                        >
+                          <UploadCloud className="h-3.5 w-3.5" />
+                          {syncingWoo === p.id ? "Syncing…" : "Sync to WooCommerce"}
                         </button>
                         <button
                           type="button"

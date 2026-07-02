@@ -25,6 +25,14 @@ export function mergeIncomingUserSecure(
     merged.passwordHash = existing.passwordHash;
   }
 
+  // Never let a client with a stale/incomplete record unlink a team member.
+  // The parent link is structural — keep it if the server already has it.
+  if (existing.parentAccountId && !incoming.parentAccountId) {
+    merged.parentAccountId = existing.parentAccountId;
+    merged.parentAccountEmail =
+      existing.parentAccountEmail ?? incoming.parentAccountEmail;
+  }
+
   if (existing.status === "pending" && incoming.status !== "pending") {
     if (
       incoming.approvedAt &&

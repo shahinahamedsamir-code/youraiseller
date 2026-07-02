@@ -121,6 +121,62 @@ function normalizeKindData(kind: string, data: unknown): unknown {
   return kind === "orders" ? slimOrdersBlob(data) : data;
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+/** Parse the app's "02 Jul 2026, 08:46 AM" (or ISO) updatedAt into a number. */
+function parseUpdatedAt(s: unknown): number {
+  const str = String(s ?? "").trim();
+  if (!str) return 0;
+  const iso = Date.parse(str);
+  if (!Number.isNaN(iso)) return iso;
+  const m = str.match(
+    /(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})(?:,?\s*(\d{1,2}):(\d{2})\s*(am|pm)?)?/i
+  );
+  if (!m) return 0;
+  const mon = MONTHS[m[2].slice(0, 3).toLowerCase()];
+  if (mon === undefined) return 0;
+  let hh = m[4] ? parseInt(m[4], 10) : 0;
+  const mm = m[5] ? parseInt(m[5], 10) : 0;
+  const ap = m[6]?.toLowerCase();
+  if (ap === "pm" && hh < 12) hh += 12;
+  if (ap === "am" && hh === 12) hh = 0;
+  return new Date(parseInt(m[3], 10), mon, parseInt(m[1], 10), hh, mm).getTime();
+}
+
+type ServerOrder = { id?: string; updatedAt?: string; advance?: number };
+
+/**
+ * Merge an incoming orders blob into what the server already has, keeping the
+ * newest copy of each order (and never wiping a seller advance the server has
+ * but the push lacks). This stops a stale full-blob push from one tab/device
+ * from reverting a newer edit (status/cancel/note/advance) made elsewhere.
+ */
+function mergeServerOrders(incoming: unknown, existing: unknown): unknown {
+  const inc = (incoming as { orders?: ServerOrder[] })?.orders;
+  const exi = (existing as { orders?: ServerOrder[] })?.orders;
+  if (!Array.isArray(inc)) return incoming;
+  if (!Array.isArray(exi) || exi.length === 0) return incoming;
+
+  const byId = new Map<string, ServerOrder>();
+  for (const o of inc) if (o?.id) byId.set(o.id, o);
+  for (const eo of exi) {
+    if (!eo?.id) continue;
+    const io = byId.get(eo.id);
+    if (!io) {
+      byId.set(eo.id, eo); // order only on the server — don't lose it
+      continue;
+    }
+    const existingNewer =
+      parseUpdatedAt(eo.updatedAt) > parseUpdatedAt(io.updatedAt);
+    const advanceProtect = (eo.advance ?? 0) > 0 && !(io.advance ?? 0);
+    if (existingNewer || advanceProtect) byId.set(eo.id, eo);
+  }
+  return { ...(incoming as object), orders: [...byId.values()] };
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -174,7 +230,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const data = normalizeKindData(kind, body.data);
+    let data = normalizeKindData(kind, body.data);
+    // Merge orders with what the server already has so a stale full-blob push
+    // from another tab/device can't revert a newer edit (status/cancel/note/
+    // advance) — the permanent fix for multi-tab reverts.
+    if (kind === "orders") {
+      try {
+        const existing = await readData(scope, "orders");
+        data = mergeServerOrders(data, existing);
+      } catch (e) {
+        console.error("[seller-data] order merge failed, writing as-is", e);
+      }
+    }
     await writeData(scope, kind, data);
 
     // Keep the normalized `orders` table in sync so the paginated read API can

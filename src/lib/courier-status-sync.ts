@@ -100,6 +100,32 @@ export function applyCourierDeliveryStatus(
     };
   }
 
+  // Don't let courier polling REGRESS an order the seller advanced by hand in
+  // the main pipeline (pending → rts → shipped → delivered). E.g. staff moved
+  // to Shipped but the courier still reports "in review" (→ rts) — keep Shipped.
+  // Forward moves and terminal/branch states (returned, partial, …) still apply.
+  const PIPELINE_RANK: Record<string, number> = {
+    pending: 0,
+    rts: 1,
+    shipped: 2,
+    delivered: 3,
+  };
+  if (
+    mapped &&
+    PIPELINE_RANK[mapped] !== undefined &&
+    PIPELINE_RANK[prevStatus] !== undefined &&
+    PIPELINE_RANK[mapped] < PIPELINE_RANK[prevStatus]
+  ) {
+    return {
+      orderId,
+      ok: true,
+      message: deliveryStatus,
+      courierStatus: deliveryStatus,
+      panelStatus: prevStatus,
+      statusChanged: false,
+    };
+  }
+
   if (mapped && mapped !== prevStatus) {
     updateOrderStatus(orderId, mapped);
     statusChanged = true;

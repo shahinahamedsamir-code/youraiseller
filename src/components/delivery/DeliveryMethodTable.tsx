@@ -53,6 +53,15 @@ export function DeliveryMethodTable() {
 
   useEffect(() => {
     refresh();
+    // Refresh when methods change locally OR when the server sync adopts the
+    // owner's data (team members receive the owner's couriers this way).
+    const onUpdate = () => refresh();
+    window.addEventListener("youraiseller-delivery-methods-updated", onUpdate);
+    window.addEventListener("youraiseller-data-updated", onUpdate);
+    return () => {
+      window.removeEventListener("youraiseller-delivery-methods-updated", onUpdate);
+      window.removeEventListener("youraiseller-data-updated", onUpdate);
+    };
   }, []);
 
   const filtered = useMemo(() => {

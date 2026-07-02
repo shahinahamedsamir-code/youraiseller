@@ -1,4 +1,5 @@
 import { sellerStorageKey } from "./seller-storage";
+import { getSessionUser } from "./dev-users";
 import { pushSellerData } from "./seller-sync";
 import {
   DEFAULT_STEADFAST_CONFIG,
@@ -162,6 +163,12 @@ function loadRaw(): DeliveryMethod[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) {
+      // A team member must NOT seed default methods — they use the owner's
+      // couriers, which arrive via the server sync. Seeding here would show the
+      // wrong generic method and could mask the owner's real ones.
+      if (getSessionUser()?.parentAccountId) {
+        return [];
+      }
       const json = JSON.stringify(DEFAULT_METHODS);
       localStorage.setItem(key, json);
       methodsRawCache = { key, raw: json, methods: DEFAULT_METHODS };
